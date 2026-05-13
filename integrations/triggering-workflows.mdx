@@ -1,0 +1,99 @@
+---
+title: "Triggering workflows from external systems"
+description: "Three patterns for starting work in Coverbase from outside the UI."
+icon: "bolt"
+---
+
+The most common integration question is whether an external system can start work in Coverbase without anyone touching the UI. Yes. There are three patterns.
+
+## Pattern 1: Create the object, let triggers handle the rest
+
+Most workflows are bound to object events. The cleanest integration is to create or update the object through the API and let the workflow engine react.
+
+**Example.** A new vendor is requested in Ariba. Ariba, or a thin middleware layer, posts the vendor to Coverbase:
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/import/vendor-intake" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": [
+      {
+        "Name": "Acme Corporation",
+        "External Id": "ariba-req-7821",
+        "Website": "https://acmecorp.com",
+        "Status": "intake",
+        "Business Unit": "Engineering",
+        "Requested Use": "Customer support ticketing",
+        "Data Types": ["customer_pii", "support_transcripts"]
+      }
+    ]
+  }'
+```
+
+A workflow bound to the `vendor.created` trigger now runs. Conditions inspect `Data Types` and `Requested Use`, classify the vendor as data-handling, and the workflow automatically launches an assessment, sends a questionnaire to the vendor contact, and notifies the internal owner. No UI interaction is required.
+
+## Pattern 2: Explicitly start an assessment
+
+When an external system needs to start an assessment on an existing vendor, for example a GRC tool beginning annual reassessment of a known vendor, it can call the assessments endpoint directly.
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/assessments" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
+    "type": "annual_reassessment",
+    "scope": "service",
+    "service_id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+    "trigger_workflow": "annual-reassessment-flow"
+  }'
+```
+
+The `trigger_workflow` parameter is optional. If omitted, the assessment is created and any workflow bound to `assessment.created` runs by default. If specified, that named workflow runs instead. This lets external systems pick the appropriate orchestration path based on context they have but Coverbase does not.
+
+## Pattern 3: Invoke a named workflow directly
+
+For cases that don't map cleanly to a single object event, for example sending the standard data privacy questionnaire to forty vendors and aggregating responses into a quarterly report, external systems can invoke a workflow by name and pass it parameters.
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/workflows/quarterly-privacy-sweep/run" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "vendor_filter": { "tags": ["processes_pii"], "tier": ["1", "2"] },
+      "due_date": "2026-06-30",
+      "report_recipient": "privacy-team@example.com"
+    }
+  }'
+```
+
+The response includes a `workflow_run_id` that can be polled for status or subscribed to via webhook.
+
+```json
+{
+  "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+  "workflow_name": "quarterly-privacy-sweep",
+  "status": "running",
+  "started_at": 1746576000,
+  "input": { "...": "..." }
+}
+```
+
+## Idempotency
+
+All workflow-starting endpoints accept an `Idempotency-Key` header. If the same key is sent twice within the idempotency window of 24 hours, the second call returns the original response without starting a new workflow. This makes it safe for external systems to retry on network failure.
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/workflows/onboard-vendor/run" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Idempotency-Key: ariba-req-7821" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
+
+<Tip>
+  Use an identifier from the source system (a procurement request ID, a ticket number) as the idempotency key. That way retries from the source system are naturally deduplicated without extra bookkeeping on your side.
+</Tip>

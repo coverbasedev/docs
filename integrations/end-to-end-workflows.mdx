@@ -1,0 +1,203 @@
+---
+title: "End-to-end workflows"
+description: "Three full lifecycle walkthroughs showing every API and webhook touchpoint."
+icon: "route"
+---
+
+The walkthroughs below trace three full lifecycle workflows, showing every API and webhook touchpoint. These are templates. Your workflows are configured during onboarding to match your processes, and can be modified through the API at any time.
+
+## Workflow A: Vendor onboarding
+
+A new third-party request enters Coverbase from procurement, gets risk-classified, drives the appropriate assessment depth, and produces a decision artifact that flows back to procurement and contract management.
+
+<Steps>
+  <Step title="Procurement creates the vendor">
+    Source system: Ariba, or any procurement intake.
+
+    ```http
+    POST /v1/import/vendor-intake
+    ```
+
+    ```json
+    {
+      "data": [{
+        "Name": "Acme Corporation",
+        "External Id": "ariba-req-7821",
+        "Website": "https://acmecorp.com",
+        "Status": "intake",
+        "Business Unit": "Engineering",
+        "Requested Use": "Customer support ticketing",
+        "Data Types": ["customer_pii"]
+      }]
+    }
+    ```
+
+    **Trigger fired:** `vendor.created`.
+  </Step>
+
+  <Step title="Workflow runs IRQ classification">
+    The workflow inspects `Data Types`, `Requested Use`, and `Business Unit`. Conditions branch:
+
+    - If `customer_pii` is present and the vendor has SaaS hosting, route to the full security and privacy assessment path.
+    - If the engagement is a commodity, with no data access and no system integration, route to a lightweight financial and compliance check and skip directly to procurement approval.
+
+    This is a configured branch. The configuration itself is API-readable and API-modifiable.
+  </Step>
+
+  <Step title="Assessment created and questionnaire dispatched">
+    **Action:** create assessment, send questionnaire to vendor contact.
+
+    **Webhook fired:** `evidence.requested`. Payload includes the vendor ID, assessment ID, and the contact email. Your GRC tool receives the webhook and creates a corresponding tracking record.
+  </Step>
+
+  <Step title="Vendor responds">
+    Vendor uploads SOC 2 and completes the questionnaire through the vendor portal.
+
+    **Webhook fired:** `evidence.received`.
+  </Step>
+
+  <Step title="Copilot processes evidence">
+    **Action:** run Copilot against uploaded evidence. Copilot extracts control evidence from the SOC 2 and reconciles it against questionnaire responses. Evaluations are produced for each control.
+
+    **Webhook fired:** `assessment.completed` with score and findings count.
+  </Step>
+
+  <Step title="Findings are flagged for review">
+    **Action:** each finding is created as an evaluation with status `flagged`. For findings above a configured severity, the workflow assigns a task to the internal risk owner.
+
+    **Webhook fired:** `evaluation.flagged`, one per finding. Your Jira instance receives webhooks and creates tickets.
+  </Step>
+
+  <Step title="Reviewer approves or rejects">
+    A human reviewer in Coverbase approves the assessment, optionally with mitigations recorded. The vendor transitions from `intake` to `active`.
+
+    **Webhook fired:** `assessment.approved` and `vendor.status_changed`. The Ariba integration receives `vendor.status_changed` and unblocks the procurement record. Contract management receives the same event and starts contract drafting with risk context attached.
+  </Step>
+
+  <Step title="Contract Guardian runs on the agreement">
+    When the draft MSA is uploaded, either via UI, API, or pulled from your CLM through a separate integration, Contract Guardian runs automatically. Missing clauses, liability deviations, and AI usage provisions are surfaced.
+
+    **Webhook fired:** `contract.analyzed`. The redline summary is delivered to the legal team's inbox via the receiving webhook handler.
+  </Step>
+</Steps>
+
+## Workflow B: Ongoing monitoring and reassessment
+
+After a vendor is active, Coverbase runs continuous monitoring and triggers reassessment work when conditions warrant.
+
+### Continuous monitoring with Supplier Radar
+
+Supplier Radar ingests external signals such as breaches, sanctions, regulatory actions, and threat intelligence, and produces events scoped to specific vendors. When an event lands above a configured severity threshold:
+
+- **Trigger fired:** `monitoring.event_detected`.
+- Conditions branch on event type and vendor tier.
+- For high-severity events on tier 1 vendors, action: create a targeted incident assessment, page the on-call risk owner, and send a webhook to PagerDuty.
+
+**Webhook fired:** `workflow.checkpoint` with `checkpoint: "incident_response_initiated"`.
+
+### Scheduled reassessment
+
+A schedule trigger fires quarterly for tier 1 vendors and annually for tier 2 and 3.
+
+```http
+POST /v1/assessments
+```
+
+```json
+{
+  "vendor_id": "cbvndr_...",
+  "control_set_id": "cbcset_...",
+  "type": "scheduled_reassessment",
+  "trigger_workflow": "scheduled-reassessment-flow"
+}
+```
+
+Copilot runs delta detection against the prior assessment state and generates follow-up questions only for control areas that have changed.
+
+### Contract renewal trigger
+
+A schedule trigger fires 90 days before contract end date.
+
+**Trigger fired:** `contract.renewal_due`. The workflow optionally launches a renewal-scoped reassessment and sends a webhook to your CLM to start renewal negotiation with current risk context.
+
+## Workflow C: Vendor offboarding
+
+When a relationship ends, Coverbase coordinates the offboarding sequence.
+
+<Steps>
+  <Step title="External system signals offboarding">
+    ```http
+    PATCH /v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162
+    ```
+
+    ```json
+    {
+      "status": "offboarding",
+      "offboarding_reason": "contract_not_renewed",
+      "effective_date": "2026-09-30"
+    }
+    ```
+
+    **Trigger fired:** `vendor.status_changed`.
+  </Step>
+
+  <Step title="Termination assessment">
+    **Action:** create a termination assessment focused on data return, access revocation, and exit obligations from the contract. **Action:** send a structured offboarding questionnaire to the vendor covering data destruction certification, access termination confirmation, and return of materials.
+
+    **Webhook fired:** `evidence.requested`.
+  </Step>
+
+  <Step title="Internal access cleanup">
+    **Webhook fired:** `workflow.checkpoint` with `checkpoint: "internal_access_cleanup_required"`. Your IAM tool receives the event and revokes vendor user accounts, API keys, and SSO entitlements.
+  </Step>
+
+  <Step title="Document archival">
+    **Action:** archive vendor documents to long-term storage with retention metadata derived from the contract and applicable regulations.
+
+    **Webhook fired:** `workflow.checkpoint` with `checkpoint: "documents_archived"`.
+  </Step>
+
+  <Step title="Final closure">
+    When all offboarding tasks complete, the vendor transitions to `offboarded`.
+
+    **Webhook fired:** `vendor.status_changed`. Procurement and finance systems receive the event and close their respective records.
+  </Step>
+</Steps>
+
+## Reference diagram
+
+```
+External Systems
+─────────────────────────────────────────────────────────────────
+Ariba · Icertis · ServiceNow · Jira · Slack · IAM · CLM · Warehouse
+
+         ▼ Inbound API                       Webhooks ▲
+
+Coverbase API
+─────────────────────────────────────────────────────────────────
+POST /v1/import/{report}      Vendors, Assessments, Services
+POST /v1/assessments          Start assessment
+POST /v1/workflows/{name}/run Invoke named workflow
+PATCH /v1/vendors/{id}        Lifecycle transitions
+POST /v1/webhooks             Register outbound endpoints
+
+         ▼
+
+Workflow Engine
+─────────────────────────────────────────────────────────────────
+Triggers       ▶  Conditions    ▶  Actions
+Object events     IRQ score        Create assessment
+Schedules         Data class       Send questionnaire
+External calls    Tier             Run Copilot, Inspect, Guardian
+                  Geography        Transition state
+                  Custom logic     Fire webhook
+
+         ▼
+
+Primary Object Store
+─────────────────────────────────────────────────────────────────
+vendor · service · engagement · assessment · evaluation
+document · contract · entity · control · control_set
+
+All accessible via full CRUD API
+```

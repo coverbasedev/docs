@@ -1,0 +1,92 @@
+---
+title: "Webhooks"
+description: "Register endpoints, subscribe to events, verify signatures, and handle retries."
+icon: "arrow-right-from-bracket"
+---
+
+Webhooks are the outbound half of the integration. When a workflow checkpoint fires, Coverbase sends an HTTP POST to an endpoint you register.
+
+## Registering a webhook
+
+Webhooks are registered per environment, with a list of event types to subscribe to.
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/webhooks" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://hooks.example.com/coverbase",
+    "events": [
+      "vendor.created",
+      "assessment.completed",
+      "evaluation.flagged",
+      "contract.renewal_due",
+      "workflow.checkpoint"
+    ],
+    "secret": "whsec_..."
+  }'
+```
+
+<Warning>
+  The `secret` is used to sign each delivery so the receiver can verify authenticity. Coverbase signs the request body with HMAC SHA256 and includes the signature in the `Coverbase-Signature` header. Store the secret in your secrets manager and verify every incoming request.
+</Warning>
+
+## Event types
+
+The full event taxonomy is documented in the dashboard under **Workflows → Events**. The most commonly subscribed events:
+
+| Event | When it fires |
+| ----- | ------------- |
+| `vendor.created` | A new vendor is created via UI, API, or workflow. |
+| `vendor.status_changed` | A vendor transitions between lifecycle states such as intake, active, suspended, or offboarded. |
+| `assessment.started` | An assessment is initiated. |
+| `assessment.completed` | An assessment finishes scoring. |
+| `assessment.approved` | A reviewer approves a completed assessment. |
+| `evaluation.flagged` | A control evaluation is flagged as a finding. |
+| `evidence.requested` | A questionnaire or evidence request is sent to a vendor. |
+| `evidence.received` | A vendor uploads requested evidence. |
+| `contract.renewal_due` | A contract enters its configured renewal notification window. |
+| `contract.analyzed` | Contract Guardian completes analysis of an uploaded contract. |
+| `workflow.checkpoint` | A workflow reaches a configured checkpoint, custom-defined per workflow. |
+
+## Webhook payload
+
+```json
+{
+  "event_id": "cbevt_8b3c1a4d9e7f2c5b6a8d1e3f9c7b4a2e",
+  "event_type": "assessment.completed",
+  "occurred_at": 1746576120,
+  "data": {
+    "assessment_id": "cbasmt_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
+    "status": "completed",
+    "score": 0.82,
+    "findings_count": 3,
+    "completed_at": 1746576100
+  },
+  "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b"
+}
+```
+
+The `workflow_run_id`, when present, ties the event back to the workflow that produced it, so downstream systems can correlate a series of related webhooks.
+
+## Delivery guarantees
+
+<CardGroup cols={2}>
+  <Card title="Retries" icon="arrows-rotate">
+    Coverbase retries failed webhook deliveries with exponential backoff for 24 hours.
+  </Card>
+
+  <Card title="Response window" icon="stopwatch">
+    Receivers should respond with a 2xx status code within 10 seconds to acknowledge delivery.
+  </Card>
+
+  <Card title="Idempotency" icon="fingerprint">
+    Receivers must be idempotent: the same `event_id` may be delivered more than once.
+  </Card>
+
+  <Card title="Signature verification" icon="signature">
+    Verify the HMAC SHA256 signature in the `Coverbase-Signature` header before processing.
+  </Card>
+</CardGroup>

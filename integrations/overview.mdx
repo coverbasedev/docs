@@ -1,0 +1,78 @@
+---
+title: "Integration Workflows"
+description: "How Coverbase integrates with the systems your organization already runs, end to end."
+icon: "diagram-project"
+---
+
+This page describes how Coverbase integrates with the systems your organization already runs and how those integrations behave end to end. It's intended for security, integration, and procurement teams evaluating Coverbase as part of a broader third-party risk and vendor lifecycle stack.
+
+The integration model is built around three layers: inbound API calls that bring data and commands into Coverbase, a workflow engine that orchestrates the work, and outbound webhooks that notify your downstream systems as work progresses.
+
+## Architecture
+
+<CardGroup cols={3}>
+  <Card title="Inbound" icon="arrow-right-to-bracket">
+    External systems push data and commands into Coverbase. Procurement platforms create vendors, intake forms submit questionnaires, CMDBs sync service catalogs, and GRC tools start assessments. Each is a standard authenticated API call.
+  </Card>
+
+  <Card title="Orchestration" icon="diagram-project">
+    Once data lands, the workflow engine takes over. Triggers fire on object events, schedules, or external invocation. Conditions branch the flow. Actions execute the work: send a questionnaire, request evidence, run Copilot, wait for human review.
+  </Card>
+
+  <Card title="Outbound" icon="arrow-right-from-bracket">
+    As workflows progress, Coverbase fires webhooks to endpoints you control. Webhooks carry the event type and the affected object, so ServiceNow, Jira, Slack, Ariba, Icertis, or your data warehouse can react in real time.
+  </Card>
+</CardGroup>
+
+```
+External Systems          Coverbase              External Systems
+─────────────────         ─────────────          ─────────────────
+Ariba             ──▶     Inbound API     ──▶    ServiceNow
+Jira                      Workflow Engine        Jira
+CMDB                      Object Store           Slack
+GRC tooling                                      Icertis
+                                                 Data warehouse
+```
+
+<Info>
+  The orchestration layer is configured once during onboarding. After that, both the configuration and every running workflow instance are reachable through the API. You can interrupt, modify, or replace any step at any time, through either the dashboard or the API.
+</Info>
+
+## Primary objects
+
+All workflow logic operates on a small set of primary objects. Each supports full CRUD via the API.
+
+| Object | Description |
+| ------ | ----------- |
+| `vendor` | A third party your organization engages with. |
+| `service` | A specific product or service a vendor provides. One vendor can have many services. |
+| `engagement` | A specific use of a service by a business unit, with its own risk profile. |
+| `assessment` | An analysis of a vendor or service against one or more control sets. |
+| `evaluation` | The result of analysis against a single control inside an assessment. |
+| `document` | Evidence files such as SOC 2, ISO 27001, pen tests, policies, and contracts. |
+| `contract` | A legal agreement with a vendor, including MSAs, DPAs, SOWs, and BAAs. |
+| `entity` | A counterparty or end party referenced in a contract or relationship. |
+| `control` | An atomic requirement used to evaluate a vendor. |
+| `control_set` | A versioned collection of controls representing an evaluation standard. |
+
+When a workflow trigger fires, the payload references these objects by Coverbase ID. When a webhook fires, it references the same IDs, so your downstream systems can correlate events back to records they care about.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Workflow engine" icon="gears" href="/integrations/workflow-engine">
+    Triggers, conditions, and actions. How orchestration logic is composed.
+  </Card>
+
+  <Card title="Triggering workflows from external systems" icon="bolt" href="/integrations/triggering-workflows">
+    Three patterns for starting work in Coverbase from outside the UI.
+  </Card>
+
+  <Card title="Webhooks" icon="arrow-right-from-bracket" href="/integrations/webhooks">
+    Register endpoints, subscribe to event types, verify signatures, handle retries.
+  </Card>
+
+  <Card title="End-to-end workflows" icon="route" href="/integrations/end-to-end-workflows">
+    Full lifecycle walkthroughs for onboarding, monitoring, and offboarding.
+  </Card>
+</CardGroup>

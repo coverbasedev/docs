@@ -1,0 +1,64 @@
+---
+title: "Workflow engine"
+description: "How triggers, conditions, and actions compose into orchestration logic."
+icon: "gears"
+---
+
+A workflow is a sequence of triggers, conditions, and actions that runs against a primary object.
+
+## Triggers
+
+A trigger is the event that starts a workflow. Triggers fall into three groups.
+
+<AccordionGroup>
+  <Accordion title="Object events" icon="circle-dot" defaultOpen>
+    A primary object is created, updated, or transitions state. Examples include a new vendor being created, an assessment moving to completion, a contract entering its renewal window, or an evaluation being flagged as a finding.
+  </Accordion>
+
+  <Accordion title="Schedule events" icon="calendar-clock">
+    A workflow runs on a recurring schedule. Examples include quarterly reassessment of all critical vendors, annual SOC 2 refresh, or monthly checks for expiring contracts.
+  </Accordion>
+
+  <Accordion title="External events" icon="signal-stream">
+    An external system explicitly invokes a workflow through the API. This is the integration path most relevant to procurement and GRC tooling.
+
+    See [Triggering workflows from external systems](/integrations/triggering-workflows) for the three patterns.
+  </Accordion>
+</AccordionGroup>
+
+## Conditions
+
+Conditions branch the flow. They evaluate fields on the primary object or its related objects.
+
+Common patterns include:
+
+- IRQ score above or below a threshold
+- Data classification (PII, PHI, PCI, or none)
+- Hosting model (SaaS, on-prem, or hybrid)
+- Geographic jurisdiction
+- Vendor tier or criticality
+- Whether prior assessment evidence exists
+- Whether a specific document type is present
+
+Conditions can be composed with `AND` or `OR` logic and nested arbitrarily.
+
+## Actions
+
+Actions execute work. The available actions:
+
+<CardGroup cols={2}>
+  <Card title="Create or update an assessment" icon="clipboard-check" />
+  <Card title="Send a questionnaire to a vendor contact" icon="paper-plane" />
+  <Card title="Request specific evidence types" icon="file-arrow-up" />
+  <Card title="Run Copilot against uploaded evidence" icon="robot" />
+  <Card title="Run Inspect against a vendor's public surface" icon="magnifying-glass" />
+  <Card title="Run Contract Guardian against an agreement" icon="file-contract" />
+  <Card title="Transition a vendor or assessment lifecycle state" icon="arrow-right-arrow-left" />
+  <Card title="Assign a task to an internal owner" icon="user-check" />
+  <Card title="Wait for human review" icon="user-clock" />
+  <Card title="Fire a webhook to an external endpoint" icon="arrow-right-from-bracket" />
+</CardGroup>
+
+<Note>
+  Every action that runs in the UI is also exposed as an API endpoint. Anything that can be configured as part of a workflow can also be invoked directly from outside the workflow engine.
+</Note>
