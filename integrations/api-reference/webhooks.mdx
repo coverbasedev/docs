@@ -1,0 +1,234 @@
+---
+title: "Webhooks API"
+description: "Register, list, update, and delete webhook subscriptions."
+icon: "arrow-right-from-bracket"
+---
+
+The Webhooks API manages outbound webhook subscriptions. For payload format, signature verification, and delivery guarantees, see the [Webhooks](/integrations/webhooks) reference page.
+
+## Register a webhook
+
+<ParamField path="method" type="POST">
+  `POST /v1/webhooks`
+</ParamField>
+
+Registers a new webhook endpoint subscribed to a list of event types.
+
+### Request body
+
+<ParamField body="url" type="string" required>
+  The HTTPS endpoint Coverbase will POST to. Must be a publicly reachable URL.
+</ParamField>
+
+<ParamField body="events" type="array" required>
+  Array of event type strings to subscribe to. See the [event taxonomy](/integrations/webhooks#event-types) for available types.
+</ParamField>
+
+<ParamField body="secret" type="string" required>
+  A shared secret used to sign deliveries with HMAC SHA256. Provide a high-entropy random string and store it in your secrets manager.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional human-readable label for the webhook. Visible in the dashboard.
+</ParamField>
+
+<ParamField body="enabled" type="boolean">
+  Defaults to `true`. Set to `false` to register the webhook without activating it.
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/webhooks" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://hooks.example.com/coverbase",
+    "events": [
+      "vendor.created",
+      "assessment.completed",
+      "evaluation.flagged",
+      "contract.renewal_due",
+      "workflow.checkpoint"
+    ],
+    "secret": "whsec_a1b2c3d4e5f6...",
+    "description": "Primary GRC integration"
+  }'
+```
+
+```python Python
+import os
+import secrets
+import requests
+
+API_KEY = os.getenv("COVERBASE_API_KEY")
+BASE_URL = "https://api.coverbase.app"
+
+webhook_secret = f"whsec_{secrets.token_hex(32)}"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json",
+}
+
+payload = {
+    "url": "https://hooks.example.com/coverbase",
+    "events": [
+        "vendor.created",
+        "assessment.completed",
+        "evaluation.flagged",
+        "contract.renewal_due",
+        "workflow.checkpoint",
+    ],
+    "secret": webhook_secret,
+    "description": "Primary GRC integration",
+}
+
+resp = requests.post(f"{BASE_URL}/v1/webhooks", headers=headers, json=payload, timeout=30)
+resp.raise_for_status()
+print(resp.json())
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "id": "cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+  "url": "https://hooks.example.com/coverbase",
+  "events": [
+    "vendor.created",
+    "assessment.completed",
+    "evaluation.flagged",
+    "contract.renewal_due",
+    "workflow.checkpoint"
+  ],
+  "description": "Primary GRC integration",
+  "enabled": true,
+  "created_at": 1746576000
+}
+```
+
+<Warning>
+  The `secret` is never returned in any response after creation. Save it on your side at registration time. If lost, rotate via the update endpoint.
+</Warning>
+
+## List webhooks
+
+<ParamField path="method" type="GET">
+  `GET /v1/webhooks`
+</ParamField>
+
+Returns all webhook subscriptions for the org.
+
+### Example response
+
+```json
+{
+  "data": [
+    {
+      "id": "cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+      "url": "https://hooks.example.com/coverbase",
+      "events": ["vendor.created", "assessment.completed"],
+      "description": "Primary GRC integration",
+      "enabled": true,
+      "created_at": 1746576000
+    }
+  ]
+}
+```
+
+## Update a webhook
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/webhooks/{webhook_id}`
+</ParamField>
+
+Updates one or more fields on an existing webhook. Use this to add or remove event subscriptions, rotate the secret, or disable a webhook without deleting it.
+
+### Example request
+
+```bash cURL
+curl -X PATCH "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": [
+      "vendor.created",
+      "vendor.status_changed",
+      "assessment.completed",
+      "evaluation.flagged"
+    ]
+  }'
+```
+
+Rotate the signing secret:
+
+```bash cURL
+curl -X PATCH "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "secret": "whsec_newsecretvalue..." }'
+```
+
+## Delete a webhook
+
+<ParamField path="method" type="DELETE">
+  `DELETE /v1/webhooks/{webhook_id}`
+</ParamField>
+
+Permanently removes the webhook subscription. In-flight deliveries are not cancelled; new events stop firing.
+
+```bash cURL
+curl -X DELETE "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9" \
+  -H "Authorization: Bearer <api-key>"
+```
+
+Returns `204 No Content` on success.
+
+## Test a webhook
+
+<ParamField path="method" type="POST">
+  `POST /v1/webhooks/{webhook_id}/test`
+</ParamField>
+
+Sends a test event to the webhook URL. Useful for confirming endpoint reachability and signature verification during integration setup.
+
+### Request body
+
+<ParamField body="event_type" type="string">
+  Optional event type to simulate. Defaults to `webhook.test`. Must be one of the events the webhook is subscribed to (or `webhook.test`).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9/test" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{ "event_type": "assessment.completed" }'
+```
+
+### Example response
+
+```json
+{
+  "event_id": "cbevt_test_8b3c1a4d9e7f2c5b6a8d1e3f9c7b4a2e",
+  "delivered": true,
+  "response_status": 200,
+  "response_time_ms": 142,
+  "attempted_at": 1746576180
+}
+```
+
+## Error responses
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 400 | `invalid_url` | The URL is malformed, not HTTPS, or not publicly reachable. |
+| 400 | `invalid_event_type` | One or more event types are not recognized. |
+| 400 | `weak_secret` | The provided secret does not meet minimum entropy requirements. |
+| 404 | `webhook_not_found` | The provided `webhook_id` does not exist or is not accessible to the API key. |

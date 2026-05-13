@@ -1,0 +1,205 @@
+---
+title: "Assessments API"
+description: "Programmatically start, retrieve, and manage assessments scoped to vendors or services."
+icon: "clipboard-check"
+---
+
+The Assessments API lets external systems start and manage assessments without going through the dashboard. The most common use case is a GRC tool or scheduled job kicking off a reassessment of a known vendor.
+
+## Start an assessment
+
+<ParamField path="method" type="POST">
+  `POST /v1/assessments`
+</ParamField>
+
+Creates a new assessment scoped to a vendor or service, optionally invoking a named workflow to orchestrate downstream actions.
+
+### Request body
+
+<ParamField body="vendor_id" type="string" required>
+  The Coverbase vendor ID (`cbvndr_...`) the assessment runs against.
+</ParamField>
+
+<ParamField body="control_set_id" type="string" required>
+  The control set (`cbcset_...`) to evaluate the vendor against.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Assessment type. Common values: `initial`, `annual_reassessment`, `scheduled_reassessment`, `incident_response`, `termination`.
+</ParamField>
+
+<ParamField body="scope" type="string">
+  `vendor` (default) or `service`. Determines whether the assessment covers the entire vendor or a specific service.
+</ParamField>
+
+<ParamField body="service_id" type="string">
+  Required when `scope` is `service`. The service (`cbsvc_...`) the assessment is scoped to.
+</ParamField>
+
+<ParamField body="trigger_workflow" type="string">
+  Optional name of a workflow to invoke. If omitted, any workflow bound to `assessment.created` runs by default. If specified, that named workflow runs instead.
+</ParamField>
+
+<ParamField body="assignee_id" type="string">
+  Optional user ID to assign the assessment to. Defaults to the vendor's risk owner.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer <api-key>`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional. If the same key is sent twice within 24 hours, the second call returns the original response without starting a new assessment. Recommended for retries on network failure.
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/assessments" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Idempotency-Key: grc-reassess-2026-q2-acme" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
+    "type": "annual_reassessment",
+    "scope": "service",
+    "service_id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+    "trigger_workflow": "annual-reassessment-flow"
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("COVERBASE_API_KEY")
+BASE_URL = "https://api.coverbase.app"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Idempotency-Key": "grc-reassess-2026-q2-acme",
+    "Content-Type": "application/json",
+}
+
+payload = {
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
+    "type": "annual_reassessment",
+    "scope": "service",
+    "service_id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+    "trigger_workflow": "annual-reassessment-flow",
+}
+
+resp = requests.post(
+    f"{BASE_URL}/v1/assessments",
+    headers=headers,
+    json=payload,
+    timeout=30,
+)
+resp.raise_for_status()
+print(resp.json())
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "id": "cbasmt_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "service_id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+  "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
+  "type": "annual_reassessment",
+  "scope": "service",
+  "status": "started",
+  "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+  "created_at": 1746576000
+}
+```
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The new assessment ID.
+</ResponseField>
+
+<ResponseField name="vendor_id" type="string">
+  The vendor the assessment is scoped to.
+</ResponseField>
+
+<ResponseField name="service_id" type="string">
+  The service the assessment is scoped to, when `scope` is `service`.
+</ResponseField>
+
+<ResponseField name="control_set_id" type="string">
+  The control set being evaluated.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  The assessment type passed in the request.
+</ResponseField>
+
+<ResponseField name="scope" type="string">
+  `vendor` or `service`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current lifecycle state. Initial value is typically `started` or `pending_evidence`.
+</ResponseField>
+
+<ResponseField name="workflow_run_id" type="string">
+  The workflow run that this assessment triggered, when applicable. Use this to correlate downstream webhooks.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer">
+  Unix timestamp when the assessment was created.
+</ResponseField>
+
+## Retrieve an assessment
+
+<ParamField path="method" type="GET">
+  `GET /v1/assessments/{assessment_id}`
+</ParamField>
+
+Fetches a single assessment by ID, including its current status, score, and findings count.
+
+### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/assessments/cbasmt_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a" \
+  -H "Authorization: Bearer <api-key>"
+```
+
+### Example response
+
+```json
+{
+  "id": "cbasmt_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
+  "type": "annual_reassessment",
+  "scope": "service",
+  "status": "completed",
+  "score": 0.82,
+  "findings_count": 3,
+  "started_at": 1746576000,
+  "completed_at": 1746576100
+}
+```
+
+## Error responses
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 400 | `missing_required_field` | One of `vendor_id`, `control_set_id`, or `type` was omitted. |
+| 400 | `invalid_scope_combination` | `scope` is `service` but `service_id` is missing, or `service_id` does not belong to `vendor_id`. |
+| 404 | `vendor_not_found` | The provided `vendor_id` does not exist or is not accessible to the API key. |
+| 404 | `control_set_not_found` | The provided `control_set_id` does not exist. |
+| 404 | `workflow_not_found` | The provided `trigger_workflow` name is not configured for this org. |
+| 409 | `idempotency_conflict` | An assessment already exists for this idempotency key. The original response is returned in the body. |

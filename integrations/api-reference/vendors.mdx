@@ -1,0 +1,174 @@
+---
+title: "Vendors API"
+description: "Retrieve and update vendor records and their lifecycle state."
+icon: "building"
+---
+
+The Vendors API lets external systems read and update individual vendor records. To create or bulk-update vendors, use the [Import API](/import-api) instead.
+
+The most common use of this API is lifecycle transitions: signaling that a vendor is offboarding, suspending a vendor pending review, or unblocking a procurement record once an assessment completes.
+
+## Retrieve a vendor
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}`
+</ParamField>
+
+Returns the full profile of a single vendor.
+
+### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The Coverbase vendor ID (`cbvndr_...`).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+  -H "Authorization: Bearer <api-key>"
+```
+
+### Example response
+
+```json
+{
+  "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "external_id": "ariba-req-7821",
+  "name": "Acme Corporation",
+  "website": "https://acmecorp.com",
+  "status": "active",
+  "tier": "2",
+  "business_unit": "Engineering",
+  "hq_location": "San Francisco, CA",
+  "tags": ["processes_pii", "saas"],
+  "risk_owner_id": "cbusr_a1b2c3d4...",
+  "created_at": 1732292930,
+  "updated_at": 1746575800
+}
+```
+
+## Update a vendor
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/vendors/{vendor_id}`
+</ParamField>
+
+Updates one or more fields on an existing vendor. Most commonly used to transition lifecycle state. Updates fire `vendor.updated` and, if status changes, `vendor.status_changed` webhooks.
+
+### Updatable fields
+
+<ParamField body="status" type="string">
+  Lifecycle status. Common values: `intake`, `under_review`, `active`, `suspended`, `offboarding`, `offboarded`.
+</ParamField>
+
+<ParamField body="tier" type="string">
+  Risk tier. Typically `1` through `4`.
+</ParamField>
+
+<ParamField body="risk_owner_id" type="string">
+  Coverbase user ID of the assigned risk owner.
+</ParamField>
+
+<ParamField body="business_unit" type="string">
+  Business unit owning the vendor relationship.
+</ParamField>
+
+<ParamField body="tags" type="array">
+  Tag strings to attach. Replaces the existing tag set.
+</ParamField>
+
+<ParamField body="offboarding_reason" type="string">
+  When `status` is `offboarding` or `offboarded`, the reason for termination (`contract_not_renewed`, `compliance_failure`, `vendor_acquired`, `consolidation`, etc.).
+</ParamField>
+
+<ParamField body="effective_date" type="string">
+  ISO 8601 date. When `status` is `offboarding`, the date the offboarding takes effect.
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "offboarding",
+    "offboarding_reason": "contract_not_renewed",
+    "effective_date": "2026-09-30"
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("COVERBASE_API_KEY")
+BASE_URL = "https://api.coverbase.app"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json",
+}
+
+vendor_id = "cbvndr_e448ba62882143f3ba0c140bb2e30162"
+payload = {
+    "status": "offboarding",
+    "offboarding_reason": "contract_not_renewed",
+    "effective_date": "2026-09-30",
+}
+
+resp = requests.patch(
+    f"{BASE_URL}/v1/vendors/{vendor_id}",
+    headers=headers,
+    json=payload,
+    timeout=30,
+)
+resp.raise_for_status()
+print(resp.json())
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "external_id": "ariba-req-7821",
+  "name": "Acme Corporation",
+  "status": "offboarding",
+  "offboarding_reason": "contract_not_renewed",
+  "effective_date": "2026-09-30",
+  "tier": "2",
+  "tags": ["processes_pii", "saas"],
+  "updated_at": 1746576400
+}
+```
+
+<Info>
+  This update fires both `vendor.updated` and `vendor.status_changed` webhooks. Any workflow bound to those events will run, for example the offboarding sequence described in [Workflow C: Vendor offboarding](/integrations/end-to-end-workflows#workflow-c-vendor-offboarding).
+</Info>
+
+## Lifecycle states
+
+The status field follows a defined lifecycle. Allowed transitions:
+
+```
+intake ──▶ under_review ──▶ active ──▶ suspended ──▶ active
+                              │              │
+                              └──▶ offboarding ──▶ offboarded
+```
+
+Attempting an unsupported transition (for example, moving directly from `intake` to `offboarded`) returns a `400 invalid_status_transition` error. Use intermediate states or use the Import API for bulk corrections.
+
+## Error responses
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 400 | `invalid_status_transition` | The requested status change is not allowed from the current state. |
+| 400 | `missing_required_field` | A required dependent field (such as `offboarding_reason` when transitioning to `offboarding`) was omitted. |
+| 404 | `vendor_not_found` | The provided `vendor_id` does not exist or is not accessible to the API key. |
+| 409 | `concurrent_update` | The vendor was updated by another request between read and write. Refresh and retry. |

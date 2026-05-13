@@ -1,0 +1,187 @@
+---
+title: "Workflows API"
+description: "Invoke named workflows directly and poll their execution state."
+icon: "play"
+---
+
+The Workflows API lets external systems invoke a workflow by name and pass it parameters. Use this when the work you want to start doesn't map cleanly to a single object event, for example a quarterly sweep of vendors matching a filter or an ad-hoc campaign.
+
+For workflows that are bound to object events (`vendor.created`, `assessment.completed`, etc.), prefer creating or updating the underlying object directly. See [Triggering workflows from external systems](/integrations/triggering-workflows) for the three patterns.
+
+## Run a workflow
+
+<ParamField path="method" type="POST">
+  `POST /v1/workflows/{workflow_name}/run`
+</ParamField>
+
+Starts a new run of a named workflow with the provided input parameters.
+
+### Path parameters
+
+<ParamField path="workflow_name" type="string" required>
+  The unique name of the workflow as configured in the dashboard.
+</ParamField>
+
+### Request body
+
+<ParamField body="input" type="object" required>
+  Workflow-specific input parameters. Schema is defined per workflow during configuration. See the workflow's detail page in the dashboard for its accepted input shape.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer <api-key>`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional. If the same key is sent twice within 24 hours, the second call returns the original response without starting a new run.
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/workflows/quarterly-privacy-sweep/run" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Idempotency-Key: privacy-sweep-2026-q2" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {
+      "vendor_filter": { "tags": ["processes_pii"], "tier": ["1", "2"] },
+      "due_date": "2026-06-30",
+      "report_recipient": "privacy-team@example.com"
+    }
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("COVERBASE_API_KEY")
+BASE_URL = "https://api.coverbase.app"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Idempotency-Key": "privacy-sweep-2026-q2",
+    "Content-Type": "application/json",
+}
+
+payload = {
+    "input": {
+        "vendor_filter": {"tags": ["processes_pii"], "tier": ["1", "2"]},
+        "due_date": "2026-06-30",
+        "report_recipient": "privacy-team@example.com",
+    }
+}
+
+resp = requests.post(
+    f"{BASE_URL}/v1/workflows/quarterly-privacy-sweep/run",
+    headers=headers,
+    json=payload,
+    timeout=30,
+)
+resp.raise_for_status()
+print(resp.json())
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+  "workflow_name": "quarterly-privacy-sweep",
+  "status": "running",
+  "started_at": 1746576000,
+  "input": {
+    "vendor_filter": { "tags": ["processes_pii"], "tier": ["1", "2"] },
+    "due_date": "2026-06-30",
+    "report_recipient": "privacy-team@example.com"
+  }
+}
+```
+
+### Response fields
+
+<ResponseField name="workflow_run_id" type="string">
+  Unique identifier for this run. Use it to poll status or correlate downstream webhooks.
+</ResponseField>
+
+<ResponseField name="workflow_name" type="string">
+  The name of the workflow that was invoked.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Initial status. Typically `running`. Other values include `pending`, `paused`, `completed`, `failed`, `cancelled`.
+</ResponseField>
+
+<ResponseField name="started_at" type="integer">
+  Unix timestamp when the run started.
+</ResponseField>
+
+<ResponseField name="input" type="object">
+  Echoes the input parameters sent in the request.
+</ResponseField>
+
+## Get a workflow run
+
+<ParamField path="method" type="GET">
+  `GET /v1/workflows/runs/{workflow_run_id}`
+</ParamField>
+
+Returns the current state of a workflow run, including completed steps and any output.
+
+### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b" \
+  -H "Authorization: Bearer <api-key>"
+```
+
+### Example response
+
+```json
+{
+  "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+  "workflow_name": "quarterly-privacy-sweep",
+  "status": "completed",
+  "started_at": 1746576000,
+  "completed_at": 1746579600,
+  "checkpoints_reached": [
+    "vendors_selected",
+    "questionnaires_dispatched",
+    "responses_aggregated",
+    "report_delivered"
+  ],
+  "output": {
+    "vendors_processed": 38,
+    "responses_received": 32,
+    "report_url": "https://dashboard.coverbase.app/reports/cbrpt_..."
+  }
+}
+```
+
+## Subscribe to run progress
+
+Polling is supported, but the recommended pattern is to subscribe to webhooks. The relevant events:
+
+| Event | When it fires |
+| ----- | ------------- |
+| `workflow.checkpoint` | A workflow reaches a configured checkpoint. |
+| `workflow.completed` | A workflow run finishes successfully. |
+| `workflow.failed` | A workflow run terminates with an error. |
+
+See the [Webhooks](/integrations/webhooks) reference for registration and payload format. Every event includes the `workflow_run_id` so you can correlate it back to the originating run.
+
+## Error responses
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 400 | `invalid_input` | The `input` object does not match the workflow's configured schema. |
+| 404 | `workflow_not_found` | No workflow exists with the provided name for this org. |
+| 409 | `idempotency_conflict` | A run already exists for this idempotency key. The original response is returned. |
+| 429 | `rate_limited` | Per-org workflow concurrency or rate limits exceeded. Inspect `retry_after`. |
