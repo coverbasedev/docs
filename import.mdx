@@ -1,0 +1,210 @@
+---
+title: "Import API Reference"
+description: "Endpoint reference for submitting batches of records via the Coverbase Import API."
+icon: "code"
+---
+
+## Import Report
+
+<ParamField path="method" type="POST">
+  `POST /v1/import/{report_name}`
+</ParamField>
+
+Submits a batch of records to the specified import report. Records are validated against the report's field mapping, upserted into the target base object using `external_id`, and returned with a per-record result summary.
+
+### Path parameters
+
+<ParamField path="report_name" type="string" required>
+  The unique identifier of the import report.
+</ParamField>
+
+### Request body
+
+The request body is a JSON object with a `data` key containing an array of records. Each record is an object whose keys are the mapped field names defined in the report and whose values are the incoming field values.
+
+<ParamField body="data" type="array" required>
+  Records to import. Each record must include all fields marked as Required in the report's mapping.
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/import/vendor-custom-import" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": [
+      {
+        "Name": "Acme Corporation",
+        "External Id": "vendor-123",
+        "Website": "https://acmecorp.com",
+        "Status": "active",
+        "Hq Location": "San Francisco, CA",
+        "Raw Irq Score": "85"
+      },
+      {
+        "Name": "Beta Services",
+        "External Id": "vendor-456",
+        "Website": "https://betaservices.io",
+        "Status": "onboarding"
+      }
+    ]
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("COVERBASE_API_KEY", "<api-key>")
+BASE_URL = "https://api.coverbase.app"
+
+report_name = "vendor-custom-import"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json",
+}
+
+payload = {
+    "data": [
+        {
+            "Name": "Acme Corporation",
+            "External Id": "vendor-123",
+            "Website": "https://acmecorp.com",
+            "Status": "active",
+            "Hq Location": "San Francisco, CA",
+            "Raw Irq Score": "85",
+        },
+        {
+            "Name": "Beta Services",
+            "External Id": "vendor-456",
+            "Website": "https://betaservices.io",
+            "Status": "onboarding",
+        },
+    ]
+}
+
+resp = requests.post(
+    f"{BASE_URL}/v1/import/{report_name}",
+    headers=headers,
+    json=payload,
+    timeout=30,
+)
+resp.raise_for_status()
+result = resp.json()
+
+print(f"Received: {result['received_count']}")
+print(f"Created: {result['created_count']}, Updated: {result['updated_count']}, Failed: {result['failed_count']}")
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "id": "cbimprt_7b2c918fa4e14e6c9a3d7b21d4f8a0c2",
+  "slug": "vendor-custom-import",
+  "report_name": "Vendor Import",
+  "base_object": "vendor",
+  "mapping": {
+    "name": "Name",
+    "external_id": "External Id",
+    "website": "Website",
+    "status": "Status",
+    "hq_location": "Hq Location",
+    "raw_irq_score": "Raw Irq Score"
+  },
+  "received_count": 2,
+  "created_count": 1,
+  "updated_count": 1,
+  "failed_count": 0,
+  "results": [
+    {
+      "external_id": "vendor-123",
+      "coverbase_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "action": "updated",
+      "status": "success"
+    },
+    {
+      "external_id": "vendor-456",
+      "coverbase_id": "cbvndr_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
+      "action": "created",
+      "status": "success"
+    }
+  ],
+  "errors": [],
+  "received_at": 1745481600
+}
+```
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  Unique Coverbase import report ID.
+</ResponseField>
+
+<ResponseField name="slug" type="string">
+  Unique string used in the API endpoint URL.
+</ResponseField>
+
+<ResponseField name="report_name" type="string">
+  Display name for the report.
+</ResponseField>
+
+<ResponseField name="base_object" type="string">
+  The object each record in `data` represents (`vendor`, `assessment`, or `service`).
+</ResponseField>
+
+<ResponseField name="mapping" type="object">
+  Mapping between Coverbase field names and the field names accepted in the incoming JSON objects.
+</ResponseField>
+
+<ResponseField name="received_count" type="integer">
+  Total number of records received in the request body.
+</ResponseField>
+
+<ResponseField name="created_count" type="integer">
+  Number of records that resulted in a new base object being created.
+</ResponseField>
+
+<ResponseField name="updated_count" type="integer">
+  Number of records that matched an existing base object on `external_id` and were updated in place.
+</ResponseField>
+
+<ResponseField name="failed_count" type="integer">
+  Number of records that were rejected due to validation or mapping errors.
+</ResponseField>
+
+<ResponseField name="results" type="array">
+  Per-record result objects for successfully processed records. Each contains `external_id`, `coverbase_id`, `action` (`created` or `updated`), and `status`.
+</ResponseField>
+
+<ResponseField name="errors" type="array">
+  Per-record error objects for rejected records. Each contains the record index, `external_id` (if available), `error_code`, and a human-readable message.
+</ResponseField>
+
+<ResponseField name="received_at" type="integer">
+  Unix timestamp indicating when the import batch was received.
+</ResponseField>
+
+### Error codes
+
+| Code | Description |
+| --- | --- |
+| `missing_required_field` | A required field (such as `name` or `external_id`) was absent from the record. |
+| `invalid_field_value` | A field value failed type or format validation (for example, a malformed date or non-numeric score). |
+| `unmapped_field` | A field in the record is not defined in the report's mapping and was ignored. Informational only; does not fail the record. |
+| `unknown_base_object` | The report's configured base object is no longer valid. |
+| `duplicate_external_id` | The same `external_id` appears more than once in a single request batch. |
+
+<Info>
+  Partial success is supported. Records that pass validation are imported even if other records in the same batch fail. The HTTP response code is `200` when at least one record succeeds and `400` when all records fail validation.
+</Info>
+
+<Note>
+  Need help? Email [support@coverbase.com](mailto:support@coverbase.com).
+</Note>

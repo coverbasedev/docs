@@ -1,0 +1,79 @@
+---
+title: "Export API Concepts"
+description: "Pull vendor, assessment, control, and evaluation data out of Coverbase via configurable report endpoints."
+icon: "arrow-up-from-bracket"
+---
+
+The Export API is the backbone for automating your third-party risk management program. It enables secure, direct retrieval of vendor profiles, risk assessments, control evaluations, and related compliance data.
+
+## What you can do
+
+<CardGroup cols={2}>
+  <Card title="Replace spreadsheets" icon="table">
+    Swap manual spreadsheet tracking for live system data pulled directly from Coverbase.
+  </Card>
+
+  <Card title="Feed dashboards" icon="chart-line">
+    Pipe vendor and assessment information into internal compliance dashboards.
+  </Card>
+
+  <Card title="Automate reporting" icon="file-chart-column">
+    Generate regulatory reports by pulling structured control evaluations on a schedule.
+  </Card>
+
+  <Card title="Trigger workflows" icon="bolt">
+    Drive remediation in ServiceNow, Jira, or other internal tools when evaluations surface issues.
+  </Card>
+</CardGroup>
+
+The API uses a RESTful design with a predictable URL structure and communicates entirely in JSON. All interactions are authenticated and encrypted.
+
+## Setup
+
+The Export API requires you to first create a Report in the [dashboard](https://dashboard.coverbase.app/api). A report defines the URL of the endpoint, the data it returns, and the field labels it uses on the way out.
+
+<Frame>
+  ![Creating a new export report in the Coverbase dashboard](/images/export-api-setup.png)
+</Frame>
+
+To configure the report, you first pick a **base object** that the report returns. When you call the API endpoint, it returns an array of JSON objects, each representing one instance of that base object.
+
+## Base objects
+
+The following base objects are currently supported.
+
+<AccordionGroup>
+  <Accordion title="Vendor" defaultOpen icon="building">
+    Vendor records include metadata such as name, website, ownership, risk level, and tags.
+
+    **Example:** A supplier record for "Acme Corp, Payments API" might differ from "Acme Corp, Cloud Hosting" if both are used by different teams.
+  </Accordion>
+
+  <Accordion title="Assessment" icon="clipboard-list">
+    An assessment is an analysis of a vendor's documents, questionnaires, and contextual data against one or more control sets. Assessments are automatically populated, reviewed, and scored by Coverbase's AI engine.
+
+    **Example:** Reviewing Acme Corp's SOC 2 and CAIQ to determine whether they meet your encryption and access control expectations.
+  </Accordion>
+
+  <Accordion title="Evaluation" icon="circle-check">
+    Assessments produce evaluations. Each evaluation is the result of analyzing a single control. There are as many evaluations as there are controls being assessed. Evaluations with weaknesses are considered issues. Each one carries context, evidence citations, and optional recommended mitigations.
+
+    **Example:** "Encryption control unmet, no evidence of data-at-rest encryption found in SOC 2."
+  </Accordion>
+
+  <Accordion title="Control" icon="shield-check">
+    An atomic requirement used to evaluate a supplier's security, legal, or operational posture. Each control has an expectation, guidance, weight, and supporting evidence references.
+
+    **Example:** "Vendor must encrypt customer data at rest with AES-256 or stronger."
+  </Accordion>
+
+  <Accordion title="Control Set" icon="folder-tree">
+    A collection of controls representing a full evaluation standard. Control sets may include sections (such as "Data Security" or "Business Continuity") and are versioned for auditability.
+
+    **Example:** A custom control set derived from your internal security questionnaire.
+  </Accordion>
+</AccordionGroup>
+
+<Card title="Export API Reference" icon="code" href="/export-api/reference">
+  Endpoint signatures, request parameters, full response schemas, and code samples.
+</Card>

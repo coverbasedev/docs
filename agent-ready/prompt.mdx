@@ -1,75 +1,117 @@
 ---
-title: 'Prompt component'
-description: 'Embed shareable AI prompts readers can copy or open in Cursor'
-icon: 'robot'
+title: "Coverbase MCP Server"
+description: "Let AI assistants query and manage your TPRM program through natural conversation."
+icon: "robot"
 ---
 
-The `Prompt` component displays a pre-built AI prompt with one-click actions to copy it to the clipboard or open it directly in Cursor. It's ideal for any docs page where you want to hand readers a ready-to-use prompt.
+The Coverbase MCP server lets AI assistants and agentic tools query and manage your third-party risk and procurement program through natural conversation. Ask about vendors, assessments, findings, contracts, obligations, and subprocessor exposure, and the assistant pulls answers directly from your Coverbase account, scoped to your permissions.
 
-## Basic usage
+The server implements the [Model Context Protocol](https://modelcontextprotocol.io), an open standard for connecting AI assistants to external systems. It works with any MCP-compatible client.
 
-<Prompt description="Summarize this API endpoint">
-You are a technical writer. Given the following API endpoint documentation, write a one-paragraph summary that explains what the endpoint does, what inputs it requires, and what it returns. Be concise and use plain language.
-</Prompt>
+## Supported clients
 
-```mdx
-<Prompt description="Summarize this API endpoint">
-You are a technical writer. Given the following API endpoint documentation,
-write a one-paragraph summary that explains what the endpoint does, what
-inputs it requires, and what it returns. Be concise and use plain language.
-</Prompt>
+<CardGroup cols={3}>
+  <Card title="Claude" icon="comments">
+    claude.ai web, Claude Desktop, Claude for Chrome
+  </Card>
+
+  <Card title="Claude Code" icon="terminal">
+    Anthropic's command-line agentic coding tool
+  </Card>
+
+  <Card title="Cursor" icon="code">
+    The AI-native IDE
+  </Card>
+
+  <Card title="Cline" icon="puzzle-piece">
+    The VS Code coding agent
+  </Card>
+
+  <Card title="Goose" icon="ghost">
+    Block's open-source AI agent
+  </Card>
+
+  <Card title="MCP Inspector" icon="bug">
+    The official Anthropic debugging client
+  </Card>
+</CardGroup>
+
+If your tool speaks MCP over OAuth 2.0 with Streamable HTTP transport, it will work with our server. Email [support@coverbase.com](mailto:support@coverbase.com) if you'd like us to add yours to the test matrix.
+
+## What you can do
+
+The server exposes 65 tools across read and write capabilities.
+
+<AccordionGroup>
+  <Accordion title="Vendor and portfolio operations" icon="building">
+    Search vendors by name, status, tier, owner, or tags. Pull a full vendor profile in one call: people, assessments, findings, contracts, engagements, obligations, radar alerts, security cases, and SOC 2 documents. Surface portfolio-wide views including highest-risk vendors, evidence health, and assessment metrics.
+  </Accordion>
+
+  <Accordion title="Assessments and controls" icon="clipboard-check">
+    Search assessments by vendor, status, or assignee. Get full assessment detail in one call: control evaluations, findings with titles, people, supporting documents. List control sets, controls within a set, and per-control evaluation results. Start new assessments, update fields, and manage assessment plans.
+  </Accordion>
+
+  <Accordion title="Findings, obligations, and follow-ups" icon="flag">
+    Search findings scoped to a vendor or assessment, or org-wide, with full titles, categories, assignees, due dates, and status. List follow-ups attached to assessments. Search and update obligations extracted from vendor documents. Create new findings or obligations with explicit confirmation.
+  </Accordion>
+
+  <Accordion title="Contracts, engagements, and documents" icon="file-contract">
+    Search contracts by vendor or status, and get full contract detail. List vendor engagements and vendor documents (evidence files) for a vendor or org-wide. Get evidence health summaries.
+  </Accordion>
+
+  <Accordion title="Subprocessor and supply-chain analysis" icon="diagram-project">
+    Search across all vendors' SOC 2 reports and custom relationships to find which vendors depend on a specific nth-party. The question that takes hours in most TPRM tools and seconds here: "which of our vendors use AWS as a subprocessor?"
+  </Accordion>
+
+  <Accordion title="Radar and continuous monitoring" icon="satellite-dish">
+    List radar alert events for a single vendor or across the org. List and update radar detectors configured for the org.
+  </Accordion>
+
+  <Accordion title="Activity, audit, and notifications" icon="bell">
+    Get a comprehensive org activity digest in one call: recent assessments, open findings, radar alerts, audit trail entries, and notifications. List the audit trail for any supported object.
+  </Accordion>
+
+  <Accordion title="Notes and configuration" icon="gear">
+    List and add notes on any platform object. List and update tags, custom field configurations, custom field values, workflow automations, and assessment plans.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Every tool that creates, updates, or deletes data requires a `confirm` parameter set to `true`. The assistant is expected to surface the proposed change in chat and wait for your approval before executing. This human-in-the-loop pattern applies uniformly across all write tools.
+</Warning>
+
+## Server endpoint
+
+```text
+https://mcp.coverbase.app/mcp
 ```
 
-## With Cursor integration
+## Connecting
 
-Add `actions={["copy", "cursor"]}` to also surface an "Open in Cursor" button. This is especially useful for prompts readers will use in their editor.
+<CardGroup cols={2}>
+  <Card title="Claude Desktop" icon="comments" href="/mcp/connecting#claude">
+    Add as a connector in Settings → Connectors
+  </Card>
 
-<Prompt
-  description="Generate a typed API client"
-  icon="code"
-  actions={["copy", "cursor"]}
->
-You are an expert TypeScript developer. Given the following OpenAPI specification, generate a fully-typed API client using native fetch. Include:
-- A base client class with configurable baseUrl and auth headers
-- One method per endpoint, with typed request parameters and response types
-- JSDoc comments on each method
-Do not use any third-party HTTP libraries.
-</Prompt>
+  <Card title="Claude Code" icon="terminal" href="/mcp/connecting#claude-code">
+    `claude mcp add coverbase https://mcp.coverbase.app/mcp`
+  </Card>
 
-```mdx
-<Prompt
-  description="Generate a typed API client"
-  icon="code"
-  actions={["copy", "cursor"]}
->
-You are an expert TypeScript developer. Given the following OpenAPI
-specification, generate a fully-typed API client using native fetch...
-</Prompt>
-```
+  <Card title="Cursor" icon="code" href="/mcp/connecting#cursor">
+    Add as a remote MCP server in Cursor settings
+  </Card>
 
-## Props
+  <Card title="Other clients" icon="plug" href="/mcp/connecting#other">
+    Any MCP client with OAuth 2.0 and Streamable HTTP transport
+  </Card>
+</CardGroup>
 
-<ResponseField name="description" type="string" required>
-  Heading text shown above the prompt content. Supports Markdown.
-</ResponseField>
+## Requirements
 
-<ResponseField name="children" type="string" required>
-  The prompt text that gets copied or sent to Cursor.
-</ResponseField>
+- An active Coverbase account on a plan that includes API access.
+- An MCP-compatible AI assistant or client.
+- The MCP server uses OAuth 2.0. Your permissions in Coverbase determine what the connected assistant can see and do.
 
-<ResponseField name="actions" type="array">
-  Which action buttons to show. Options: `"copy"`, `"cursor"`. Defaults to `["copy"]`.
-</ResponseField>
-
-<ResponseField name="icon" type="string">
-  An icon displayed alongside the description. Supports Font Awesome, Lucide, and Tabler icon names, image URLs, or inline SVG.
-</ResponseField>
-
-## When to use it
-
-The `Prompt` component works well anywhere you're teaching readers to work with AI:
-
-- **Quickstart guides** — give readers a prompt to generate their first integration
-- **API reference pages** — include a prompt for generating client code from the spec
-- **Troubleshooting guides** — embed a debugging prompt readers can run against their own error logs
-- **Conceptual pages** — add a prompt for exploring the topic further with an AI assistant
+<Card title="Privacy and security" icon="shield-halved" href="/mcp/security">
+  How we handle credentials, what we log, what we don't retain, and how to revoke access.
+</Card>
