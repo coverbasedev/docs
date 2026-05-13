@@ -1,0 +1,77 @@
+---
+title: "Security and privacy"
+description: "Authentication, authorization, data handling, and what we log when you connect the MCP server."
+icon: "shield-halved"
+---
+
+## Authentication and authorization
+
+The Coverbase MCP server uses OAuth 2.0. We do not store the AI assistant provider's credentials, and the AI assistant provider does not receive your Coverbase password.
+
+<CardGroup cols={2}>
+  <Card title="OAuth 2.0" icon="key">
+    Short-lived access tokens with refresh-token rotation.
+  </Card>
+
+  <Card title="Permission inheritance" icon="user-shield">
+    Tool calls run with the connected user's permissions. The connector cannot escalate beyond what that user could do in the Coverbase UI.
+  </Card>
+
+  <Card title="Origin validation" icon="shield">
+    The server validates the `Origin` header on incoming MCP requests to prevent DNS rebinding attacks.
+  </Card>
+
+  <Card title="Transport security" icon="lock">
+    All connections use TLS 1.2 or higher with certificates from recognized authorities.
+  </Card>
+</CardGroup>
+
+## What we log
+
+When the connector is invoked, we log:
+
+- The OAuth user identity
+- The tool called
+- The parameters passed
+- The timestamp
+- The outcome (success or error)
+
+These logs are used for security monitoring, debugging, abuse prevention, and audit. They are retained in line with the retention periods described in our privacy policy.
+
+## What we do not retain
+
+<Info>
+  - We do not retain the prompts you send to the AI assistant.
+  - We do not retain the conversation context the assistant maintains.
+  - We do not retain the assistant's responses to you.
+  - We do not collect data outside the scope of the specific tool calls made by the assistant.
+  - We do not access the assistant's chat history, memory, or files.
+</Info>
+
+The AI assistant provider (for example, Anthropic for Claude) is a separate controller for the prompts you send to it and the responses it generates. Their handling of your data is governed by their own privacy policy.
+
+## Revocation
+
+You can revoke the connector at any time from your Coverbase account settings or from the assistant client's connector settings. Revocation invalidates the OAuth token immediately.
+
+## Write-action protection
+
+<Warning>
+  Every tool that creates, updates, or deletes data requires an explicit `confirm` parameter set to `true`. The assistant is expected to surface the proposed change in chat before execution. Calls without confirmation return a precondition error rather than executing silently.
+</Warning>
+
+## Audit logging
+
+Every tool call is logged with user identity, parameters, and outcome. Logs are available to admins in the Coverbase audit trail, alongside the audit trail for actions taken in the dashboard.
+
+## Compliance
+
+The Coverbase MCP server is part of our SOC 2 Type II audited platform and inherits the same controls as the core product.
+
+## Vulnerability reporting
+
+Report any security issue to [security@coverbase.com](mailto:security@coverbase.com). We acknowledge reports within one business day and follow responsible-disclosure timelines.
+
+<Card title="Full privacy policy" icon="file-shield" href="https://www.coverbase.com/privacy-policy">
+  See the MCP section of the Coverbase Privacy Policy for full details.
+</Card>

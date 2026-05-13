@@ -1,0 +1,115 @@
+---
+title: "Example prompts"
+description: "Realistic prompts that exercise the core MCP server workflows."
+icon: "comments"
+---
+
+Use these as inspiration, not a script. The patterns below cover the workflows most customers run on a daily and weekly basis.
+
+## Portfolio and subprocessor analysis
+
+<AccordionGroup>
+  <Accordion title="Which of our vendors use AWS as a subprocessor?" defaultOpen icon="diagram-project">
+    > Which of our vendors use AWS as a subprocessor, and what is the current risk tier for each?
+
+    The assistant calls `search_soc2_nth_party_usage` with relevant aliases (AWS, Amazon Web Services, S3, EC2), gets back the list of dependent vendors, then calls `get_vendor_risk_summary` for each to surface tier and open findings count.
+  </Accordion>
+
+  <Accordion title="Blast-radius analysis during an incident" icon="explosion">
+    > A major Snowflake outage is happening. Show me every vendor in our portfolio that depends on Snowflake, sorted by criticality.
+
+    Same pattern, scoped to Snowflake. The assistant can also pull recent radar alerts for the affected vendors to see if any have already filed incident notifications.
+  </Accordion>
+
+  <Accordion title="Top-N highest-risk vendors with key findings" icon="chart-simple">
+    > Build me a one-page report of our top 10 highest-risk vendors with their key open findings.
+
+    The assistant calls `get_portfolio_risk_report` with `top_n=10`, then drills into each vendor with `get_vendor_detail` to extract the relevant findings.
+  </Accordion>
+</AccordionGroup>
+
+## Vendor profiles and assessments
+
+<AccordionGroup>
+  <Accordion title="Full vendor risk summary" icon="building">
+    > Give me a full risk summary for Acme Corp, including any open findings and recent radar alerts.
+
+    The assistant calls `search_vendors` to resolve the name to an ID, then `get_vendor_detail` to pull the consolidated profile in a single call.
+  </Accordion>
+
+  <Accordion title="Assessment review prep" icon="clipboard-check">
+    > Summarize assessment cbassmt\_abc123 and list the controls that need human review.
+
+    The assistant calls `get_assessment_detail` and surfaces the control evaluations that are flagged or have open findings, so the reviewer can focus on what matters.
+  </Accordion>
+
+  <Accordion title="Assessment backlog visibility" icon="list-check">
+    > What does the assessment backlog look like? How many are in progress, and who owns each?
+
+    The assistant calls `search_assessments` with `status=in_progress` and groups by assignee, or pulls `get_assessment_metrics` for the rolling window view.
+  </Accordion>
+</AccordionGroup>
+
+## Program health and continuous monitoring
+
+<AccordionGroup>
+  <Accordion title="Weekly program standup" defaultOpen icon="calendar-week">
+    > What is happening across our TPRM program this week? Show me recent assessments, open findings, and radar alerts.
+
+    The assistant calls `get_org_activity_digest` with `days=7` and reasonable limits. This is the single most useful prompt for a daily standup or weekly review.
+  </Accordion>
+
+  <Accordion title="Overdue findings by owner" icon="user-clock">
+    > Show me every vendor with overdue findings and their owners so I can chase them.
+
+    The assistant calls `get_findings_detail` org-wide with a status filter for open and a date filter for past-due, then groups by assignee.
+  </Accordion>
+
+  <Accordion title="Tier-1 radar check" icon="satellite-dish">
+    > Are there any new radar alerts on our tier-1 vendors in the past 24 hours?
+
+    The assistant calls `list_radar_alerts` filtered by vendor ID for the tier-1 list, or asks `get_org_activity_digest` for a 1-day window.
+  </Accordion>
+</AccordionGroup>
+
+## Contracts and obligations
+
+<AccordionGroup>
+  <Accordion title="Expiring contracts with unresolved findings" icon="file-contract">
+    > What contracts expire in the next 90 days, and which of those vendors have unresolved findings?
+
+    The assistant calls `search_contracts` with the date filter, then for each result calls `search_findings` scoped to that vendor.
+  </Accordion>
+
+  <Accordion title="Unassigned upcoming obligations" icon="circle-question">
+    > Are there any obligations coming due next month that have not been assigned to anyone?
+
+    The assistant calls `search_obligations` filtered by due date and missing assignee.
+  </Accordion>
+</AccordionGroup>
+
+## Write actions, with confirmation
+
+<Warning>
+  Every write tool requires the assistant to propose the action in chat and wait for your explicit approval. The examples below show the pattern.
+</Warning>
+
+<AccordionGroup>
+  <Accordion title="Add a note to a vendor" icon="note-sticky">
+    > Add a note to vendor Acme Corp: following up with their security team next week.
+
+    The assistant proposes: _"I am about to add a note to Acme Corp with the text 'following up with their security team next week.' Confirm?"_ After your approval, it calls `add_note` with `confirm=true`.
+  </Accordion>
+
+  <Accordion title="Create a finding on an assessment" icon="flag">
+    > Create a finding on assessment cbassmt\_abc123 titled "Missing encryption at rest evidence" and assign it to me.
+
+    The assistant proposes the finding (title, body, assessment ID, assignee), waits for confirmation, then calls `create_finding_tool`.
+  </Accordion>
+
+  <Accordion title="Update a vendor's risk tier" icon="arrow-up-right-dots">
+    > Update the risk tier of vendor Globex to Tier 1.
+
+    The assistant proposes the change to the vendor status, confirms, then calls `update_vendor_tool` with the relevant status ID.
+  </Accordion>
+</AccordionGroup>

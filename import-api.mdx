@@ -3,3 +3,94 @@ title: "Import API Concepts"
 description: "Push vendor, assessment, and service data into Coverbase from upstream systems of record."
 icon: "arrow-down-to-bracket"
 ---
+
+The Import API is the ingestion counterpart to the Export API. It allows secure, programmatic delivery of vendor, assessment, and service data into Coverbase from upstream systems of record.
+
+## What you can do
+
+<CardGroup cols={2}>
+  <Card title="Sync vendor inventory" icon="arrows-rotate">
+    Mirror your ERP, procurement system, or internal CMDB into Coverbase so procurement and risk share one source of truth.
+  </Card>
+
+  <Card title="Migrate from legacy GRC" icon="boxes-packing">
+    Bulk-load historical assessment data when cutting over from a legacy TPRM platform or spreadsheets.
+  </Card>
+
+  <Card title="Push service catalogs" icon="diagram-project">
+    Keep third-party service mappings current by piping data from engineering or architecture catalogs.
+  </Card>
+
+  <Card title="Bridge intake and CLM" icon="link">
+    Connect intake forms, ticketing, and contract lifecycle tools into the Coverbase vendor graph without manual re-entry.
+  </Card>
+</CardGroup>
+
+The API uses a RESTful design with a predictable URL structure and communicates entirely in JSON. All interactions are authenticated with an API key and encrypted in transit.
+
+## Setup
+
+The Import API requires you to first create an Import Report in the [dashboard](https://dashboard.coverbase.app/api). The report defines the target base object, the field mapping between your incoming payload and Coverbase fields, and the POST endpoint used to submit records.
+
+<Frame>
+  ![Creating a new import report in the Coverbase dashboard](/images/import-api-setup.png)
+</Frame>
+
+To configure the report, you first pick a **base object** that records will be imported into. When you POST to the endpoint, the request body contains a JSON array of records under the `data` key, each conforming to the mapped field schema for the selected base object.
+
+## Base objects
+
+<AccordionGroup>
+  <Accordion title="Vendor" defaultOpen icon="building">
+    Imports create or update vendor records in the Coverbase vendor inventory. The payload supports core metadata (name, website, HQ location, description), lifecycle status, risk scoring fields (raw IRQ score, raw residual risk score), engagement context (business unit, enterprise flag, vendor category, dependent services), and scheduling fields (next assessment date, audit start, SOC 2 audit end, contract length).
+
+    Each record must include `name` and `external_id`. The `external_id` is the stable identifier from your source system and is used for upsert semantics: records with a matching `external_id` are updated in place rather than duplicated.
+
+    **Example:** Syncing the full list of active suppliers from your ERP nightly so that Coverbase's vendor inventory reflects procurement's source of truth without manual entry.
+  </Accordion>
+
+  <Accordion title="Assessment" icon="clipboard-list">
+    Imports create or update assessment records linked to a vendor. The payload supports assessment metadata (type, status, scope, assessor, assessment period), linkage to the target vendor, and historical scoring fields where available.
+
+    Imported assessments are treated as records of prior analysis rather than assessments Coverbase itself performed. They appear in the vendor's assessment history and can be referenced by Copilot during delta detection on subsequent reassessments.
+
+    **Example:** Migrating three years of completed SIG Lite and CAIQ assessments from a legacy GRC platform so that vendor history is preserved when customers cut over to Coverbase.
+  </Accordion>
+
+  <Accordion title="Service" icon="server">
+    Imports create or update service records representing the specific third-party services a vendor provides. A single vendor can have multiple services, each with its own risk profile, data classification, and dependent internal systems.
+
+    The payload supports service metadata (name, description, data types processed, hosting model, criticality tier), the parent vendor reference, and dependency relationships to internal systems or downstream vendors.
+
+    **Example:** Loading a service catalog that distinguishes "Acme Corp, Payments API" from "Acme Corp, Cloud Hosting" so that assessments and monitoring events are scoped to the specific service consumed rather than the vendor as a whole.
+  </Accordion>
+</AccordionGroup>
+
+## Field mapping
+
+Each Import Report defines a mapping from incoming field names in your payload to the corresponding Coverbase fields on the base object. The dashboard exposes all available target fields for the selected base object and surfaces which ones are required.
+
+<Info>
+  Records submitted with unmapped fields are ignored; records missing a required field are rejected and returned in the response with an error reason.
+</Info>
+
+Mappings are versioned with the report, so changes to upstream schemas can be handled by updating the mapping without changing the endpoint URL or client integration code.
+
+## Request format
+
+All requests are POST to the report endpoint with a JSON body of the shape:
+
+```json
+{
+  "data": [
+    { "Name": "Acme Corporation", "External Id": "vendor-123" },
+    { "Name": "Beta Services", "External Id": "vendor-456" }
+  ]
+}
+```
+
+Batch size, partial-success semantics, and idempotency behavior are documented per base object in the endpoint detail view of the dashboard.
+
+<Card title="Import API Reference" icon="code" href="/import-api/reference">
+  Full endpoint signature, request body schema, response fields, and error codes.
+</Card>

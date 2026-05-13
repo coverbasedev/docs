@@ -1,0 +1,107 @@
+---
+title: "Troubleshooting"
+description: "Common issues when connecting and using the Coverbase MCP server."
+icon: "wrench"
+---
+
+## Connection issues
+
+<AccordionGroup>
+  <Accordion title="The connector authorizes but no tools appear" defaultOpen icon="circle-question">
+    Confirm your Coverbase user has API access enabled. Some plans gate this; your admin can confirm in account settings.
+
+    Also confirm the client supports OAuth 2.0 for MCP, not just API-key configurations. Older MCP clients sometimes only support stdio transport, which won't work with the Coverbase server.
+  </Accordion>
+
+  <Accordion title="OAuth flow fails or times out" icon="clock">
+    Check that your browser allows pop-ups from the AI client's domain and that you're signed into the correct Coverbase account in the browser session handling the OAuth callback.
+
+    If you have multiple Coverbase accounts, sign out of all of them in the browser first, then re-initiate the connection so you're prompted to sign in fresh.
+  </Accordion>
+</AccordionGroup>
+
+## Permission and visibility
+
+<AccordionGroup>
+  <Accordion title="Tools return 'permission denied' or 'not found' for records I can see" icon="ban">
+    The connector enforces your role and permissions. If a record is restricted (for example, an assessment in a restricted folder), it will be invisible to the connector even if you can find it elsewhere in the UI.
+
+    Ask your Coverbase admin to confirm the scope of your role.
+  </Accordion>
+
+  <Accordion title="Search returns no results for a vendor I know exists" icon="magnifying-glass">
+    Search uses partial-name matching but is case-insensitive. Try a shorter query (just the first distinctive word of the vendor name).
+
+    If the vendor was recently created or renamed, it may take a few minutes to index. Try again after a short wait.
+  </Accordion>
+</AccordionGroup>
+
+## Write actions
+
+<AccordionGroup>
+  <Accordion title="Write actions are not executing" icon="circle-exclamation">
+    Every write tool requires `confirm=true`. If the assistant is calling the tool without confirmation, the call returns a precondition error rather than executing silently.
+
+    Re-issue the request and approve when the assistant proposes the change. If the assistant isn't surfacing a confirmation step, that's a client behavior issue; report it to your client vendor.
+  </Accordion>
+
+  <Accordion title="Confirmed write succeeded but the change isn't visible in the UI" icon="eye-slash">
+    Refresh the affected record in the Coverbase UI. Some object types cache briefly.
+
+    Check the audit trail for the record (Vendor → Activity, Assessment → Activity, etc.) to confirm the write was applied. If the audit trail shows the action but the UI doesn't reflect it, report it to support.
+  </Accordion>
+</AccordionGroup>
+
+## Rate limits and performance
+
+<AccordionGroup>
+  <Accordion title="Rate limit errors" icon="gauge-high">
+    The MCP server applies the same per-org rate limits as the underlying Coverbase API. If you hit a limit, you'll see an explicit rate-limit error with a `retry_after` hint.
+
+    For production use cases that require higher throughput, contact your account manager.
+  </Accordion>
+
+  <Accordion title="Tools are slow or timing out" icon="hourglass">
+    Some tools (notably `get_org_activity_digest` and `get_vendor_detail`) consolidate many internal calls into one to save tokens, which can be slower on accounts with very large data volumes. Try narrower scoping (specific vendor ID, shorter time window).
+  </Accordion>
+</AccordionGroup>
+
+## Other
+
+<AccordionGroup>
+  <Accordion title="The favicon or logo is not rendering correctly in the connector card" icon="image">
+    Try removing and re-adding the connector. If the issue persists, contact [support@coverbase.com](mailto:support@coverbase.com) with a screenshot.
+  </Accordion>
+
+  <Accordion title="My client is not in the supported list" icon="puzzle-piece">
+    If it speaks MCP with OAuth 2.0 and Streamable HTTP transport, it should work. Let us know what you're using and we'll add it to the test matrix: [support@coverbase.com](mailto:support@coverbase.com).
+  </Accordion>
+</AccordionGroup>
+
+## Status and updates
+
+<CardGroup cols={2}>
+  <Card title="Status and uptime" icon="signal" href="https://status.coverbase.com">
+    status.coverbase.com
+  </Card>
+
+  <Card title="Changelog" icon="list-timeline" href="https://docs.coverbase.com/mcp/changelog">
+    Tool additions, parameter changes, and deprecations with at least 30 days notice for breaking changes.
+  </Card>
+</CardGroup>
+
+## Contact
+
+<CardGroup cols={3}>
+  <Card title="Product support" icon="envelope" href="mailto:support@coverbase.com">
+    [support@coverbase.ai](mailto:support@coverbase.ai)
+  </Card>
+
+  <Card title="Security issues" icon="shield-halved" href="mailto:security@coverbase.com">
+    [security@coverbase.ai](mailto:security@coverbase.ai)
+  </Card>
+
+  <Card title="Privacy questions" icon="user-shield" href="mailto:privacy@coverbase.com">
+    [privacy@coverbase.ai](mailto:privacy@coverbase.ai)
+  </Card>
+</CardGroup>

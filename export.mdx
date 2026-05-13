@@ -3,3 +3,143 @@ title: "Export API Reference"
 description: "Endpoint reference for retrieving report data via the Coverbase Export API."
 icon: "code"
 ---
+
+## Export Report
+
+<ParamField path="method" type="GET">
+  `GET /v1/export/{report_name}`
+</ParamField>
+
+Retrieves the data for the specified report.
+
+### Path parameters
+
+<ParamField path="report_name" type="string" required>
+  The unique identifier of the report.
+</ParamField>
+
+### Query parameters
+
+<ParamField query="limit" type="integer">
+  The maximum number of JSON objects to return in the `data` array.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  The number of records to skip before starting to return data.
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/export/vendor-custom-report?limit=10&offset=20" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "Content-Type: application/json"
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("COVERBASE_API_KEY", "<api-key>")
+BASE_URL = "https://api.coverbase.app"
+
+report_name = "vendor-custom-report"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json",
+}
+
+resp = requests.get(
+    f"{BASE_URL}/v1/export/{report_name}?limit=10&offset=20",
+    headers=headers,
+    timeout=30,
+)
+resp.raise_for_status()
+report = resp.json()
+
+print(f"Report: {report['report_name']} ({report['base_object']})")
+print(f"Returned {len(report['data'])} of {report['total_count']} records")
+```
+
+</CodeGroup>
+
+### Example response
+
+```json
+{
+  "id": "cbexprt_a13361e835664c26bb0551a860258f6d",
+  "slug": "vendor-custom-report",
+  "report_name": "Vendor Report",
+  "base_object": "vendor",
+  "mapping": {
+    "id": "Id",
+    "name": "Name",
+    "status": "Status",
+    "website": "Website",
+    "products": "Products",
+    "created_at": "Created At",
+    "description": "Description",
+    "hq_location": "Hq Location"
+  },
+  "data": [
+    {
+      "Id": "cbvndr_0de9333fece3493eb3987b1a1af28119",
+      "Name": "1Password",
+      "Status": "Active",
+      "Website": "1password.com",
+      "Products": [],
+      "Created At": 1731132522,
+      "Description": "1Password provides secure password management solutions for individuals and businesses.",
+      "Hq Location": "Toronto, Ontario, Canada"
+    }
+  ],
+  "limit": 10,
+  "offset": 20,
+  "total_count": 157
+}
+```
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  Unique Coverbase export report ID.
+</ResponseField>
+
+<ResponseField name="slug" type="string">
+  Unique string used in the API endpoint URL.
+</ResponseField>
+
+<ResponseField name="report_name" type="string">
+  Display name for the report.
+</ResponseField>
+
+<ResponseField name="base_object" type="string">
+  The object each record in `data` represents (for example, `vendor` or `assessment`).
+</ResponseField>
+
+<ResponseField name="mapping" type="object">
+  Mapping between Coverbase field names and the field names exported in the JSON objects.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of JSON objects. Each object represents one `base_object` and contains field names specified by the values in the `mapping` object.
+</ResponseField>
+
+<ResponseField name="limit" type="integer">
+  The maximum length of the `data` array.
+</ResponseField>
+
+<ResponseField name="offset" type="integer">
+  The number of records skipped before the system began returning records.
+</ResponseField>
+
+<ResponseField name="total_count" type="integer">
+  Total number of base objects in Coverbase.
+</ResponseField>
+
+<Note>
+  Need help? Email [support@coverbase.com](mailto:support@coverbase.com).
+</Note>

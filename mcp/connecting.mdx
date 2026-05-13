@@ -1,0 +1,76 @@
+---
+title: "Connecting clients"
+description: "Connect Claude, Cursor, Claude Code, and other MCP clients to the Coverbase MCP server."
+icon: "plug"
+---
+
+The exact connection flow depends on which client you're using. The general pattern is the same: point the client at the Coverbase MCP endpoint, complete the OAuth flow in your browser, and the tools become available in your session.
+
+## Server endpoint
+
+```text
+https://mcp.coverbase.app/mcp
+```
+
+## Claude (claude.ai or Claude Desktop)
+
+<Steps>
+  <Step title="Open Connectors">
+    In Claude, open **Settings**, then **Connectors**.
+  </Step>
+  <Step title="Add Coverbase">
+    Click **Add connector** and select Coverbase from the directory, or paste the server endpoint as a custom connector.
+  </Step>
+  <Step title="Authorize">
+    You'll be redirected to Coverbase to authorize the connection. Sign in, review the requested scopes, and approve.
+  </Step>
+  <Step title="Use the tools">
+    Return to Claude. The Coverbase tools are now available in your conversations.
+  </Step>
+</Steps>
+
+## Claude Code
+
+Add the Coverbase server to your project or user config:
+
+```bash
+claude mcp add coverbase https://mcp.coverbase.app/mcp
+```
+
+Then run `claude` in your project. When you first invoke a Coverbase tool, Claude Code will prompt you to authorize via your browser.
+
+## Cursor
+
+In Cursor's settings, open the MCP section and add a new server with the endpoint `https://mcp.coverbase.app/mcp`. Cursor handles the OAuth flow on first use.
+
+## Cline (VS Code)
+
+Open the Cline settings, then the **MCP Servers** panel. Add a new remote server with the Coverbase endpoint. Authorize when prompted.
+
+## Goose
+
+```bash
+goose configure
+```
+
+Choose to add a remote MCP server, then enter `https://mcp.coverbase.app/mcp`. Authorize on first invocation.
+
+## MCP Inspector
+
+Useful for debugging or one-off exploration without a full IDE setup:
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+Enter the Coverbase endpoint, authenticate, and exercise tools directly.
+
+## Other clients
+
+<Info>
+  Any client that supports MCP with OAuth 2.0 and Streamable HTTP transport should work. The OAuth discovery document is published at `https://mcp.coverbase.app/.well-known/oauth-authorization-server`. Point your client at the server URL and the rest is standard.
+</Info>
+
+<Card title="Troubleshooting" icon="wrench" href="/mcp/troubleshooting">
+  No tools appearing, permission denied errors, write actions not executing, and other common issues.
+</Card>
