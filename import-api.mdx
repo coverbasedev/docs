@@ -4,6 +4,10 @@ description: "Push vendor, assessment, and service data into Coverbase from upst
 icon: "arrow-down-to-bracket"
 ---
 
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
 The Import API is the ingestion counterpart to the Export API. It allows secure, programmatic delivery of vendor, assessment, and service data into Coverbase from upstream systems of record.
 
 ## What you can do
@@ -36,31 +40,29 @@ To configure the report, you first pick a **base object** that records will be i
 
 ## Base objects
 
-<AccordionGroup>
-  <Accordion title="Vendor" defaultOpen icon="building">
-    Imports create or update vendor records in the Coverbase vendor inventory. The payload supports core metadata (name, website, HQ location, description), lifecycle status, risk scoring fields (raw IRQ score, raw residual risk score), engagement context (business unit, enterprise flag, vendor category, dependent services), and scheduling fields (next assessment date, audit start, SOC 2 audit end, contract length).
+### Vendor
 
-    Each record must include `name` and `external_id`. The `external_id` is the stable identifier from your source system and is used for upsert semantics: records with a matching `external_id` are updated in place rather than duplicated.
+Imports create or update vendor records in the Coverbase vendor inventory. The payload supports core metadata (name, website, HQ location, description), lifecycle status, risk scoring fields (raw IRQ score, raw residual risk score), engagement context (business unit, enterprise flag, vendor category, dependent services), and scheduling fields (next assessment date, audit start, SOC 2 audit end, contract length).
 
-    **Example:** Syncing the full list of active suppliers from your ERP nightly so that Coverbase's vendor inventory reflects procurement's source of truth without manual entry.
-  </Accordion>
+Each record must include `name` and `external_id`. The `external_id` is the stable identifier from your source system and is used for upsert semantics: records with a matching `external_id` are updated in place rather than duplicated.
 
-  <Accordion title="Assessment" icon="clipboard-list">
-    Imports create or update assessment records linked to a vendor. The payload supports assessment metadata (type, status, scope, assessor, assessment period), linkage to the target vendor, and historical scoring fields where available.
+**Example:** Syncing the full list of active suppliers from your ERP nightly so that Coverbase's vendor inventory reflects procurement's source of truth without manual entry.
 
-    Imported assessments are treated as records of prior analysis rather than assessments Coverbase itself performed. They appear in the vendor's assessment history and can be referenced by Copilot during delta detection on subsequent reassessments.
+### Assessment
 
-    **Example:** Migrating three years of completed SIG Lite and CAIQ assessments from a legacy GRC platform so that vendor history is preserved when customers cut over to Coverbase.
-  </Accordion>
+Imports create or update assessment records linked to a vendor. The payload supports assessment metadata (type, status, scope, assessor, assessment period), linkage to the target vendor, and historical scoring fields where available.
 
-  <Accordion title="Service" icon="server">
-    Imports create or update service records representing the specific third-party services a vendor provides. A single vendor can have multiple services, each with its own risk profile, data classification, and dependent internal systems.
+Imported assessments are treated as records of prior analysis rather than assessments Coverbase itself performed. They appear in the vendor's assessment history and can be referenced by Copilot during delta detection on subsequent reassessments.
 
-    The payload supports service metadata (name, description, data types processed, hosting model, criticality tier), the parent vendor reference, and dependency relationships to internal systems or downstream vendors.
+**Example:** Migrating three years of completed SIG Lite and CAIQ assessments from a legacy GRC platform so that vendor history is preserved when customers cut over to Coverbase.
 
-    **Example:** Loading a service catalog that distinguishes "Acme Corp, Payments API" from "Acme Corp, Cloud Hosting" so that assessments and monitoring events are scoped to the specific service consumed rather than the vendor as a whole.
-  </Accordion>
-</AccordionGroup>
+### Service
+
+Imports create or update service records representing the specific third-party services a vendor provides. A single vendor can have multiple services, each with its own risk profile, data classification, and dependent internal systems.
+
+The payload supports service metadata (name, description, data types processed, hosting model, criticality tier), the parent vendor reference, and dependency relationships to internal systems or downstream vendors.
+
+**Example:** Loading a service catalog that distinguishes "Acme Corp, Payments API" from "Acme Corp, Cloud Hosting" so that assessments and monitoring events are scoped to the specific service consumed rather than the vendor as a whole.
 
 ## Field mapping
 
