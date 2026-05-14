@@ -14,13 +14,17 @@ For workflows that are bound to object events (`vendor.created`, `assessment.com
   `POST /v1/workflows/{workflow_name}/run`
 </ParamField>
 
-Starts a new run of a named workflow with the provided input parameters.
+Starts a new run of a named workflow with the provided input parameters. The `workflow_name` path parameter resolves to a `CbWorkflowDefinition` by its `name` field.
 
 ### Path parameters
 
 <ParamField path="workflow_name" type="string" required>
-  The unique name of the workflow as configured in the dashboard.
+  The unique name of the workflow as configured in the dashboard. This resolves to a `CbWorkflowDefinition` by name.
 </ParamField>
+
+<Note>
+  If your workflow names contain special characters that require URL-encoding, consider using `POST /v1/workflows/runs` with `workflow_definition_id` in the request body as an alternative.
+</Note>
 
 ### Request body
 
@@ -94,6 +98,7 @@ print(resp.json())
 ```json
 {
   "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+  "workflow_definition_id": "cbwfdef_1a2b3c4d5e6f7a8b",
   "workflow_name": "quarterly-privacy-sweep",
   "status": "running",
   "started_at": 1746576000,
@@ -109,6 +114,10 @@ print(resp.json())
 
 <ResponseField name="workflow_run_id" type="string">
   Unique identifier for this run. Use it to poll status or correlate downstream webhooks.
+</ResponseField>
+
+<ResponseField name="workflow_definition_id" type="string">
+  The ID of the workflow definition that was run.
 </ResponseField>
 
 <ResponseField name="workflow_name" type="string">
@@ -147,6 +156,7 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwfr_a8f2c19e3d4b5e6f7
 ```json
 {
   "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+  "workflow_definition_id": "cbwfdef_1a2b3c4d5e6f7a8b",
   "workflow_name": "quarterly-privacy-sweep",
   "status": "completed",
   "started_at": 1746576000,
@@ -164,6 +174,32 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwfr_a8f2c19e3d4b5e6f7
   }
 }
 ```
+
+### Response fields
+
+<ResponseField name="workflow_definition_id" type="string">
+  The definition ID that was run.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the run: `pending`, `running`, `paused`, `completed`, `failed`, or `cancelled`.
+</ResponseField>
+
+<ResponseField name="started_at" type="integer">
+  Unix timestamp when the run started.
+</ResponseField>
+
+<ResponseField name="completed_at" type="integer or null">
+  Unix timestamp when the run finished, if applicable.
+</ResponseField>
+
+<ResponseField name="checkpoints_reached" type="array">
+  Array of checkpoint name strings reached during execution. Derived from the `CbWorkflowRunStep` records for this run.
+</ResponseField>
+
+<ResponseField name="output" type="object or null">
+  Workflow output data, if the workflow produces output. Structure varies by workflow definition.
+</ResponseField>
 
 ## Subscribe to run progress
 

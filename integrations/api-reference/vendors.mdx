@@ -37,16 +37,108 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
   "external_id": "ariba-req-7821",
   "name": "Acme Corporation",
   "website": "https://acmecorp.com",
-  "status": "active",
-  "tier": "2",
-  "business_unit": "Engineering",
+  "description": "Enterprise customer support tooling provider",
   "hq_location": "San Francisco, CA",
-  "tags": ["processes_pii", "saas"],
-  "risk_owner_id": "cbusr_a1b2c3d4...",
+  "status": {
+    "id": "cbsts_a1b2c3d4e5f6",
+    "label": "Active",
+    "group": "started"
+  },
+  "tags": [
+    { "id": "cbtag_f1e2d3c4b5a6", "name": "processes_pii" },
+    { "id": "cbtag_a9b8c7d6e5f4", "name": "saas" }
+  ],
+  "risk_analyst_ids": ["cbusr_a1b2c3d4..."],
+  "relationship_owner_ids": ["cbusr_e5f6a7b8..."],
+  "inherent_risk_level_id": "cbscl_7a8b9c0d1e2f",
+  "residual_risk_level_id": "cbscl_3f4e5d6c7b8a",
+  "raw_irq_score": 0.72,
+  "engagement_type": "saas_platform",
+  "use_case": "Customer support ticketing",
+  "next_assessment_date": 1754352000,
+  "last_assessment_outcome": "approved_with_findings",
   "created_at": 1732292930,
   "updated_at": 1746575800
 }
 ```
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The Coverbase vendor ID.
+</ResponseField>
+
+<ResponseField name="external_id" type="string or null">
+  External system identifier (e.g., an Ariba request ID) if one was provided during import.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Vendor name.
+</ResponseField>
+
+<ResponseField name="website" type="string or null">
+  Vendor website URL.
+</ResponseField>
+
+<ResponseField name="description" type="string or null">
+  Vendor description.
+</ResponseField>
+
+<ResponseField name="hq_location" type="string or null">
+  Headquarters location.
+</ResponseField>
+
+<ResponseField name="status" type="object">
+  The vendor's current status as a `CbStatus` object with `id`, `label`, and `group` fields. The `group` is one of `unstarted`, `started`, `completed`, or `canceled`.
+</ResponseField>
+
+<ResponseField name="tags" type="array">
+  Array of tag objects, each with `id` and `name` fields.
+</ResponseField>
+
+<ResponseField name="risk_analyst_ids" type="array">
+  User IDs of assigned risk analysts.
+</ResponseField>
+
+<ResponseField name="relationship_owner_ids" type="array">
+  User IDs of relationship owners.
+</ResponseField>
+
+<ResponseField name="inherent_risk_level_id" type="string or null">
+  ID of the scale level representing inherent risk.
+</ResponseField>
+
+<ResponseField name="residual_risk_level_id" type="string or null">
+  ID of the scale level representing residual risk.
+</ResponseField>
+
+<ResponseField name="raw_irq_score" type="float or null">
+  Raw IRQ (Inherent Risk Questionnaire) score.
+</ResponseField>
+
+<ResponseField name="engagement_type" type="string or null">
+  Type of engagement with this vendor.
+</ResponseField>
+
+<ResponseField name="use_case" type="string or null">
+  How the vendor is used within the organization.
+</ResponseField>
+
+<ResponseField name="next_assessment_date" type="integer or null">
+  Unix timestamp of the next scheduled assessment.
+</ResponseField>
+
+<ResponseField name="last_assessment_outcome" type="string or null">
+  Outcome of the most recent assessment.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer">
+  Unix timestamp when the vendor record was created.
+</ResponseField>
+
+<ResponseField name="updated_at" type="integer">
+  Unix timestamp of the last update.
+</ResponseField>
 
 ## Update a vendor
 
@@ -58,32 +150,64 @@ Updates one or more fields on an existing vendor. Most commonly used to transiti
 
 ### Updatable fields
 
-<ParamField body="status" type="string">
-  Lifecycle status. Common values: `intake`, `under_review`, `active`, `suspended`, `offboarding`, `offboarded`.
+<ParamField body="status_id" type="string">
+  ID of a `CbStatus` record to transition to. Must be a valid, non-archived vendor status for the org.
 </ParamField>
 
-<ParamField body="tier" type="string">
-  Risk tier. Typically `1` through `4`.
+<ParamField body="name" type="string">
+  Vendor name.
 </ParamField>
 
-<ParamField body="risk_owner_id" type="string">
-  Coverbase user ID of the assigned risk owner.
+<ParamField body="website" type="string or null">
+  Vendor website URL. Send an empty string to clear.
 </ParamField>
 
-<ParamField body="business_unit" type="string">
-  Business unit owning the vendor relationship.
+<ParamField body="description" type="string or null">
+  Vendor description.
 </ParamField>
 
-<ParamField body="tags" type="array">
-  Tag strings to attach. Replaces the existing tag set.
+<ParamField body="hq_location" type="string or null">
+  Headquarters location.
 </ParamField>
 
-<ParamField body="offboarding_reason" type="string">
-  When `status` is `offboarding` or `offboarded`, the reason for termination (`contract_not_renewed`, `compliance_failure`, `vendor_acquired`, `consolidation`, etc.).
+<ParamField body="risk_analyst_ids" type="array">
+  Replace the entire set of risk analyst user IDs.
 </ParamField>
 
-<ParamField body="effective_date" type="string">
-  ISO 8601 date. When `status` is `offboarding`, the date the offboarding takes effect.
+<ParamField body="relationship_owner_ids" type="array">
+  Replace the entire set of relationship owner user IDs.
+</ParamField>
+
+<ParamField body="tag_ids" type="array">
+  Replace the entire tag set using `CbTag` IDs.
+</ParamField>
+
+<ParamField body="inherent_risk_level_id" type="string or null">
+  Scale level ID for inherent risk.
+</ParamField>
+
+<ParamField body="residual_risk_level_id" type="string or null">
+  Scale level ID for residual risk.
+</ParamField>
+
+<ParamField body="raw_irq_score" type="float or null">
+  Raw IRQ score value.
+</ParamField>
+
+<ParamField body="next_assessment_date" type="integer or null">
+  Unix timestamp of the next scheduled assessment.
+</ParamField>
+
+<ParamField body="use_case" type="string or null">
+  How the vendor is used within the organization.
+</ParamField>
+
+<ParamField body="engagement_type" type="string or null">
+  Type of engagement with this vendor.
+</ParamField>
+
+<ParamField body="custom_field_data" type="array">
+  Array of custom field value objects for org-specific fields.
 </ParamField>
 
 ### Example request
@@ -95,9 +219,8 @@ curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c1
   -H "Authorization: Bearer <api-key>" \
   -H "Content-Type: application/json" \
   -d '{
-    "status": "offboarding",
-    "offboarding_reason": "contract_not_renewed",
-    "effective_date": "2026-09-30"
+    "status_id": "cbsts_offboarding_7f8e9d0c",
+    "use_case": "Legacy system — winding down"
   }'
 ```
 
@@ -115,9 +238,8 @@ headers = {
 
 vendor_id = "cbvndr_e448ba62882143f3ba0c140bb2e30162"
 payload = {
-    "status": "offboarding",
-    "offboarding_reason": "contract_not_renewed",
-    "effective_date": "2026-09-30",
+    "status_id": "cbsts_offboarding_7f8e9d0c",
+    "use_case": "Legacy system — winding down",
 }
 
 resp = requests.patch(
@@ -139,11 +261,12 @@ print(resp.json())
   "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
   "external_id": "ariba-req-7821",
   "name": "Acme Corporation",
-  "status": "offboarding",
-  "offboarding_reason": "contract_not_renewed",
-  "effective_date": "2026-09-30",
-  "tier": "2",
-  "tags": ["processes_pii", "saas"],
+  "status": {
+    "id": "cbsts_offboarding_7f8e9d0c",
+    "label": "Offboarding",
+    "group": "started"
+  },
+  "use_case": "Legacy system — winding down",
   "updated_at": 1746576400
 }
 ```
@@ -152,23 +275,20 @@ print(resp.json())
   This update fires both `vendor.updated` and `vendor.status_changed` webhooks. Any workflow bound to those events will run, for example the offboarding sequence described in [Workflow C: Vendor offboarding](/integrations/end-to-end-workflows#workflow-c-vendor-offboarding).
 </Info>
 
-## Lifecycle states
+## Vendor statuses
 
-The status field follows a defined lifecycle. Allowed transitions:
+Vendor statuses are org-customizable. Each status belongs to a group (`unstarted`, `started`, `completed`, `canceled`). Use the dashboard or a list statuses endpoint to see available statuses for your org.
 
-```
-intake ──▶ under_review ──▶ active ──▶ suspended ──▶ active
-                              │              │
-                              └──▶ offboarding ──▶ offboarded
-```
+Any valid, non-archived vendor status ID can be set via `status_id`. Status transitions are not enforced — you can move a vendor to any status that exists for your org.
 
-Attempting an unsupported transition (for example, moving directly from `intake` to `offboarded`) returns a `400 invalid_status_transition` error. Use intermediate states or use the Import API for bulk corrections.
+<Info>
+  Statuses are `CbStatus` records with `target_type=VENDOR`. Each org defines their own status labels, colors, and groups. If you need to discover available statuses programmatically, query the statuses list endpoint filtered by target type.
+</Info>
 
 ## Error responses
 
 | Status | Code | When |
 | ------ | ---- | ---- |
-| 400 | `invalid_status_transition` | The requested status change is not allowed from the current state. |
-| 400 | `missing_required_field` | A required dependent field (such as `offboarding_reason` when transitioning to `offboarding`) was omitted. |
+| 400 | `invalid_status_id` | The provided `status_id` doesn't exist, is archived, or isn't a vendor status for this org. |
+| 400 | `missing_required_field` | A required field was omitted. |
 | 404 | `vendor_not_found` | The provided `vendor_id` does not exist or is not accessible to the API key. |
-| 409 | `concurrent_update` | The vendor was updated by another request between read and write. Refresh and retry. |

@@ -1,6 +1,6 @@
 ---
 title: "Assessments API"
-description: "Programmatically start, retrieve, and manage assessments scoped to vendors or services."
+description: "Programmatically start, retrieve, and manage assessments for vendors and services."
 icon: "clipboard-check"
 ---
 
@@ -12,7 +12,7 @@ The Assessments API lets external systems start and manage assessments without g
   `POST /v1/assessments`
 </ParamField>
 
-Creates a new assessment scoped to a vendor or service, optionally invoking a named workflow to orchestrate downstream actions.
+Creates a new assessment for a vendor, optionally covering specific services and invoking a named workflow to orchestrate downstream actions.
 
 ### Request body
 
@@ -20,20 +20,24 @@ Creates a new assessment scoped to a vendor or service, optionally invoking a na
   The Coverbase vendor ID (`cbvndr_...`) the assessment runs against.
 </ParamField>
 
-<ParamField body="control_set_id" type="string" required>
-  The control set (`cbcset_...`) to evaluate the vendor against.
+<ParamField body="control_set_ids" type="array" required>
+  Array of control set IDs (`cbcset_...`) to evaluate the vendor against. Assessments can evaluate against one or more policy control sets.
 </ParamField>
 
-<ParamField body="type" type="string" required>
-  Assessment type. Common values: `initial`, `annual_reassessment`, `scheduled_reassessment`, `incident_response`, `termination`.
+<ParamField body="risk_type" type="string" required>
+  Assessment risk type. Values come from the `RiskType` enum and include security-oriented types. Verify available values for your org through the dashboard.
 </ParamField>
 
-<ParamField body="scope" type="string">
-  `vendor` (default) or `service`. Determines whether the assessment covers the entire vendor or a specific service.
+<ParamField body="name" type="string">
+  Assessment name. Required unless `assessment_name_format` is provided.
 </ParamField>
 
-<ParamField body="service_id" type="string">
-  Required when `scope` is `service`. The service (`cbsvc_...`) the assessment is scoped to.
+<ParamField body="assessment_name_format" type="string">
+  If provided (even as an empty string), auto-generates the assessment name using the built-in format. Use this OR `name`, not both.
+</ParamField>
+
+<ParamField body="service_ids" type="array">
+  Optional array of service IDs (`cbsvc_...`) the assessment covers. An assessment can cover multiple services.
 </ParamField>
 
 <ParamField body="trigger_workflow" type="string">
@@ -42,6 +46,18 @@ Creates a new assessment scoped to a vendor or service, optionally invoking a na
 
 <ParamField body="assignee_id" type="string">
   Optional user ID to assign the assessment to. Defaults to the vendor's risk owner.
+</ParamField>
+
+<ParamField body="supporting_document_ids" type="array">
+  Optional array of document IDs (`cbdoc_...`) to attach as evidence.
+</ParamField>
+
+<ParamField body="doc_collection_mode" type="string">
+  How evidence is collected. Values come from the `DocCollectionMode` enum.
+</ParamField>
+
+<ParamField body="products" type="array">
+  Optional array of product name strings associated with this assessment.
 </ParamField>
 
 ### Headers
@@ -65,10 +81,10 @@ curl -X POST "https://api.coverbase.app/v1/assessments" \
   -H "Content-Type: application/json" \
   -d '{
     "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-    "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
-    "type": "annual_reassessment",
-    "scope": "service",
-    "service_id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+    "control_set_ids": ["cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071"],
+    "risk_type": "security",
+    "name": "Acme Q2 2026 Reassessment",
+    "service_ids": ["cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab"],
     "trigger_workflow": "annual-reassessment-flow"
   }'
 ```
@@ -88,10 +104,10 @@ headers = {
 
 payload = {
     "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-    "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
-    "type": "annual_reassessment",
-    "scope": "service",
-    "service_id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+    "control_set_ids": ["cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071"],
+    "risk_type": "security",
+    "name": "Acme Q2 2026 Reassessment",
+    "service_ids": ["cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab"],
     "trigger_workflow": "annual-reassessment-flow",
 }
 
@@ -113,12 +129,14 @@ print(resp.json())
 {
   "id": "cbasmt_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
   "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-  "service_id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
-  "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
-  "type": "annual_reassessment",
-  "scope": "service",
+  "name": "Acme Q2 2026 Reassessment",
+  "service_ids": ["cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab"],
+  "control_set_ids": ["cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071"],
+  "risk_type": "security",
   "status": "started",
+  "assignee_id": "cbusr_a1b2c3d4...",
   "workflow_run_id": "cbwfr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+  "initiated_at": 1746576000,
   "created_at": 1746576000
 }
 ```
@@ -130,31 +148,39 @@ print(resp.json())
 </ResponseField>
 
 <ResponseField name="vendor_id" type="string">
-  The vendor the assessment is scoped to.
+  The vendor the assessment runs against.
 </ResponseField>
 
-<ResponseField name="service_id" type="string">
-  The service the assessment is scoped to, when `scope` is `service`.
+<ResponseField name="name" type="string">
+  The assessment name, either provided directly or auto-generated from `assessment_name_format`.
 </ResponseField>
 
-<ResponseField name="control_set_id" type="string">
-  The control set being evaluated.
+<ResponseField name="service_ids" type="array">
+  The services the assessment covers, if any were specified.
 </ResponseField>
 
-<ResponseField name="type" type="string">
-  The assessment type passed in the request.
+<ResponseField name="control_set_ids" type="array">
+  The control sets being evaluated.
 </ResponseField>
 
-<ResponseField name="scope" type="string">
-  `vendor` or `service`.
+<ResponseField name="risk_type" type="string">
+  The risk type passed in the request.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Current lifecycle state. Initial value is typically `started` or `pending_evidence`.
+  Current status. The assessment status system uses org-customizable labels (via `CbStatus`), so initial values vary by org configuration.
+</ResponseField>
+
+<ResponseField name="assignee_id" type="string or null">
+  The assigned user, if any.
 </ResponseField>
 
 <ResponseField name="workflow_run_id" type="string">
   The workflow run that this assessment triggered, when applicable. Use this to correlate downstream webhooks.
+</ResponseField>
+
+<ResponseField name="initiated_at" type="integer or null">
+  Unix timestamp when the assessment was initiated. May differ from `created_at` if the assessment is created in a pending state before initiation.
 </ResponseField>
 
 <ResponseField name="created_at" type="integer">
@@ -167,7 +193,7 @@ print(resp.json())
   `GET /v1/assessments/{assessment_id}`
 </ParamField>
 
-Fetches a single assessment by ID, including its current status, score, and findings count.
+Fetches a single assessment by ID, including its current status and score.
 
 ### Example request
 
@@ -182,24 +208,38 @@ curl -X GET "https://api.coverbase.app/v1/assessments/cbasmt_2d5e8f1a4b7c0d3e6f9
 {
   "id": "cbasmt_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
   "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-  "control_set_id": "cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
-  "type": "annual_reassessment",
-  "scope": "service",
+  "name": "Acme Q2 2026 Reassessment",
+  "control_set_ids": ["cbcset_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071"],
+  "risk_type": "security",
   "status": "completed",
-  "score": 0.82,
+  "score_percent": 0.82,
   "findings_count": 3,
-  "started_at": 1746576000,
-  "completed_at": 1746576100
+  "assignee_id": "cbusr_a1b2c3d4...",
+  "initiated_at": 1746576000,
+  "created_at": 1746576000
 }
 ```
+
+### Response fields
+
+<ResponseField name="score_percent" type="float">
+  Score as a decimal between 0 and 1 representing the assessment outcome.
+</ResponseField>
+
+<ResponseField name="findings_count" type="integer">
+  Derived count of evaluations flagged as findings within this assessment. This is a computed value, not a stored field.
+</ResponseField>
+
+<ResponseField name="initiated_at" type="integer or null">
+  Unix timestamp when the assessment was initiated.
+</ResponseField>
 
 ## Error responses
 
 | Status | Code | When |
 | ------ | ---- | ---- |
-| 400 | `missing_required_field` | One of `vendor_id`, `control_set_id`, or `type` was omitted. |
-| 400 | `invalid_scope_combination` | `scope` is `service` but `service_id` is missing, or `service_id` does not belong to `vendor_id`. |
+| 400 | `missing_required_field` | One of `vendor_id`, `control_set_ids`, or `risk_type` was omitted. |
+| 400 | `invalid_control_set_ids` | One or more IDs in `control_set_ids` do not exist or are not accessible to the API key. |
 | 404 | `vendor_not_found` | The provided `vendor_id` does not exist or is not accessible to the API key. |
-| 404 | `control_set_not_found` | The provided `control_set_id` does not exist. |
 | 404 | `workflow_not_found` | The provided `trigger_workflow` name is not configured for this org. |
 | 409 | `idempotency_conflict` | An assessment already exists for this idempotency key. The original response is returned in the body. |
