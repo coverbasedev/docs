@@ -1,6 +1,6 @@
 ---
 title: "Vendors API"
-description: "Retrieve and update vendor records and their lifecycle state."
+description: "Retrieve and update individual vendor records."
 icon: "building"
 ---
 
@@ -8,9 +8,9 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The Vendors API lets external systems read and update individual vendor records. To create or bulk-update vendors, use the [Import API](/import-api) instead.
+The Vendors API lets external systems read and update individual vendor records. The public API does **not** create vendors or services — vendor creation happens through the dashboard or the [Import API](/import-api).
 
-The most common use of this API is lifecycle transitions: signaling that a vendor is offboarding, suspending a vendor pending review, or unblocking a procurement record once an assessment completes.
+All endpoints are org-scoped to the API key making the request. See [API conventions](/conventions) for authentication, ID formats, timestamps, and the error envelope.
 
 ## Retrieve a vendor
 
@@ -18,7 +18,7 @@ The most common use of this API is lifecycle transitions: signaling that a vendo
   `GET /v1/vendors/{vendor_id}`
 </ParamField>
 
-Returns the full profile of a single vendor.
+Returns a single vendor.
 
 ### Path parameters
 
@@ -30,7 +30,7 @@ Returns the full profile of a single vendor.
 
 ```bash cURL
 curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
-  -H "Authorization: Bearer <api-key>"
+  -H "Authorization: Bearer ak_live_xxx"
 ```
 
 ### Example response
@@ -43,24 +43,15 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
   "website": "https://acmecorp.com",
   "description": "Enterprise customer support tooling provider",
   "hq_location": "San Francisco, CA",
-  "status": {
-    "id": "cbsts_a1b2c3d4e5f6",
-    "label": "Active",
-    "group": "started"
-  },
-  "tags": [
-    { "id": "cbtag_f1e2d3c4b5a6", "name": "processes_pii" },
-    { "id": "cbtag_a9b8c7d6e5f4", "name": "saas" }
-  ],
-  "risk_analyst_ids": ["cbusr_a1b2c3d4..."],
-  "relationship_owner_ids": ["cbusr_e5f6a7b8..."],
-  "inherent_risk_level_id": "cbscl_7a8b9c0d1e2f",
-  "residual_risk_level_id": "cbscl_3f4e5d6c7b8a",
-  "raw_irq_score": 0.72,
+  "status": "Active",
+  "status_id": "cbst_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "tags": ["processes_pii", "saas"],
+  "risk_analyst_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
+  "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
+  "inherent_risk_level_id": "cbsclvl_7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+  "residual_risk_level_id": "cbsclvl_3f4e5d6c7b8a9b0c1d2e3f4a5b6c7d8e",
   "engagement_type": "saas_platform",
   "use_case": "Customer support ticketing",
-  "next_assessment_date": 1754352000,
-  "last_assessment_outcome": "approved_with_findings",
   "created_at": 1732292930,
   "updated_at": 1746575800
 }
@@ -69,80 +60,78 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
 ### Response fields
 
 <ResponseField name="id" type="string">
-  The Coverbase vendor ID.
+  The Coverbase vendor ID (`cbvndr_...`).
 </ResponseField>
 
-<ResponseField name="external_id" type="string or null">
-  External system identifier (e.g., an Ariba request ID) if one was provided during import.
+<ResponseField name="external_id" type="string | null">
+  External system identifier, if one was set when the vendor was imported.
 </ResponseField>
 
 <ResponseField name="name" type="string">
   Vendor name.
 </ResponseField>
 
-<ResponseField name="website" type="string or null">
+<ResponseField name="website" type="string | null">
   Vendor website URL.
 </ResponseField>
 
-<ResponseField name="description" type="string or null">
+<ResponseField name="description" type="string | null">
   Vendor description.
 </ResponseField>
 
-<ResponseField name="hq_location" type="string or null">
+<ResponseField name="hq_location" type="string | null">
   Headquarters location.
 </ResponseField>
 
-<ResponseField name="status" type="object">
-  The vendor's current status as a `CbStatus` object with `id`, `label`, and `group` fields. The `group` is one of `unstarted`, `started`, `completed`, or `canceled`.
+<ResponseField name="status" type="string | null">
+  The vendor's current status as a plain label string (e.g. `"Active"`). Statuses are org-customizable. `null` if the vendor has no status set.
 </ResponseField>
 
-<ResponseField name="tags" type="array">
-  Array of tag objects, each with `id` and `name` fields.
+<ResponseField name="status_id" type="string | null">
+  The ID (`cbst_...`) of the vendor's current status record.
 </ResponseField>
 
-<ResponseField name="risk_analyst_ids" type="array">
-  User IDs of assigned risk analysts.
+<ResponseField name="tags" type="string[]">
+  Array of tag value strings. Empty array if the vendor has no tags.
 </ResponseField>
 
-<ResponseField name="relationship_owner_ids" type="array">
-  User IDs of relationship owners.
+<ResponseField name="risk_analyst_ids" type="string[]">
+  User IDs (`cbuser_...`) of assigned risk analysts.
 </ResponseField>
 
-<ResponseField name="inherent_risk_level_id" type="string or null">
-  ID of the scale level representing inherent risk.
+<ResponseField name="relationship_owner_ids" type="string[]">
+  User IDs (`cbuser_...`) of relationship owners.
 </ResponseField>
 
-<ResponseField name="residual_risk_level_id" type="string or null">
-  ID of the scale level representing residual risk.
+<ResponseField name="inherent_risk_level_id" type="string | null">
+  Scale level ID (`cbsclvl_...`) representing inherent risk.
 </ResponseField>
 
-<ResponseField name="raw_irq_score" type="float or null">
-  Raw IRQ (Inherent Risk Questionnaire) score.
+<ResponseField name="residual_risk_level_id" type="string | null">
+  Scale level ID (`cbsclvl_...`) representing residual risk.
 </ResponseField>
 
-<ResponseField name="engagement_type" type="string or null">
+<ResponseField name="engagement_type" type="string | null">
   Type of engagement with this vendor.
 </ResponseField>
 
-<ResponseField name="use_case" type="string or null">
+<ResponseField name="use_case" type="string | null">
   How the vendor is used within the organization.
 </ResponseField>
 
-<ResponseField name="next_assessment_date" type="integer or null">
-  Unix timestamp of the next scheduled assessment.
-</ResponseField>
-
-<ResponseField name="last_assessment_outcome" type="string or null">
-  Outcome of the most recent assessment.
-</ResponseField>
-
 <ResponseField name="created_at" type="integer">
-  Unix timestamp when the vendor record was created.
+  Unix timestamp (seconds) when the vendor record was created.
 </ResponseField>
 
 <ResponseField name="updated_at" type="integer">
-  Unix timestamp of the last update.
+  Unix timestamp (seconds) of the last update.
 </ResponseField>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | The `vendor_id` does not exist or is not in the API key's org. |
 
 ## Update a vendor
 
@@ -150,68 +139,60 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
   `PATCH /v1/vendors/{vendor_id}`
 </ParamField>
 
-Updates one or more fields on an existing vendor. Most commonly used to transition lifecycle state. Updates fire `vendor.updated` and, if status changes, `vendor.status_changed` webhooks.
+Updates one or more fields on an existing vendor. Only the fields you include are changed; omitted fields are left untouched. The response is the full, refreshed vendor object (same shape as the GET response above).
 
-### Updatable fields
+<Note>
+  Every field in the update body is optional and nullable in the request schema. There is no separate "clear to null" behavior — sending `null` for a field is treated the same as omitting it (the field is not changed).
+</Note>
 
-<ParamField body="status_id" type="string">
-  ID of a `CbStatus` record to transition to. Must be a valid, non-archived vendor status for the org.
-</ParamField>
+### Request body
 
 <ParamField body="name" type="string">
   Vendor name.
 </ParamField>
 
-<ParamField body="website" type="string or null">
-  Vendor website URL. Send an empty string to clear.
+<ParamField body="website" type="string">
+  Vendor website URL.
 </ParamField>
 
-<ParamField body="description" type="string or null">
+<ParamField body="description" type="string">
   Vendor description.
 </ParamField>
 
-<ParamField body="hq_location" type="string or null">
+<ParamField body="hq_location" type="string">
   Headquarters location.
 </ParamField>
 
-<ParamField body="risk_analyst_ids" type="array">
-  Replace the entire set of risk analyst user IDs.
+<ParamField body="status_id" type="string">
+  ID (`cbst_...`) of a status record to transition the vendor to.
 </ParamField>
 
-<ParamField body="relationship_owner_ids" type="array">
-  Replace the entire set of relationship owner user IDs.
+<ParamField body="tag_ids" type="string[]">
+  Replace the entire tag set, using tag IDs (`cbtag_...`).
 </ParamField>
 
-<ParamField body="tag_ids" type="array">
-  Replace the entire tag set using `CbTag` IDs.
+<ParamField body="risk_analyst_ids" type="string[]">
+  Replace the entire set of risk analyst user IDs (`cbuser_...`).
 </ParamField>
 
-<ParamField body="inherent_risk_level_id" type="string or null">
-  Scale level ID for inherent risk.
+<ParamField body="relationship_owner_ids" type="string[]">
+  Replace the entire set of relationship owner user IDs (`cbuser_...`).
 </ParamField>
 
-<ParamField body="residual_risk_level_id" type="string or null">
-  Scale level ID for residual risk.
+<ParamField body="inherent_risk_level_id" type="string">
+  Scale level ID (`cbsclvl_...`) for inherent risk.
 </ParamField>
 
-<ParamField body="raw_irq_score" type="float or null">
-  Raw IRQ score value.
+<ParamField body="residual_risk_level_id" type="string">
+  Scale level ID (`cbsclvl_...`) for residual risk.
 </ParamField>
 
-<ParamField body="next_assessment_date" type="integer or null">
-  Unix timestamp of the next scheduled assessment.
-</ParamField>
-
-<ParamField body="use_case" type="string or null">
+<ParamField body="use_case" type="string">
   How the vendor is used within the organization.
 </ParamField>
 
-<ParamField body="engagement_type" type="string or null">
+<ParamField body="engagement_type" type="string">
   Type of engagement with this vendor.
-</ParamField>
-
-<ParamField body="custom_field_data" type="array">
-  Array of custom field value objects for org-specific fields.
 </ParamField>
 
 ### Example request
@@ -220,10 +201,10 @@ Updates one or more fields on an existing vendor. Most commonly used to transiti
 
 ```bash cURL
 curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
-  -H "Authorization: Bearer <api-key>" \
+  -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
-    "status_id": "cbsts_offboarding_7f8e9d0c",
+    "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
     "use_case": "Legacy system — winding down"
   }'
 ```
@@ -232,23 +213,21 @@ curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c1
 import os
 import requests
 
-API_KEY = os.getenv("COVERBASE_API_KEY")
+API_KEY = os.environ["COVERBASE_API_KEY"]
 BASE_URL = "https://api.coverbase.app"
-
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json",
-}
 
 vendor_id = "cbvndr_e448ba62882143f3ba0c140bb2e30162"
 payload = {
-    "status_id": "cbsts_offboarding_7f8e9d0c",
+    "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
     "use_case": "Legacy system — winding down",
 }
 
 resp = requests.patch(
     f"{BASE_URL}/v1/vendors/{vendor_id}",
-    headers=headers,
+    headers={
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    },
     json=payload,
     timeout=30,
 )
@@ -260,39 +239,34 @@ print(resp.json())
 
 ### Example response
 
+The full vendor object is returned (identical shape to [Retrieve a vendor](#retrieve-a-vendor)):
+
 ```json
 {
   "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
   "external_id": "ariba-req-7821",
   "name": "Acme Corporation",
-  "status": {
-    "id": "cbsts_offboarding_7f8e9d0c",
-    "label": "Offboarding",
-    "group": "started"
-  },
+  "website": "https://acmecorp.com",
+  "description": "Enterprise customer support tooling provider",
+  "hq_location": "San Francisco, CA",
+  "status": "Offboarding",
+  "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
+  "tags": ["processes_pii", "saas"],
+  "risk_analyst_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
+  "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
+  "inherent_risk_level_id": "cbsclvl_7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+  "residual_risk_level_id": "cbsclvl_3f4e5d6c7b8a9b0c1d2e3f4a5b6c7d8e",
+  "engagement_type": "saas_platform",
   "use_case": "Legacy system — winding down",
+  "created_at": 1732292930,
   "updated_at": 1746576400
 }
 ```
 
-<Info>
-  This update fires both `vendor.updated` and `vendor.status_changed` webhooks. Any workflow bound to those events will run, for example the offboarding sequence described in [Workflow C: Vendor offboarding](/integrations/end-to-end-workflows#workflow-c-vendor-offboarding).
-</Info>
+### Error responses
 
-## Vendor statuses
-
-Vendor statuses are org-customizable. Each status belongs to a group (`unstarted`, `started`, `completed`, `canceled`). Use the dashboard or a list statuses endpoint to see available statuses for your org.
-
-Any valid, non-archived vendor status ID can be set via `status_id`. Status transitions are not enforced — you can move a vendor to any status that exists for your org.
-
-<Info>
-  Statuses are `CbStatus` records with `target_type=VENDOR`. Each org defines their own status labels, colors, and groups. If you need to discover available statuses programmatically, query the statuses list endpoint filtered by target type.
-</Info>
-
-## Error responses
-
-| Status | Code | When |
+| Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `invalid_status_id` | The provided `status_id` doesn't exist, is archived, or isn't a vendor status for this org. |
-| 400 | `missing_required_field` | A required field was omitted. |
-| 404 | `vendor_not_found` | The provided `vendor_id` does not exist or is not accessible to the API key. |
+| 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | The update was rejected (e.g. an invalid `status_id` or other reference ID). `message` contains the reason. |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | The `vendor_id` does not exist or is not in the API key's org. |
+| 422 | Standard validation error | The request body failed schema validation. See [API conventions](/conventions#validation-errors). |

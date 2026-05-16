@@ -1,0 +1,23 @@
+---
+title: "Changelog"
+description: "Notable changes to the Coverbase public API documentation."
+icon: "clock-rotate-left"
+---
+
+## 2026-05-16 — Documentation reconciled with the API
+
+The API reference was rebuilt to exactly match the implemented public API. Highlights:
+
+- **Resource surface corrected.** The public API consists of exactly: `GET`/`PATCH /v1/vendors/{id}`, `POST`/`GET /v1/assessments`, `POST /v1/workflows/{name}/run`, `GET /v1/workflows/runs/{id}`, and the `/v1/webhooks` CRUD + `/test` endpoints. There is no public create-vendor, create-service, findings, obligations, or users endpoint.
+- **Vendor schema fixed.** `status` is a label string (not an object); `tags` is a string array (not objects). Added `status_id`. Removed fields that the API does not return (`raw_irq_score`, `next_assessment_date`, `last_assessment_outcome`).
+- **Assessment schema fixed.** Removed the non-existent `risk_type`, `doc_collection_mode`, and `products` request fields. `control_set_ids` is required. Status values corrected to the real enum. Idempotency replays return the original `201` body (no `409 idempotency_conflict`).
+- **Workflow schema fixed.** Run status values are `started`/`completed`/`canceled`/`failed`. The get-run response returns only run metadata — no `checkpoints_reached` or `output`. Removed the non-existent `429 rate_limited` / `400 invalid_input` errors and the non-existent `POST /v1/workflows/runs` alternative.
+- **Webhook signing documented from source.** Signature header is `Coverbase-Signature` (lowercase hex HMAC-SHA256 of the raw body, keyed by the registered secret). Deliveries also send `X-Coverbase-Event-Id` and `X-Coverbase-Event-Type`. Envelope is exactly `{event_id, event_type, occurred_at, data}`. Retries are bounded at 5 attempts with a 10s per-attempt timeout (no documented multi-hour backoff window).
+- **Event catalog corrected** to the emission-backed `SupportedEventType` values with exact casing (e.g. `Vendor.Created`, not `vendor.created`). Removed invented events (`evaluation.flagged`, `evidence.requested`, etc.).
+- Added a shared [API conventions](/conventions) page (auth, IDs, timestamps, idempotency, error envelope).
+
+### Open questions
+
+- **Automatic event delivery.** In the reviewed codebase, no path fans domain events out to subscribed webhook endpoints; only the manual test endpoint dispatches a delivery. Whether/where automatic fan-out is enabled needs confirmation from the API team.
+- **Sandbox base URL.** The exact sandbox host is not derivable from the codebase and should be confirmed with Coverbase.
+- **`supporting_document_ids` ID prefix.** The assessment create field accepts document IDs; the precise prefix is intentionally left unspecified pending confirmation.

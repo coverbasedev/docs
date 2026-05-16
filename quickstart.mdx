@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The Coverbase API uses bearer token authentication. Every request must include your API key in the `Authorization` header.
+The Coverbase API uses bearer token authentication. Every request must include a credential in the `Authorization` header. For the full set of cross-cutting rules (IDs, timestamps, idempotency, error envelope) see [API conventions](/conventions).
 
 <Warning>
   API keys grant significant access to your TPRM data. Never share them in public repositories, client-side code, screenshots, or support tickets. Treat them like passwords.
@@ -16,7 +16,9 @@ The Coverbase API uses bearer token authentication. Every request must include y
 
 ## Request an API key
 
-API keys are provisioned by Coverbase admins in your organization. Contact your admin or your Coverbase account manager to request one.
+API keys are provisioned by a Coverbase admin in your organization. Each key looks like `ak_...`, is scoped to a single organization, and authenticates as a service account — all data it can read or write is implicitly scoped to that org. Contact your admin or Coverbase account manager to request one.
+
+A logged-in user JWT (the dashboard session token) is also accepted, which is convenient for first-party scripts running as a user.
 
 ## Base URL
 
@@ -24,12 +26,14 @@ API keys are provisioned by Coverbase admins in your organization. Contact your 
 https://api.coverbase.app
 ```
 
+A separate sandbox environment is available for integration testing; confirm its exact host with your account team. See [API conventions → Base URL](/conventions#base-url).
+
 ## Authorization header
 
 Include your key as a bearer token in every request:
 
 ```text
-Authorization: Bearer <api-key>
+Authorization: Bearer ak_...
 ```
 
 ## Test your connection
@@ -39,8 +43,7 @@ Use the `/v1/utils/authtest` endpoint to verify three things at once: your key i
 <CodeGroup>
 
 ```bash cURL
-curl -H "Authorization: Bearer <api-key>" \
-     -H "Content-Type: application/json" \
+curl -H "Authorization: Bearer ak_live_xxx" \
      https://api.coverbase.app/v1/utils/authtest
 ```
 
@@ -48,15 +51,14 @@ curl -H "Authorization: Bearer <api-key>" \
 import os
 import requests
 
-API_KEY = os.getenv("COVERBASE_API_KEY")
+API_KEY = os.environ["COVERBASE_API_KEY"]
 BASE_URL = "https://api.coverbase.app"
 
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json",
-}
-
-response = requests.get(f"{BASE_URL}/v1/utils/authtest", headers=headers, timeout=30)
+response = requests.get(
+    f"{BASE_URL}/v1/utils/authtest",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    timeout=30,
+)
 response.raise_for_status()
 print(response.json())
 ```
@@ -73,11 +75,11 @@ A successful request returns `200 OK`:
 
 <AccordionGroup>
   <Accordion title="401 Unauthorized" icon="lock">
-    Your API key is missing, malformed, or invalid. Confirm that the `Authorization` header is present and that the key has not been rotated or revoked.
+    Your credential is missing, malformed, expired, or revoked — or its role is not permitted on the public API (the response message reads `Unauthorized role.`). Confirm the `Authorization` header is present and the key is active.
   </Accordion>
 
-  <Accordion title="403 Forbidden" icon="ban">
-    Your API key is valid but lacks permission for the resource you're accessing. The Coverbase API enforces the same role and scope rules as the dashboard. Ask your admin to confirm your key's permissions.
+  <Accordion title="404 Not Found" icon="magnifying-glass">
+    The resource does not exist, or it belongs to a different organization than your API key. All data is org-scoped to the key.
   </Accordion>
 
   <Accordion title="Network timeouts" icon="clock">
