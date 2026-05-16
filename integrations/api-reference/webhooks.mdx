@@ -423,6 +423,8 @@ curl -sS "$CB/v1/org/$ORG_ID" "${A[@]}" | jq .api_ip_allowlist
 #   {"detail":{"code":"ip_not_allowed","message":"..."}}
 # Clear (unrestricted again):
 curl -sS -X POST "$CB/v1/org/$ORG_ID" "${A[@]}" -d '{"api_ip_allowlist":[]}'
+# Find the IP the API sees for the caller (same value the allowlist evaluates):
+curl -sS "$CB/v1/whoami/ip" "${A[@]}"          # → {"client_ip":"203.0.113.42"}
 ```
 
 For receiver-side signature verification (Python and Node), see [Webhooks → Signature verification](/integrations/webhooks#signature-verification).

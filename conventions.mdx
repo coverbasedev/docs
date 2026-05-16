@@ -95,6 +95,23 @@ The org object (`GET`/`POST /v1/org/{id}`) now includes `api_ip_allowlist` (a st
   Add the egress IPs of your integration **before** enabling the allowlist, and keep a dashboard admin path available — a too-narrow allowlist locks every API client out until it is widened or cleared from the dashboard.
 </Warning>
 
+### Find your current IP
+
+<ParamField path="method" type="GET">
+  `GET /v1/whoami/ip`
+</ParamField>
+
+A convenience endpoint (authenticated) that returns the caller's source IP as the API sees it — the load-balancer-appended, unspoofable value. This is the **same value** evaluated by the org `api_ip_allowlist` check, so use it to confirm which IP to allowlist (it backs the dashboard editor's "Add my current IP" helper).
+
+```bash cURL
+curl -sS "https://api.coverbase.app/v1/whoami/ip" \
+  -H "Authorization: Bearer ak_live_xxx"   # → {"client_ip":"203.0.113.42"}
+```
+
+<ResponseField name="client_ip" type="string | null">
+  The caller's source IP. `null` if the IP cannot be determined — the same condition under which a configured allowlist fails closed.
+</ResponseField>
+
 ## IDs
 
 Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (e.g. `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque — never parse or construct them.
