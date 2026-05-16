@@ -18,6 +18,20 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/vendors/{vendor_id}` | — |
 | `PATCH` | `/v1/vendors/{vendor_id}` | No |
 | `POST` | `/v1/vendors/{vendor_id}/services` | No |
+| `PATCH` | `/v1/vendors/{vendor_id}/services/{service_id}` | No |
+
+## The primary contact object
+
+Several vendor endpoints accept/return a `primary_contact`. It is the address the inherent-risk-questionnaire portal invite (and other vendor emails) are sent to.
+
+| Field | Type | Notes |
+| ----- | ---- | ----- |
+| `email` | string | **Required**, validated as an email address. |
+| `name` | string \| null | Contact name. |
+| `title` | string \| null | Contact title. |
+| `phone_number` | string \| null | Contact phone. |
+
+On read, `primary_contact` is derived from the vendor's stored contact personnel (first entry with an email), falling back to the vendor's security contact email; it is `null` if neither is set.
 
 ## Create a vendor
 
@@ -51,6 +65,10 @@ Creates a parent vendor. Returns `201 Created` with the full vendor object.
 
 <ParamField body="external_id" type="string">
   Your system's identifier for this vendor (e.g. an Ariba request ID). Stored and echoed back; useful for correlation.
+</ParamField>
+
+<ParamField body="primary_contact" type="object">
+  The vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)). If supplied, `email` is required and validated.
 </ParamField>
 
 ### Headers
@@ -130,6 +148,8 @@ print(resp.json())
   "engagement_type": null,
   "use_case": "Demo supplier for Equinix sandbox",
   "tier": null,
+  "primary_contact": null,
+  "services": [],
   "created_at": 1746576000,
   "updated_at": 1746576000
 }
@@ -140,7 +160,7 @@ print(resp.json())
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 400 | `{"detail": {"code": "invalid_vendor", "message": "..."}}` | Creation rejected by a business rule. |
-| 422 | Standard validation error | `name` missing or body malformed. |
+| 422 | Standard validation error | `name` missing, body malformed, or `primary_contact.email` not a valid email. |
 
 ## Create a child service
 
@@ -174,6 +194,10 @@ Creates a service under an existing vendor. Returns `201 Created`.
   Your system's identifier for this service.
 </ParamField>
 
+<ParamField body="tag_ids" type="string[]">
+  Tag IDs (`cbtag_...`) to attach to the service.
+</ParamField>
+
 ### Example request
 
 ```bash cURL
@@ -185,7 +209,7 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
 
 ### Example response
 
-`201 Created`:
+`201 Created` (see [the service object](#service-object)):
 
 ```json
 {
@@ -194,17 +218,19 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
   "name": "EQX_Sup_Test1 — Primary Service",
   "description": null,
   "external_id": null,
+  "tags": [],
   "created_at": 1746576000
 }
 ```
 
-### Response fields
+### Service object
 
 <ResponseField name="id" type="string">Service ID (`cbsvc_...`).</ResponseField>
 <ResponseField name="vendor_id" type="string">The parent vendor ID.</ResponseField>
 <ResponseField name="name" type="string">Service name.</ResponseField>
 <ResponseField name="description" type="string | null">Service description.</ResponseField>
 <ResponseField name="external_id" type="string | null">Your external identifier, if supplied.</ResponseField>
+<ResponseField name="tags" type="string[]">Tag value strings (empty array if none).</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
 
 ### Error responses
@@ -214,6 +240,51 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
 | 400 | `{"detail": {"code": "invalid_service", "message": "..."}}` | Creation rejected by a business rule. |
 | 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` does not exist or is not in the API key's org. |
 | 422 | Standard validation error | `name` missing or body malformed. |
+
+## Update a service
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/vendors/{vendor_id}/services/{service_id}`
+</ParamField>
+
+Updates a service. Only included fields change. Returns the updated [service object](#service-object).
+
+### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The parent vendor ID (`cbvndr_...`).
+</ParamField>
+
+<ParamField path="service_id" type="string" required>
+  The service ID (`cbsvc_...`). Must belong to `vendor_id`.
+</ParamField>
+
+### Request body
+
+<ParamField body="name" type="string">Service name.</ParamField>
+<ParamField body="description" type="string">Service description.</ParamField>
+<ParamField body="tag_ids" type="string[]">Replace the service's tag set (tag IDs `cbtag_...`).</ParamField>
+
+<Note>
+  `external_id` is set only at creation and is not updatable here.
+</Note>
+
+### Example request
+
+```bash cURL
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/services/cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "EQX_Sup_Test1 — Renamed Service" }'
+```
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_service", "message": "..."}}` | Update rejected by a business rule. |
+| 404 | `{"detail": {"code": "service_not_found", "message": "Service not found."}}` | The service does not exist, or does not belong to `vendor_id`, or is not in the API key's org. |
+| 422 | Standard validation error | Body failed schema validation. |
 
 ## Retrieve a vendor
 
@@ -254,6 +325,23 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
   "engagement_type": "saas_platform",
   "use_case": "Customer support ticketing",
   "tier": "tier_2",
+  "primary_contact": {
+    "email": "security@supplier1.example.com",
+    "name": "Jordan Lee",
+    "title": "CISO",
+    "phone_number": "+1-555-0100"
+  },
+  "services": [
+    {
+      "id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+      "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "name": "EQX_Sup_Test1 — Primary Service",
+      "description": null,
+      "external_id": null,
+      "tags": [],
+      "created_at": 1746576000
+    }
+  ],
   "created_at": 1732292930,
   "updated_at": 1746575800
 }
@@ -277,6 +365,8 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 <ResponseField name="engagement_type" type="string | null">Type of engagement with this vendor.</ResponseField>
 <ResponseField name="use_case" type="string | null">How the vendor is used.</ResponseField>
 <ResponseField name="tier" type="string | null">Derived vendor tier (e.g. `tier_1`, `tier_2`). Set by workflow tiering actions; `null` until derived.</ResponseField>
+<ResponseField name="primary_contact" type="object | null">The vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)), or `null`.</ResponseField>
+<ResponseField name="services" type="object[]">The vendor's child services, each a [service object](#service-object). Empty array if none.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds) of creation.</ResponseField>
 <ResponseField name="updated_at" type="integer">Unix timestamp (seconds) of last update.</ResponseField>
 
@@ -312,6 +402,7 @@ Updates one or more fields. Only included fields change; omitted fields are unto
 <ParamField body="residual_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for residual risk.</ParamField>
 <ParamField body="use_case" type="string">How the vendor is used.</ParamField>
 <ParamField body="engagement_type" type="string">Type of engagement.</ParamField>
+<ParamField body="primary_contact" type="object">Replace the vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)). When supplied, `email` is required and validated.</ParamField>
 
 <Note>
   `external_id` and `tier` are **not** updatable through this endpoint (`external_id` is set only at creation; `tier` is derived by workflows).

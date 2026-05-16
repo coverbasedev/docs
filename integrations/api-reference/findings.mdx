@@ -99,7 +99,7 @@ The list envelope adds `total` (full filtered count), `limit`, and `offset` — 
   `POST /v1/findings`
 </ParamField>
 
-Returns `201 Created`. **Exactly one of `vendor_id` or `assessment_id` is required** (at least one must be present).
+Returns `201 Created`. **Exactly one of `vendor_id` or `assessment_id` must be provided** — supplying neither *or both* is rejected with `422` ("Exactly one of vendor_id or assessment_id must be provided.").
 
 ### Request body
 
@@ -112,11 +112,11 @@ Returns `201 Created`. **Exactly one of `vendor_id` or `assessment_id` is requir
 </ParamField>
 
 <ParamField body="vendor_id" type="string">
-  Vendor the finding is raised against (`cbvndr_...`). Required if `assessment_id` is omitted.
+  Vendor the finding is raised against (`cbvndr_...`). Provide this **or** `assessment_id`, not both.
 </ParamField>
 
 <ParamField body="assessment_id" type="string">
-  Assessment the finding is raised against (`cbqsrw_...`). Required if `vendor_id` is omitted.
+  Assessment the finding is raised against (`cbqsrw_...`). Provide this **or** `vendor_id`, not both.
 </ParamField>
 
 <ParamField body="finding_status_id" type="string">
@@ -147,9 +147,8 @@ Returns the [finding object](#finding-object).
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `{"detail": {"code": "invalid_finding", "message": "Either vendor_id or assessment_id is required."}}` | Neither `vendor_id` nor `assessment_id` was provided. |
-| 400 | `{"detail": {"code": "invalid_finding", "message": "..."}}` | Other business-rule rejection (e.g. bad reference ID). |
-| 422 | Standard validation error | `title` missing or body malformed. |
+| 422 | Standard validation error (`msg`: "Exactly one of vendor_id or assessment_id must be provided.") | Neither or both of `vendor_id`/`assessment_id` supplied, `title` missing, or body malformed. |
+| 400 | `{"detail": {"code": "invalid_finding", "message": "..."}}` | Business-rule rejection (e.g. a bad reference ID). |
 
 ## Retrieve a finding
 

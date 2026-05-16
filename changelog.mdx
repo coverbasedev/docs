@@ -4,6 +4,16 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-05-16 — Reconciled against the deployed source branch
+
+Corrected the reference against the branch actually deployed to the sandbox. Changes vs. the prior pass:
+
+- **Vendor `primary_contact`.** Create, update, and read now document the `primary_contact` object (`email` required + validated, plus `name`/`title`/`phone_number`). On read it is derived from stored contact personnel / security contact email.
+- **Vendor `services`.** The vendor object now includes a `services` array (nested [service objects](/integrations/api-reference/vendors#service-object)).
+- **Service updates.** Added `PATCH /v1/vendors/{vendor_id}/services/{service_id}` (name / description / tag_ids → `service_not_found` 404, `invalid_service` 400). Service create now accepts `tag_ids`; the service object includes a `tags` string array.
+- **User `email` is validated.** `POST /v1/users` rejects a non-email `email` with `422`; `409 user_exists` is also returned on a create race / global uniqueness conflict.
+- **Findings: exactly one target.** `POST /v1/findings` now requires *exactly one* of `vendor_id`/`assessment_id` — supplying neither **or both** fails with `422` ("Exactly one of vendor_id or assessment_id must be provided.").
+
 ## 2026-05-16 — Full sandbox surface documented
 
 Added complete reference coverage for the endpoints available on the sandbox API that were previously undocumented:

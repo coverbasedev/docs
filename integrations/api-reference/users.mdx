@@ -48,7 +48,7 @@ Creates the account + org membership (`invited`). Returns `201 Created`.
 ### Request body
 
 <ParamField body="email" type="string" required>
-  The user's email. Used to link the account to your IdP on first SSO.
+  The user's email — validated as a proper email address. Used to link the account to your IdP on first SSO.
 </ParamField>
 
 <ParamField body="first_name" type="string">
@@ -152,8 +152,8 @@ print(resp.status_code, resp.json())
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 409 | `{"detail": {"code": "user_exists", "message": "A user with email ... already exists."}}` | A user with that email already exists in this org. Expected on replay without an idempotency key. |
-| 422 | Standard validation error | `email` missing, or `role` not a recognized value. |
+| 409 | `{"detail": {"code": "user_exists", "message": "A user with email ... already exists."}}` | A user with that email already exists in this org (also returned if a concurrent create or a global email-uniqueness constraint races). Expected on replay without an idempotency key. |
+| 422 | Standard validation error | `email` missing or not a valid email address, or `role` not a recognized value. |
 
 ## Retrieve a user
 
