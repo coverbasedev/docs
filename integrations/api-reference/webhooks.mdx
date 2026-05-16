@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The Webhooks API manages webhook subscription records and can send a manual test delivery to a registered endpoint. For the delivery format, signature verification, and the event catalog, see the [Webhooks](/integrations/webhooks) reference.
+The Webhooks API manages webhook subscription records and can send a manual test delivery to a registered endpoint. For the delivery format, fan-out, signature verification, and the event catalog, see the [Webhooks](/integrations/webhooks) guide. For the audit trail of every attempt, see [Webhook delivery history](/integrations/webhook-deliveries).
 
 All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication and the error envelope.
 
@@ -23,11 +23,11 @@ Creates a webhook subscription. Returns `201 Created`.
 ### Request body
 
 <ParamField body="url" type="string" required>
-  The endpoint Coverbase will POST to. **Must start with `https://`.**
+  The public HTTPS endpoint Coverbase will POST to. Rejected with `400 invalid_url` if it is not HTTPS, carries credentials, uses a non-standard port, or resolves to a private / loopback / link-local / metadata address. See [URL restrictions](/integrations/webhooks#url-restrictions).
 </ParamField>
 
 <ParamField body="events" type="string[]" required>
-  Event type strings to subscribe to. This is a free-form list of strings; it is **not** validated against a fixed enum at registration time. Use the exact event values from the [event catalog](/integrations/webhooks#event-catalog) (e.g. `Vendor.Created`).
+  Event type strings to subscribe to. **Strictly validated** against the [event catalog](/integrations/webhooks#event-catalog) — any value not in the catalog fails with `422 invalid_event_types`. Use the exact, case-sensitive values (e.g. `Vendor.Created`).
 </ParamField>
 
 <ParamField body="secret" type="string" required>
@@ -99,7 +99,10 @@ print(resp.json())
   "events": ["Vendor.Created", "Vendor.Updated", "Assessment.Created"],
   "description": "Primary GRC integration",
   "enabled": true,
-  "created_at": 1746576000
+  "created_at": 1746576000,
+  "last_delivery_status": null,
+  "delivery_success_rate": null,
+  "delivery_count": 0
 }
 ```
 
@@ -133,12 +136,29 @@ print(resp.json())
   Unix timestamp (seconds) when the webhook was created.
 </ResponseField>
 
+<ResponseField name="last_delivery_status" type="string | null">
+  Status of the most recent recorded delivery attempt — one of `delivered`, `timeout`, `error`, `skipped` — or `null` if there are no recorded deliveries yet.
+</ResponseField>
+
+<ResponseField name="delivery_success_rate" type="number | null">
+  Fraction of recorded attempts that were `delivered`, `0`–`1` (rounded to 4 dp). `null` when there are no recorded deliveries.
+</ResponseField>
+
+<ResponseField name="delivery_count" type="integer">
+  Total recorded delivery attempts for this webhook. `0` when none.
+</ResponseField>
+
+See [Webhook delivery history](/integrations/webhook-deliveries) for the per-attempt records behind these aggregates.
+
 ### Error responses
+
+Validation is applied in this order: `secret`, then `url`, then `events`.
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `{"detail": {"code": "weak_secret", "message": "Secret must be at least 16 characters."}}` | `secret` is shorter than 16 characters. Checked before the URL. |
-| 400 | `{"detail": {"code": "invalid_url", "message": "Webhook URL must use HTTPS."}}` | `url` does not start with `https://`. |
+| 400 | `{"detail": {"code": "weak_secret", "message": "Secret must be at least 16 characters."}}` | `secret` is shorter than 16 characters. Checked first. |
+| 400 | `{"detail": {"code": "invalid_url", "message": "Webhook URL must be HTTPS and must not target a private, link-local, loopback, or metadata address."}}` | `url` is not a public HTTPS endpoint. See [URL restrictions](/integrations/webhooks#url-restrictions). |
+| 422 | `{"detail": {"code": "invalid_event_types", "message": "Unsupported event type(s): ..."}}` | `events` contains a value not in the [event catalog](/integrations/webhooks#event-catalog). |
 | 422 | Standard validation error | Required fields missing or wrong type. See [API conventions](/conventions#validation-errors). |
 
 ## List webhooks
@@ -147,7 +167,7 @@ print(resp.json())
   `GET /v1/webhooks`
 </ParamField>
 
-Returns all (non-archived) webhook subscriptions for the org.
+Returns all (non-archived) webhook subscriptions for the org, each including its delivery-health aggregates.
 
 ### Example response
 
@@ -160,11 +180,16 @@ Returns all (non-archived) webhook subscriptions for the org.
       "events": ["Vendor.Created", "Assessment.Created"],
       "description": "Primary GRC integration",
       "enabled": true,
-      "created_at": 1746576000
+      "created_at": 1746576000,
+      "last_delivery_status": "delivered",
+      "delivery_success_rate": 0.9821,
+      "delivery_count": 56
     }
   ]
 }
 ```
+
+Each item has the same shape as the [create response](#response-fields), including `last_delivery_status`, `delivery_success_rate`, and `delivery_count`.
 
 ## Update a webhook
 
@@ -181,7 +206,7 @@ Updates a webhook subscription. Only the fields you include are changed; omitted
 </ParamField>
 
 <ParamField body="events" type="string[]">
-  Replace the subscribed event list.
+  Replace the subscribed event list. Strictly validated against the [event catalog](/integrations/webhooks#event-catalog) — an unsupported value fails with `422 invalid_event_types`.
 </ParamField>
 
 <ParamField body="secret" type="string">
@@ -217,7 +242,8 @@ curl -X PATCH "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 400 | `{"detail": {"code": "weak_secret", "message": "..."}}` | A new `secret` shorter than 16 characters was supplied. |
-| 400 | `{"detail": {"code": "invalid_url", "message": "Webhook URL must use HTTPS."}}` | A new `url` not starting with `https://` was supplied. |
+| 400 | `{"detail": {"code": "invalid_url", "message": "Webhook URL must be HTTPS and must not target a private, link-local, loopback, or metadata address."}}` | A new `url` that is not a public HTTPS endpoint was supplied. |
+| 422 | `{"detail": {"code": "invalid_event_types", "message": "Unsupported event type(s): ..."}}` | A new `events` value is not in the [event catalog](/integrations/webhooks#event-catalog). |
 | 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |
 
 ## Delete a webhook
@@ -248,17 +274,28 @@ Enqueues a test delivery to the webhook's URL. The delivery is dispatched asynch
 
 ### Request body
 
-<ParamField body="event_type" type="string">
-  Event type string to send in the test delivery. Defaults to `webhook.test`.
+<ParamField body="event_type" type="string" default="webhook.test">
+  Event type string to send in the test delivery. Unlike subscription `events`, this is **not** validated against the catalog — any string is accepted, including `webhook.test`.
+</ParamField>
+
+<ParamField body="payload" type="object">
+  Optional. The object delivered as the envelope's `data`. Defaults to `{"test": true}`.
 </ParamField>
 
 ### Example request
 
-```bash cURL
+```bash Custom payload
 curl -X POST "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9/test" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{ "event_type": "Assessment.Created" }'
+  -d '{ "event_type": "Vendor.Created", "payload": { "vendor_id": "cbvndr_demo" } }'
+```
+
+```bash Default payload
+curl -X POST "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9/test" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "event_type": "webhook.test" }'
 ```
 
 ### Example response
@@ -274,7 +311,7 @@ curl -X POST "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c
 ```
 
 <Note>
-  `delivered` reflects that the test was **enqueued**, not that the receiver accepted it. `response_status` and `response_time_ms` are always `null` on this response because delivery happens out of band. The test payload's `data` is `{"test": true}`.
+  `delivered` reflects that the test was **enqueued**, not that the receiver accepted it. `response_status` and `response_time_ms` are always `null` on this response because delivery happens out of band. The actual attempt (and the receiver's real status) is recorded in [delivery history](/integrations/webhook-deliveries). The delivered envelope's `data` is your `payload` (default `{"test": true}`).
 </Note>
 
 ### Error responses
@@ -282,3 +319,112 @@ curl -X POST "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |
+
+## List delivery attempts
+
+<ParamField path="method" type="GET">
+  `GET /v1/webhooks/{webhook_id}/deliveries`
+</ParamField>
+
+Returns the paginated delivery history for a webhook, newest first. Full request/response schema, query parameters, status values, and pagination are documented on the [Webhook delivery history](/integrations/webhook-deliveries) page.
+
+```bash cURL
+curl "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9/deliveries?limit=50&offset=0" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |
+
+## Appendix A: cURL quick reference
+
+One block per endpoint, copy-paste ready. Set these once:
+
+```bash Setup
+export CB="https://api.coverbase.app"       # or the sandbox host
+export AK="ak_REPLACE_ME"                    # dashboard → API keys
+export ORG_ID="cborg_REPLACE_ME"             # the id field on the org object
+A=(-H "Authorization: Bearer $AK" -H "Content-Type: application/json")
+```
+
+```bash Create a webhook
+WH=$(curl -sS -X POST "$CB/v1/webhooks" "${A[@]}" -d '{
+  "url": "https://hooks.example.com/coverbase",
+  "events": ["Vendor.Created", "Assessment.StatusChanged"],
+  "secret": "whsec_at_least_16_chars",
+  "description": "Prod receiver",
+  "enabled": true
+}' | jq -r .id)
+echo "$WH"
+# 201 → {id, url, events, description, enabled, created_at,
+#        last_delivery_status:null, delivery_success_rate:null, delivery_count:0}
+```
+
+```bash Validation errors
+# weak secret → 400 {"detail":{"code":"weak_secret",...}}
+curl -sS -X POST "$CB/v1/webhooks" "${A[@]}" \
+  -d '{"url":"https://hooks.example.com/x","events":["Vendor.Created"],"secret":"short"}'
+# SSRF-blocked / non-HTTPS URL → 400 {"detail":{"code":"invalid_url",...}}
+curl -sS -X POST "$CB/v1/webhooks" "${A[@]}" \
+  -d '{"url":"https://169.254.169.254/latest/meta-data/","events":["Vendor.Created"],"secret":"whsec_at_least_16_chars"}'
+curl -sS -X POST "$CB/v1/webhooks" "${A[@]}" \
+  -d '{"url":"http://hooks.example.com/x","events":["Vendor.Created"],"secret":"whsec_at_least_16_chars"}'
+# unsupported event type → 422 {"detail":{"code":"invalid_event_types",...}}
+curl -sS -X POST "$CB/v1/webhooks" "${A[@]}" \
+  -d '{"url":"https://hooks.example.com/x","events":["vendor.created"],"secret":"whsec_at_least_16_chars"}'
+```
+
+```bash List webhooks (with delivery health)
+curl -sS "$CB/v1/webhooks" "${A[@]}" | jq '.data[] |
+  {id, url, enabled, last_delivery_status, delivery_success_rate, delivery_count}'
+```
+
+```bash Update a webhook
+curl -sS -X PATCH "$CB/v1/webhooks/$WH" "${A[@]}" \
+  -d '{"events":["Vendor.Created","Vendor.Updated"],"enabled":false}'
+# invalid event on update → 422 invalid_event_types
+curl -sS -X PATCH "$CB/v1/webhooks/$WH" "${A[@]}" -d '{"events":["not.real"]}'
+```
+
+```bash Send a test delivery
+curl -sS -X POST "$CB/v1/webhooks/$WH/test" "${A[@]}" \
+  -d '{"event_type":"Vendor.Created","payload":{"vendor_id":"cbvndr_demo"}}'
+# default payload form:
+curl -sS -X POST "$CB/v1/webhooks/$WH/test" "${A[@]}" -d '{"event_type":"webhook.test"}'
+# → {event_id, delivered, response_status, response_time_ms, attempted_at}
+```
+
+```bash Delivery history (paginated, newest first)
+curl -sS "$CB/v1/webhooks/$WH/deliveries?limit=50&offset=0" "${A[@]}" | jq '{
+  total, limit, offset,
+  data: [.data[] | {event_type, status, response_status,
+                     response_time_ms, error, attempted_at}]
+}'
+# next page:
+curl -sS "$CB/v1/webhooks/$WH/deliveries?limit=50&offset=50" "${A[@]}"
+# unknown id → 404 {"detail":{"code":"webhook_not_found",...}}
+curl -sS "$CB/v1/webhooks/cbwh_nope/deliveries" "${A[@]}"
+```
+
+```bash Delete a webhook
+curl -sS -o /dev/null -w '%{http_code}\n' -X DELETE "$CB/v1/webhooks/$WH" "${A[@]}"  # 204
+```
+
+```bash Org-level API IP allowlist
+# Configure (CIDRs validated server-side; invalid → 422):
+curl -sS -X POST "$CB/v1/org/$ORG_ID" "${A[@]}" \
+  -d '{"api_ip_allowlist":["203.0.113.0/24","198.51.100.7/32"]}'
+curl -sS -X POST "$CB/v1/org/$ORG_ID" "${A[@]}" \
+  -d '{"api_ip_allowlist":["not-a-cidr"]}'        # → 422
+# Read back (org object now returns api_ip_allowlist):
+curl -sS "$CB/v1/org/$ORG_ID" "${A[@]}" | jq .api_ip_allowlist
+# Once a non-empty allowlist is set, a call from an IP outside the CIDRs → 403:
+#   {"detail":{"code":"ip_not_allowed","message":"..."}}
+# Clear (unrestricted again):
+curl -sS -X POST "$CB/v1/org/$ORG_ID" "${A[@]}" -d '{"api_ip_allowlist":[]}'
+# Find the IP the API sees for the caller (same value the allowlist evaluates):
+curl -sS "$CB/v1/whoami/ip" "${A[@]}"          # → {"client_ip":"203.0.113.42"}
+```
+
+For receiver-side signature verification (Python and Node), see [Webhooks → Signature verification](/integrations/webhooks#signature-verification).

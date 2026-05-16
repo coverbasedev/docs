@@ -43,6 +43,75 @@ curl -H "Authorization: Bearer ak_live_xxx" \
   https://sandbox.api.coverbase.app/v1/utils/authtest
 ```
 
+## API IP allowlist
+
+An organization can optionally restrict **all public API (`ak_...` key) requests** to a set of IPv4/IPv6 CIDRs. This is an org-level control configured by an admin.
+
+- **Default is unrestricted.** An empty allowlist (`[]`, the default) imposes no restriction.
+- **When configured**, a request whose client IP is outside *every* configured CIDR is rejected with `403`:
+
+  ```json
+  { "detail": { "code": "ip_not_allowed", "message": "This request originates from an IP address that is not in your organization's API allowlist." } }
+  ```
+
+- **Fail-closed.** If an allowlist is configured but the client IP cannot be determined, the request is denied.
+- **Scope.** The allowlist applies to every `/v1/*` public API route. It does **not** affect dashboard sign-in.
+- **Client IP source.** The connecting IP is the value the Coverbase load balancer appends to `X-Forwarded-For`. Clients cannot spoof it by sending their own `X-Forwarded-For` header.
+
+### Configure the allowlist
+
+Set the allowlist from the dashboard (**Configuration → Coverbase API → "API IP allowlist"**) or via the org update API. Your organization ID is the `id` field on the org object (also visible in the dashboard).
+
+<ParamField body="api_ip_allowlist" type="string[]">
+  A list of CIDR strings (IPv4 or IPv6). Each entry is validated server-side; an invalid CIDR rejects the whole request with `422`. An empty list clears the allowlist (unrestricted).
+</ParamField>
+
+```bash Set the allowlist
+curl -X POST "https://api.coverbase.app/v1/org/cborg_xxx" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "api_ip_allowlist": ["203.0.113.0/24", "198.51.100.7/32"] }'
+```
+
+```bash Read it back
+curl "https://api.coverbase.app/v1/org/cborg_xxx" \
+  -H "Authorization: Bearer ak_live_xxx" | jq .api_ip_allowlist
+```
+
+```bash Clear it (unrestricted again)
+curl -X POST "https://api.coverbase.app/v1/org/cborg_xxx" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "api_ip_allowlist": [] }'
+```
+
+The org object (`GET`/`POST /v1/org/{id}`) now includes `api_ip_allowlist` (a string array; `[]` when unrestricted). An invalid CIDR returns `422` with a free-form error body (not the coded envelope):
+
+```json
+{ "detail": { "error": "Invalid CIDR in api_ip_allowlist", "value": "not-a-cidr" } }
+```
+
+<Warning>
+  Add the egress IPs of your integration **before** enabling the allowlist, and keep a dashboard admin path available — a too-narrow allowlist locks every API client out until it is widened or cleared from the dashboard.
+</Warning>
+
+### Find your current IP
+
+<ParamField path="method" type="GET">
+  `GET /v1/whoami/ip`
+</ParamField>
+
+A convenience endpoint (authenticated) that returns the caller's source IP as the API sees it — the load-balancer-appended, unspoofable value. This is the **same value** evaluated by the org `api_ip_allowlist` check, so use it to confirm which IP to allowlist (it backs the dashboard editor's "Add my current IP" helper).
+
+```bash cURL
+curl -sS "https://api.coverbase.app/v1/whoami/ip" \
+  -H "Authorization: Bearer ak_live_xxx"   # → {"client_ip":"203.0.113.42"}
+```
+
+<ResponseField name="client_ip" type="string | null">
+  The caller's source IP. `null` if the IP cannot be determined — the same condition under which a configured allowlist fails closed.
+</ResponseField>
+
 ## IDs
 
 Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (e.g. `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque — never parse or construct them.
@@ -64,6 +133,8 @@ Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characte
 | `cbsclvl_` | Scale level (inherent/residual risk level) |
 | `cbvdoc_` | Vendor document |
 | `cbevt_` | Webhook delivery event |
+| `cbwhd_` | Webhook delivery (attempt record) |
+| `cborg_` | Organization |
 
 <Note>
   Findings are internally called "tasks", so finding IDs use the `cbtask_` prefix. This is expected — a `cbtask_...` value **is** a finding ID.

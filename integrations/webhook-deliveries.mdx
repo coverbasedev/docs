@@ -1,0 +1,146 @@
+---
+title: "Webhook delivery history"
+description: "Inspect every webhook delivery attempt — status, response, and payload."
+icon: "list-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase records **every** webhook delivery attempt as an audit row. Whether the delivery came from a [domain-event fan-out](/integrations/webhooks#when-deliveries-happen), a workflow [`send_webhook` action](/integrations/workflow-engine#actions), or a manual [test](/integrations/api-reference/webhooks#test-a-webhook), there is one history record per attempt — including retries and deliveries that were blocked by the [URL restrictions](/integrations/webhooks#url-restrictions).
+
+Use the history to debug failing receivers, confirm a delivery happened, and monitor delivery health over time. The aggregate health of a subscription (`last_delivery_status`, `delivery_success_rate`, `delivery_count`) is also surfaced on the [webhook object](/integrations/api-reference/webhooks#response-fields).
+
+## List delivery attempts
+
+<ParamField path="method" type="GET">
+  `GET /v1/webhooks/{webhook_id}/deliveries`
+</ParamField>
+
+Returns the delivery attempts for one webhook, **newest first**, paginated. Org-scoped to the API key.
+
+### Path parameters
+
+<ParamField path="webhook_id" type="string" required>
+  The webhook subscription ID (`cbwh_...`).
+</ParamField>
+
+### Query parameters
+
+<ParamField query="limit" type="integer" default="50">
+  Page size. Clamped to the range `1`–`100` (values outside the range are clamped, not rejected).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of records to skip. Negative values are clamped to `0`.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9/deliveries?limit=50&offset=0" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.environ["COVERBASE_API_KEY"]
+BASE_URL = "https://api.coverbase.app"
+webhook_id = "cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9"
+
+resp = requests.get(
+    f"{BASE_URL}/v1/webhooks/{webhook_id}/deliveries",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    params={"limit": 50, "offset": 0},
+    timeout=30,
+)
+resp.raise_for_status()
+print(resp.json())
+```
+
+### Example response
+
+```json
+{
+  "data": [
+    {
+      "id": "cbwhd_9c7b4a2e8b3c1a4d9e7f2c5b6a8d1e3f",
+      "webhook_id": "cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+      "event_id": "cbevt_8b3c1a4d9e7f2c5b6a8d1e3f9c7b4a2e",
+      "event_type": "Vendor.Created",
+      "status": "delivered",
+      "response_status": 200,
+      "response_time_ms": 142,
+      "error": null,
+      "payload": { "event_type": "Vendor.Created", "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162" },
+      "attempted_at": 1747400001,
+      "created_at": 1747400001
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### Response fields
+
+<ResponseField name="data" type="object[]">
+  The page of delivery attempts, newest first. Each item:
+  <Expandable title="delivery fields">
+    <ResponseField name="id" type="string">Delivery attempt ID (`cbwhd_...`).</ResponseField>
+    <ResponseField name="webhook_id" type="string">The subscription this attempt belongs to (`cbwh_...`).</ResponseField>
+    <ResponseField name="event_id" type="string">The shared event ID (`cbevt_...`) sent in the envelope and the `X-Coverbase-Event-Id` header.</ResponseField>
+    <ResponseField name="event_type" type="string">The event type the delivery was labelled with.</ResponseField>
+    <ResponseField name="status" type="string">One of `delivered`, `timeout`, `error`, `skipped`.</ResponseField>
+    <ResponseField name="response_status" type="integer | null">The receiver's HTTP status code, or `null` if no response was received (timeout / connection error / skipped).</ResponseField>
+    <ResponseField name="response_time_ms" type="integer | null">Round-trip time in milliseconds, or `null` if no response was received.</ResponseField>
+    <ResponseField name="error" type="string | null">Error detail when `status` is `timeout` or `error` (e.g. a blocked-URL message); otherwise `null`.</ResponseField>
+    <ResponseField name="payload" type="object">The `data` object that was delivered for this attempt.</ResponseField>
+    <ResponseField name="attempted_at" type="integer">Unix timestamp (seconds) when the attempt was made.</ResponseField>
+    <ResponseField name="created_at" type="integer">Unix timestamp (seconds) when the audit row was written.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total recorded attempts for this webhook, ignoring `limit`/`offset`. Page until `offset + len(data) >= total`.
+</ResponseField>
+
+<ResponseField name="limit" type="integer">
+  The effective page size after clamping.
+</ResponseField>
+
+<ResponseField name="offset" type="integer">
+  The effective offset after clamping.
+</ResponseField>
+
+### Delivery status values
+
+| Status | Meaning |
+| ------ | ------- |
+| `delivered` | The receiver returned an HTTP response (any status code). `response_status` and `response_time_ms` are populated. |
+| `timeout` | The request exceeded the 10-second per-attempt timeout. |
+| `error` | A connection error, or the URL was blocked by the [delivery-time SSRF re-check](/integrations/webhooks#url-restrictions). `error` carries detail. |
+| `skipped` | The subscription was not deliverable at send time (e.g. archived between dispatch and delivery). |
+
+<Note>
+  `delivered` means a response was received, not that the receiver "succeeded". If your endpoint returns a non-`2xx`, the attempt is still recorded as `delivered` with that `response_status`, and the delivery is retried.
+</Note>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |
+
+### Pagination example
+
+```bash Next page
+curl "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9/deliveries?limit=50&offset=50" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+See [API conventions → Timestamps](/conventions#timestamps) for the epoch-seconds convention used by `attempted_at` and `created_at`.

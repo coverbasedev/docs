@@ -1,6 +1,6 @@
 ---
 title: "Webhooks"
-description: "Delivery format, signature verification, retries, and the event catalog."
+description: "Delivery format, fan-out, signature verification, retries, and the event catalog."
 icon: "arrow-right-from-bracket"
 ---
 
@@ -8,11 +8,17 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Webhooks are the outbound half of an integration. This page documents the delivery format, how to verify signatures, retry behavior, and the event catalog. To register, list, update, delete, or test a subscription, see the [Webhooks API](/integrations/api-reference/webhooks).
+Webhooks are the outbound half of an integration. This page documents how events are delivered, how to verify signatures, retry behavior, and the event catalog. To register, list, update, delete, test, or inspect the delivery history of a subscription, see the [Webhooks API](/integrations/api-reference/webhooks). For the audit trail of every attempt, see [Webhook delivery history](/integrations/webhook-deliveries).
 
-<Warning>
-  **Automatic event delivery is not yet wired up in the platform.** You can register webhook subscriptions and trigger a manual [test delivery](/integrations/api-reference/webhooks#test-a-webhook), and the delivery format below is exactly what a receiver will get. However, in the current codebase there is no path that automatically fans domain events (e.g. `Vendor.Created`) out to subscribed endpoints — only the test endpoint dispatches a delivery. Do not build production logic that depends on automatic event delivery without confirming availability with Coverbase. This is tracked as an open question; see the [Changelog](/changelog).
-</Warning>
+## When deliveries happen
+
+When a subscribed event occurs, Coverbase POSTs a JSON envelope to **every active webhook subscribed to that event type**. Deliveries originate from three sources, and all of them are recorded in [delivery history](/integrations/webhook-deliveries):
+
+- **Domain-event fan-out** — a domain event (e.g. a vendor is created) fans out to every subscription for that event type.
+- **Workflow `send_webhook` action** — a workflow automation explicitly delivers its triggering event. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
+- **Manual test** — the [test endpoint](/integrations/api-reference/webhooks#test-a-webhook) sends a one-off delivery to a single subscription.
+
+For one source event, the **same `event_id` is shared across all webhooks** in the fan-out. Receivers can use it to dedupe a fan-out and to correlate a multi-subscription delivery.
 
 ## Delivery format
 
@@ -20,21 +26,21 @@ A delivery is an HTTP `POST` with a JSON body in this exact envelope:
 
 ```json
 {
-  "event_id": "cbevt_test_8b3c1a4d9e7f2c5b6a8d1e3f9c7b4a2e",
-  "event_type": "Assessment.Created",
-  "occurred_at": 1746576120,
-  "data": { "test": true }
+  "event_id": "cbevt_8b3c1a4d9e7f2c5b6a8d1e3f9c7b4a2e",
+  "event_type": "Vendor.Created",
+  "occurred_at": 1747400000,
+  "data": { "event_type": "Vendor.Created", "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162" }
 }
 ```
 
 | Field | Type | Notes |
 | ----- | ---- | ----- |
-| `event_id` | string | Unique delivery/event identifier. |
-| `event_type` | string | The event type string. |
-| `occurred_at` | integer | Unix timestamp in **seconds** at delivery time. |
-| `data` | object | Event-specific payload. For test deliveries this is `{"test": true}`. |
+| `event_id` | string | Shared delivery/event identifier (`cbevt_...`). The same value for every webhook in one fan-out. |
+| `event_type` | string | The event type string (see the [event catalog](#event-catalog)). |
+| `occurred_at` | integer | Unix timestamp in **seconds**, generated at send time. |
+| `data` | object | Event-specific payload. For real events these are the catalog fields for that event type (and `data` echoes `event_type`). For a manual test, `data` is your custom `payload` (default `{"test": true}`). |
 
-There is no top-level `workflow_run_id` and no other top-level fields — the envelope is exactly the four keys above.
+The envelope is exactly these four keys — there is no top-level `workflow_run_id` or any other field.
 
 ### Request headers
 
@@ -47,7 +53,7 @@ There is no top-level `workflow_run_id` and no other top-level fields — the en
 
 ## Signature verification
 
-The signature is `HMAC-SHA256(secret, raw_request_body)` rendered as a lowercase hex string, sent in the `Coverbase-Signature` header. Verify it against the **raw bytes** of the request body before parsing JSON.
+The signature is `HMAC-SHA256(secret, raw_request_body)` rendered as a lowercase hex string, sent in the `Coverbase-Signature` header. The key is the `secret` you registered with the subscription. Verify it against the **raw bytes** of the request body, before parsing JSON, with a constant-time comparison.
 
 ```python Python
 import hashlib
@@ -70,7 +76,7 @@ def receive():
     if not verify(raw, sig, WEBHOOK_SECRET):
         abort(401)
     event = request.get_json()
-    # handle event["event_type"] / event["data"]
+    # dedupe on request.headers["X-Coverbase-Event-Id"] before handling
     return "", 200
 ```
 
@@ -82,10 +88,9 @@ function verify(rawBody, signatureHeader, secret) {
     .createHmac("sha256", secret)
     .update(rawBody)
     .digest("hex");
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signatureHeader),
-  );
+  const a = Buffer.from(expected);
+  const b = Buffer.from(signatureHeader);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 // Express example (use express.raw so rawBody is the unparsed buffer)
@@ -98,7 +103,7 @@ app.post(
       return res.status(401).end();
     }
     const event = JSON.parse(req.body.toString("utf8"));
-    // handle event.event_type / event.data
+    // dedupe on req.header("X-Coverbase-Event-Id") before handling
     res.status(200).end();
   },
 );
@@ -111,37 +116,51 @@ app.post(
 | HTTP method | `POST` |
 | Connection timeout | 10 seconds per attempt |
 | Retries | Up to 5 attempts on failure (timeout or connection error) |
-| Endpoint requirement | HTTPS only |
+| Ordering | Not guaranteed — deliveries are unordered |
+| Guarantee | At-least-once — the same `event_id` may be delivered more than once |
+| Endpoint requirement | Public HTTPS endpoint (see [URL restrictions](#url-restrictions)) |
 
-There is no published exponential-backoff schedule or extended (multi-hour) retry window — retries are bounded at 5 attempts. Receivers should treat the same `event_id` as potentially delivered more than once and process idempotently. Respond with a `2xx` quickly to acknowledge.
+`occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` quickly to acknowledge; non-`2xx`, timeouts, and connection errors are retried up to 5 times.
+
+## URL restrictions
+
+Webhook URLs must be **public HTTPS endpoints**. A URL is rejected at create/update time (`400 invalid_url`) if it is not HTTPS, carries credentials, uses a non-standard port, or resolves to a private, loopback, link-local, or metadata address (e.g. `169.254.169.254`).
+
+The same check is **re-applied with DNS resolution at delivery time**, so a hostname that is repointed to an internal address after registration (DNS rebinding) is still blocked. A delivery blocked this way is recorded with status `error` in [delivery history](/integrations/webhook-deliveries).
 
 ## Event catalog
 
-The following event types have backend emission implemented (the platform's `SupportedEventType` set). Use these exact, case-sensitive strings in a subscription's `events` array:
+These are the **only** values valid in a subscription's `events` array and the only event types emitted. The `events` field is strictly validated against this set — see the [behavior change](#strict-event-type-validation) below. Use the exact, case-sensitive strings.
 
-| Event type |
-| ---------- |
-| `Assessment.Created` |
-| `Assessment.AssigneeChanged` |
-| `Assessment.StatusChanged` |
-| `IntakeSession.Created` |
-| `IntakeSession.Submitted` |
-| `Service.Created` |
-| `Service.Updated` |
-| `OrgIntake.Disabled` |
-| `OrgIntake.QuestionnaireRemoved` |
-| `QuestionnaireResponse.Created` |
-| `QuestionnaireResponse.StatusChanged` |
-| `Review.StatusChanged` |
-| `Procurement.Created` |
-| `Procurement.StatusChanged` |
-| `Vendor.Created` |
-| `Vendor.Updated` |
-| `WorkQueueItem.Created` |
-| `WorkQueueItem.Completed` |
+| `event_type` | `data` fields |
+| ------------ | ------------- |
+| `Assessment.Created` | `assessment_id` |
+| `Assessment.AssigneeChanged` | `assessment_id`, `old_assignee_id` (nullable), `new_assignee_id` (nullable) |
+| `Assessment.StatusChanged` | `assessment_id`, `old_status`, `new_status` |
+| `QuestionnaireResponse.Created` | `questionnaire_response_id` |
+| `QuestionnaireResponse.StatusChanged` | `questionnaire_response_id`, `old_status`, `new_status` |
+| `Review.StatusChanged` | `review_id`, `old_status_id` (nullable), `new_status_id` (nullable) |
+| `WorkQueueItem.Created` | `work_queue_item_id` |
+| `WorkQueueItem.Completed` | `work_queue_item_id` |
+| `Vendor.Created` | `vendor_id` |
+| `Vendor.Updated` | `vendor_id` |
+| `Procurement.Created` | `procurement_id` |
+| `Procurement.StatusChanged` | `procurement_id`, `old_status_id` (nullable), `new_status_id` |
+| `Service.Created` | `service_id` |
+| `Service.Updated` | `service_id` |
+| `OrgIntake.QuestionnaireRemoved` | `questionnaire_id`, `intake_disabled` (bool) |
+| `OrgIntake.Disabled` | `removed_questionnaire_id` |
+| `IntakeSession.Created` | `intake_session_id` |
+| `IntakeSession.Submitted` | `intake_session_id` |
 
-Workflow lifecycle event strings (`Workflow.Checkpoint`, `Workflow.Completed`, `Workflow.Failed`) are defined in the platform's event enum and reserved for workflow-run correlation, but they are not part of the emission-backed `SupportedEventType` set above.
+All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
 
 <Note>
-  The `events` field on a subscription is a free list of strings — it is **not** rejected if it contains a value outside this catalog. Subscribing to a value that is never emitted simply results in no deliveries. Stick to the exact strings above.
+  `webhook.test` is a valid value only for the [test endpoint's](/integrations/api-reference/webhooks#test-a-webhook) `event_type` field. It is **not** a subscribable event type — it will be rejected if used in a subscription's `events` array.
 </Note>
+
+### Strict event-type validation
+
+<Warning>
+  **Breaking change.** `events` is now strictly validated against the catalog above. Previously any free-form string was accepted. A `POST /v1/webhooks` or `PATCH /v1/webhooks/{id}` whose `events` contains a value not in the catalog now fails with `422 invalid_event_types`. Integrations that registered non-canonical strings (e.g. lowercase `vendor.created`) must switch to the exact catalog value (e.g. `Vendor.Created`).
+</Warning>

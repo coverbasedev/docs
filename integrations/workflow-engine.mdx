@@ -63,6 +63,16 @@ Actions execute work. The available actions:
   <Card title="Fire a webhook to an external endpoint" icon="arrow-right-from-bracket" />
 </CardGroup>
 
+### `send_webhook` action
+
+The **Fire a webhook** action delivers the workflow's triggering event to subscribed [webhooks](/integrations/webhooks).
+
+- By default the event type is the workflow's triggering event; an optional **event type override** changes which subscriptions are matched and the type the delivery is labelled with.
+- An optional **`webhook_ids`** restricts delivery to an explicit subset of the org's webhooks for that event type. Omit it to fan out to every active subscription for the event type.
+- One shared `event_id` is generated per action invocation, so a receiver can dedupe a multi-webhook fan-out — the same idempotency model as the [domain-event fan-out](/integrations/webhooks#when-deliveries-happen).
+
+Every delivery from this action is recorded in [delivery history](/integrations/webhook-deliveries). If no active webhook is subscribed to the (possibly overridden) event type, the action is a no-op.
+
 <Note>
   Every action that runs in the UI is also exposed as an API endpoint. Anything that can be configured as part of a workflow can also be invoked directly from outside the workflow engine.
 </Note>
