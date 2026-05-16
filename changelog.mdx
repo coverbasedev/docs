@@ -4,6 +4,22 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-05-16 — Webhook event-type validation, SSRF restrictions, delivery history, and API IP allowlist
+
+Reconciled against the `claude/webhook-ui-workflow` source branch. Two breaking changes and two additive features.
+
+### Breaking
+
+- **Webhook `events` is now strictly validated.** `POST /v1/webhooks` and `PATCH /v1/webhooks/{id}` reject any event type outside the supported [event catalog](/integrations/webhooks#event-catalog) with `422 invalid_event_types`. Previously the field was a free-form list of strings. Integrations that registered non-canonical values (e.g. lowercase `vendor.created`) must switch to the exact catalog casing (e.g. `Vendor.Created`) or their create/update calls will now fail.
+- **Webhook URLs are SSRF-restricted.** A webhook `url` must be a public HTTPS endpoint. URLs that are non-HTTPS, carry credentials, use a non-standard port, or resolve to a private / loopback / link-local / metadata address (e.g. `169.254.169.254`) are rejected at create/update with `400 invalid_url`. The same check is re-applied with DNS resolution at delivery time (DNS-rebinding safe); a delivery blocked this way is recorded with status `error`.
+
+### Additive
+
+- **Automatic event delivery is live.** Subscribed webhooks now receive a fan-out delivery whenever a matching domain event occurs (previously only the manual test endpoint dispatched a delivery). All webhooks for one source event share a single `event_id` so receivers can dedupe the fan-out. The prior "automatic event delivery is not yet wired up" caveat has been removed.
+- **Webhook delivery history.** New `GET /v1/webhooks/{id}/deliveries` endpoint (paginated, newest first) and a new [Webhook delivery history](/integrations/webhook-deliveries) page. Every attempt — event fan-out, manual test, or workflow-triggered — is recorded. The webhook object now also returns `last_delivery_status`, `delivery_success_rate`, and `delivery_count`.
+- **Org-level API IP allowlist.** An org can restrict all `/v1/*` public API requests to a set of CIDRs via `api_ip_allowlist` on the org object (`POST /v1/org/{id}`). Requests from outside the allowlist get `403 ip_not_allowed`; the control fails closed. See [API conventions → API IP allowlist](/conventions#api-ip-allowlist).
+- **Workflow `send_webhook` action.** Workflow automations can deliver their triggering event to subscribed webhooks, with an optional event-type override and an optional `webhook_ids` subset. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
+
 ## 2026-05-16 — Reconciled against the deployed source branch
 
 Corrected the reference against the branch actually deployed to the sandbox. Changes vs. the prior pass:
@@ -43,5 +59,5 @@ The API reference was rebuilt to exactly match the implemented public API. Highl
 
 ### Open questions
 
-- **Automatic event delivery.** No code path fans domain events out to subscribed webhook endpoints; only the manual test endpoint dispatches a delivery. Registering a subscription does not yet result in automatic deliveries. Whether/where automatic fan-out is enabled needs confirmation from the API team.
+- **Automatic event delivery.** ~~No code path fans domain events out to subscribed webhook endpoints.~~ **Resolved 2026-05-16:** automatic fan-out is now implemented — see the latest changelog entry above and the [Webhooks](/integrations/webhooks) guide.
 - **`supporting_document_ids` ID prefix.** The assessment create field accepts document IDs; the precise prefix is intentionally left unspecified pending confirmation.
