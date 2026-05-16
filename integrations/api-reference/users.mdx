@@ -1,0 +1,223 @@
+---
+title: "Users API"
+description: "Provision users, change org roles, and deprovision — for SailPoint / IGA-driven lifecycle."
+icon: "user"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Users API provisions Coverbase accounts and manages their organization role and lifecycle. It is designed for identity-governance (SailPoint / IGA) integrations: the upstream system owns approval, this API creates the account + org membership so SSO can authenticate the user on first login.
+
+<Info>
+  Provisioning creates the Coverbase account and an org membership in **`invited`** status. It does **not** create a login session — the user is linked to your IdP by email on first SSO. SailPoint owns the upstream approval; this API only reflects role/lifecycle into Coverbase.
+</Info>
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path | Idempotent |
+| ------ | ---- | ---------- |
+| `POST` | `/v1/users` | Yes (`Idempotency-Key`) |
+| `GET` | `/v1/users/{user_id}` | — |
+| `PATCH` | `/v1/users/{user_id}` | No |
+
+## Org roles
+
+The `role` field uses these values:
+
+| Value | Role |
+| ----- | ---- |
+| `org:admin` | Admin |
+| `org:member` | Member |
+| `org:siloed_member` | Siloed member |
+| `org:guest` | Guest |
+| `org:auxiliary_member` | Auxiliary member |
+| `org:service_account` | Service account |
+
+The aliases `member`, `basic_member`, `org:basic_member` (→ `org:member`) and `admin` (→ `org:admin`) are also accepted. Any other value is rejected with `422`.
+
+## Provision a user
+
+<ParamField path="method" type="POST">
+  `POST /v1/users`
+</ParamField>
+
+Creates the account + org membership (`invited`). Returns `201 Created`.
+
+### Request body
+
+<ParamField body="email" type="string" required>
+  The user's email — validated as a proper email address. Used to link the account to your IdP on first SSO.
+</ParamField>
+
+<ParamField body="first_name" type="string">
+  Given name.
+</ParamField>
+
+<ParamField body="last_name" type="string">
+  Family name.
+</ParamField>
+
+<ParamField body="role" type="string">
+  One of the [org role values](#org-roles). Defaults to `org:member`.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer ak_...`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional. Replaying the same key within 24 hours returns the original `201` body. See [Idempotency](/conventions#idempotency).
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/users" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Idempotency-Key: eqx-user-clarencechio" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "clarencechio@gmail.com",
+    "first_name": "Clarence",
+    "last_name": "Chio",
+    "role": "org:admin"
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.environ["COVERBASE_API_KEY"]
+BASE_URL = "https://sandbox.api.coverbase.app"
+
+resp = requests.post(
+    f"{BASE_URL}/v1/users",
+    headers={
+        "Authorization": f"Bearer {API_KEY}",
+        "Idempotency-Key": "eqx-user-clarencechio",
+        "Content-Type": "application/json",
+    },
+    json={
+        "email": "clarencechio@gmail.com",
+        "first_name": "Clarence",
+        "last_name": "Chio",
+        "role": "org:admin",
+    },
+    timeout=30,
+)
+# 201 on create; 409 if the email already exists in this org
+print(resp.status_code, resp.json())
+```
+
+</CodeGroup>
+
+### Example response
+
+`201 Created`:
+
+```json
+{
+  "id": "cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "email": "clarencechio@gmail.com",
+  "first_name": "Clarence",
+  "last_name": "Chio",
+  "role": "org:admin",
+  "status": "invited",
+  "is_archived": false,
+  "created_at": 1746576000,
+  "updated_at": 1746576000
+}
+```
+
+### User object
+
+<ResponseField name="id" type="string">User ID (`cbuser_...`).</ResponseField>
+<ResponseField name="email" type="string">User email.</ResponseField>
+<ResponseField name="first_name" type="string | null">Given name.</ResponseField>
+<ResponseField name="last_name" type="string | null">Family name.</ResponseField>
+<ResponseField name="role" type="string | null">Org role value for this org (e.g. `org:admin`).</ResponseField>
+<ResponseField name="status" type="string | null">Org membership status: `invited`, `active`, or `inactive`.</ResponseField>
+<ResponseField name="is_archived" type="boolean">`true` once the user is deprovisioned.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 409 | `{"detail": {"code": "user_exists", "message": "A user with email ... already exists."}}` | A user with that email already exists in this org (also returned if a concurrent create or a global email-uniqueness constraint races). Expected on replay without an idempotency key. |
+| 422 | Standard validation error | `email` missing or not a valid email address, or `role` not a recognized value. |
+
+## Retrieve a user
+
+<ParamField path="method" type="GET">
+  `GET /v1/users/{user_id}`
+</ParamField>
+
+Returns the user. The user must have a membership in the API key's org.
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+Returns the [user object](#user-object). `role` and `status` reflect the current org membership.
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "user_not_found", "message": "User not found."}}` | No such user, or the user has no membership in the API key's org. |
+
+## Update role / deprovision
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/users/{user_id}`
+</ParamField>
+
+Changes a user's org role and/or (de)provisions them. Returns the refreshed [user object](#user-object).
+
+### Request body
+
+<ParamField body="role" type="string">
+  New org role (one of the [role values](#org-roles)). Omit to leave unchanged.
+</ParamField>
+
+<ParamField body="is_archived" type="boolean">
+  `true` deprovisions: archives the user and sets org membership to `inactive`. `false` reactivates: membership back to `active`. Omit to leave unchanged.
+</ParamField>
+
+### Examples
+
+```bash Change role
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "role": "org:member" }'
+```
+
+```bash Deprovision
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "is_archived": true }'
+```
+
+### Behavior
+
+- `is_archived: true` → user archived, membership `inactive`.
+- `is_archived: false` → membership `active` (reactivation).
+- `role` set → membership role updated.
+- Combined (`role` + `is_archived`) is applied together.
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "user_not_found", "message": "User not found."}}` | No membership for this user in the API key's org. |
+| 422 | Standard validation error | `role` not a recognized value. |

@@ -4,11 +4,36 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-05-16 — Reconciled against the deployed source branch
+
+Corrected the reference against the branch actually deployed to the sandbox. Changes vs. the prior pass:
+
+- **Vendor `primary_contact`.** Create, update, and read now document the `primary_contact` object (`email` required + validated, plus `name`/`title`/`phone_number`). On read it is derived from stored contact personnel / security contact email.
+- **Vendor `services`.** The vendor object now includes a `services` array (nested [service objects](/integrations/api-reference/vendors#service-object)).
+- **Service updates.** Added `PATCH /v1/vendors/{vendor_id}/services/{service_id}` (name / description / tag_ids → `service_not_found` 404, `invalid_service` 400). Service create now accepts `tag_ids`; the service object includes a `tags` string array.
+- **User `email` is validated.** `POST /v1/users` rejects a non-email `email` with `422`; `409 user_exists` is also returned on a create race / global uniqueness conflict.
+- **Findings: exactly one target.** `POST /v1/findings` now requires *exactly one* of `vendor_id`/`assessment_id` — supplying neither **or both** fails with `422` ("Exactly one of vendor_id or assessment_id must be provided.").
+
+## 2026-05-16 — Full sandbox surface documented
+
+Added complete reference coverage for the endpoints available on the sandbox API that were previously undocumented:
+
+- **Users API** — `POST /v1/users` (provision, idempotent), `GET /v1/users/{id}`, `PATCH /v1/users/{id}` (role change / deprovision via `is_archived`). Documented org role values, `409 user_exists`, and the `invited`/`active`/`inactive` membership states.
+- **Vendor & service creation** — `POST /v1/vendors` (idempotent) and `POST /v1/vendors/{id}/services` (not idempotent). Added the vendor `tier` field and `external_id` create input.
+- **Findings API** — `GET`/`POST /v1/findings`, `GET`/`PATCH /v1/findings/{id}`. Documented the vendor/assessment filter, `limit`/`offset` pagination, the `cbtask_` ID prefix, and the "one of vendor_id/assessment_id required" rule.
+- **Obligations API** — `GET`/`POST /v1/obligations`, `GET`/`PATCH /v1/obligations/{id}`. Documented the `satisfied`/`not_satisfied` status enum, CUEC type, and pagination.
+- **Workflows** — the get-run response now documents `steps[]`; added `409 workflow_disabled` and `502 workflow_dispatch_failed`; clarified that running a workflow genuinely dispatches the engine (`Workflow.RunRequested`).
+- Added the sandbox base URL (`https://sandbox.api.coverbase.app`) and a pagination section to [API conventions](/conventions); expanded the ID-prefix table (`cbtask_`, `cboblg_`, `cbsvc_`, `cbvdoc_`) and the idempotency support matrix.
+
+<Note>
+  This surface is verified against the deployed sandbox API. Confirm production parity with Coverbase before pointing production traffic at endpoints you first integrated on sandbox.
+</Note>
+
 ## 2026-05-16 — Documentation reconciled with the API
 
 The API reference was rebuilt to exactly match the implemented public API. Highlights:
 
-- **Resource surface corrected.** The public API consists of exactly: `GET`/`PATCH /v1/vendors/{id}`, `POST`/`GET /v1/assessments`, `POST /v1/workflows/{name}/run`, `GET /v1/workflows/runs/{id}`, and the `/v1/webhooks` CRUD + `/test` endpoints. There is no public create-vendor, create-service, findings, obligations, or users endpoint.
+- **Resource surface corrected.** Fixed schemas for the vendors, assessments, workflows, and webhooks endpoints. (The Users, vendor/service creation, Findings, and Obligations endpoints were documented in the following entry once the deployed sandbox surface was confirmed.)
 - **Vendor schema fixed.** `status` is a label string (not an object); `tags` is a string array (not objects). Added `status_id`. Removed fields that the API does not return (`raw_irq_score`, `next_assessment_date`, `last_assessment_outcome`).
 - **Assessment schema fixed.** Removed the non-existent `risk_type`, `doc_collection_mode`, and `products` request fields. `control_set_ids` is required. Status values corrected to the real enum. Idempotency replays return the original `201` body (no `409 idempotency_conflict`).
 - **Workflow schema fixed.** Run status values are `started`/`completed`/`canceled`/`failed`. The get-run response returns only run metadata — no `checkpoints_reached` or `output`. Removed the non-existent `429 rate_limited` / `400 invalid_input` errors and the non-existent `POST /v1/workflows/runs` alternative.
@@ -18,6 +43,5 @@ The API reference was rebuilt to exactly match the implemented public API. Highl
 
 ### Open questions
 
-- **Automatic event delivery.** In the reviewed codebase, no path fans domain events out to subscribed webhook endpoints; only the manual test endpoint dispatches a delivery. Whether/where automatic fan-out is enabled needs confirmation from the API team.
-- **Sandbox base URL.** The exact sandbox host is not derivable from the codebase and should be confirmed with Coverbase.
+- **Automatic event delivery.** No code path fans domain events out to subscribed webhook endpoints; only the manual test endpoint dispatches a delivery. Registering a subscription does not yet result in automatic deliveries. Whether/where automatic fan-out is enabled needs confirmation from the API team.
 - **`supporting_document_ids` ID prefix.** The assessment create field accepts document IDs; the precise prefix is intentionally left unspecified pending confirmation.

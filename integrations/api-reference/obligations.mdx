@@ -1,0 +1,218 @@
+---
+title: "Obligations API"
+description: "List, create, retrieve, and status-sync obligations (CUEC) for GRC round-trips."
+icon: "list-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+An **obligation** (`cboblg_...`) is a compliance obligation tracked against the org. Obligations created through this API are of type **CUEC** (complementary user-entity controls). This API exists for GRC sync and external visibility.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior, including [pagination](/conventions#pagination).
+
+| Method | Path |
+| ------ | ---- |
+| `GET` | `/v1/obligations` |
+| `POST` | `/v1/obligations` |
+| `GET` | `/v1/obligations/{obligation_id}` |
+| `PATCH` | `/v1/obligations/{obligation_id}` |
+
+None of these honor `Idempotency-Key`.
+
+## Status values
+
+The `status` field accepts exactly:
+
+| Value | Meaning |
+| ----- | ------- |
+| `satisfied` | The obligation is met. |
+| `not_satisfied` | The obligation is not met (default on create). |
+
+Any other value returns `400 invalid_status` listing the accepted values.
+
+## List obligations
+
+<ParamField path="method" type="GET">
+  `GET /v1/obligations`
+</ParamField>
+
+### Query parameters
+
+<ParamField query="vendor_id" type="string">
+  Filter to obligations associated with a vendor (`cbvndr_...`).
+</ParamField>
+
+<ParamField query="obligation_status" type="string">
+  Filter by status — `satisfied` or `not_satisfied`.
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Page size. Default `50`, range `1`–`200`.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Page offset. Default `0`.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/obligations?obligation_status=not_satisfied&limit=50" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+```json
+{
+  "items": [
+    {
+      "id": "cboblg_4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c",
+      "statement": "Customer must enforce MFA on all admin accounts.",
+      "status": "not_satisfied",
+      "obligation_type": "cuec",
+      "compliance_type": null,
+      "vendor_document_id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      "assignee_id": "cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      "assignee_group_id": null,
+      "due_date": 1749168000,
+      "is_archived": false,
+      "created_at": 1746576000,
+      "updated_at": 1746576400
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### Obligation object
+
+<ResponseField name="id" type="string">Obligation ID (`cboblg_...`).</ResponseField>
+<ResponseField name="statement" type="string">The obligation statement.</ResponseField>
+<ResponseField name="status" type="string">`satisfied` or `not_satisfied`.</ResponseField>
+<ResponseField name="obligation_type" type="string">Always `cuec` for obligations created via this API.</ResponseField>
+<ResponseField name="compliance_type" type="string | null">How compliance is established (`manual`, `internal_control`, or `similar_obligation`), if set.</ResponseField>
+<ResponseField name="vendor_document_id" type="string | null">Source vendor document (`cbvdoc_...`), if linked.</ResponseField>
+<ResponseField name="assignee_id" type="string | null">Assigned user (`cbuser_...`).</ResponseField>
+<ResponseField name="assignee_group_id" type="string | null">Assigned group, if assigned to a group instead of a user.</ResponseField>
+<ResponseField name="due_date" type="integer | null">Unix timestamp (seconds), if set.</ResponseField>
+<ResponseField name="is_archived" type="boolean">`true` if archived.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+The list envelope adds `total`, `limit`, `offset` — see [pagination](/conventions#pagination).
+
+## Create an obligation
+
+<ParamField path="method" type="POST">
+  `POST /v1/obligations`
+</ParamField>
+
+Returns `201 Created`. `obligation_type` is always set to `cuec`.
+
+### Request body
+
+<ParamField body="statement" type="string" required>
+  The obligation statement.
+</ParamField>
+
+<ParamField body="status" type="string">
+  `satisfied` or `not_satisfied`. Defaults to `not_satisfied`.
+</ParamField>
+
+<ParamField body="vendor_document_id" type="string">
+  Link to a source vendor document (`cbvdoc_...`).
+</ParamField>
+
+<ParamField body="assignee_id" type="string">
+  Assign to a user (`cbuser_...`).
+</ParamField>
+
+<ParamField body="assignee_group_id" type="string">
+  Assign to a group instead of a user.
+</ParamField>
+
+<ParamField body="due_date" type="integer">
+  Unix timestamp (seconds).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/obligations" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "statement": "Customer must enforce MFA on all admin accounts.",
+    "status": "not_satisfied",
+    "due_date": 1749168000
+  }'
+```
+
+Returns the [obligation object](#obligation-object).
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_status", "message": "Invalid status '...'. Expected one of: satisfied, not_satisfied."}}` | `status` not one of the accepted values. |
+| 400 | `{"detail": {"code": "invalid_obligation", "message": "..."}}` | Other business-rule rejection. |
+| 422 | Standard validation error | `statement` missing or body malformed. |
+
+## Retrieve an obligation
+
+<ParamField path="method" type="GET">
+  `GET /v1/obligations/{obligation_id}`
+</ParamField>
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/obligations/cboblg_4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+Returns the [obligation object](#obligation-object).
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "obligation_not_found", "message": "Obligation not found."}}` | Not found / not in the API key's org. |
+
+## Update / status-sync an obligation
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/obligations/{obligation_id}`
+</ParamField>
+
+Push status, assignment, due-date, or statement changes (or archive) back into Coverbase. Only included fields change.
+
+### Request body
+
+<ParamField body="statement" type="string">Updated statement.</ParamField>
+<ParamField body="status" type="string">`satisfied` or `not_satisfied`.</ParamField>
+<ParamField body="assignee_id" type="string">Reassign to a user (`cbuser_...`).</ParamField>
+<ParamField body="assignee_group_id" type="string">Reassign to a group.</ParamField>
+<ParamField body="due_date" type="integer">New due date (Unix seconds).</ParamField>
+<ParamField body="is_archived" type="boolean">Archive (`true`) or restore (`false`).</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/obligations/cboblg_4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "satisfied" }'
+```
+
+Returns the refreshed [obligation object](#obligation-object).
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_status", "message": "Invalid status '...'. Expected one of: satisfied, not_satisfied."}}` | `status` not accepted. |
+| 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | Update otherwise rejected. |
+| 404 | `{"detail": {"code": "obligation_not_found", "message": "Obligation not found."}}` | Not found / not in the API key's org. |
+| 422 | Standard validation error | Body failed schema validation. |

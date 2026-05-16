@@ -20,6 +20,8 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 
 Starts a new run of the named workflow. Returns `201 Created`. The `workflow_name` path segment is matched against the workflow definition's `name` for your org.
 
+The run row is created and committed, then a `Workflow.RunRequested` event is dispatched to the workflow engine, which executes the definition's entrypoint components. The response returns as soon as the run is created and the event is enqueued — poll [Get a workflow run](#get-a-workflow-run) for progress.
+
 ### Path parameters
 
 <ParamField path="workflow_name" type="string" required>
@@ -126,6 +128,8 @@ print(resp.json())
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "workflow_not_found", "message": "Workflow '...' not found."}}` | No workflow with that name exists for the org. |
+| 409 | `{"detail": {"code": "workflow_disabled", "message": "Workflow '...' is disabled."}}` | The workflow exists but is not enabled. |
+| 502 | `{"detail": {"code": "workflow_dispatch_failed", "message": "Workflow run was created but could not be dispatched. Retry with the same workflow run id (...)."}}` | The run row was created but the dispatch event failed. The run ID is in the message; safe to retry. |
 | 422 | Standard validation error | The request body failed schema validation. See [API conventions](/conventions#validation-errors). |
 
 ## Get a workflow run
@@ -158,7 +162,16 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwr_a8f2c19e3d4b5e6f7a
   "workflow_definition_id": "cbwd_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
   "status": "completed",
   "started_at": 1746576000,
-  "completed_at": 1746579600
+  "completed_at": 1746579600,
+  "steps": [
+    {
+      "step_id": "cbwr_step_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      "component_id": "cbwc_9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+      "component_name": "Send questionnaire",
+      "action_type": "send_questionnaire",
+      "updated_at": 1746576600
+    }
+  ]
 }
 ```
 
@@ -188,12 +201,21 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwr_a8f2c19e3d4b5e6f7a
   Unix timestamp (seconds) when the run finished. Populated only when `status` is `completed` or `failed`; otherwise `null`.
 </ResponseField>
 
+<ResponseField name="steps" type="object[]">
+  Executed steps for this run (empty array if none yet). Each step has:
+  <Expandable title="step fields">
+    <ResponseField name="step_id" type="string">The run-step ID.</ResponseField>
+    <ResponseField name="component_id" type="string | null">The workflow component this step ran.</ResponseField>
+    <ResponseField name="component_name" type="string | null">The component's display name.</ResponseField>
+    <ResponseField name="action_type" type="string | null">The component's action type (e.g. `send_questionnaire`), when available.</ResponseField>
+    <ResponseField name="updated_at" type="integer | null">Unix timestamp (seconds) of the step's last update.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+Poll this endpoint until `status` is terminal (`completed`, `canceled`, or `failed`); `steps[]` grows as the engine progresses. There is no separate checkpoint or free-form output field.
+
 ### Error responses
 
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "workflow_run_not_found", "message": "Workflow run not found."}}` | The `workflow_run_id` does not exist or is not in the API key's org. |
-
-<Note>
-  This endpoint does not return per-step state, checkpoints, or workflow output. Only the fields listed above are returned.
-</Note>

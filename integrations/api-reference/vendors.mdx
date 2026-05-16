@@ -1,6 +1,6 @@
 ---
-title: "Vendors API"
-description: "Retrieve and update individual vendor records."
+title: "Vendors & Services API"
+description: "Create, retrieve, and update vendors, and create child services."
 icon: "building"
 ---
 
@@ -8,146 +8,42 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The Vendors API lets external systems read and update individual vendor records. The public API does **not** create vendors or services — vendor creation happens through the dashboard or the [Import API](/import-api).
+A **vendor** (`cbvndr_...`) is a parent supplier entity. A **service** (`cbsvc_...`) is a child entity under a vendor. This API creates and reads both.
 
-All endpoints are org-scoped to the API key making the request. See [API conventions](/conventions) for authentication, ID formats, timestamps, and the error envelope.
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, idempotency, and the error envelope.
 
-## Retrieve a vendor
+| Method | Path | Idempotent |
+| ------ | ---- | ---------- |
+| `POST` | `/v1/vendors` | Yes (`Idempotency-Key`) |
+| `GET` | `/v1/vendors/{vendor_id}` | — |
+| `PATCH` | `/v1/vendors/{vendor_id}` | No |
+| `POST` | `/v1/vendors/{vendor_id}/services` | No |
+| `PATCH` | `/v1/vendors/{vendor_id}/services/{service_id}` | No |
 
-<ParamField path="method" type="GET">
-  `GET /v1/vendors/{vendor_id}`
+## The primary contact object
+
+Several vendor endpoints accept/return a `primary_contact`. It is the address the inherent-risk-questionnaire portal invite (and other vendor emails) are sent to.
+
+| Field | Type | Notes |
+| ----- | ---- | ----- |
+| `email` | string | **Required**, validated as an email address. |
+| `name` | string \| null | Contact name. |
+| `title` | string \| null | Contact title. |
+| `phone_number` | string \| null | Contact phone. |
+
+On read, `primary_contact` is derived from the vendor's stored contact personnel (first entry with an email), falling back to the vendor's security contact email; it is `null` if neither is set.
+
+## Create a vendor
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors`
 </ParamField>
 
-Returns a single vendor.
-
-### Path parameters
-
-<ParamField path="vendor_id" type="string" required>
-  The Coverbase vendor ID (`cbvndr_...`).
-</ParamField>
-
-### Example request
-
-```bash cURL
-curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
-  -H "Authorization: Bearer ak_live_xxx"
-```
-
-### Example response
-
-```json
-{
-  "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-  "external_id": "ariba-req-7821",
-  "name": "Acme Corporation",
-  "website": "https://acmecorp.com",
-  "description": "Enterprise customer support tooling provider",
-  "hq_location": "San Francisco, CA",
-  "status": "Active",
-  "status_id": "cbst_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
-  "tags": ["processes_pii", "saas"],
-  "risk_analyst_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
-  "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
-  "inherent_risk_level_id": "cbsclvl_7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
-  "residual_risk_level_id": "cbsclvl_3f4e5d6c7b8a9b0c1d2e3f4a5b6c7d8e",
-  "engagement_type": "saas_platform",
-  "use_case": "Customer support ticketing",
-  "created_at": 1732292930,
-  "updated_at": 1746575800
-}
-```
-
-### Response fields
-
-<ResponseField name="id" type="string">
-  The Coverbase vendor ID (`cbvndr_...`).
-</ResponseField>
-
-<ResponseField name="external_id" type="string | null">
-  External system identifier, if one was set when the vendor was imported.
-</ResponseField>
-
-<ResponseField name="name" type="string">
-  Vendor name.
-</ResponseField>
-
-<ResponseField name="website" type="string | null">
-  Vendor website URL.
-</ResponseField>
-
-<ResponseField name="description" type="string | null">
-  Vendor description.
-</ResponseField>
-
-<ResponseField name="hq_location" type="string | null">
-  Headquarters location.
-</ResponseField>
-
-<ResponseField name="status" type="string | null">
-  The vendor's current status as a plain label string (e.g. `"Active"`). Statuses are org-customizable. `null` if the vendor has no status set.
-</ResponseField>
-
-<ResponseField name="status_id" type="string | null">
-  The ID (`cbst_...`) of the vendor's current status record.
-</ResponseField>
-
-<ResponseField name="tags" type="string[]">
-  Array of tag value strings. Empty array if the vendor has no tags.
-</ResponseField>
-
-<ResponseField name="risk_analyst_ids" type="string[]">
-  User IDs (`cbuser_...`) of assigned risk analysts.
-</ResponseField>
-
-<ResponseField name="relationship_owner_ids" type="string[]">
-  User IDs (`cbuser_...`) of relationship owners.
-</ResponseField>
-
-<ResponseField name="inherent_risk_level_id" type="string | null">
-  Scale level ID (`cbsclvl_...`) representing inherent risk.
-</ResponseField>
-
-<ResponseField name="residual_risk_level_id" type="string | null">
-  Scale level ID (`cbsclvl_...`) representing residual risk.
-</ResponseField>
-
-<ResponseField name="engagement_type" type="string | null">
-  Type of engagement with this vendor.
-</ResponseField>
-
-<ResponseField name="use_case" type="string | null">
-  How the vendor is used within the organization.
-</ResponseField>
-
-<ResponseField name="created_at" type="integer">
-  Unix timestamp (seconds) when the vendor record was created.
-</ResponseField>
-
-<ResponseField name="updated_at" type="integer">
-  Unix timestamp (seconds) of the last update.
-</ResponseField>
-
-### Error responses
-
-| Status | Body | When |
-| ------ | ---- | ---- |
-| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | The `vendor_id` does not exist or is not in the API key's org. |
-
-## Update a vendor
-
-<ParamField path="method" type="PATCH">
-  `PATCH /v1/vendors/{vendor_id}`
-</ParamField>
-
-Updates one or more fields on an existing vendor. Only the fields you include are changed; omitted fields are left untouched. The response is the full, refreshed vendor object (same shape as the GET response above).
-
-<Note>
-  Every field in the update body is optional and nullable in the request schema. There is no separate "clear to null" behavior — sending `null` for a field is treated the same as omitting it (the field is not changed).
-</Note>
+Creates a parent vendor. Returns `201 Created` with the full vendor object.
 
 ### Request body
 
-<ParamField body="name" type="string">
+<ParamField body="name" type="string" required>
   Vendor name.
 </ParamField>
 
@@ -163,36 +59,26 @@ Updates one or more fields on an existing vendor. Only the fields you include ar
   Headquarters location.
 </ParamField>
 
-<ParamField body="status_id" type="string">
-  ID (`cbst_...`) of a status record to transition the vendor to.
-</ParamField>
-
-<ParamField body="tag_ids" type="string[]">
-  Replace the entire tag set, using tag IDs (`cbtag_...`).
-</ParamField>
-
-<ParamField body="risk_analyst_ids" type="string[]">
-  Replace the entire set of risk analyst user IDs (`cbuser_...`).
-</ParamField>
-
-<ParamField body="relationship_owner_ids" type="string[]">
-  Replace the entire set of relationship owner user IDs (`cbuser_...`).
-</ParamField>
-
-<ParamField body="inherent_risk_level_id" type="string">
-  Scale level ID (`cbsclvl_...`) for inherent risk.
-</ParamField>
-
-<ParamField body="residual_risk_level_id" type="string">
-  Scale level ID (`cbsclvl_...`) for residual risk.
-</ParamField>
-
 <ParamField body="use_case" type="string">
   How the vendor is used within the organization.
 </ParamField>
 
-<ParamField body="engagement_type" type="string">
-  Type of engagement with this vendor.
+<ParamField body="external_id" type="string">
+  Your system's identifier for this vendor (e.g. an Ariba request ID). Stored and echoed back; useful for correlation.
+</ParamField>
+
+<ParamField body="primary_contact" type="object">
+  The vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)). If supplied, `email` is required and validated.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer ak_...`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional. Replaying the same key within 24 hours returns the original `201` body. See [Idempotency](/conventions#idempotency).
 </ParamField>
 
 ### Example request
@@ -200,12 +86,15 @@ Updates one or more fields on an existing vendor. Only the fields you include ar
 <CodeGroup>
 
 ```bash cURL
-curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+curl -X POST "https://sandbox.api.coverbase.app/v1/vendors" \
   -H "Authorization: Bearer ak_live_xxx" \
+  -H "Idempotency-Key: eqx-vendor-test1" \
   -H "Content-Type: application/json" \
   -d '{
-    "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
-    "use_case": "Legacy system — winding down"
+    "name": "EQX_Sup_Test1",
+    "website": "https://supplier1.example.com",
+    "use_case": "Demo supplier for Equinix sandbox",
+    "external_id": "ariba-req-7821"
   }'
 ```
 
@@ -214,21 +103,21 @@ import os
 import requests
 
 API_KEY = os.environ["COVERBASE_API_KEY"]
-BASE_URL = "https://api.coverbase.app"
+BASE_URL = "https://sandbox.api.coverbase.app"
 
-vendor_id = "cbvndr_e448ba62882143f3ba0c140bb2e30162"
-payload = {
-    "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
-    "use_case": "Legacy system — winding down",
-}
-
-resp = requests.patch(
-    f"{BASE_URL}/v1/vendors/{vendor_id}",
+resp = requests.post(
+    f"{BASE_URL}/v1/vendors",
     headers={
         "Authorization": f"Bearer {API_KEY}",
+        "Idempotency-Key": "eqx-vendor-test1",
         "Content-Type": "application/json",
     },
-    json=payload,
+    json={
+        "name": "EQX_Sup_Test1",
+        "website": "https://supplier1.example.com",
+        "use_case": "Demo supplier for Equinix sandbox",
+        "external_id": "ariba-req-7821",
+    },
     timeout=30,
 )
 resp.raise_for_status()
@@ -239,27 +128,30 @@ print(resp.json())
 
 ### Example response
 
-The full vendor object is returned (identical shape to [Retrieve a vendor](#retrieve-a-vendor)):
+`201 Created` — the full vendor object (see [response fields](#vendor-object) below):
 
 ```json
 {
   "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
   "external_id": "ariba-req-7821",
-  "name": "Acme Corporation",
-  "website": "https://acmecorp.com",
-  "description": "Enterprise customer support tooling provider",
-  "hq_location": "San Francisco, CA",
-  "status": "Offboarding",
-  "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
-  "tags": ["processes_pii", "saas"],
-  "risk_analyst_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
-  "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
-  "inherent_risk_level_id": "cbsclvl_7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
-  "residual_risk_level_id": "cbsclvl_3f4e5d6c7b8a9b0c1d2e3f4a5b6c7d8e",
-  "engagement_type": "saas_platform",
-  "use_case": "Legacy system — winding down",
-  "created_at": 1732292930,
-  "updated_at": 1746576400
+  "name": "EQX_Sup_Test1",
+  "website": "https://supplier1.example.com",
+  "description": null,
+  "hq_location": null,
+  "status": null,
+  "status_id": null,
+  "tags": [],
+  "risk_analyst_ids": [],
+  "relationship_owner_ids": [],
+  "inherent_risk_level_id": null,
+  "residual_risk_level_id": null,
+  "engagement_type": null,
+  "use_case": "Demo supplier for Equinix sandbox",
+  "tier": null,
+  "primary_contact": null,
+  "services": [],
+  "created_at": 1746576000,
+  "updated_at": 1746576000
 }
 ```
 
@@ -267,6 +159,273 @@ The full vendor object is returned (identical shape to [Retrieve a vendor](#retr
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | The update was rejected (e.g. an invalid `status_id` or other reference ID). `message` contains the reason. |
-| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | The `vendor_id` does not exist or is not in the API key's org. |
-| 422 | Standard validation error | The request body failed schema validation. See [API conventions](/conventions#validation-errors). |
+| 400 | `{"detail": {"code": "invalid_vendor", "message": "..."}}` | Creation rejected by a business rule. |
+| 422 | Standard validation error | `name` missing, body malformed, or `primary_contact.email` not a valid email. |
+
+## Create a child service
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/services`
+</ParamField>
+
+Creates a service under an existing vendor. Returns `201 Created`.
+
+<Note>
+  This endpoint does **not** honor `Idempotency-Key` — sending the header is harmless but has no effect. Retrying after a successful create makes a second service.
+</Note>
+
+### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The parent vendor ID (`cbvndr_...`).
+</ParamField>
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  Service name.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Service description.
+</ParamField>
+
+<ParamField body="external_id" type="string">
+  Your system's identifier for this service.
+</ParamField>
+
+<ParamField body="tag_ids" type="string[]">
+  Tag IDs (`cbtag_...`) to attach to the service.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/services" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "EQX_Sup_Test1 — Primary Service" }'
+```
+
+### Example response
+
+`201 Created` (see [the service object](#service-object)):
+
+```json
+{
+  "id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "name": "EQX_Sup_Test1 — Primary Service",
+  "description": null,
+  "external_id": null,
+  "tags": [],
+  "created_at": 1746576000
+}
+```
+
+### Service object
+
+<ResponseField name="id" type="string">Service ID (`cbsvc_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The parent vendor ID.</ResponseField>
+<ResponseField name="name" type="string">Service name.</ResponseField>
+<ResponseField name="description" type="string | null">Service description.</ResponseField>
+<ResponseField name="external_id" type="string | null">Your external identifier, if supplied.</ResponseField>
+<ResponseField name="tags" type="string[]">Tag value strings (empty array if none).</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_service", "message": "..."}}` | Creation rejected by a business rule. |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` does not exist or is not in the API key's org. |
+| 422 | Standard validation error | `name` missing or body malformed. |
+
+## Update a service
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/vendors/{vendor_id}/services/{service_id}`
+</ParamField>
+
+Updates a service. Only included fields change. Returns the updated [service object](#service-object).
+
+### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The parent vendor ID (`cbvndr_...`).
+</ParamField>
+
+<ParamField path="service_id" type="string" required>
+  The service ID (`cbsvc_...`). Must belong to `vendor_id`.
+</ParamField>
+
+### Request body
+
+<ParamField body="name" type="string">Service name.</ParamField>
+<ParamField body="description" type="string">Service description.</ParamField>
+<ParamField body="tag_ids" type="string[]">Replace the service's tag set (tag IDs `cbtag_...`).</ParamField>
+
+<Note>
+  `external_id` is set only at creation and is not updatable here.
+</Note>
+
+### Example request
+
+```bash cURL
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/services/cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "EQX_Sup_Test1 — Renamed Service" }'
+```
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_service", "message": "..."}}` | Update rejected by a business rule. |
+| 404 | `{"detail": {"code": "service_not_found", "message": "Service not found."}}` | The service does not exist, or does not belong to `vendor_id`, or is not in the API key's org. |
+| 422 | Standard validation error | Body failed schema validation. |
+
+## Retrieve a vendor
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}`
+</ParamField>
+
+### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+```json
+{
+  "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "external_id": "ariba-req-7821",
+  "name": "EQX_Sup_Test1",
+  "website": "https://supplier1.example.com",
+  "description": "Enterprise customer support tooling provider",
+  "hq_location": "San Francisco, CA",
+  "status": "Active",
+  "status_id": "cbst_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "tags": ["processes_pii", "saas"],
+  "risk_analyst_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
+  "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
+  "inherent_risk_level_id": "cbsclvl_7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
+  "residual_risk_level_id": "cbsclvl_3f4e5d6c7b8a9b0c1d2e3f4a5b6c7d8e",
+  "engagement_type": "saas_platform",
+  "use_case": "Customer support ticketing",
+  "tier": "tier_2",
+  "primary_contact": {
+    "email": "security@supplier1.example.com",
+    "name": "Jordan Lee",
+    "title": "CISO",
+    "phone_number": "+1-555-0100"
+  },
+  "services": [
+    {
+      "id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
+      "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "name": "EQX_Sup_Test1 — Primary Service",
+      "description": null,
+      "external_id": null,
+      "tags": [],
+      "created_at": 1746576000
+    }
+  ],
+  "created_at": 1732292930,
+  "updated_at": 1746575800
+}
+```
+
+### Vendor object
+
+<ResponseField name="id" type="string">Vendor ID (`cbvndr_...`).</ResponseField>
+<ResponseField name="external_id" type="string | null">Your external identifier, if set.</ResponseField>
+<ResponseField name="name" type="string">Vendor name.</ResponseField>
+<ResponseField name="website" type="string | null">Vendor website URL.</ResponseField>
+<ResponseField name="description" type="string | null">Vendor description.</ResponseField>
+<ResponseField name="hq_location" type="string | null">Headquarters location.</ResponseField>
+<ResponseField name="status" type="string | null">Current status as a plain label string (e.g. `"Active"`). Org-customizable. `null` if unset.</ResponseField>
+<ResponseField name="status_id" type="string | null">ID (`cbst_...`) of the current status record.</ResponseField>
+<ResponseField name="tags" type="string[]">Tag value strings (empty array if none).</ResponseField>
+<ResponseField name="risk_analyst_ids" type="string[]">Assigned risk analyst user IDs (`cbuser_...`).</ResponseField>
+<ResponseField name="relationship_owner_ids" type="string[]">Relationship owner user IDs (`cbuser_...`).</ResponseField>
+<ResponseField name="inherent_risk_level_id" type="string | null">Scale level ID (`cbsclvl_...`) for inherent risk.</ResponseField>
+<ResponseField name="residual_risk_level_id" type="string | null">Scale level ID (`cbsclvl_...`) for residual risk.</ResponseField>
+<ResponseField name="engagement_type" type="string | null">Type of engagement with this vendor.</ResponseField>
+<ResponseField name="use_case" type="string | null">How the vendor is used.</ResponseField>
+<ResponseField name="tier" type="string | null">Derived vendor tier (e.g. `tier_1`, `tier_2`). Set by workflow tiering actions; `null` until derived.</ResponseField>
+<ResponseField name="primary_contact" type="object | null">The vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)), or `null`.</ResponseField>
+<ResponseField name="services" type="object[]">The vendor's child services, each a [service object](#service-object). Empty array if none.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds) of creation.</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds) of last update.</ResponseField>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` does not exist or is not in the API key's org. |
+
+## Update a vendor
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/vendors/{vendor_id}`
+</ParamField>
+
+Updates one or more fields. Only included fields change; omitted fields are untouched. The full, refreshed vendor object is returned.
+
+<Note>
+  Every body field is optional. Sending `null` for a field is treated the same as omitting it (no change) — there is no clear-to-null behavior.
+</Note>
+
+### Request body
+
+<ParamField body="name" type="string">Vendor name.</ParamField>
+<ParamField body="website" type="string">Vendor website URL.</ParamField>
+<ParamField body="description" type="string">Vendor description.</ParamField>
+<ParamField body="hq_location" type="string">Headquarters location.</ParamField>
+<ParamField body="status_id" type="string">ID (`cbst_...`) of a status record to transition to.</ParamField>
+<ParamField body="tag_ids" type="string[]">Replace the entire tag set, using tag IDs (`cbtag_...`).</ParamField>
+<ParamField body="risk_analyst_ids" type="string[]">Replace the risk analyst set (user IDs `cbuser_...`).</ParamField>
+<ParamField body="relationship_owner_ids" type="string[]">Replace the relationship owner set (user IDs `cbuser_...`).</ParamField>
+<ParamField body="inherent_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for inherent risk.</ParamField>
+<ParamField body="residual_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for residual risk.</ParamField>
+<ParamField body="use_case" type="string">How the vendor is used.</ParamField>
+<ParamField body="engagement_type" type="string">Type of engagement.</ParamField>
+<ParamField body="primary_contact" type="object">Replace the vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)). When supplied, `email` is required and validated.</ParamField>
+
+<Note>
+  `external_id` and `tier` are **not** updatable through this endpoint (`external_id` is set only at creation; `tier` is derived by workflows).
+</Note>
+
+### Example request
+
+```bash cURL
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
+    "use_case": "Legacy system — winding down"
+  }'
+```
+
+The response is the full vendor object (same shape as [Retrieve a vendor](#vendor-object)).
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | Update rejected (e.g. an invalid reference ID). |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` not found / not in org. |
+| 422 | Standard validation error | Body failed schema validation. |
