@@ -1,0 +1,128 @@
+---
+title: "API conventions"
+description: "Authentication, IDs, timestamps, idempotency, and the error envelope shared by all endpoints."
+icon: "ruler-combined"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+This page covers behavior shared by every public API endpoint: the resource API surface (`/v1/vendors`, `/v1/assessments`, `/v1/workflows`, `/v1/webhooks`).
+
+## Base URL
+
+```text
+https://api.coverbase.app
+```
+
+All requests are JSON over HTTPS. Paths are versioned under `/v1`.
+
+<Note>
+  A separate sandbox environment exists for integration testing. Its base host is provided by Coverbase as part of onboarding rather than derived here — confirm the exact sandbox URL with your account team before pointing integration tests at it.
+</Note>
+
+## Authentication
+
+Every request must send a bearer token:
+
+```text
+Authorization: Bearer ak_...
+```
+
+The public API accepts two credential types:
+
+- **Service-account API key** (`ak_...`) — the primary credential for integrations. Keys are issued by a Coverbase admin and are scoped to a single organization. All data the key can read or write is implicitly scoped to that org.
+- **Logged-in user JWT** — the same session token the dashboard uses. Useful for first-party scripts running as a user.
+
+There is no unauthenticated surface. An invalid or expired key returns `401`. A credential whose role is not permitted for the public API returns `401` with `"Unauthorized role."`.
+
+### Test your credentials
+
+`GET /v1/utils/authtest` returns `200` and `{"msg": "Auth successful"}` when the token is valid. It accepts both API keys and user JWTs.
+
+```bash cURL
+curl -H "Authorization: Bearer ak_live_xxx" \
+  https://api.coverbase.app/v1/utils/authtest
+```
+
+## IDs
+
+Resource IDs are opaque, prefixed strings: `<prefix>_<32 hex characters>`. Treat them as opaque — do not parse them. Prefixes you will encounter on the public API:
+
+| Prefix | Resource |
+| ------ | -------- |
+| `cbvndr_` | Vendor |
+| `cbsvc_` | Service |
+| `cbqsrw_` | Assessment |
+| `cbwr_` | Workflow run |
+| `cbwd_` | Workflow definition |
+| `cbwh_` | Webhook subscription |
+| `cbuser_` | User (assignees, risk analysts, relationship owners) |
+| `cbctst_` | Control set |
+| `cbst_` | Status |
+| `cbtag_` | Tag |
+| `cbsclvl_` | Scale level (inherent/residual risk level) |
+| `cbevt_` | Webhook delivery event |
+
+## Timestamps
+
+All timestamps are **Unix epoch seconds** (integers), not milliseconds and not ISO-8601 strings. Examples: `created_at`, `updated_at`, `initiated_at`, `started_at`, `completed_at`, `occurred_at`, `attempted_at`.
+
+## Idempotency
+
+State-changing endpoints that support retries accept an optional `Idempotency-Key` request header:
+
+| Endpoint | Honors `Idempotency-Key` |
+| -------- | ------------------------ |
+| `POST /v1/assessments` | Yes |
+| `POST /v1/workflows/{workflow_name}/run` | Yes |
+| `POST /v1/webhooks` and other webhook writes | No |
+| `PATCH /v1/vendors/{vendor_id}` | No |
+
+Behavior: keys are scoped to **(org, endpoint, key)** and expire **24 hours** after first use. If the same key is replayed within that window for the same endpoint, the **original response body is returned verbatim** and no new resource is created. There is no conflict error — a replay is not rejected, it is replayed.
+
+<Tip>
+  Use a stable identifier from the source system (a procurement request ID, a ticket number) as the idempotency key so source-side retries deduplicate naturally.
+</Tip>
+
+## Errors
+
+Application errors use FastAPI's `detail` envelope. Most endpoints return a coded object:
+
+```json
+{ "detail": { "code": "vendor_not_found", "message": "Vendor not found." } }
+```
+
+A few endpoints return a free-form message instead of a `code`:
+
+```json
+{ "detail": { "error": "..." } }
+```
+
+(`POST /v1/assessments` uses the `error` form for creation failures.)
+
+### Validation errors
+
+Request bodies that fail schema validation return `422` with FastAPI's standard validation array:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "vendor_id"],
+      "msg": "Field required",
+      "type": "missing"
+    }
+  ]
+}
+```
+
+### Common status codes
+
+| Status | Meaning |
+| ------ | ------- |
+| `400` | Request understood but rejected by a business rule (bad reference ID, weak secret, non-HTTPS URL). |
+| `401` | Missing/invalid credential, or a role not allowed on the public API. |
+| `404` | Resource not found or not in the API key's org. |
+| `422` | Request body failed schema validation. |

@@ -1,6 +1,6 @@
 ---
 title: "Webhooks API"
-description: "Register, list, update, and delete webhook subscriptions."
+description: "Register, list, update, delete, and test webhook subscriptions."
 icon: "arrow-right-from-bracket"
 ---
 
@@ -8,7 +8,9 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The Webhooks API manages outbound webhook subscriptions. For payload format, signature verification, and delivery guarantees, see the [Webhooks](/integrations/webhooks) reference page.
+The Webhooks API manages webhook subscription records and can send a manual test delivery to a registered endpoint. For the delivery format, signature verification, and the event catalog, see the [Webhooks](/integrations/webhooks) reference.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication and the error envelope.
 
 ## Register a webhook
 
@@ -16,28 +18,28 @@ The Webhooks API manages outbound webhook subscriptions. For payload format, sig
   `POST /v1/webhooks`
 </ParamField>
 
-Registers a new webhook endpoint subscribed to a list of event types.
+Creates a webhook subscription. Returns `201 Created`.
 
 ### Request body
 
 <ParamField body="url" type="string" required>
-  The HTTPS endpoint Coverbase will POST to. Must be a publicly reachable URL.
+  The endpoint Coverbase will POST to. **Must start with `https://`.**
 </ParamField>
 
-<ParamField body="events" type="array" required>
-  Array of event type strings to subscribe to in dot-notation format (e.g., `vendor.created`, `assessment.completed`). See the [event taxonomy](/integrations/webhooks#event-types) for available types. The external API uses dot-notation (`vendor.created`) which maps to internal enum values (`VENDOR_CREATED`).
+<ParamField body="events" type="string[]" required>
+  Event type strings to subscribe to. This is a free-form list of strings; it is **not** validated against a fixed enum at registration time. Use the exact event values from the [event catalog](/integrations/webhooks#event-catalog) (e.g. `Vendor.Created`).
 </ParamField>
 
 <ParamField body="secret" type="string" required>
-  A shared secret used to sign deliveries with HMAC SHA256. Provide a high-entropy random string and store it in your secrets manager.
+  Shared secret used to sign deliveries (HMAC-SHA256). **Must be at least 16 characters.** Write-only — it is never returned in any response.
 </ParamField>
 
 <ParamField body="description" type="string">
-  Optional human-readable label for the webhook. Visible in the dashboard.
+  Optional human-readable label.
 </ParamField>
 
 <ParamField body="enabled" type="boolean">
-  Defaults to `true`. Set to `false` to register the webhook without activating it.
+  Defaults to `true`. When `false`, the subscription is created in a disabled state.
 </ParamField>
 
 ### Example request
@@ -46,18 +48,12 @@ Registers a new webhook endpoint subscribed to a list of event types.
 
 ```bash cURL
 curl -X POST "https://api.coverbase.app/v1/webhooks" \
-  -H "Authorization: Bearer <api-key>" \
+  -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://hooks.example.com/coverbase",
-    "events": [
-      "vendor.created",
-      "assessment.completed",
-      "evaluation.flagged",
-      "contract.renewal_due",
-      "workflow.checkpoint"
-    ],
-    "secret": "whsec_a1b2c3d4e5f6...",
+    "events": ["Vendor.Created", "Vendor.Updated", "Assessment.Created"],
+    "secret": "whsec_a1b2c3d4e5f6a7b8c9d0e1f2",
     "description": "Primary GRC integration"
   }'
 ```
@@ -67,30 +63,25 @@ import os
 import secrets
 import requests
 
-API_KEY = os.getenv("COVERBASE_API_KEY")
+API_KEY = os.environ["COVERBASE_API_KEY"]
 BASE_URL = "https://api.coverbase.app"
 
-webhook_secret = f"whsec_{secrets.token_hex(32)}"
+webhook_secret = f"whsec_{secrets.token_hex(24)}"  # >= 16 chars
 
-headers = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json",
-}
-
-payload = {
-    "url": "https://hooks.example.com/coverbase",
-    "events": [
-        "vendor.created",
-        "assessment.completed",
-        "evaluation.flagged",
-        "contract.renewal_due",
-        "workflow.checkpoint",
-    ],
-    "secret": webhook_secret,
-    "description": "Primary GRC integration",
-}
-
-resp = requests.post(f"{BASE_URL}/v1/webhooks", headers=headers, json=payload, timeout=30)
+resp = requests.post(
+    f"{BASE_URL}/v1/webhooks",
+    headers={
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    },
+    json={
+        "url": "https://hooks.example.com/coverbase",
+        "events": ["Vendor.Created", "Vendor.Updated", "Assessment.Created"],
+        "secret": webhook_secret,
+        "description": "Primary GRC integration",
+    },
+    timeout=30,
+)
 resp.raise_for_status()
 print(resp.json())
 ```
@@ -99,17 +90,13 @@ print(resp.json())
 
 ### Example response
 
+`201 Created`:
+
 ```json
 {
   "id": "cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
   "url": "https://hooks.example.com/coverbase",
-  "events": [
-    "vendor.created",
-    "assessment.completed",
-    "evaluation.flagged",
-    "contract.renewal_due",
-    "workflow.checkpoint"
-  ],
+  "events": ["Vendor.Created", "Vendor.Updated", "Assessment.Created"],
   "description": "Primary GRC integration",
   "enabled": true,
   "created_at": 1746576000
@@ -117,8 +104,42 @@ print(resp.json())
 ```
 
 <Warning>
-  The `secret` is never returned in any response after creation. Save it on your side at registration time. If lost, rotate via the update endpoint.
+  The `secret` is never returned after creation. Store it at registration time. If lost, set a new one via the update endpoint.
 </Warning>
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  Webhook ID (`cbwh_...`).
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  The registered HTTPS endpoint.
+</ResponseField>
+
+<ResponseField name="events" type="string[]">
+  Subscribed event strings.
+</ResponseField>
+
+<ResponseField name="description" type="string | null">
+  The label, if set.
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  `true` when the subscription is active.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer">
+  Unix timestamp (seconds) when the webhook was created.
+</ResponseField>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "weak_secret", "message": "Secret must be at least 16 characters."}}` | `secret` is shorter than 16 characters. Checked before the URL. |
+| 400 | `{"detail": {"code": "invalid_url", "message": "Webhook URL must use HTTPS."}}` | `url` does not start with `https://`. |
+| 422 | Standard validation error | Required fields missing or wrong type. See [API conventions](/conventions#validation-errors). |
 
 ## List webhooks
 
@@ -126,7 +147,7 @@ print(resp.json())
   `GET /v1/webhooks`
 </ParamField>
 
-Returns all webhook subscriptions for the org.
+Returns all (non-archived) webhook subscriptions for the org.
 
 ### Example response
 
@@ -136,7 +157,7 @@ Returns all webhook subscriptions for the org.
     {
       "id": "cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
       "url": "https://hooks.example.com/coverbase",
-      "events": ["vendor.created", "assessment.completed"],
+      "events": ["Vendor.Created", "Assessment.Created"],
       "description": "Primary GRC integration",
       "enabled": true,
       "created_at": 1746576000
@@ -151,32 +172,53 @@ Returns all webhook subscriptions for the org.
   `PATCH /v1/webhooks/{webhook_id}`
 </ParamField>
 
-Updates one or more fields on an existing webhook. Use this to add or remove event subscriptions, rotate the secret, or disable a webhook without deleting it.
+Updates a webhook subscription. Only the fields you include are changed; omitted or `null` fields are left unchanged. Returns the updated webhook (same shape as the create response).
 
-### Example request
+### Request body
 
-```bash cURL
+<ParamField body="url" type="string">
+  New endpoint. If provided, must start with `https://`.
+</ParamField>
+
+<ParamField body="events" type="string[]">
+  Replace the subscribed event list.
+</ParamField>
+
+<ParamField body="secret" type="string">
+  Rotate the signing secret. If provided, must be at least 16 characters.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Update the label.
+</ParamField>
+
+<ParamField body="enabled" type="boolean">
+  Enable or disable the subscription.
+</ParamField>
+
+### Example requests
+
+```bash Update events
 curl -X PATCH "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9" \
-  -H "Authorization: Bearer <api-key>" \
+  -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{
-    "events": [
-      "vendor.created",
-      "vendor.status_changed",
-      "assessment.completed",
-      "evaluation.flagged"
-    ]
-  }'
+  -d '{ "events": ["Vendor.Created", "Vendor.Updated", "Assessment.StatusChanged"] }'
 ```
 
-Rotate the signing secret:
-
-```bash cURL
+```bash Rotate the secret
 curl -X PATCH "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9" \
-  -H "Authorization: Bearer <api-key>" \
+  -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{ "secret": "whsec_newsecretvalue..." }'
+  -d '{ "secret": "whsec_newsecretvalueatleast16" }'
 ```
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "weak_secret", "message": "..."}}` | A new `secret` shorter than 16 characters was supplied. |
+| 400 | `{"detail": {"code": "invalid_url", "message": "Webhook URL must use HTTPS."}}` | A new `url` not starting with `https://` was supplied. |
+| 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |
 
 ## Delete a webhook
 
@@ -184,14 +226,17 @@ curl -X PATCH "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4
   `DELETE /v1/webhooks/{webhook_id}`
 </ParamField>
 
-Permanently removes the webhook subscription. In-flight deliveries are not cancelled; new events stop firing.
+Archives (soft-deletes) the webhook subscription. Returns `204 No Content`.
 
 ```bash cURL
 curl -X DELETE "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9" \
-  -H "Authorization: Bearer <api-key>"
+  -H "Authorization: Bearer ak_live_xxx"
 ```
 
-Returns `204 No Content` on success.
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 204 | _(empty)_ | Archived successfully. |
+| 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |
 
 ## Test a webhook
 
@@ -199,21 +244,21 @@ Returns `204 No Content` on success.
   `POST /v1/webhooks/{webhook_id}/test`
 </ParamField>
 
-Sends a test event to the webhook URL. Useful for confirming endpoint reachability and signature verification during integration setup.
+Enqueues a test delivery to the webhook's URL. The delivery is dispatched asynchronously, so the response confirms the test was **enqueued** — it does not contain the receiver's HTTP status.
 
 ### Request body
 
 <ParamField body="event_type" type="string">
-  Optional event type to simulate. Defaults to `webhook.test`. Must be one of the events the webhook is subscribed to (or `webhook.test`).
+  Event type string to send in the test delivery. Defaults to `webhook.test`.
 </ParamField>
 
 ### Example request
 
 ```bash cURL
 curl -X POST "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9/test" \
-  -H "Authorization: Bearer <api-key>" \
+  -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{ "event_type": "assessment.completed" }'
+  -d '{ "event_type": "Assessment.Created" }'
 ```
 
 ### Example response
@@ -222,17 +267,18 @@ curl -X POST "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c
 {
   "event_id": "cbevt_test_8b3c1a4d9e7f2c5b6a8d1e3f9c7b4a2e",
   "delivered": true,
-  "response_status": 200,
-  "response_time_ms": 142,
+  "response_status": null,
+  "response_time_ms": null,
   "attempted_at": 1746576180
 }
 ```
 
-## Error responses
+<Note>
+  `delivered` reflects that the test was **enqueued**, not that the receiver accepted it. `response_status` and `response_time_ms` are always `null` on this response because delivery happens out of band. The test payload's `data` is `{"test": true}`.
+</Note>
 
-| Status | Code | When |
+### Error responses
+
+| Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `invalid_url` | The URL is malformed, not HTTPS, or not publicly reachable. |
-| 400 | `invalid_event_type` | One or more event types are not recognized. |
-| 400 | `weak_secret` | The provided secret does not meet minimum entropy requirements. |
-| 404 | `webhook_not_found` | The provided `webhook_id` does not exist or is not accessible to the API key. |
+| 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |

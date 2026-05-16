@@ -42,27 +42,21 @@ GRC tooling                                      Icertis
   The orchestration layer is configured once during onboarding. After that, both the configuration and every running workflow instance are reachable through the API. You can interrupt, modify, or replace any step at any time, through either the dashboard or the API.
 </Info>
 
-## Primary objects
+## Public API surface
 
-All workflow logic operates on a small set of primary objects. Each supports full CRUD via the API.
+The public resource API is intentionally small and stable. It covers exactly these operations:
 
-| Object | Description |
-| ------ | ----------- |
-| `vendor` | A third party your organization engages with. |
-| `service` | A specific product or service a vendor provides. One vendor can have many services. |
-| `engagement` | A specific use of a service by a business unit, with its own risk profile. Accessible via `/v1/engagement`. |
-| `assessment` | An analysis of a vendor or service against one or more control sets. |
-| `evaluation` | The result of analysis against a single control inside an assessment. |
-| `document` | Evidence files such as SOC 2, ISO 27001, pen tests, policies, and contracts. |
-| `contract` | A legal agreement with a vendor, including MSAs, DPAs, SOWs, and BAAs. |
-| `entity` | A counterparty or end party referenced in a contract or relationship. |
-| `control` | An atomic requirement used to evaluate a vendor. |
-| `control_set` | A versioned collection of controls representing an evaluation standard. |
+| Resource | Operations |
+| -------- | ---------- |
+| Vendor | Get, update (`GET`/`PATCH /v1/vendors/{id}`) |
+| Assessment | Create, get (`POST`/`GET /v1/assessments`) |
+| Workflow | Run, get run (`POST /v1/workflows/{name}/run`, `GET /v1/workflows/runs/{id}`) |
+| Webhook | Create, list, update, delete, test (`/v1/webhooks`) |
 
-When a workflow trigger fires, the payload references these objects by Coverbase ID. When a webhook fires, it references the same IDs, so your downstream systems can correlate events back to records they care about.
+Vendor and service creation, contracts, documents, controls, and findings are managed through the dashboard or the [Import API](/import-api) — they are not part of this resource API. Other domain objects (services, control sets, users, statuses) are referenced **by ID** in the requests and responses above, but are not independently CRUD-able through the public API.
 
 <Info>
-  The external API documented here uses plural route names (`/v1/vendors`, `/v1/assessments`). Internal dashboard routes use singular nouns (`/v1/vendor`, `/v1/assessment`). If you encounter both forms, the plural routes are the public API surface intended for external integrations.
+  The public API uses plural route names (`/v1/vendors`, `/v1/assessments`). Internal dashboard routes use singular nouns and are not part of the supported public surface.
 </Info>
 
 ## Where to go next
