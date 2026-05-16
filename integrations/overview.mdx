@@ -44,16 +44,20 @@ GRC tooling                                      Icertis
 
 ## Public API surface
 
-The public resource API is intentionally small and stable. It covers exactly these operations:
+The public resource API covers these operations:
 
 | Resource | Operations |
 | -------- | ---------- |
-| Vendor | Get, update (`GET`/`PATCH /v1/vendors/{id}`) |
+| Vendor | Create, get, update (`POST`/`GET`/`PATCH /v1/vendors`) |
+| Service | Create under a vendor (`POST /v1/vendors/{id}/services`) |
+| User | Provision, get, update role / deprovision (`POST`/`GET`/`PATCH /v1/users`) |
 | Assessment | Create, get (`POST`/`GET /v1/assessments`) |
-| Workflow | Run, get run (`POST /v1/workflows/{name}/run`, `GET /v1/workflows/runs/{id}`) |
+| Finding | List, create, get, status-sync (`/v1/findings`) |
+| Obligation | List, create, get, status-sync (`/v1/obligations`) |
+| Workflow | Run, get run with steps (`POST /v1/workflows/{name}/run`, `GET /v1/workflows/runs/{id}`) |
 | Webhook | Create, list, update, delete, test (`/v1/webhooks`) |
 
-Vendor and service creation, contracts, documents, controls, and findings are managed through the dashboard or the [Import API](/import-api) — they are not part of this resource API. Other domain objects (services, control sets, users, statuses) are referenced **by ID** in the requests and responses above, but are not independently CRUD-able through the public API.
+Bulk vendor/assessment loading is also available through the separate [Import API](/import-api). Control sets, statuses, tags, and scale levels are referenced **by ID** in these requests/responses; configure them in the dashboard.
 
 <Info>
   The public API uses plural route names (`/v1/vendors`, `/v1/assessments`). Internal dashboard routes use singular nouns and are not part of the supported public surface.

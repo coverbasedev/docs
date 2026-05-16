@@ -1,0 +1,210 @@
+---
+title: "Findings API"
+description: "List, create, retrieve, and status-sync findings for GRC round-trips."
+icon: "triangle-exclamation"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A **finding** (`cbtask_...`) is an issue raised against a vendor or an assessment. This API exists for GRC sync and external visibility: pull findings into your GRC tool, push status changes back.
+
+<Note>
+  Findings are internally modeled as "tasks", so finding IDs use the `cbtask_` prefix. A `cbtask_...` value **is** a finding ID.
+</Note>
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior, including [pagination](/conventions#pagination).
+
+| Method | Path |
+| ------ | ---- |
+| `GET` | `/v1/findings` |
+| `POST` | `/v1/findings` |
+| `GET` | `/v1/findings/{finding_id}` |
+| `PATCH` | `/v1/findings/{finding_id}` |
+
+None of these honor `Idempotency-Key`.
+
+## List findings
+
+<ParamField path="method" type="GET">
+  `GET /v1/findings`
+</ParamField>
+
+### Query parameters
+
+<ParamField query="vendor_id" type="string">
+  Filter to findings on a vendor (`cbvndr_...`).
+</ParamField>
+
+<ParamField query="assessment_id" type="string">
+  Filter to findings on an assessment (`cbqsrw_...`).
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Page size. Default `50`, range `1`–`200`.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Page offset. Default `0`.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/findings?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&limit=50&offset=0" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+```json
+{
+  "items": [
+    {
+      "id": "cbtask_9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+      "public_idx": "F-142",
+      "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "assessment_id": "cbqsrw_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
+      "finding_status_id": "cbst_open1234567890abcdef1234567890ab",
+      "due_date": 1749168000,
+      "is_archived": false,
+      "created_at": 1746576000,
+      "updated_at": 1746576400
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### Finding object
+
+<ResponseField name="id" type="string">Finding ID (`cbtask_...`).</ResponseField>
+<ResponseField name="public_idx" type="string | null">Human-readable index (e.g. `F-142`), if assigned.</ResponseField>
+<ResponseField name="vendor_id" type="string | null">Vendor the finding is on, if any.</ResponseField>
+<ResponseField name="assessment_id" type="string | null">Assessment the finding is on, if any.</ResponseField>
+<ResponseField name="finding_status_id" type="string | null">Status record ID (`cbst_...`).</ResponseField>
+<ResponseField name="due_date" type="integer | null">Unix timestamp (seconds), if set.</ResponseField>
+<ResponseField name="is_archived" type="boolean">`true` if archived.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+The list envelope adds `total` (full filtered count), `limit`, and `offset` — see [pagination](/conventions#pagination).
+
+## Create a finding
+
+<ParamField path="method" type="POST">
+  `POST /v1/findings`
+</ParamField>
+
+Returns `201 Created`. **Exactly one of `vendor_id` or `assessment_id` is required** (at least one must be present).
+
+### Request body
+
+<ParamField body="title" type="string" required>
+  Finding title.
+</ParamField>
+
+<ParamField body="body" type="string">
+  Finding detail / description.
+</ParamField>
+
+<ParamField body="vendor_id" type="string">
+  Vendor the finding is raised against (`cbvndr_...`). Required if `assessment_id` is omitted.
+</ParamField>
+
+<ParamField body="assessment_id" type="string">
+  Assessment the finding is raised against (`cbqsrw_...`). Required if `vendor_id` is omitted.
+</ParamField>
+
+<ParamField body="finding_status_id" type="string">
+  Initial status record ID (`cbst_...`).
+</ParamField>
+
+<ParamField body="due_date" type="integer">
+  Unix timestamp (seconds).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/findings" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Missing SOC 2 Type II report",
+    "body": "Vendor has not provided a current SOC 2 Type II.",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "due_date": 1749168000
+  }'
+```
+
+Returns the [finding object](#finding-object).
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_finding", "message": "Either vendor_id or assessment_id is required."}}` | Neither `vendor_id` nor `assessment_id` was provided. |
+| 400 | `{"detail": {"code": "invalid_finding", "message": "..."}}` | Other business-rule rejection (e.g. bad reference ID). |
+| 422 | Standard validation error | `title` missing or body malformed. |
+
+## Retrieve a finding
+
+<ParamField path="method" type="GET">
+  `GET /v1/findings/{finding_id}`
+</ParamField>
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/findings/cbtask_9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+Returns the [finding object](#finding-object).
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "finding_not_found", "message": "Finding not found."}}` | Not found / not in the API key's org. |
+
+## Update / status-sync a finding
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/findings/{finding_id}`
+</ParamField>
+
+Designed for the GRC round-trip: push status and due-date changes (or archive) back into Coverbase. Only included fields change.
+
+### Request body
+
+<ParamField body="finding_status_id" type="string">
+  New status record ID (`cbst_...`).
+</ParamField>
+
+<ParamField body="due_date" type="integer">
+  New due date (Unix seconds).
+</ParamField>
+
+<ParamField body="is_archived" type="boolean">
+  Archive (`true`) or restore (`false`) the finding.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/findings/cbtask_9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "finding_status_id": "cbst_resolved234567890abcdef1234567890" }'
+```
+
+Returns the refreshed [finding object](#finding-object).
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | Update rejected (e.g. invalid status ID). |
+| 404 | `{"detail": {"code": "finding_not_found", "message": "Finding not found."}}` | Not found / not in the API key's org. |
+| 422 | Standard validation error | Body failed schema validation. |
