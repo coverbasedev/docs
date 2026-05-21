@@ -165,10 +165,17 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwr_a8f2c19e3d4b5e6f7a
   "completed_at": 1746579600,
   "steps": [
     {
-      "step_id": "cbwr_step_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      "step_id": "cbwrs_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
       "component_id": "cbwc_9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
       "component_name": "Send questionnaire",
       "action_type": "send_questionnaire",
+      "status": "success",
+      "message": null,
+      "artifacts": [
+        { "artifact_type": "vendor", "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162", "role": "trigger" },
+        { "artifact_type": "questionnaire_response", "id": "cbqsrw_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a", "role": "result" }
+      ],
+      "created_at": 1746576540,
       "updated_at": 1746576600
     }
   ]
@@ -198,24 +205,117 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwr_a8f2c19e3d4b5e6f7a
 </ResponseField>
 
 <ResponseField name="completed_at" type="integer | null">
-  Unix timestamp (seconds) when the run finished. Populated only when `status` is `completed` or `failed`; otherwise `null`.
+  Unix timestamp (seconds) when the run finished. Populated only when `status` is `completed`, `failed`, or `canceled`; otherwise `null`.
 </ResponseField>
 
 <ResponseField name="steps" type="object[]">
-  Executed steps for this run (empty array if none yet). Each step has:
+  Executed steps for this run (empty array if none yet). Each step records both the component that ran and the outcome of that component's action. Each step has:
   <Expandable title="step fields">
-    <ResponseField name="step_id" type="string">The run-step ID.</ResponseField>
+    <ResponseField name="step_id" type="string">The run-step ID (`cbwrs_...`).</ResponseField>
     <ResponseField name="component_id" type="string | null">The workflow component this step ran.</ResponseField>
     <ResponseField name="component_name" type="string | null">The component's display name.</ResponseField>
     <ResponseField name="action_type" type="string | null">The component's action type (e.g. `send_questionnaire`), when available.</ResponseField>
+    <ResponseField name="status" type="string | null">Action outcome. One of `success`, `failed`, `skipped`, or `null` if the engine has not yet recorded a result for this step.</ResponseField>
+    <ResponseField name="message" type="string | null">Optional human-readable explanation. Set on failure to surface the error; set on `skipped` to explain why; usually `null` on success.</ResponseField>
+    <ResponseField name="artifacts" type="object[]">
+      Entities the step consumed or produced. Each entry has `artifact_type` (the canonical target type, e.g. `vendor`, `assessment`, `questionnaire_response`), `id` (the entity ID), and `role` (`trigger` for entities that fed into the step; `result` for entities the step created or modified).
+    </ResponseField>
+    <ResponseField name="created_at" type="integer | null">Unix timestamp (seconds) when the step was recorded.</ResponseField>
     <ResponseField name="updated_at" type="integer | null">Unix timestamp (seconds) of the step's last update.</ResponseField>
   </Expandable>
 </ResponseField>
 
-Poll this endpoint until `status` is terminal (`completed`, `canceled`, or `failed`); `steps[]` grows as the engine progresses. There is no separate checkpoint or free-form output field.
+Poll this endpoint until `status` is terminal (`completed`, `canceled`, or `failed`); `steps[]` grows as the engine progresses, and each step's `status` and `artifacts` reflect what that stage actually did.
 
 ### Error responses
 
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "workflow_run_not_found", "message": "Workflow run not found."}}` | The `workflow_run_id` does not exist or is not in the API key's org. |
+
+## List workflow runs
+
+<ParamField path="method" type="GET">
+  `GET /v1/workflows/runs`
+</ParamField>
+
+Returns workflow runs for the org, newest first. Use this when you don't already know the run ID — for example, to discover runs created by other systems or by Coverbase's internal automations, or to reconcile run history against an external scheduler.
+
+### Query parameters
+
+<ParamField query="workflow_name" type="string">
+  Filter to runs of a specific workflow definition by name. Returns `404 workflow_not_found` if no workflow with that name exists for the org.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by run status. Repeat to include multiple statuses, e.g. `?status=started&status=failed`. Valid values: `started`, `completed`, `canceled`, `failed`.
+</ParamField>
+
+<ParamField query="created_at_after" type="integer">
+  Unix timestamp (seconds). Include only runs created at or after this time.
+</ParamField>
+
+<ParamField query="created_at_before" type="integer">
+  Unix timestamp (seconds). Include only runs created at or before this time.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Page size. Min `1`, max `500`.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Pagination offset.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/workflows/runs?workflow_name=quarterly-privacy-sweep&status=failed&limit=20" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+```json
+{
+  "data": [
+    {
+      "workflow_run_id": "cbwr_a8f2c19e3d4b5e6f7a8b9c0d1e2f3a4b",
+      "workflow_name": "quarterly-privacy-sweep",
+      "workflow_definition_id": "cbwd_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      "status": "failed",
+      "started_at": 1746576000,
+      "completed_at": 1746576720,
+      "step_count": 3
+    }
+  ],
+  "total": 1,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+### Response fields
+
+<ResponseField name="data" type="object[]">
+  Paginated list of run summaries. Each entry mirrors the keys of [Get a workflow run](#get-a-workflow-run), minus `steps[]` and plus `step_count`. Fetch the full run via `GET /v1/workflows/runs/{workflow_run_id}` when you need per-stage outcomes.
+</ResponseField>
+
+<ResponseField name="total" type="integer">
+  Total number of runs matching the filters (across all pages).
+</ResponseField>
+
+<ResponseField name="limit" type="integer">
+  Echoes the requested page size.
+</ResponseField>
+
+<ResponseField name="offset" type="integer">
+  Echoes the requested offset.
+</ResponseField>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "workflow_not_found", "message": "Workflow '...' not found."}}` | `workflow_name` was supplied but no workflow with that name exists for the org. |
+| 422 | Standard validation error | A query parameter failed validation (e.g. `limit` out of range, malformed `status`). |

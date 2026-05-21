@@ -4,6 +4,18 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-05-21 — Self-serve API keys, workflow run listing, assessment archive, audit log
+
+Additive features answering common customer questions on day-2 operations of the public API.
+
+### Additive
+
+- **Self-serve `ak_*` API key management.** New [API Keys API](/integrations/api-reference/api-keys) lets an org admin list, create, rotate, and revoke their organization's public-API keys without contacting Coverbase support. Rotation is atomic: a new key is minted, then the old one is revoked; if the revoke fails the new key is rolled back so there's never a window with two simultaneously-valid keys. The endpoints are JWT-only (`ak_*` keys cannot manage other keys, by design).
+- **`GET /v1/workflows/runs` — list workflow runs.** Page through workflow run history without already knowing the run ID. Filterable by `workflow_name`, `status` (repeatable), and a created-at time range. Returns a `step_count` per run for at-a-glance progress. See [Workflows API → List workflow runs](/integrations/api-reference/workflows#list-workflow-runs).
+- **Per-stage workflow outcomes.** `GET /v1/workflows/runs/{id}` now surfaces the action outcome of every executed step: `status` (`success` / `failed` / `skipped`), an optional `message` (carries the failure reason on failure), the consumed and produced `artifacts` (with `role` of `trigger` or `result`), and the step's `created_at`. The previous response (component id, name, action_type, updated_at) is unchanged so this is additive. `completed_at` now also populates on `canceled`.
+- **`DELETE /v1/assessments/{id}` — cancel / archive an assessment.** Mirrors the in-product Archive action: soft-deletes the assessment plus its evals and findings, closes the portal if open, and best-effort cancels any in-flight workflow runs targeting the assessment. Idempotent at the row level. See [Assessments API → Cancel (archive) an assessment](/integrations/api-reference/assessments#cancel-archive-an-assessment).
+- **Public-API audit log.** Every authenticated `/v1/*` request now writes a `CbActivity` row (`type=external_api_call`, `target_type=external_api_request`) with the method, path, route template, status code, duration, query parameter names, `ak_*` key id+name, client IP, and a request correlation ID. Visible to admins in **Settings → Audit log** under the *Integrations* group, and via `GET /v1/system_audit_log`. Request and response bodies are never persisted. See [API conventions → Public API audit log](/conventions#public-api-audit-log).
+
 ## 2026-05-16 — Webhook event-type validation, SSRF restrictions, delivery history, and API IP allowlist
 
 Reconciled against the `claude/webhook-ui-workflow` source branch. Two breaking changes and two additive features.
