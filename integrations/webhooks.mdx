@@ -116,11 +116,22 @@ app.post(
 | HTTP method | `POST` |
 | Connection timeout | 10 seconds per attempt |
 | Retries | Up to 5 attempts on failure (timeout or connection error) |
+| Retry backoff | None — Hatchet retries immediately; no exponential backoff, no jitter |
 | Ordering | Not guaranteed — deliveries are unordered |
 | Guarantee | At-least-once — the same `event_id` may be delivered more than once |
 | Endpoint requirement | Public HTTPS endpoint (see [URL restrictions](#url-restrictions)) |
 
-`occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` quickly to acknowledge; non-`2xx`, timeouts, and connection errors are retried up to 5 times.
+`occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` quickly to acknowledge; non-`2xx`, timeouts, and connection errors are retried up to 5 times in rapid succession.
+
+### Source IP
+
+Coverbase does **not** publish a fixed egress IP range for outbound webhook deliveries. Authenticate the sender by **HMAC signature verification** (see [Signature verification](#signature-verification)) — not by source IP. The compute fleet is autoscaled and the public IPs that originate deliveries change frequently.
+
+If you operate behind a network perimeter that requires a static allow-list, route deliveries through a customer-controlled HTTPS proxy with a stable egress IP and forward to the real receiver after re-verifying the signature.
+
+## Delivery history retention
+
+Every delivery attempt is recorded in [delivery history](/integrations/webhook-deliveries) for **90 days**. Older rows are deleted by a daily background job; the API still serves the window inside retention via `GET /v1/webhooks/{id}/deliveries`. Capture deliveries you need beyond that window from your receiver side at delivery time.
 
 ## URL restrictions
 
