@@ -1,0 +1,214 @@
+---
+title: "API Keys API"
+description: "Manage your organization's ak_* public-API keys: list, create, rotate, and revoke."
+icon: "key"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The API Keys API lets an organization administrator manage the `ak_*` keys used to authenticate the Coverbase public API — without contacting Coverbase support.
+
+<Note>
+  Unlike the rest of the public API, the API Keys endpoints are **not** authenticated with an `ak_*` key. They require a **dashboard session token (JWT) from a user with the `admin` org role**. This is intentional: it prevents a compromised public-API key from being used to mint, rotate, or revoke other keys.
+</Note>
+
+All operations are org-scoped to the caller's organization and recorded in the activity log as `target_type=api_key`. The Coverbase backend brokers calls to the underlying identity provider (Clerk), so customers do not need direct Clerk dashboard access.
+
+## List API keys
+
+<ParamField path="method" type="GET">
+  `GET /v1/api-keys`
+</ParamField>
+
+Returns every `ak_*` API key belonging to your org, including revoked and expired keys. Use this to audit which keys exist before rotating or revoking.
+
+### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/api-keys" \
+  -H "Authorization: Bearer <admin-jwt>"
+```
+
+### Example response
+
+```json
+{
+  "data": [
+    {
+      "id": "ak_2YkL...redacted",
+      "name": "GRC pipeline (Acme)",
+      "created_at": 1735689600,
+      "last_used_at": 1746579000,
+      "revoked": false,
+      "expired": false,
+      "created_by_clerk_user_id": "user_2Zx9..."
+    }
+  ]
+}
+```
+
+### Response fields
+
+Each entry contains:
+
+<ResponseField name="id" type="string">
+  The key's Clerk-side identifier (the prefix portion of `ak_*`). The raw secret is **not** returned by this endpoint; it is only available at the moment of creation or rotation.
+</ResponseField>
+
+<ResponseField name="name" type="string | null">
+  Human-readable name set at creation time.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer | null">
+  Unix timestamp (seconds) when the key was created.
+</ResponseField>
+
+<ResponseField name="last_used_at" type="integer | null">
+  Unix timestamp (seconds) of the most recent successful authentication, or `null` if never used.
+</ResponseField>
+
+<ResponseField name="revoked" type="boolean">
+  `true` if the key has been revoked.
+</ResponseField>
+
+<ResponseField name="expired" type="boolean">
+  `true` if the key has passed its expiration.
+</ResponseField>
+
+<ResponseField name="created_by_clerk_user_id" type="string | null">
+  The Clerk user ID of the admin who created the key.
+</ResponseField>
+
+## Create an API key
+
+<ParamField path="method" type="POST">
+  `POST /v1/api-keys`
+</ParamField>
+
+Creates a new API key scoped to your org. The raw `ak_*` secret is returned **once** in the response body — store it immediately. Coverbase does not retain the plaintext, so a lost secret can only be replaced (rotated), not recovered.
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  Human-readable name for the key (e.g. `"ServiceNow exporter"`). Must be non-empty after trimming.
+</ParamField>
+
+<ParamField body="seconds_until_expiration" type="integer">
+  Optional. Seconds until the key automatically expires. Omit for a non-expiring key. Recommended for keys used by short-lived integrations (e.g. `31536000` for a one-year rotation policy).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/api-keys" \
+  -H "Authorization: Bearer <admin-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "GRC pipeline (Acme)", "seconds_until_expiration": 31536000}'
+```
+
+### Example response
+
+`201 Created`:
+
+```json
+{
+  "id": "ak_2YkL...redacted",
+  "name": "GRC pipeline (Acme)",
+  "secret": "ak_live_2YkLm3pQrStUvWxYzABCDEFGHIJKLMNOPQRSTUVWXYZabcdef",
+  "created_at": 1746576000
+}
+```
+
+<Warning>
+  `secret` is the only place you will ever see the full token. If you lose it, rotate the key (which mints a new secret and revokes the old one). Treat the secret like a password.
+</Warning>
+
+## Rotate an API key
+
+<ParamField path="method" type="POST">
+  `POST /v1/api-keys/{api_key_id}/rotate`
+</ParamField>
+
+Atomically rotates a key: mints a new key with the same name, then revokes the original. Use this when a secret may have been compromised, or as part of a scheduled rotation policy.
+
+If revocation of the original key fails after the new key is minted, the new key is automatically rolled back (also revoked) so the operation never leaves you with two simultaneously-active keys.
+
+### Path parameters
+
+<ParamField path="api_key_id" type="string" required>
+  The key's Clerk-side identifier (the prefix portion of `ak_*`, as returned by [List API keys](#list-api-keys)).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../rotate" \
+  -H "Authorization: Bearer <admin-jwt>"
+```
+
+### Example response
+
+```json
+{
+  "id": "ak_5ZmN...newkey",
+  "name": "GRC pipeline (Acme)",
+  "secret": "ak_live_5ZmN3pQrStUvWxYzABCDEFGHIJKLMNOPQRSTUVWXYZabcdef",
+  "revoked_id": "ak_2YkL...redacted",
+  "created_at": 1746580000
+}
+```
+
+<Note>
+  Distribute the new `secret` to all systems that use the rotated key **before** removing the old one's grace period. The old key is revoked immediately on a successful rotate, so any process still using it will start receiving `401 Unauthorized` responses.
+</Note>
+
+## Revoke an API key
+
+<ParamField path="method" type="POST">
+  `POST /v1/api-keys/{api_key_id}/revoke`
+</ParamField>
+
+Permanently revokes a key. Future requests using the revoked secret are rejected with `401 Unauthorized`. The revocation is recorded in the activity log; the key still appears in [List API keys](#list-api-keys) with `revoked: true` for audit purposes.
+
+### Path parameters
+
+<ParamField path="api_key_id" type="string" required>
+  The key's Clerk-side identifier.
+</ParamField>
+
+### Request body
+
+<ParamField body="reason" type="string">
+  Optional. Free-form revocation reason (e.g. `"Employee offboarded"`, `"Suspected leak in Sentry log"`). Recorded for compliance.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
+  -H "Authorization: Bearer <admin-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "Employee offboarded"}'
+```
+
+### Example response
+
+`200 OK` — returns the same shape as [List API keys](#list-api-keys), with `revoked: true`.
+
+## Authorization & audit
+
+- Only org members with the **`admin` role** can call any of these endpoints. Non-admins receive `401 Unauthorized`.
+- Public-API service accounts (`ak_*` keys) cannot call these endpoints, by design. The auth dependency enforces a JWT-only allow list.
+- Every successful create/rotate/revoke writes a `CbActivity` row of type `record_creation` or `field_update` against `target_type=api_key`. These are visible to admins in **Settings → Audit log** (System Audit → Integrations group).
+
+## Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_name", "message": "Name cannot be empty."}}` | `name` is empty or whitespace-only on create. |
+| 401 | `{"detail": "Unauthorized role."}` | The caller is not an admin, or used an `ak_*` key (service accounts cannot manage API keys). |
+| 403 | `{"detail": {"code": "user_not_provisioned", "message": "..."}}` | The admin user record has no Clerk identity (rare — re-provision via support). |
+| 404 | `{"detail": {"code": "api_key_not_found", "message": "API key not found."}}` | The `api_key_id` does not belong to your org or no longer exists. |
+| 502 | `{"detail": {"code": "clerk_upstream_error", "message": "..."}}` | The upstream identity provider returned an error. Retry; contact support if it persists. |

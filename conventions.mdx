@@ -32,7 +32,23 @@ Two credential types are accepted:
 - **Service-account API key** (`ak_...`) — the primary credential for integrations. A Coverbase admin mints it from the dashboard (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account.
 - **Logged-in user JWT** — the dashboard session token, useful for first-party scripts running as a specific user.
 
+Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/integrations/api-reference/api-keys) — no support ticket required. The API Keys endpoints themselves are JWT-only (a service account cannot manage other service accounts).
+
 There is no unauthenticated surface. An invalid/expired/revoked key returns `401 "Invalid or expired API key."`. A credential whose role is not allowed on the public API returns `401 "Unauthorized role."`.
+
+### Public API audit log
+
+Every authenticated call that lands on a `/v1/*` public-API route is recorded in the org's activity log as `type=external_api_call` with `target_type=external_api_request`. Each record captures:
+
+- the HTTP method, request path, and matched route template
+- the response status code and duration in milliseconds
+- the names of query parameters used (values are not recorded)
+- the `ak_*` key ID and human-readable name that authenticated the request
+- the client IP and a per-request correlation ID
+
+Bodies are never persisted. Records are visible to org admins via **Settings → Audit log** in the dashboard, filtered to the **Integrations** group, and via `GET /v1/system_audit_log`.
+
+Requests that fail authentication before the `ak_*` key resolves (e.g. an unknown or revoked key returning `401`) are not stored in the activity log — they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
 
 ### Test your credentials
 

@@ -248,3 +248,67 @@ The shape matches the create response, **minus** `workflow_run_id`. `findings_co
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "assessment_not_found", "message": "Assessment not found."}}` | The `assessment_id` does not exist or is not in the API key's org. |
+
+## Cancel (archive) an assessment
+
+<ParamField path="method" type="DELETE">
+  `DELETE /v1/assessments/{assessment_id}`
+</ParamField>
+
+Cancels an in-flight assessment or archives a completed one. Mirrors the in-product "Archive" action on the assessment page.
+
+The operation is a **soft delete**: the assessment row plus its evals and findings are marked `is_archived=true`, the assessment's portal (if any) is closed, and any in-flight workflow runs targeting the assessment are canceled in the workflow engine on a best-effort basis. The underlying rows are retained for audit; `GET /v1/assessments/{assessment_id}` will continue to return them.
+
+### Path parameters
+
+<ParamField path="assessment_id" type="string" required>
+  The assessment ID (`cbqsrw_...`).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X DELETE "https://api.coverbase.app/v1/assessments/cbqsrw_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+`200 OK`:
+
+```json
+{
+  "id": "cbqsrw_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
+  "status": "canceled",
+  "is_archived": true,
+  "archived_at": 1746580000
+}
+```
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The archived assessment ID.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Assessment status at the time of archival. The workflow engine receives a best-effort cancel signal immediately after archive; transient runs may still surface a brief `canceled` lifecycle event.
+</ResponseField>
+
+<ResponseField name="is_archived" type="boolean">
+  Always `true` after a successful archive.
+</ResponseField>
+
+<ResponseField name="archived_at" type="integer">
+  Unix timestamp (seconds) when the archive took effect.
+</ResponseField>
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "assessment_not_found", "message": "Assessment not found."}}` | The `assessment_id` does not exist or is not in the API key's org. |
+
+<Note>
+  Archive is idempotent: archiving an already-archived assessment returns `200` with the same envelope. To restore an archived assessment, use the Coverbase dashboard.
+</Note>
