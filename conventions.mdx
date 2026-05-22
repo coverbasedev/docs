@@ -29,10 +29,23 @@ Authorization: Bearer ak_...
 
 Two credential types are accepted:
 
-- **Service-account API key** (`ak_...`) — the primary credential for integrations. A Coverbase admin mints it from the dashboard (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account.
+- **Service-account API key** (`ak_...`) — the primary credential for integrations. A Coverbase admin mints it from the dashboard (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account. By default a key carries no scopes and can only call ordinary `/v1/*` routes; an admin can additionally grant it elevated [scopes](#api-key-scopes).
 - **Logged-in user JWT** — the dashboard session token, useful for first-party scripts running as a specific user.
 
-Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/integrations/api-reference/api-keys) — no support ticket required. The API Keys endpoints themselves are JWT-only (a service account cannot manage other service accounts).
+Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/integrations/api-reference/api-keys) — no support ticket required.
+
+### API key scopes
+
+Most `ak_*` keys carry **no scopes**: they authenticate ordinary `/v1/*` calls but cannot reach the admin surfaces. An admin can mint a long-lived key with one or both elevated scopes for headless or middleware use:
+
+| Scope | Grants |
+| ----- | ------ |
+| `keys:manage` | List, create, rotate, and revoke `ak_*` keys via the [API Keys API](/integrations/api-reference/api-keys). |
+| `audit:read` | Read the org system audit log (`GET /v1/system_audit_log` and `GET /v1/system_audit_log/metadata`). |
+
+These admin endpoints accept **either** an admin dashboard JWT **or** an `ak_*` key carrying the required scope, so you can run them headlessly without a short-lived session token. The JWT path is unchanged: key management requires the org `admin` role; audit-log reads accept the same dashboard roles as before (member, siloed-member, admin, guest).
+
+Scopes can only be granted from an **admin dashboard session (JWT)**. A scoped key cannot grant scopes — not to itself and not to another key — so a leaked integration key can never escalate its own access. A request that passes `scopes` without an admin JWT is rejected with `403 scope_grant_forbidden`; a call to a scoped endpoint with a key that lacks the required scope returns `403 insufficient_scope`.
 
 There is no unauthenticated surface. An invalid/expired/revoked key returns `401 "Invalid or expired API key."`. A credential whose role is not allowed on the public API returns `401 "Unauthorized role."`.
 
@@ -46,7 +59,7 @@ Every authenticated call that lands on a `/v1/*` public-API route is recorded in
 - the `ak_*` key ID and human-readable name that authenticated the request
 - the client IP and a per-request correlation ID
 
-Bodies are never persisted. Records are visible to org admins via **Settings → Audit log** in the dashboard, filtered to the **Integrations** group, and via `GET /v1/system_audit_log`.
+Bodies are never persisted. The records surface in the dashboard under **Settings → Audit log** (filtered to the **Integrations** group) and through `GET /v1/system_audit_log` (and `GET /v1/system_audit_log/metadata`). Both read endpoints accept **either** a dashboard session JWT (member, siloed-member, admin, or guest role — unchanged from before) **or** an `ak_*` key that carries the [`audit:read` scope](#api-key-scopes).
 
 Requests that fail authentication before the `ak_*` key resolves (e.g. an unknown or revoked key returning `401`) are not stored in the activity log — they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
 
@@ -224,6 +237,7 @@ Bodies/params that fail schema validation return `422` with FastAPI's standard a
 | ------ | ------- |
 | `400` | Rejected by a business rule (bad reference ID, weak secret, non-HTTPS URL, missing vendor/assessment on a finding). |
 | `401` | Missing/invalid credential, or a role not allowed on the public API. |
+| `403` | Authenticated but not authorized — the key lacks a required scope (`insufficient_scope`), a non-admin tried to grant scopes (`scope_grant_forbidden`), or the client IP is outside the org allowlist (`ip_not_allowed`). |
 | `404` | Resource not found or not in the API key's org. |
 | `409` | Conflict — e.g. `user_exists`, or running a disabled workflow (`workflow_disabled`). |
 | `422` | Request body/query failed schema validation. |

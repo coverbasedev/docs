@@ -1,6 +1,6 @@
 ---
 title: "API Keys API"
-description: "Manage your organization's ak_* public-API keys: list, create, rotate, and revoke."
+description: "Manage your organization's ak_* public-API keys: list, create, rotate, revoke, and grant admin scopes."
 icon: "key"
 ---
 
@@ -11,10 +11,23 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 The API Keys API lets an organization administrator manage the `ak_*` keys used to authenticate the Coverbase public API — without contacting Coverbase support.
 
 <Note>
-  Unlike the rest of the public API, the API Keys endpoints are **not** authenticated with an `ak_*` key. They require a **dashboard session token (JWT) from a user with the `admin` org role**. This is intentional: it prevents a compromised public-API key from being used to mint, rotate, or revoke other keys.
+  These endpoints accept **either** an admin dashboard session JWT (a user with the `admin` org role) **or** an `ak_*` key that carries the `keys:manage` [scope](#key-scopes). The scoped-key path lets headless and middleware integrations manage keys without a short-lived dashboard token. A standard integration key carries no scopes and cannot manage keys, so a compromised integration key cannot be used to mint, rotate, or revoke other keys.
 </Note>
 
-All operations are org-scoped to the caller's organization and recorded in the activity log as `target_type=api_key`. The Coverbase backend brokers calls to the underlying identity provider (Clerk), so customers do not need direct Clerk dashboard access.
+All operations are org-scoped to the caller's organization and recorded in the activity log as `target_type=api_key`. The Coverbase backend brokers calls to the underlying identity provider (Clerk), so customers do not need direct Clerk dashboard access. Coverbase stores only the `(org, clerk_key_id) → scopes` mapping — never the secret.
+
+## Key scopes
+
+A key can carry zero or more **admin scopes**. A standard integration key has none and can only call ordinary `/v1/*` routes; granting a scope turns a key into a long-lived admin credential.
+
+| Scope | Grants |
+| ----- | ------ |
+| `keys:manage` | List, create, rotate, and revoke `ak_*` keys (the endpoints on this page). |
+| `audit:read` | Read the org system audit log (`GET /v1/system_audit_log` and `GET /v1/system_audit_log/metadata`). |
+
+<Warning>
+  Granting scopes is a deliberate **admin** action and requires an admin dashboard JWT. A scoped `ak_*` key **cannot** grant scopes — not to itself and not to any other key — so a leaked key can never escalate its own access. A non-admin or scoped-key caller that supplies `scopes` is rejected with `403 scope_grant_forbidden`, and a call made with a key that lacks the required scope returns `403 insufficient_scope`.
+</Warning>
 
 ## List API keys
 
@@ -24,11 +37,18 @@ All operations are org-scoped to the caller's organization and recorded in the a
 
 Returns every `ak_*` API key belonging to your org, including revoked and expired keys. Use this to audit which keys exist before rotating or revoking.
 
+**Auth:** admin dashboard JWT or an `ak_*` key with the `keys:manage` scope.
+
 ### Example request
 
 ```bash cURL
+# Admin JWT...
 curl -X GET "https://api.coverbase.app/v1/api-keys" \
   -H "Authorization: Bearer <admin-jwt>"
+
+# ...or a key with the keys:manage scope (headless):
+curl -X GET "https://api.coverbase.app/v1/api-keys" \
+  -H "Authorization: Bearer ak_live_xxx"
 ```
 
 ### Example response
@@ -43,6 +63,17 @@ curl -X GET "https://api.coverbase.app/v1/api-keys" \
       "last_used_at": 1746579000,
       "revoked": false,
       "expired": false,
+      "scopes": [],
+      "created_by_clerk_user_id": "user_2Zx9..."
+    },
+    {
+      "id": "ak_7QpR...redacted",
+      "name": "Headless admin (middleware)",
+      "created_at": 1746000000,
+      "last_used_at": 1746579500,
+      "revoked": false,
+      "expired": false,
+      "scopes": ["keys:manage", "audit:read"],
       "created_by_clerk_user_id": "user_2Zx9..."
     }
   ]
@@ -77,6 +108,10 @@ Each entry contains:
   `true` if the key has passed its expiration.
 </ResponseField>
 
+<ResponseField name="scopes" type="string[]">
+  The admin scopes granted to the key. Each value is one of `"keys:manage"` or `"audit:read"`. A standard integration key returns an empty array (`[]`).
+</ResponseField>
+
 <ResponseField name="created_by_clerk_user_id" type="string | null">
   The Clerk user ID of the admin who created the key.
 </ResponseField>
@@ -89,6 +124,8 @@ Each entry contains:
 
 Creates a new API key scoped to your org. The raw `ak_*` secret is returned **once** in the response body — store it immediately. Coverbase does not retain the plaintext, so a lost secret can only be replaced (rotated), not recovered.
 
+**Auth:** admin dashboard JWT or an `ak_*` key with the `keys:manage` scope. Note that **supplying `scopes` requires an admin JWT** (see below).
+
 ### Request body
 
 <ParamField body="name" type="string" required>
@@ -99,13 +136,24 @@ Creates a new API key scoped to your org. The raw `ak_*` secret is returned **on
   Optional. Seconds until the key automatically expires. Omit for a non-expiring key. Recommended for keys used by short-lived integrations (e.g. `31536000` for a one-year rotation policy).
 </ParamField>
 
+<ParamField body="scopes" type="string[]">
+  Optional. Admin scopes to grant the new key — any subset of `"keys:manage"` and `"audit:read"`. Omit or pass `[]` to mint a standard integration key with no elevated access. **Granting scopes requires an admin dashboard JWT**; a non-admin or scoped-key caller that supplies a non-empty `scopes` array is rejected with `403 scope_grant_forbidden`.
+</ParamField>
+
 ### Example request
 
 ```bash cURL
+# Standard integration key (no scopes), JWT or keys:manage key:
 curl -X POST "https://api.coverbase.app/v1/api-keys" \
   -H "Authorization: Bearer <admin-jwt>" \
   -H "Content-Type: application/json" \
   -d '{"name": "GRC pipeline (Acme)", "seconds_until_expiration": 31536000}'
+
+# Scoped admin key — requires an admin JWT:
+curl -X POST "https://api.coverbase.app/v1/api-keys" \
+  -H "Authorization: Bearer <admin-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Headless admin (middleware)", "scopes": ["keys:manage", "audit:read"]}'
 ```
 
 ### Example response
@@ -117,7 +165,8 @@ curl -X POST "https://api.coverbase.app/v1/api-keys" \
   "id": "ak_2YkL...redacted",
   "name": "GRC pipeline (Acme)",
   "secret": "ak_live_2YkLm3pQrStUvWxYzABCDEFGHIJKLMNOPQRSTUVWXYZabcdef",
-  "created_at": 1746576000
+  "created_at": 1746576000,
+  "scopes": []
 }
 ```
 
@@ -131,9 +180,11 @@ curl -X POST "https://api.coverbase.app/v1/api-keys" \
   `POST /v1/api-keys/{api_key_id}/rotate`
 </ParamField>
 
-Atomically rotates a key: mints a new key with the same name, then revokes the original. Use this when a secret may have been compromised, or as part of a scheduled rotation policy.
+Atomically rotates a key: mints a new key with the same name, then revokes the original. Use this when a secret may have been compromised, or as part of a scheduled rotation policy. **The new key inherits the same scopes as the rotated key**, so a scoped admin key stays scoped after rotation.
 
 If revocation of the original key fails after the new key is minted, the new key is automatically rolled back (also revoked) so the operation never leaves you with two simultaneously-active keys.
+
+**Auth:** admin dashboard JWT or an `ak_*` key with the `keys:manage` scope.
 
 ### Path parameters
 
@@ -156,7 +207,8 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../rotate" \
   "name": "GRC pipeline (Acme)",
   "secret": "ak_live_5ZmN3pQrStUvWxYzABCDEFGHIJKLMNOPQRSTUVWXYZabcdef",
   "revoked_id": "ak_2YkL...redacted",
-  "created_at": 1746580000
+  "created_at": 1746580000,
+  "scopes": []
 }
 ```
 
@@ -170,9 +222,11 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../rotate" \
   `POST /v1/api-keys/{api_key_id}/revoke`
 </ParamField>
 
-Revokes a key. Future requests using the revoked secret are rejected with `401 Unauthorized`. The key still appears in [List API keys](#list-api-keys) with `revoked: true` for audit purposes.
+Revokes a key. Future requests using the revoked secret are rejected with `401 Unauthorized`. The key still appears in [List API keys](#list-api-keys) with `revoked: true` for audit purposes. **Revoking clears any scopes** the key carried, so a revoked admin key retains no elevated access.
 
 The endpoint is **idempotent**: the first revocation (the active → revoked transition) is recorded in the activity log, but re-revoking an already-revoked key is a no-op that writes **no** additional audit entry.
+
+**Auth:** admin dashboard JWT or an `ak_*` key with the `keys:manage` scope.
 
 ### Path parameters
 
@@ -201,8 +255,8 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 
 ## Authorization & audit
 
-- Only org members with the **`admin` role** can call any of these endpoints. Non-admins receive `401 Unauthorized`.
-- Public-API service accounts (`ak_*` keys) cannot call these endpoints, by design. The auth dependency enforces a JWT-only allow list.
+- Each endpoint accepts **either** an admin dashboard JWT (org **`admin` role**) **or** an `ak_*` key carrying the `keys:manage` scope. A JWT caller without the admin role, or a key without `keys:manage`, is rejected.
+- **Granting scopes is admin-only.** A non-empty `scopes` array on create can only be supplied with an admin JWT; a scoped-key caller that passes `scopes` is rejected with `403 scope_grant_forbidden`. A scoped key can manage keys but can never grant scopes — there is no self-propagation.
 - Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it actually transitions a key from active to revoked** — re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Settings → Audit log** (System Audit → Integrations group).
 
 ## Error responses
@@ -210,7 +264,9 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 400 | `{"detail": {"code": "invalid_name", "message": "Name cannot be empty."}}` | `name` is empty or whitespace-only on create. |
-| 401 | `{"detail": "Unauthorized role."}` | The caller is not an admin, or used an `ak_*` key (service accounts cannot manage API keys). |
+| 401 | `{"detail": "Unauthorized role."}` | Missing/invalid credential — e.g. a JWT whose role is not `admin`, or no bearer token at all. |
+| 403 | `{"detail": {"code": "insufficient_scope", "message": "..."}}` | The `ak_*` key is valid but lacks the `keys:manage` scope required for this endpoint. |
+| 403 | `{"detail": {"code": "scope_grant_forbidden", "message": "..."}}` | A non-admin or scoped-key caller tried to grant `scopes` on create. Scopes can only be granted from an admin dashboard session. |
 | 403 | `{"detail": {"code": "user_not_provisioned", "message": "..."}}` | The admin user record has no Clerk identity (rare — re-provision via support). |
 | 404 | `{"detail": {"code": "api_key_not_found", "message": "API key not found."}}` | The `api_key_id` does not belong to your org or no longer exists. |
 | 502 | `{"detail": {"code": "clerk_upstream_error", "message": "..."}}` | The upstream identity provider returned an error. Retry; contact support if it persists. |
