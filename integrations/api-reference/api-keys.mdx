@@ -170,7 +170,9 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../rotate" \
   `POST /v1/api-keys/{api_key_id}/revoke`
 </ParamField>
 
-Permanently revokes a key. Future requests using the revoked secret are rejected with `401 Unauthorized`. The revocation is recorded in the activity log; the key still appears in [List API keys](#list-api-keys) with `revoked: true` for audit purposes.
+Revokes a key. Future requests using the revoked secret are rejected with `401 Unauthorized`. The key still appears in [List API keys](#list-api-keys) with `revoked: true` for audit purposes.
+
+The endpoint is **idempotent**: the first revocation (the active → revoked transition) is recorded in the activity log, but re-revoking an already-revoked key is a no-op that writes **no** additional audit entry.
 
 ### Path parameters
 
@@ -201,7 +203,7 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 
 - Only org members with the **`admin` role** can call any of these endpoints. Non-admins receive `401 Unauthorized`.
 - Public-API service accounts (`ak_*` keys) cannot call these endpoints, by design. The auth dependency enforces a JWT-only allow list.
-- Every successful create/rotate/revoke writes a `CbActivity` row of type `record_creation` or `field_update` against `target_type=api_key`. These are visible to admins in **Settings → Audit log** (System Audit → Integrations group).
+- Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it actually transitions a key from active to revoked** — re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Settings → Audit log** (System Audit → Integrations group).
 
 ## Error responses
 
@@ -212,3 +214,4 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 | 403 | `{"detail": {"code": "user_not_provisioned", "message": "..."}}` | The admin user record has no Clerk identity (rare — re-provision via support). |
 | 404 | `{"detail": {"code": "api_key_not_found", "message": "API key not found."}}` | The `api_key_id` does not belong to your org or no longer exists. |
 | 502 | `{"detail": {"code": "clerk_upstream_error", "message": "..."}}` | The upstream identity provider returned an error. Retry; contact support if it persists. |
+| 502 | `{"detail": {"code": "clerk_missing_secret", "message": "..."}}` | On create/rotate, the identity provider returned an incomplete key (missing `id`/`secret`). The partial key is automatically revoked so none is left stranded — safe to retry. |
