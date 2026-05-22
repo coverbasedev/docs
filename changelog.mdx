@@ -4,6 +4,36 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-05-22 — This week at Coverbase
+
+A big week for the public API: self-serve key management, deeper workflow visibility, automatic webhook delivery, and tighter network controls.
+
+### New features
+
+- **Self-serve API key management.** Admins can now list, create, rotate, and revoke their org's `ak_*` keys without filing a support ticket. Rotation is atomic, so you'll never have two valid keys live at the same time. See the [API Keys reference](/integrations/api-reference/api-keys).
+- **List workflow runs.** Page through workflow run history with filters for workflow name, status, and time range — no need to know a run ID up front. See [List workflow runs](/integrations/api-reference/workflows#list-workflow-runs).
+- **Archive an assessment via API.** `DELETE /v1/assessments/{id}` mirrors the in-product Archive action: it soft-deletes the assessment along with its evals and findings, closes the portal if open, and cancels any in-flight workflow runs. See [Cancel (archive) an assessment](/integrations/api-reference/assessments#cancel-archive-an-assessment).
+- **Public API audit log.** Every authenticated `/v1/*` call is now recorded and visible to admins under **Settings → Audit log** (Integrations group), or via `GET /v1/system_audit_log`. Request and response bodies are never persisted. See [Public API audit log](/conventions#public-api-audit-log).
+- **Org-level API IP allowlist.** Restrict all public API traffic to a set of CIDRs. Requests from outside the allowlist are rejected with `403 ip_not_allowed`. See [API IP allowlist](/conventions#api-ip-allowlist).
+- **Workflow `send_webhook` action.** Workflow automations can now deliver their triggering event to subscribed webhooks, with optional event-type override and an optional subset of recipient webhooks. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
+
+### Updates
+
+- **Per-stage workflow outcomes.** `GET /v1/workflows/runs/{id}` now returns the outcome of every executed step — status (`success`, `failed`, `skipped`), an optional message, the artifacts consumed and produced, and a per-step timestamp. Existing fields are unchanged. `completed_at` also now populates on canceled runs.
+- **Automatic webhook delivery is live.** Subscribed webhooks now receive a fan-out delivery whenever a matching domain event occurs — not just from the manual test endpoint. All webhooks for a single source event share an `event_id` so receivers can dedupe. See [Webhooks](/integrations/webhooks).
+- **Webhook delivery history.** Inspect every delivery attempt — event fan-out, manual test, or workflow-triggered — via the new `GET /v1/webhooks/{id}/deliveries` endpoint, and review aggregate stats (`last_delivery_status`, `delivery_success_rate`, `delivery_count`) on the webhook itself. See [Webhook delivery history](/integrations/webhook-deliveries).
+
+### Breaking changes
+
+- **Webhook event types are now strictly validated.** Creating or updating a webhook with an event type outside the [event catalog](/integrations/webhooks#event-catalog) now returns `422 invalid_event_types`. Casing matters — use `Vendor.Created`, not `vendor.created`. Review your registered subscriptions before your next deploy.
+- **Webhook URLs are SSRF-restricted.** Webhook `url` must be a public HTTPS endpoint. Non-HTTPS URLs, URLs with credentials or non-standard ports, and URLs resolving to private, loopback, link-local, or metadata addresses are rejected with `400 invalid_url`. The same check runs at delivery time (DNS-rebinding safe).
+
+### Fixes
+
+- **API keys revoke is idempotent.** Re-revoking an already-revoked key returns success without writing a duplicate audit row. Audit entries are only written on actual state transitions.
+
+---
+
 ## 2026-05-21 — Self-serve API keys, workflow run listing, assessment archive, audit log
 
 Additive features answering common customer questions on day-2 operations of the public API.
