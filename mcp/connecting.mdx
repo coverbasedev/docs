@@ -1,6 +1,6 @@
 ---
 title: "Connecting clients"
-description: "Connect Claude, Cursor, Claude Code, and other MCP clients to the Coverbase MCP server."
+description: "Connect Claude Code, Claude.ai, Claude Desktop, Cursor, VS Code, Microsoft Copilot Studio, and other MCP clients to the Coverbase MCP server."
 icon: "plug"
 ---
 
@@ -16,65 +16,132 @@ The exact connection flow depends on which client you're using. The general patt
 https://mcp.coverbase.app/mcp
 ```
 
-## Claude (claude.ai or Claude Desktop)
+The server speaks MCP over **Streamable HTTP** and authenticates with **OAuth 2.0** (PKCE, no client secret). On first connection your client opens a browser window so you can sign in to Coverbase and authorize access. Your permissions in Coverbase determine what the connected assistant can see and do.
+
+## Claude Code
+
+Add the Coverbase server with the HTTP transport:
+
+```bash
+claude mcp add --transport http coverbase https://mcp.coverbase.app/mcp
+```
+
+Then start Claude Code, run `/mcp`, and choose **Authenticate** to complete OAuth sign-in in your browser. The Coverbase tools are available once the status shows connected.
+
+<Tip>
+  Use `--transport http` for the remote Coverbase server. Without it, the CLI assumes a local stdio command and the connection will fail.
+</Tip>
+
+## Claude.ai
 
 <Steps>
   <Step title="Open Connectors">
-    In Claude, open **Settings**, then **Connectors**.
+    In Claude, open **Settings → Connectors**.
   </Step>
   <Step title="Add Coverbase">
-    Click **Add connector** and select Coverbase from the directory, or paste the server endpoint as a custom connector.
+    Click **Add custom connector**, name it `Coverbase`, and paste the server endpoint.
   </Step>
   <Step title="Authorize">
-    You'll be redirected to Coverbase to authorize the connection. Sign in, review the requested scopes, and approve.
+    Click **Add**, then **Connect**. You'll be redirected to Coverbase to sign in, review the requested scopes, and approve.
   </Step>
   <Step title="Use the tools">
     Return to Claude. The Coverbase tools are now available in your conversations.
   </Step>
 </Steps>
 
-## Claude Code
+## Claude Desktop
 
-Add the Coverbase server to your project or user config:
-
-```bash
-claude mcp add coverbase https://mcp.coverbase.app/mcp
-```
-
-Then run `claude` in your project. When you first invoke a Coverbase tool, Claude Code will prompt you to authorize via your browser.
+Open Claude Desktop, go to **Settings → Connectors**, and click **Add custom connector**. Name it `Coverbase`, paste the server endpoint, and click **Add**. Click **Connect** and sign in to Coverbase when prompted.
 
 ## Cursor
 
-In Cursor's settings, open the MCP section and add a new server with the endpoint `https://mcp.coverbase.app/mcp`. Cursor handles the OAuth flow on first use.
+In Cursor's settings, open **MCP → Add new server**, or add the server to `~/.cursor/mcp.json`:
 
-## Cline (VS Code)
-
-Open the Cline settings, then the **MCP Servers** panel. Add a new remote server with the Coverbase endpoint. Authorize when prompted.
-
-## Goose
-
-```bash
-goose configure
+```json
+{
+  "mcpServers": {
+    "coverbase": {
+      "type": "streamable-http",
+      "url": "https://mcp.coverbase.app/mcp"
+    }
+  }
+}
 ```
 
-Choose to add a remote MCP server, then enter `https://mcp.coverbase.app/mcp`. Authorize on first invocation.
+Cursor handles the OAuth flow in your browser on first use.
 
-## MCP Inspector
+## VS Code
 
-Useful for debugging or one-off exploration without a full IDE setup:
+VS Code supports MCP servers natively in **GitHub Copilot agent mode**. Add the server to your `settings.json`:
 
-```bash
-npx @modelcontextprotocol/inspector
+```json
+{
+  "mcp": {
+    "servers": {
+      "coverbase": {
+        "type": "streamable-http",
+        "url": "https://mcp.coverbase.app/mcp"
+      }
+    }
+  }
+}
 ```
 
-Enter the Coverbase endpoint, authenticate, and exercise tools directly.
+Reload VS Code and sign in to Coverbase when Copilot prompts you.
+
+## Microsoft Copilot Studio
+
+Copilot Studio can call Coverbase as a Model Context Protocol tool.
+
+<Steps>
+  <Step title="Add a tool">
+    In your agent, open **Tools → Add a tool → Model Context Protocol**, then add a new MCP server.
+  </Step>
+  <Step title="Configure the server">
+    Set the transport to **Streamable HTTP** and enter the server endpoint `https://mcp.coverbase.app/mcp`.
+  </Step>
+  <Step title="Authenticate">
+    Choose **OAuth 2.0** authentication. Copilot Studio uses dynamic discovery to find the authorization server, so no manual endpoint configuration is required. Complete sign-in to Coverbase to finish.
+  </Step>
+</Steps>
+
+<Info>
+  Copilot Studio probes the RFC 8414 §3.1 path-insertion discovery variant (`/.well-known/oauth-authorization-server/{path}`). The Coverbase server serves authorization-server metadata at that path, so dynamic discovery works out of the box. If discovery fails with "Could not discover authorization server metadata," confirm you entered the full `/mcp` endpoint.
+</Info>
+
+## Microsoft ecosystem and other agents
+
+Coverbase works with any framework that speaks MCP over OAuth 2.0 with Streamable HTTP transport, including **Semantic Kernel**, the **Microsoft Agent Framework** (AutoGen), and **Azure AI Foundry** agents. Register `https://mcp.coverbase.app/mcp` as a remote MCP server / tool in your framework's MCP client and let it run the OAuth flow.
+
+Other popular clients:
+
+- **Cline (VS Code):** open the Cline **MCP Servers** panel and add a new remote server with the Coverbase endpoint.
+- **Goose:** run `goose configure`, choose to add a remote MCP server, and enter the endpoint.
+- **MCP Inspector:** run `npx @modelcontextprotocol/inspector`, enter the endpoint, authenticate, and exercise tools directly.
+
+## Clients without remote MCP support (mcp-remote)
+
+For clients that only support local **stdio** servers, bridge to the remote server with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
+
+```json
+{
+  "mcpServers": {
+    "coverbase": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.coverbase.app/mcp"]
+    }
+  }
+}
+```
+
+`mcp-remote` proxies the connection and handles the OAuth handshake in your browser on first use.
 
 ## Other clients
 
 <Info>
-  Any client that supports MCP with OAuth 2.0 and Streamable HTTP transport should work. The OAuth discovery document is published at `https://mcp.coverbase.app/.well-known/oauth-authorization-server`. Point your client at the server URL and the rest is standard.
+  Any client that supports MCP with OAuth 2.0 and Streamable HTTP transport should work. The OAuth discovery documents are published at `https://mcp.coverbase.app/.well-known/oauth-protected-resource` and `https://mcp.coverbase.app/.well-known/oauth-authorization-server`. Point your client at the server URL and the rest is standard.
 </Info>
 
 <Card title="Troubleshooting" icon="wrench" href="/mcp/troubleshooting">
-  No tools appearing, permission denied errors, write actions not executing, and other common issues.
+  No tools appearing, permission denied errors, write actions not executing, `403 Forbidden` during authentication, and other common issues.
 </Card>
