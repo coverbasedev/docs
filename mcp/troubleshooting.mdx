@@ -22,6 +22,25 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
     If you have multiple Coverbase accounts, sign out of all of them in the browser first, then re-initiate the connection so you're prompted to sign in fresh.
   </Accordion>
+
+  <Accordion title="Command-line client fails with '403 Forbidden' (HTML) during authentication" icon="terminal">
+    A command-line client such as Claude Code may report an error like:
+
+    ```text
+    SDK auth failed: HTTP 403: Invalid OAuth error response:
+    SyntaxError: ... Unrecognized token '<'. Raw body: <html> ... 403 Forbidden ...
+    ```
+
+    This happens when something in front of the server returns a raw HTML `403` page where the client expects a JSON OAuth response. The usual cause is a web application firewall that blocks requests with no `User-Agent` header — command-line MCP clients built on Node send their OAuth and tool requests without one. The Coverbase MCP server explicitly allows header-less requests on the MCP, OAuth, and discovery paths, so on the hosted server this is resolved.
+
+    If you still hit it:
+
+    - Make sure you added the server with the HTTP transport: `claude mcp add --transport http coverbase https://mcp.coverbase.app/mcp`.
+    - Update to the latest version of your client and retry.
+    - If you front the server with your own proxy or firewall, allow requests with a missing `User-Agent` on the `/mcp`, `/oauth/`, and `/.well-known/` paths.
+
+    If the error persists, contact [support@coverbase.ai](mailto:support@coverbase.ai) with the client name and version.
+  </Accordion>
 </AccordionGroup>
 
 ## Permission and visibility
