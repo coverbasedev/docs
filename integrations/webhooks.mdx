@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Webhooks are the outbound half of an integration. This page documents how events are delivered, how to verify signatures, retry behavior, and the event catalog. To register, list, update, delete, test, or inspect the delivery history of a subscription, see the [Webhooks API](/integrations/api-reference/webhooks). For the audit trail of every attempt, see [Webhook delivery history](/integrations/webhook-deliveries).
+Webhooks are the outbound half of an integration. This page documents how events are delivered, how to verify signatures, retry behavior, and the event catalog. To register, list, update, delete, test, or inspect the delivery history of a subscription, see the [Webhooks API](/api-reference/webhooks). For the audit trail of every attempt, see [Webhook delivery history](/integrations/webhook-deliveries).
 
 ## When deliveries happen
 
@@ -16,7 +16,7 @@ When a subscribed event occurs, Coverbase POSTs a JSON envelope to **every activ
 
 - **Domain-event fan-out** — a domain event (e.g. a vendor is created) fans out to every subscription for that event type.
 - **Workflow `send_webhook` action** — a workflow automation explicitly delivers its triggering event. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
-- **Manual test** — the [test endpoint](/integrations/api-reference/webhooks#test-a-webhook) sends a one-off delivery to a single subscription.
+- **Manual test** — the [test endpoint](/api-reference/webhooks#test-a-webhook) sends a one-off delivery to a single subscription.
 
 For one source event, the **same `event_id` is shared across all webhooks** in the fan-out. Receivers can use it to dedupe a fan-out and to correlate a multi-subscription delivery.
 
@@ -174,13 +174,13 @@ These are the **only** values valid in a subscription's `events` array and the o
 | `Reassessment.Deleted` | `reassessment_id` |
 
 <Note>
-  A **radar alert** is a `RadarDetectorResult` — subscribe to `RadarDetectorResult.Created` to be notified of new alerts and `RadarDetectorResult.Updated` (whose `field_diffs` will include `is_dismissed`) for triage activity. `*.Updated` events carry a `field_diffs` object mapping each changed field to its `{ "old_value", "new_value" }`. A soft-archive (`is_archived` → `true`) surfaces as `*.Deleted`, not `*.Updated`. See the [Radar](/integrations/api-reference/radar) and [Reassessments](/integrations/api-reference/reassessments) APIs.
+  A **radar alert** is a `RadarDetectorResult` — subscribe to `RadarDetectorResult.Created` to be notified of new alerts and `RadarDetectorResult.Updated` (whose `field_diffs` will include `is_dismissed`) for triage activity. `*.Updated` events carry a `field_diffs` object mapping each changed field to its `{ "old_value", "new_value" }`. A soft-archive (`is_archived` → `true`) surfaces as `*.Deleted`, not `*.Updated`. See the [Radar](/api-reference/radar) and [Reassessments](/api-reference/reassessments) APIs.
 </Note>
 
 All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
 
 <Note>
-  `webhook.test` is a valid value only for the [test endpoint's](/integrations/api-reference/webhooks#test-a-webhook) `event_type` field. It is **not** a subscribable event type — it will be rejected if used in a subscription's `events` array.
+  `webhook.test` is a valid value only for the [test endpoint's](/api-reference/webhooks#test-a-webhook) `event_type` field. It is **not** a subscribable event type — it will be rejected if used in a subscription's `events` array.
 </Note>
 
 ### Strict event-type validation
