@@ -32,7 +32,7 @@ Two credential types are accepted:
 - **Service-account API key** (`ak_...`) — the primary credential for integrations. A Coverbase admin mints it from the dashboard (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account. By default a key carries no scopes and can only call ordinary `/v1/*` routes; an admin can additionally grant it elevated [scopes](#api-key-scopes).
 - **Logged-in user JWT** — the dashboard session token, useful for first-party scripts running as a specific user.
 
-Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/integrations/api-reference/api-keys) — no support ticket required.
+Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/api-reference/api-keys) — no support ticket required.
 
 ### API key scopes
 
@@ -40,7 +40,7 @@ Most `ak_*` keys carry **no scopes**: they authenticate ordinary `/v1/*` calls b
 
 | Scope | Grants |
 | ----- | ------ |
-| `keys:manage` | List, create, rotate, and revoke `ak_*` keys via the [API Keys API](/integrations/api-reference/api-keys). |
+| `keys:manage` | List, create, rotate, and revoke `ak_*` keys via the [API Keys API](/api-reference/api-keys). |
 | `audit:read` | Read the org system audit log (`GET /v1/system_audit_log` and `GET /v1/system_audit_log/metadata`). |
 
 These admin endpoints accept **either** an admin dashboard JWT **or** an `ak_*` key carrying the required scope, so you can run them headlessly without a short-lived session token. The JWT path is unchanged: key management requires the org `admin` role; audit-log reads accept the same dashboard roles as before (member, siloed-member, admin, guest).
