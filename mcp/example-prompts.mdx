@@ -116,4 +116,22 @@ Use these as inspiration, not a script. The patterns below cover the workflows m
 
     The assistant proposes the change to the vendor status, confirms, then calls `update_vendor_tool` with the relevant status ID.
   </Accordion>
+
+  <Accordion title="Log a radar event for a vendor" icon="satellite-dish">
+    > Log a radar event for Acme Corp: they disclosed a data breach today.
+
+    The assistant proposes the event (name, summary, impact type, vendor), waits for confirmation, then calls `mutate(entity="radar_event", action="create", data={..., "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Dismiss a noisy radar alert" icon="bell-slash">
+    > That radar alert about Acme is a duplicate — dismiss it and suppress similar ones.
+
+    The assistant proposes the dismissal (alert ID, reason, `suppress_similar`), confirms, then calls `mutate(entity="radar_alert", action="dismiss", data={..., "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Reassess a vendor after an event" icon="rotate">
+    > Kick off a reassessment of Acme Corp because of that breach event.
+
+    The assistant lists reassessments via `query_radar(kind="reassessments")` to check for an existing one, then proposes a new reassessment (radar event, vendors, optional plan) and calls `mutate(entity="reassessment", action="create", data={..., "confirm": true})`. This never opens a case.
+  </Accordion>
 </AccordionGroup>

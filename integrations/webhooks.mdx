@@ -163,6 +163,19 @@ These are the **only** values valid in a subscription's `events` array and the o
 | `OrgIntake.Disabled` | `removed_questionnaire_id` |
 | `IntakeSession.Created` | `intake_session_id` |
 | `IntakeSession.Submitted` | `intake_session_id` |
+| `RadarEvent.Created` | `radar_event_id` |
+| `RadarEvent.Updated` | `radar_event_id`, `field_diffs` |
+| `RadarEvent.Deleted` | `radar_event_id` |
+| `RadarDetectorResult.Created` | `radar_detector_result_id` |
+| `RadarDetectorResult.Updated` | `radar_detector_result_id`, `field_diffs` |
+| `RadarDetectorResult.Deleted` | `radar_detector_result_id` |
+| `Reassessment.Created` | `reassessment_id` |
+| `Reassessment.Updated` | `reassessment_id`, `field_diffs` |
+| `Reassessment.Deleted` | `reassessment_id` |
+
+<Note>
+  A **radar alert** is a `RadarDetectorResult` — subscribe to `RadarDetectorResult.Created` to be notified of new alerts and `RadarDetectorResult.Updated` (whose `field_diffs` will include `is_dismissed`) for triage activity. `*.Updated` events carry a `field_diffs` object mapping each changed field to its `{ "old_value", "new_value" }`. A soft-archive (`is_archived` → `true`) surfaces as `*.Deleted`, not `*.Updated`. See the [Radar](/integrations/api-reference/radar) and [Reassessments](/integrations/api-reference/reassessments) APIs.
+</Note>
 
 All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
 

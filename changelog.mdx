@@ -4,6 +4,22 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-05-29 — Radar & reassessments come to the API
+
+Programmatic access to continuous monitoring: create radar events, triage alerts, and drive reassessments end-to-end — plus webhooks for all three.
+
+### New features
+
+- **Radar API.** Create radar events (`POST /v1/radar/events`), list and retrieve events, and list, retrieve, dismiss, and undismiss radar alerts. Dismissing with `suppress_similar` teaches the detector to suppress similar alerts going forward. See the [Radar API reference](/integrations/api-reference/radar).
+- **Reassessments API.** Create a reassessment from a radar event with its vendors, curate the vendor set (add vendors, opt vendors in/out), set the assessment plan, then `confirm`, `dismiss`, or `run` it. Running creates one assessment per included vendor from the linked plan — and never opens a case. See the [Reassessments API reference](/integrations/api-reference/reassessments).
+- **Radar & reassessment webhooks.** Subscribe to `RadarEvent.*`, `RadarDetectorResult.*` (radar alerts), and `Reassessment.*` events. `*.Updated` events carry per-field `field_diffs`; soft-archives surface as `*.Deleted`. See the [event catalog](/integrations/webhooks#event-catalog).
+
+### Updates
+
+- **MCP & AI assistants.** The Coverbase MCP server can now read reassessments (`query_radar` kind `reassessments`) and create radar events, dismiss alerts, and create/update reassessments (`mutate`). The in-product Interrogate assistant can propose the same radar/reassessment actions on a vendor.
+
+---
+
 ## 2026-05-22 — This week at Coverbase
 
 A big week for the public API: self-serve key management, deeper workflow visibility, automatic webhook delivery, and tighter network controls.

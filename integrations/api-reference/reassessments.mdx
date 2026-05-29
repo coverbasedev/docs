@@ -1,0 +1,192 @@
+---
+title: "Reassessments API"
+description: "Create reassessments from radar events, curate the vendor set, and run them."
+icon: "rotate"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A **reassessment** (`cbrsm_...`) is a draft batch of assessments to run against a set of vendors — typically prompted by a [radar event or alert](/integrations/api-reference/radar). It lets you curate the vendor set and choose an assessment plan, then run it, without ever opening a case.
+
+A reassessment moves through four statuses:
+
+| Status | Meaning |
+| ------ | ------- |
+| `draft` | Just created; awaiting review and vendor curation. |
+| `confirmed` | Vendor set confirmed; ready to run. |
+| `run` | Assessments have been created from the linked plan. **Terminal.** |
+| `dismissed` | Closed without running. **Terminal.** |
+
+A reassessment in a terminal status (`run` or `dismissed`) is immutable.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path |
+| ------ | ---- |
+| `GET` | `/v1/reassessments` |
+| `POST` | `/v1/reassessments` |
+| `GET` | `/v1/reassessments/{reassessment_id}` |
+| `PATCH` | `/v1/reassessments/{reassessment_id}` |
+| `POST` | `/v1/reassessments/{reassessment_id}/vendors` |
+| `POST` | `/v1/reassessments/{reassessment_id}/vendor_inclusion` |
+| `POST` | `/v1/reassessments/{reassessment_id}/confirm` |
+| `POST` | `/v1/reassessments/{reassessment_id}/dismiss` |
+| `POST` | `/v1/reassessments/{reassessment_id}/run` |
+
+None of these honor `Idempotency-Key`.
+
+## Create a reassessment
+
+<ParamField path="method" type="POST">
+  `POST /v1/reassessments`
+</ParamField>
+
+Returns `201 Created`. Creates a `draft` reassessment from a radar event with an initial vendor set. The assessment plan is optional up front — set it later with a `PATCH` before running.
+
+### Request body
+
+<ParamField body="radar_event_id" type="string" required>
+  The radar event providing context for the reassessment (`cbrevent_...`).
+</ParamField>
+
+<ParamField body="vendor_ids" type="string[]" required>
+  Vendors to include (`cbvndr_...`). At least one; all must belong to the API key's org.
+</ParamField>
+
+<ParamField body="assessment_plan_id" type="string">
+  Assessment plan to run (`cbasmtpl_...`). Optional; set later before running.
+</ParamField>
+
+<ParamField body="title" type="string">
+  Reassessment title.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/reassessments" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "radar_event_id": "cbrevent_3333333333333333333333333333cccc",
+    "vendor_ids": ["cbvndr_e448ba62882143f3ba0c140bb2e30162"],
+    "title": "Reassess Acme after breach"
+  }'
+```
+
+Returns the [reassessment object](#reassessment-object).
+
+### Reassessment object
+
+<ResponseField name="id" type="string">Reassessment ID (`cbrsm_...`).</ResponseField>
+<ResponseField name="status" type="string">`draft`, `confirmed`, `run`, or `dismissed`.</ResponseField>
+<ResponseField name="title" type="string | null">Title.</ResponseField>
+<ResponseField name="assessment_plan_id" type="string | null">Linked assessment plan (`cbasmtpl_...`).</ResponseField>
+<ResponseField name="radar_event_id" type="string | null">Source radar event (`cbrevent_...`).</ResponseField>
+<ResponseField name="alert_ids" type="string[]">Radar alerts that drove the reassessment.</ResponseField>
+<ResponseField name="vendors" type="object[]">Per-vendor entries — see below.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+Each `vendors[]` entry:
+
+<ResponseField name="vendor_id" type="string">Vendor (`cbvndr_...`).</ResponseField>
+<ResponseField name="source" type="string">How the vendor joined: `matched` (added at creation) or `manual` (added during review).</ResponseField>
+<ResponseField name="included" type="boolean">Whether the vendor is in the run set.</ResponseField>
+<ResponseField name="assessment_id" type="string | null">Assessment created for this vendor once the reassessment is run.</ResponseField>
+
+## List reassessments
+
+<ParamField path="method" type="GET">
+  `GET /v1/reassessments`
+</ParamField>
+
+### Query parameters
+
+<ParamField query="status" type="string">
+  Filter by status (`draft`, `confirmed`, `run`, `dismissed`).
+</ParamField>
+
+Returns an `items` array of [reassessment objects](#reassessment-object), newest first.
+
+## Retrieve a reassessment
+
+<ParamField path="method" type="GET">
+  `GET /v1/reassessments/{reassessment_id}`
+</ParamField>
+
+Returns the [reassessment object](#reassessment-object), or `404 reassessment_not_found`.
+
+## Update a reassessment
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/reassessments/{reassessment_id}`
+</ParamField>
+
+Update editable metadata. Only included fields change. Rejected with `422 reassessment_immutable` once the reassessment is `run` or `dismissed`.
+
+### Request body
+
+<ParamField body="title" type="string">New title.</ParamField>
+<ParamField body="assessment_plan_id" type="string">Assessment plan to run (`cbasmtpl_...`).</ParamField>
+<ParamField body="radar_event_id" type="string">Re-link to a different radar event (`cbrevent_...`).</ParamField>
+
+## Curate the vendor set
+
+<ParamField path="method" type="POST">
+  `POST /v1/reassessments/{reassessment_id}/vendors`
+</ParamField>
+
+Add manually-selected vendors. Body: `{ "vendor_ids": ["cbvndr_..."] }` (at least one).
+
+<ParamField path="method" type="POST">
+  `POST /v1/reassessments/{reassessment_id}/vendor_inclusion`
+</ParamField>
+
+Opt a single vendor in or out of the run set. Body: `{ "vendor_id": "cbvndr_...", "included": false }`.
+
+Both return the refreshed [reassessment object](#reassessment-object).
+
+## Confirm, dismiss, run
+
+<ParamField path="method" type="POST">
+  `POST /v1/reassessments/{reassessment_id}/confirm`
+</ParamField>
+
+Move a `draft` reassessment to `confirmed` (vendor set locked in, ready to run).
+
+<ParamField path="method" type="POST">
+  `POST /v1/reassessments/{reassessment_id}/dismiss`
+</ParamField>
+
+Close a reassessment without running it (`dismissed`).
+
+<ParamField path="method" type="POST">
+  `POST /v1/reassessments/{reassessment_id}/run`
+</ParamField>
+
+Create an assessment from the linked plan for each **included** vendor, then mark the reassessment `run`. Requires `assessment_plan_id` to be set first — otherwise `400 missing_assessment_plan`. This **never** creates a case.
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/reassessments/cbrsm_1234/run" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+All three return the refreshed [reassessment object](#reassessment-object).
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "missing_assessment_plan", ...}}` | `run` called before an assessment plan is set. |
+| 404 | `{"detail": {"code": "reassessment_not_found", ...}}` | Not found / not in the API key's org. |
+| 422 | `{"detail": {"code": "reassessment_immutable", ...}}` | Editing a `run`/`dismissed` reassessment. |
+
+## Related
+
+- [Radar API](/integrations/api-reference/radar) — the events and alerts that prompt reassessments.
+- [Webhooks](/integrations/webhooks#event-catalog) — subscribe to `Reassessment.*` events.
