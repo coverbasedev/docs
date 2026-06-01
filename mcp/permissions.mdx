@@ -1,0 +1,167 @@
+---
+title: "Roles and permissions"
+description: "How the MCP server enforces read-only versus read/write access, why it inherits the connected user's Coverbase role, and the controls that keep every tool call least-privilege."
+icon: "user-shield"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Coverbase MCP server does not have its own permission system. Every tool call runs as the person who authorized the connection, with exactly the access that user already has in Coverbase — no more. There are no separate MCP credentials, no service identity that sees more than the user, and no way for the assistant to escalate beyond what the user could do in the dashboard.
+
+This page explains how that works end to end: how a request is authenticated, how a role is resolved, and how read-only versus read/write access is decided and enforced.
+
+<Note>
+  **The short version.** Access is tied to each user's role in Coverbase. **Admins** and **Members** get read **and** write. **Guests** and **Siloed Members** are **read-only**. Change someone's role in Coverbase and it takes effect on their next request — there is nothing separate to re-issue.
+</Note>
+
+## Permission inheritance
+
+When a client connects, the user signs in to Coverbase through OAuth 2.0 and authorizes the connection. From that point on, every tool the assistant calls is evaluated against **that user's live organization membership**. The connector is a delegate, not a privileged service account.
+
+Three properties follow from this design:
+
+<CardGroup cols={3}>
+  <Card title="No privilege escalation" icon="user-lock">
+    The assistant can never see or do more than the connected user could do by logging into the dashboard themselves.
+  </Card>
+
+  <Card title="Single source of truth" icon="database">
+    Permissions are read from the user's organization membership, not from a static config baked into the connector or copied at install time.
+  </Card>
+
+  <Card title="Org isolation" icon="building-shield">
+    Every call is scoped to the user's organization. The client never supplies an organization ID — the server derives it from the authenticated session.
+  </Card>
+</CardGroup>
+
+## Role-to-access matrix
+
+Coverbase organization roles map to MCP access as follows.
+
+| Role | Can connect to MCP? | Read tools | Write tools |
+| --- | --- | --- | --- |
+| **Admin** | Yes | Yes | Yes |
+| **Member** | Yes | Yes | Yes |
+| **Siloed Member** | Yes | Yes | No (read-only) |
+| **Guest** | Yes | Yes | No (read-only) |
+| **Auxiliary Member** | No | — | — |
+| **Service Account** | No | — | — |
+
+A few things worth calling out:
+
+- **Read access** (search vendors, pull assessment detail, list findings, run portfolio reports, and so on) is available to every role that can connect.
+- **Write access** (creating or updating vendors, assessments, findings, obligations, notes, tags, and other records) is reserved for **Members** and **Admins**.
+- **Auxiliary Members** and **Service Accounts** cannot use the MCP server at all. These are non-interactive identities, so they are excluded from the connectable set entirely and receive a `403` if a token for one is ever presented.
+
+<Info>
+  The MCP write boundary is deliberately conservative. Write access through the connector is limited to Members and Admins, so it is **never broader** than what the same user could do in the dashboard — and for some roles it is intentionally tighter. If you need a user to make changes through an assistant, give them the Member or Admin role.
+</Info>
+
+## How a request is authorized
+
+Every request flows through the same gate, regardless of which client or token type it uses. There is no path that skips role resolution.
+
+<Steps>
+  <Step title="Authenticate the token">
+    The server accepts three token formats on the `Authorization: Bearer` header — an OAuth 2.0 access token issued to a remote MCP client, a dashboard SSO session token, or a long-lived Coverbase-issued MCP API key. Anything else is rejected with `401`.
+  </Step>
+
+  <Step title="Resolve the live role">
+    The user's organization role is resolved from their **current** membership record, not from anything cached in the client. For API-key and session tokens, the membership is looked up on every request. For OAuth tokens, the role is bound to the token from live membership at authorization time and **re-validated every time the token is refreshed** (see [Live revalidation](#live-revalidation)).
+  </Step>
+
+  <Step title="Enforce the connect allowlist">
+    If the resolved role is not one of the connectable roles (Guest, Siloed Member, Member, Admin), the request is rejected with `403` before any tool runs.
+  </Step>
+
+  <Step title="Enforce per-tool access">
+    Read tools proceed for any connectable role. Write tools pass through an additional guard described in [Write protection](#write-protection) before they touch any data.
+  </Step>
+
+  <Step title="Scope to the organization">
+    The organization is taken from the authenticated session and applied to every query automatically. The client cannot widen the scope by passing a different organization ID — there is no parameter to do so.
+  </Step>
+</Steps>
+
+## Write protection
+
+Read-only versus read/write is not a single switch — a write tool only executes when **three independent conditions** are all satisfied. Any one of them failing returns a clear, non-destructive error instead of performing the change.
+
+<Steps>
+  <Step title="Role check (least privilege)">
+    The connected user's role must be **Member** or **Admin**. Guests and Siloed Members receive a message explaining that their role cannot run write tools, and are pointed to ask a Member or Admin.
+  </Step>
+
+  <Step title="Scope check">
+    The access token must carry the **`mcp:write`** scope. Tokens can be issued without it to produce a strictly read-only connection, even for a user whose role would otherwise allow writes. (See [OAuth scopes](#oauth-scopes).)
+  </Step>
+
+  <Step title="Explicit confirmation (human-in-the-loop)">
+    Every write tool requires an explicit `confirm=true` argument. Without it, the tool returns a precondition error rather than executing — so the assistant is forced to surface the proposed change to you and wait for your approval before anything is written.
+  </Step>
+</Steps>
+
+<Warning>
+  These checks are applied **server-side**, inside the write guard, before any database write. They do not rely on the client or the model behaving correctly. A misbehaving or compromised client cannot bypass the role check, the scope check, or the confirmation requirement.
+</Warning>
+
+## OAuth scopes
+
+The server defines two scopes:
+
+| Scope | Grants |
+| --- | --- |
+| `mcp:read` | Access to all read tools (search, detail, reports). |
+| `mcp:write` | Access to write tools, in combination with a Member/Admin role and explicit confirmation. |
+
+By default, tokens are issued with **both** scopes, so in normal use the user's **role** is the effective read-only-versus-read/write switch. The authorization endpoint also accepts a narrower `scope` request, which makes it possible to mint a deliberately read-only token even for a user who could otherwise write.
+
+<Note>
+  **Want a guaranteed read-only connection?** Two levers give you that:
+
+  1. Connect with a **Guest** or **Siloed Member** account — their role blocks writes regardless of scope.
+  2. Or issue a token without the `mcp:write` scope — writes are blocked regardless of role.
+
+  Either is sufficient on its own; the write guard requires *both* a write-capable role *and* the write scope.
+</Note>
+
+## Live revalidation
+
+Because permissions are resolved from live membership, changes you make in Coverbase propagate without any re-install or token re-issuance on the user's side.
+
+- **API-key and session tokens** look up the user's membership on **every request**. If the user has been removed from the organization, the request is rejected with `403` — even if the token itself is still otherwise valid.
+- **OAuth tokens** bind the role at authorization time and **re-check live membership on every refresh**. A user who is demoted (for example, Member → Guest) or removed from the organization cannot keep using a previously elevated token: the next refresh either downgrades the role baked into the new token or fails outright. Access tokens are short-lived and clients refresh silently, so a role change converges quickly.
+
+<Info>
+  This means a demotion is also a downgrade of MCP access, and a removal is a revocation — without anyone needing to touch the connector. Revoking the connection from Coverbase account settings or the client invalidates the token immediately.
+</Info>
+
+## What this means in practice
+
+<AccordionGroup>
+  <Accordion title="A Guest connects and asks the assistant to update a vendor" icon="circle-xmark">
+    The assistant can search vendors, pull the vendor's full profile, list findings and assessments, and run reports — all read operations succeed. The update is **blocked by the role check** and the assistant is told the user's role cannot perform writes. No data is changed.
+  </Accordion>
+
+  <Accordion title="A Member connects and asks the assistant to create a finding" icon="circle-check">
+    The role check passes (Member is write-capable) and the default token carries `mcp:write`. The assistant proposes the new finding and waits. Once you confirm, it re-runs the tool with `confirm=true` and the finding is created — and the action is recorded in the audit trail.
+  </Accordion>
+
+  <Accordion title="An admin demotes a user to Guest while their session is live" icon="rotate">
+    On the user's next request (API key/session) or next token refresh (OAuth), the new Guest role takes effect. Subsequent write attempts are rejected. There is nothing to reconfigure on the user's machine.
+  </Accordion>
+
+  <Accordion title="A user is removed from the organization" icon="user-xmark">
+    The next request or refresh fails with a `403` because there is no active membership to resolve a role from. The connection effectively stops working immediately.
+  </Accordion>
+</AccordionGroup>
+
+## Auditability
+
+Every tool call — read or write — is logged with the OAuth user identity, the tool name, the parameters, a timestamp, and the outcome. Write actions taken through the MCP server land in the same Coverbase audit trail as actions taken in the dashboard, so administrators have one consolidated record of who did what, regardless of whether it happened through the UI or an assistant.
+
+<Card title="Security and privacy" icon="shield-halved" href="/mcp/security">
+  Authentication, transport security, what we log, what we don't retain, and how to revoke access.
+</Card>
