@@ -4,6 +4,25 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-06-02 — Bill of Materials
+
+Upload, version, and search machine-readable bills of materials (SBOM, AIBOM, HBOM, SaaSBOM) for vendors and services — over the REST API and through the MCP server.
+
+### New features
+
+- **Bill of Materials API.** Upload a BOM as a document linked to a vendor or its services (`POST /v1/bill_of_materials`), and Coverbase parses CycloneDX and SPDX JSON in the background into a searchable list of components. Read the current applied BOM for a vendor or service (`GET /v1/bill_of_materials/latest`), page the full upload history (`GET /v1/bill_of_materials`), retrieve one BOM with its components, search components within a BOM or across all of a vendor's BOMs, and archive a BOM. Only the latest non-archived BOM is "applied"; older ones stay viewable as history. See the [Bill of Materials API reference](/api-reference/bill-of-materials).
+
+### Updates
+
+- **MCP & AI assistants.** The `query_vendors` tool gained two read-only kinds — `bill_of_materials` (the latest applied BOM and its components) and `bill_of_materials_history` (every uploaded BOM for a vendor, newest first). See the [example prompts](/mcp/example-prompts#bill-of-materials).
+- **Conventions.** The ID-prefix table now lists `cbbom_` (bill of materials) and `cbbomc_` (component). See [IDs](/conventions#ids).
+
+<Note>
+  The feature is gated by the org-level `bill-of-materials` entitlement. While it is off, the `/v1/bill_of_materials` routes return `404`. Ask your administrator to enable it.
+</Note>
+
+---
+
 ## 2026-05-29 — Radar & reassessments come to the API
 
 Programmatic access to continuous monitoring: create radar events, triage alerts, and drive reassessments end-to-end — plus webhooks for all three.

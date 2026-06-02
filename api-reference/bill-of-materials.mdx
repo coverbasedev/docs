@@ -1,0 +1,527 @@
+---
+title: "Bill of Materials API"
+description: "Upload, version, and search machine-readable bills of materials (SBOM, AIBOM, HBOM, SaaSBOM) for vendors and services."
+icon: "cubes"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A **bill of materials** (`cbbom_...`) is a machine-readable inventory of the components that make up a vendor's product or a specific service. Upload one as a document, and Coverbase parses it in the background into a searchable list of [components](#the-component-object) (`cbbomc_...`) — each traceable back to the exact source file and vendor it came from.
+
+Supported BOM kinds: **SBOM** (software), **AIBOM** (AI/ML models and datasets), **HBOM** (hardware), **SaaSBOM**, and `other`. Supported formats are **CycloneDX (JSON)** and **SPDX (JSON)**; files in any other format are still stored, but are not parsed into components.
+
+All endpoints are org-scoped to the API key and require the **`bill-of-materials`** entitlement. See [Availability](#availability) below. See [API conventions](/conventions) for authentication, IDs, timestamps, and the error envelope.
+
+| Method | Path | Idempotent |
+| ------ | ---- | ---------- |
+| `POST` | `/v1/bill_of_materials` | No |
+| `GET` | `/v1/bill_of_materials/latest` | — |
+| `GET` | `/v1/bill_of_materials` | — |
+| `GET` | `/v1/bill_of_materials/{bom_id}` | — |
+| `GET` | `/v1/bill_of_materials/{bom_id}/components` | — |
+| `GET` | `/v1/bill_of_materials/components` | — |
+| `POST` | `/v1/bill_of_materials/{bom_id}/archive` | No |
+
+## How BOMs are versioned
+
+A BOM is uploaded as a document and can be linked to **a vendor, a single service, multiple services, or the vendor only** — the same linking model as vendor documents.
+
+**Many BOMs can be uploaded over time** for the same vendor or service, and the platform keeps **all of them** as history. Only the **latest** (most recently uploaded, non-archived) BOM is "applied" — it is the one shown as current on the vendor or service page and returned by [`GET /v1/bill_of_materials/latest`](#get-the-current-applied-bom). Older BOMs remain viewable and downloadable as history via [`GET /v1/bill_of_materials`](#list-the-upload-history). [Archiving a BOM](#archive-a-bom) drops it from "latest" but keeps it in history.
+
+### Parse lifecycle
+
+On upload a BOM starts at `parse_status: "pending"` and is parsed asynchronously. Poll the BOM (or the `latest`/list endpoints) to watch it move through the lifecycle:
+
+| `parse_status` | Meaning |
+| -------------- | ------- |
+| `pending` | Registered, not yet picked up by the parser. |
+| `parsing` | Parse in progress. |
+| `parsed` | Parsed successfully; `components` are available. |
+| `failed` | Parsing was attempted but failed (see `parse_error`). |
+| `unsupported` | File format is not CycloneDX or SPDX JSON; the file is stored but not parsed. |
+
+## The bill of materials object
+
+<ResponseField name="id" type="string">Bill of materials ID (`cbbom_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The owning vendor (`cbvndr_...`).</ResponseField>
+<ResponseField name="vendor_document_id" type="string">The stored source file (`cbvdoc_...`), downloadable via the `document` object.</ResponseField>
+<ResponseField name="format" type="string">One of `cyclonedx`, `spdx`, or `unknown`.</ResponseField>
+<ResponseField name="bom_type" type="string">One of `sbom`, `aibom`, `hbom`, `saasbom`, or `other`.</ResponseField>
+<ResponseField name="parse_status" type="string">One of `pending`, `parsing`, `parsed`, `failed`, `unsupported`. See [parse lifecycle](#parse-lifecycle).</ResponseField>
+<ResponseField name="spec_version" type="string | null">Spec version of the source document, e.g. `1.5` (CycloneDX) or `SPDX-2.3`.</ResponseField>
+<ResponseField name="serial_number" type="string | null">Document serial number, if present in the source.</ResponseField>
+<ResponseField name="component_count" type="integer">Number of parsed components.</ResponseField>
+<ResponseField name="name" type="string | null">BOM subject / primary component name.</ResponseField>
+<ResponseField name="parse_error" type="string | null">Set when `parse_status` is `failed` or `unsupported`.</ResponseField>
+<ResponseField name="parsed_at" type="integer | null">Unix timestamp (seconds) when parsing completed.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the BOM has been archived.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds) of upload.</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds) of last update.</ResponseField>
+<ResponseField name="document" type="object | null">The stored source file: `{ id, name, s3_url, size, extension, created_at }`.</ResponseField>
+<ResponseField name="components" type="object[] | null">The parsed [components](#the-component-object). Present on **detail** responses only (`/latest` and `/{bom_id}`); `null` on list summaries.</ResponseField>
+
+## The component object
+
+<ResponseField name="id" type="string">Component ID (`cbbomc_...`).</ResponseField>
+<ResponseField name="bill_of_materials_id" type="string">The BOM this component belongs to (`cbbom_...`).</ResponseField>
+<ResponseField name="vendor_document_id" type="string">The source file the component was parsed from (`cbvdoc_...`).</ResponseField>
+<ResponseField name="name" type="string">Component name. **Required** — the one field always present.</ResponseField>
+<ResponseField name="version" type="string | null">Component version.</ResponseField>
+<ResponseField name="purl" type="string | null">Package URL (PURL).</ResponseField>
+<ResponseField name="cpe" type="string | null">Common Platform Enumeration identifier.</ResponseField>
+<ResponseField name="group" type="string | null">Namespace / group (e.g. Maven groupId).</ResponseField>
+<ResponseField name="supplier" type="string | null">Supplier or publisher.</ResponseField>
+<ResponseField name="author" type="string | null">Author.</ResponseField>
+<ResponseField name="description" type="string | null">Free-text description.</ResponseField>
+<ResponseField name="bom_ref" type="string | null">The source document's internal reference for this component.</ResponseField>
+<ResponseField name="component_type" type="string">One of `application`, `library`, `framework`, `container`, `operating-system`, `device`, `firmware`, `file`, `machine-learning-model`, `data`, `other`.</ResponseField>
+<ResponseField name="licenses" type="string[]">Declared licenses.</ResponseField>
+<ResponseField name="hashes" type="object">Map of hash algorithm to value (e.g. `{ "SHA-256": "..." }`).</ResponseField>
+<ResponseField name="external_references" type="array">External references from the source document.</ResponseField>
+<ResponseField name="properties" type="object">Arbitrary key/value properties from the source document.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## Upload a BOM
+
+<ParamField path="method" type="POST">
+  `POST /v1/bill_of_materials`
+</ParamField>
+
+Registers a BOM against a vendor (and optionally one or more services), then parses it asynchronously. Returns the new BOM with `parse_status: "pending"`.
+
+Upload the file to the presigned URL from `GET /v1/file/uploadable_url` first, then pass the resulting `s3_url` here.
+
+### Request body
+
+<ParamField body="vendor_id" type="string" required>
+  The owning vendor (`cbvndr_...`).
+</ParamField>
+
+<ParamField body="s3_url" type="string" required>
+  The `s3://...` URL of the uploaded file, from `GET /v1/file/uploadable_url`.
+</ParamField>
+
+<ParamField body="size" type="integer" required>
+  File size in bytes.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  File name (e.g. `acme-sbom.cdx.json`).
+</ParamField>
+
+<ParamField body="extension" type="string" required>
+  File extension (e.g. `json`).
+</ParamField>
+
+<ParamField body="service_ids" type="string[]">
+  Optional. Link the BOM to one or more services (`cbsvc_...`) under the vendor. Omit to link the BOM to the vendor only.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/bill_of_materials" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "s3_url": "s3://coverbase-uploads/acme/sbom.json",
+    "size": 20480,
+    "name": "acme-sbom.cdx.json",
+    "extension": "json",
+    "service_ids": ["cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab"]
+  }'
+```
+
+### Example response
+
+`200 OK` — the new [bill of materials object](#the-bill-of-materials-object), freshly registered:
+
+```json
+{
+  "id": "cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "vendor_document_id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+  "format": "unknown",
+  "bom_type": "other",
+  "parse_status": "pending",
+  "spec_version": null,
+  "serial_number": null,
+  "component_count": 0,
+  "name": null,
+  "parse_error": null,
+  "parsed_at": null,
+  "is_archived": false,
+  "created_at": 1748822400,
+  "updated_at": 1748822400,
+  "document": {
+    "id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+    "name": "acme-sbom.cdx.json",
+    "s3_url": "s3://coverbase-uploads/acme/sbom.json",
+    "size": 20480,
+    "extension": "json",
+    "created_at": 1748822400
+  },
+  "components": null
+}
+```
+
+`format`, `bom_type`, `spec_version`, and `component_count` are populated once parsing completes.
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` not found / not in org, or the `bill-of-materials` gate is off. |
+| 422 | Standard validation error | A required field is missing or the body is malformed. |
+
+## Get the current applied BOM
+
+<ParamField path="method" type="GET">
+  `GET /v1/bill_of_materials/latest`
+</ParamField>
+
+Returns the latest applied BOM — with its [components](#the-component-object) — for a vendor **or** a service. Returns `null` if none has been uploaded.
+
+### Query parameters
+
+<ParamField query="vendor_id" type="string">
+  A vendor (`cbvndr_...`). Provide **exactly one** of `vendor_id` or `service_id`.
+</ParamField>
+
+<ParamField query="service_id" type="string">
+  A service (`cbsvc_...`). Provide **exactly one** of `vendor_id` or `service_id`.
+</ParamField>
+
+<Note>
+  Supplying both `vendor_id` and `service_id`, or neither, returns `422`.
+</Note>
+
+### Example request
+
+```bash cURL
+# The current applied BOM for a vendor (with components):
+curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/latest?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+  -H "Authorization: Bearer ak_live_xxx"
+
+# The current applied BOM for a specific service:
+curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/latest?service_id=cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+`200 OK` — a [bill of materials object](#the-bill-of-materials-object) with `components`, or `null`:
+
+```json
+{
+  "id": "cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "vendor_document_id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+  "format": "cyclonedx",
+  "bom_type": "sbom",
+  "parse_status": "parsed",
+  "spec_version": "1.5",
+  "serial_number": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+  "component_count": 142,
+  "name": "acme-platform",
+  "parse_error": null,
+  "parsed_at": 1748822460,
+  "is_archived": false,
+  "created_at": 1748822400,
+  "updated_at": 1748822460,
+  "document": {
+    "id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+    "name": "acme-sbom.cdx.json",
+    "s3_url": "s3://coverbase-uploads/acme/sbom.json",
+    "size": 20480,
+    "extension": "json",
+    "created_at": 1748822400
+  },
+  "components": [
+    {
+      "id": "cbbomc_4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f",
+      "bill_of_materials_id": "cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c",
+      "vendor_document_id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      "name": "log4j-core",
+      "version": "2.17.1",
+      "purl": "pkg:maven/org.apache.logging.log4j/log4j-core@2.17.1",
+      "cpe": null,
+      "group": "org.apache.logging.log4j",
+      "supplier": "The Apache Software Foundation",
+      "author": null,
+      "description": null,
+      "bom_ref": "pkg:maven/org.apache.logging.log4j/log4j-core@2.17.1",
+      "component_type": "library",
+      "licenses": ["Apache-2.0"],
+      "hashes": { "SHA-256": "8d3e1..." },
+      "external_references": [],
+      "properties": {},
+      "created_at": 1748822460
+    }
+  ]
+}
+```
+
+## List the upload history
+
+<ParamField path="method" type="GET">
+  `GET /v1/bill_of_materials`
+</ParamField>
+
+Returns the full upload history for a vendor or service, **newest first**. The first item is the currently applied BOM. Items are summaries — `components` is `null`; use [Retrieve a BOM](#retrieve-a-bom) or [List components of a BOM](#list-components-of-a-bom) to pull components.
+
+### Query parameters
+
+<ParamField query="vendor_id" type="string">
+  A vendor (`cbvndr_...`). Provide **exactly one** of `vendor_id` or `service_id`.
+</ParamField>
+
+<ParamField query="service_id" type="string">
+  A service (`cbsvc_...`). Provide **exactly one** of `vendor_id` or `service_id`.
+</ParamField>
+
+<ParamField query="include_archived" type="boolean">
+  Include archived BOMs in the history. Defaults to `false`.
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Page size.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Page offset.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&limit=25" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+`200 OK` — a page of [bill of materials objects](#the-bill-of-materials-object) (summaries, no `components`):
+
+```json
+{
+  "data": [
+    {
+      "id": "cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c",
+      "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "vendor_document_id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      "format": "cyclonedx",
+      "bom_type": "sbom",
+      "parse_status": "parsed",
+      "spec_version": "1.5",
+      "serial_number": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+      "component_count": 142,
+      "name": "acme-platform",
+      "parse_error": null,
+      "parsed_at": 1748822460,
+      "is_archived": false,
+      "created_at": 1748822400,
+      "updated_at": 1748822460,
+      "document": { "id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d", "name": "acme-sbom.cdx.json", "s3_url": "s3://coverbase-uploads/acme/sbom.json", "size": 20480, "extension": "json", "created_at": 1748822400 },
+      "components": null
+    }
+  ],
+  "total_count": 3
+}
+```
+
+## Retrieve a BOM
+
+<ParamField path="method" type="GET">
+  `GET /v1/bill_of_materials/{bom_id}`
+</ParamField>
+
+Returns one BOM with its full [components](#the-component-object) list.
+
+### Path parameters
+
+<ParamField path="bom_id" type="string" required>
+  The bill of materials ID (`cbbom_...`).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+The response is a [bill of materials object](#the-bill-of-materials-object) with `components` populated (same shape as [the current applied BOM](#example-response-1)).
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "bom_not_found", "message": "Bill of materials not found."}}` | `bom_id` not found / not in org, or the gate is off. |
+
+## List components of a BOM
+
+<ParamField path="method" type="GET">
+  `GET /v1/bill_of_materials/{bom_id}/components`
+</ParamField>
+
+Returns the components of a single BOM, searchable and filterable.
+
+### Path parameters
+
+<ParamField path="bom_id" type="string" required>
+  The bill of materials ID (`cbbom_...`).
+</ParamField>
+
+### Query parameters
+
+<ParamField query="search" type="string">
+  Free-text match against component fields (name, PURL, etc.).
+</ParamField>
+
+<ParamField query="component_type" type="string">
+  Filter to a single `component_type` (e.g. `machine-learning-model`).
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Page size.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Page offset.
+</ParamField>
+
+### Example request
+
+```bash cURL
+# List components of one BOM, filtered to ML models (AIBOM use case):
+curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c/components?component_type=machine-learning-model" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+`200 OK` — a page of [component objects](#the-component-object):
+
+```json
+{
+  "data": [
+    {
+      "id": "cbbomc_4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f",
+      "bill_of_materials_id": "cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c",
+      "vendor_document_id": "cbvdoc_1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+      "name": "log4j-core",
+      "version": "2.17.1",
+      "purl": "pkg:maven/org.apache.logging.log4j/log4j-core@2.17.1",
+      "cpe": null,
+      "group": "org.apache.logging.log4j",
+      "supplier": "The Apache Software Foundation",
+      "author": null,
+      "description": null,
+      "bom_ref": "pkg:maven/org.apache.logging.log4j/log4j-core@2.17.1",
+      "component_type": "library",
+      "licenses": ["Apache-2.0"],
+      "hashes": { "SHA-256": "8d3e1..." },
+      "external_references": [],
+      "properties": {},
+      "created_at": 1748822460
+    }
+  ],
+  "total_count": 142
+}
+```
+
+## Search components across a vendor
+
+<ParamField path="method" type="GET">
+  `GET /v1/bill_of_materials/components`
+</ParamField>
+
+Search components across **all** of a vendor's BOMs at once. Because every component carries its `bill_of_materials_id` and `vendor_document_id`, each match traces straight back to the source file it came from — answering questions like "has this vendor ever shipped a BOM containing `log4j`?"
+
+### Query parameters
+
+<ParamField query="vendor_id" type="string" required>
+  The vendor to search within (`cbvndr_...`).
+</ParamField>
+
+<ParamField query="search" type="string">
+  Free-text match against component fields.
+</ParamField>
+
+<ParamField query="component_type" type="string">
+  Filter to a single `component_type`.
+</ParamField>
+
+<ParamField query="bill_of_materials_id" type="string">
+  Restrict to a single BOM (`cbbom_...`).
+</ParamField>
+
+<ParamField query="vendor_document_id" type="string">
+  Restrict to components from a single source file (`cbvdoc_...`).
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Page size.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Page offset.
+</ParamField>
+
+### Example request
+
+```bash cURL
+# Find every BOM across the vendor that contains a component (e.g. log4j):
+curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/components?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&search=log4j" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+The response is a page of [component objects](#the-component-object) (`{ "data": [...], "total_count": <int> }`), spanning every matching BOM for the vendor.
+
+## Archive a BOM
+
+<ParamField path="method" type="POST">
+  `POST /v1/bill_of_materials/{bom_id}/archive`
+</ParamField>
+
+Archives a BOM. It drops out of "latest" — the next most recent non-archived BOM becomes the applied one — but stays in history and remains retrievable (and shows in the history list when `include_archived=true`).
+
+### Path parameters
+
+<ParamField path="bom_id" type="string" required>
+  The bill of materials ID (`cbbom_...`).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/bill_of_materials/cbbom_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c/archive" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+The response is the updated [bill of materials object](#the-bill-of-materials-object) with `is_archived: true`.
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "bom_not_found", "message": "Bill of materials not found."}}` | `bom_id` not found / not in org, or the gate is off. |
+
+## MCP / assistant access
+
+The Coverbase [MCP server](/mcp/overview) exposes BOMs read-only through the `query_vendors` dispatcher tool — no new top-level tools. Two new `kind` values join the existing ones (`documents`, `document_summary`, `risk_summary`, …):
+
+| `kind` | Returns | Args |
+| ------ | ------- | ---- |
+| `bill_of_materials` | The latest applied BOM for a vendor, plus its components | `vendor_id` (required), `limit` (max components, default `100`) |
+| `bill_of_materials_history` | All uploaded BOMs for a vendor, newest first (the first is the applied one) | `vendor_id` (required), `limit` (default `20`) |
+
+Both are user- and org-scoped. See [example prompts](/mcp/example-prompts#bill-of-materials) for natural-language phrasings.
+
+## Availability
+
+The Bill of Materials feature is gated by the org-level **`bill-of-materials`** entitlement. When it is off, the **Bill of Materials** tab is hidden in the dashboard and every `/v1/bill_of_materials` route returns `404`. Ask your Coverbase administrator (or your account manager) to enable it for your organization.
