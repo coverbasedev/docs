@@ -92,6 +92,50 @@ Use these as inspiration, not a script. The patterns below cover the workflows m
   </Accordion>
 </AccordionGroup>
 
+## Bill of materials
+
+<AccordionGroup>
+  <Accordion title="Latest SBOM and its components" defaultOpen icon="cubes">
+    > Show me the latest software bill of materials for vendor Acme and list its components.
+
+    The assistant calls `search_vendors` to resolve the name, then `query_vendors(kind="bill_of_materials", vendor_id=…)` to pull the current applied BOM and its components in one call.
+  </Accordion>
+
+  <Accordion title="License screening" icon="scale-balanced">
+    > Does Acme's current SBOM include any GPL-licensed components?
+
+    Same `bill_of_materials` call, then the assistant filters the returned components by their `licenses`.
+  </Accordion>
+
+  <Accordion title="AIBOM models and datasets" icon="robot">
+    > What AI models and datasets are in Acme's AIBOM?
+
+    The assistant pulls the latest BOM and surfaces the `machine-learning-model` and `data` components.
+  </Accordion>
+
+  <Accordion title="Hardware BOM components" icon="microchip">
+    > Pull the components from Acme's latest hardware BOM.
+
+    The assistant calls `query_vendors(kind="bill_of_materials", vendor_id=…)` and lists the hardware components.
+  </Accordion>
+
+  <Accordion title="History and what's applied" icon="clock-rotate-left">
+    > List every bill of materials we've received from Acme over time — which one is currently applied?
+
+    The assistant calls `query_vendors(kind="bill_of_materials_history", vendor_id=…)`. The list comes back newest first; the first entry is the applied one.
+  </Accordion>
+
+  <Accordion title="Trace a component through history" icon="magnifying-glass-chart">
+    > Has Acme ever shipped a BOM that contained `openssl`? Show the history.
+
+    The assistant calls `query_vendors(kind="bill_of_materials_history", vendor_id=…)` and checks each BOM's components for the match, tracing every hit back to its source document.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  **Under the hood:** these resolve to `query_vendors(kind="bill_of_materials", vendor_id=…)` or `query_vendors(kind="bill_of_materials_history", vendor_id=…)` — both read-only and user/org-scoped. See the [Bill of Materials API](/api-reference/bill-of-materials#mcp-assistant-access) for the full argument list.
+</Tip>
+
 ## Write actions, with confirmation
 
 <Warning>
