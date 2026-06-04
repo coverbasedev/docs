@@ -23,6 +23,8 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PATCH` | `/v1/vendors/{vendor_id}` | No |
 | `POST` | `/v1/vendors/{vendor_id}/services` | No |
 | `PATCH` | `/v1/vendors/{vendor_id}/services/{service_id}` | No |
+| `GET` | `/v1/vendors/{vendor_id}/fact-sheet` | — |
+| `POST` | `/v1/vendors/{vendor_id}/fact-sheet/refresh` | No |
 
 ## The primary contact object
 
@@ -496,3 +498,139 @@ The response is the full vendor object (same shape as [Retrieve a vendor](#vendo
 | 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | Update rejected (e.g. an invalid reference ID). |
 | 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` not found / not in org. |
 | 422 | Standard validation error | Body failed schema validation. |
+
+## The vendor fact sheet
+
+The **fact sheet** is AI-generated company intelligence about a vendor — company profile, products, public perception, financials, leadership, compliance/legal posture, and security posture. Coverbase assembles it from public sources; in the dashboard it powers the vendor "Fact Sheet" tab and its PDF export. These two endpoints let you read that data and trigger a regeneration programmatically.
+
+Generation is **asynchronous**. Trigger it with the refresh endpoint, then poll the fact sheet endpoint until `status` is `"completed"`.
+
+| `status` | Meaning |
+| -------- | ------- |
+| `null` | Never generated. Call the refresh endpoint to populate it. |
+| `"pending"` | Generation is in progress. |
+| `"completed"` | The most recent generation run finished successfully. |
+| `"failed"` | The most recent generation run failed. Trigger another refresh to retry. |
+
+### Retrieve a vendor's fact sheet
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/fact-sheet`
+</ParamField>
+
+Returns the current fact sheet for a vendor. A vendor that has never had a fact sheet generated returns `200` with `status: null` and every section `null` — it is **not** a `404`.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/fact-sheet" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`:
+
+```json
+{
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "entity_id": "cbentity_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "status": "completed",
+  "progress": ["company profile", "products", "security posture"],
+  "generated_at": 1746575800,
+  "company_profile": {
+    "name": "ACME_Sup_Test1",
+    "website": "https://supplier1.example.com",
+    "industry": "Customer support software",
+    "hq_location": "San Francisco, CA",
+    "founded_year": 2014,
+    "description": "Enterprise customer support tooling provider"
+  },
+  "products": { "products": [{ "name": "Helpdesk", "description": "Ticketing platform" }] },
+  "public_perception": { "news_mentions": [], "competitors": [] },
+  "financials": { "public_private": "private", "market_cap_usd": null },
+  "people": { "leadership": [{ "name": "Jordan Lee", "title": "CEO" }] },
+  "compliance_legal": { "legal_actions": [] },
+  "security_posture": { "trust_center_url": "https://trust.supplier1.example.com", "security_incidents": [] }
+}
+```
+
+#### Fact sheet object
+
+<ResponseField name="vendor_id" type="string">The vendor ID (`cbvndr_...`).</ResponseField>
+<ResponseField name="entity_id" type="string | null">ID of the underlying entity that holds the fact sheet data. `null` if the vendor is not yet linked to an entity.</ResponseField>
+<ResponseField name="status" type="string | null">Generation status — `null`, `"pending"`, `"completed"`, or `"failed"` (see the [status table](#the-vendor-fact-sheet) above).</ResponseField>
+<ResponseField name="progress" type="string[]">Section names completed so far in the in-progress / most recent run. Empty array if none.</ResponseField>
+<ResponseField name="generated_at" type="integer | null">Unix timestamp (seconds) the fact sheet was last updated. `null` if never generated.</ResponseField>
+<ResponseField name="company_profile" type="object | null">Company profile (name, website, industry, HQ, founding year, headcount, revenue, etc.). `null` until generated.</ResponseField>
+<ResponseField name="products" type="object | null">Known products and offerings. `null` until generated.</ResponseField>
+<ResponseField name="public_perception" type="object | null">News mentions, third-party reviews (BBB, Trustpilot, CFPB), and competitors. `null` until generated.</ResponseField>
+<ResponseField name="financials" type="object | null">Public/private status, market cap, ticker/exchange, funding, and transactions. `null` until generated.</ResponseField>
+<ResponseField name="people" type="object | null">Leadership and headcount estimate. `null` until generated.</ResponseField>
+<ResponseField name="compliance_legal" type="object | null">Legal actions, enforcement actions, and data-privacy certifications. `null` until generated.</ResponseField>
+<ResponseField name="security_posture" type="object | null">Trust center URL, security contact, and known security incidents. `null` until generated.</ResponseField>
+
+<Note>
+  Section objects are best-effort and their internal shape may evolve as Coverbase improves enrichment. Treat the presence of each field defensively; any individual section can be `null` even when `status` is `"completed"` if no data was found for it.
+</Note>
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` does not exist or is not in the API key's org. |
+
+### Refresh a vendor's fact sheet
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/fact-sheet/refresh`
+</ParamField>
+
+Queues a (re)generation of the vendor's fact sheet and returns immediately with `202 Accepted` and `status: "pending"`. Existing fact sheet data is cleared at the start of the run, so a `GET` made right after a refresh reflects the `pending` state. Poll the [fact sheet endpoint](#retrieve-a-vendors-fact-sheet) until `status` is `"completed"`.
+
+<Note>
+  This endpoint is not idempotent — each call queues a fresh generation run.
+</Note>
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/fact-sheet/refresh" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`202 Accepted`:
+
+```json
+{
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "entity_id": "cbentity_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "status": "pending",
+  "message": "Fact sheet regeneration has been queued."
+}
+```
+
+<ResponseField name="vendor_id" type="string">The vendor ID (`cbvndr_...`).</ResponseField>
+<ResponseField name="entity_id" type="string | null">ID of the underlying entity, or `null` when the vendor is being linked to one for the first time as part of this run.</ResponseField>
+<ResponseField name="status" type="string">Always `"pending"` on a successful enqueue.</ResponseField>
+<ResponseField name="message" type="string">Human-readable acknowledgement.</ResponseField>
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` does not exist or is not in the API key's org. |
