@@ -19,8 +19,13 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `POST` | `/v1/users` | Yes (`Idempotency-Key`) |
+| `GET` | `/v1/users` | — |
 | `GET` | `/v1/users/{user_id}` | — |
 | `PATCH` | `/v1/users/{user_id}` | No |
+
+<Tip>
+  Syncing relationship owners, watchers, or risk analysts from an external system (e.g. ServiceNow)? Those [vendor/service fields](/api-reference/vendors#assigning-people-analysts-owners-watchers) take Coverbase user IDs, not emails. Use [`GET /v1/users?email=`](#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID, and `POST /v1/users` to create the user if they don't exist yet — it returns the existing user if they do.
+</Tip>
 
 ## Org roles
 
@@ -37,13 +42,17 @@ The `role` field uses these values:
 
 The aliases `member`, `basic_member`, `org:basic_member` (→ `org:member`) and `admin` (→ `org:admin`) are also accepted. Any other value is rejected with `422`.
 
-## Provision a user
+## Provision a user (create-or-get)
 
 <ParamField path="method" type="POST">
   `POST /v1/users`
 </ParamField>
 
-Creates the account + org membership (`invited`). Returns `201 Created`.
+Creates the account + org membership (`invited`), or returns the existing user. Returns `201 Created` on create, or **`200 OK`** if a user with that email already exists in the org — so this call is safe to use as create-if-missing and always yields the user's `cbuser_...` ID.
+
+<Info>
+  Idempotent create-or-get: a same-org email match returns `200` with the existing user (not `409`). A `409 user_exists` is only returned when the email belongs to a user in a **different** org (emails are globally unique). The email match is case-insensitive.
+</Info>
 
 ### Request body
 
@@ -112,7 +121,7 @@ resp = requests.post(
     },
     timeout=30,
 )
-# 201 on create; 409 if the email already exists in this org
+# 201 on create; 200 if the email already exists in this org
 print(resp.status_code, resp.json())
 ```
 
@@ -120,7 +129,7 @@ print(resp.status_code, resp.json())
 
 ### Example response
 
-`201 Created`:
+`201 Created` (new user), or `200 OK` (existing user — the stored object, whose `status` is its current membership state such as `active`):
 
 ```json
 {
@@ -152,8 +161,105 @@ print(resp.status_code, resp.json())
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 409 | `{"detail": {"code": "user_exists", "message": "A user with email ... already exists."}}` | A user with that email already exists in this org (also returned if a concurrent create or a global email-uniqueness constraint races). Expected on replay without an idempotency key. |
+| 409 | `{"detail": {"code": "user_exists", "message": "A user with email ... already exists."}}` | The email belongs to a user in a **different** org (emails are globally unique). A same-org match now returns `200` with the existing user, not `409`. |
 | 422 | Standard validation error | `email` missing or not a valid email address, or `role` not a recognized value. |
+
+## List users and look up by email
+
+<ParamField path="method" type="GET">
+  `GET /v1/users`
+</ParamField>
+
+Lists the org's users, or resolves a single user by email. This is the supported way to build an **email → user ID** mapping when syncing assignments (relationship owners, watchers, risk analysts) from an external system such as ServiceNow — those fields take Coverbase user IDs, so resolve the email here first.
+
+### Query parameters
+
+<ParamField query="email" type="string">
+  Case-insensitive exact-match lookup. Returns the matching user (even if archived, so it can be reactivated) or an empty list. Uses the same matching as the `POST /v1/users` duplicate check, so any email that exists is resolvable to its user ID. When supplied, `include_archived`/`limit`/`offset` are ignored.
+</ParamField>
+
+<ParamField query="include_archived" type="boolean">
+  Include deprovisioned (archived) users in the list. Defaults to `false`.
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Page size, `1`–`200`. Defaults to `50`.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Number of users to skip, for paging. Defaults to `0`.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer ak_...`
+</ParamField>
+
+### Example: resolve a user by email
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/users?email=clarencechio@gmail.com" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.environ["COVERBASE_API_KEY"]
+BASE_URL = "https://sandbox.api.coverbase.app"
+
+resp = requests.get(
+    f"{BASE_URL}/v1/users",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    params={"email": "clarencechio@gmail.com"},
+    timeout=30,
+)
+resp.raise_for_status()
+items = resp.json()["items"]
+user_id = items[0]["id"] if items else None  # resolve email -> cbuser_ id
+```
+
+</CodeGroup>
+
+### Example response
+
+`200 OK`:
+
+```json
+{
+  "items": [
+    {
+      "id": "cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      "email": "clarencechio@gmail.com",
+      "first_name": "Clarence",
+      "last_name": "Chio",
+      "role": "org:admin",
+      "status": "active",
+      "is_archived": false,
+      "created_at": 1746576000,
+      "updated_at": 1746576000
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### Response fields
+
+<ResponseField name="items" type="object[]">Page of [user objects](#user-object). `role` and `status` reflect each user's membership in the API key's org.</ResponseField>
+<ResponseField name="total" type="integer">Total matching users in the org (for an `email` lookup this is `0` or `1`).</ResponseField>
+<ResponseField name="limit" type="integer">Echo of the requested page size.</ResponseField>
+<ResponseField name="offset" type="integer">Echo of the requested offset.</ResponseField>
+
+<Tip>
+  To create-if-missing and always end up with the user's ID: look up the email here, and if `items` is empty call `POST /v1/users` to provision them — or just call `POST /v1/users` directly, which returns the existing user (`200`) when the email is already present.
+</Tip>
 
 ## Retrieve a user
 
