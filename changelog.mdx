@@ -4,6 +4,21 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-06-04 — List and resolve users by email
+
+The Users API can now look up a user by email and returns the existing user on a duplicate create — so external systems (e.g. ServiceNow) can build an email → user ID mapping for relationship-owner / watcher / risk-analyst assignments.
+
+### New features
+
+- **List users / look up by email.** `GET /v1/users` lists the org's users (paginated via `limit`/`offset`, optional `include_archived`), or resolves a single user with `?email=` (case-insensitive exact match; returns the user even if archived). See the [Users API reference](/api-reference/users#list-users-and-look-up-by-email).
+
+### Updates
+
+- **`POST /v1/users` is now create-or-get.** When a user with the supplied email already exists in the org, the endpoint returns `200 OK` with that user (so you can resolve its `cbuser_...` ID) instead of `409 user_exists`. A `409` is now only returned when the email belongs to a user in a **different** org (emails are globally unique).
+- **Assigning people by email.** The [vendor & service](/api-reference/vendors#assigning-people-analysts-owners-watchers) `relationship_owner_ids`, `watcher_ids`, and `risk_analyst_ids` fields still take user IDs — the Users API is the supported path to resolve those IDs from emails.
+
+---
+
 ## 2026-06-02 — Bill of Materials
 
 Upload, version, and search machine-readable bills of materials (SBOM, AIBOM, HBOM, SaaSBOM) for vendors and services — over the REST API and through the MCP server.
