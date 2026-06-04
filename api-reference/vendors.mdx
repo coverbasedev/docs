@@ -26,7 +26,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 
 ## The primary contact object
 
-Several vendor endpoints accept/return a `primary_contact`. It is the address the inherent-risk-questionnaire portal invite (and other vendor emails) are sent to.
+Both vendor and service endpoints accept/return a `primary_contact`. On a vendor it is the address the inherent-risk-questionnaire portal invite (and other vendor emails) are sent to; on a service it is the service-level point-of-contact.
 
 | Field | Type | Notes |
 | ----- | ---- | ----- |
@@ -35,7 +35,17 @@ Several vendor endpoints accept/return a `primary_contact`. It is the address th
 | `title` | string \| null | Contact title. |
 | `phone_number` | string \| null | Contact phone. |
 
-On read, `primary_contact` is derived from the vendor's stored contact personnel (first entry with an email), falling back to the vendor's security contact email; it is `null` if neither is set.
+On read, `primary_contact` is derived from the stored contact personnel (first entry with an email) — for vendors it falls back to the vendor's security contact email. It is `null` if no contact is set.
+
+## Assigning people (analysts, owners, watchers)
+
+Vendors and services accept optional personnel assignments as arrays of user IDs (`cbuser_...`). All are **optional**; on create, omit them to assign no one. On update (`PATCH`), supplying an array **replaces** the existing set — pass `[]` to clear it, or omit the field to leave it unchanged.
+
+| Field | Vendor | Service | Meaning |
+| ----- | ------ | ------- | ------- |
+| `risk_analyst_ids` | ✓ | — | Risk analysts. **Vendor-only** — services do not have risk analysts. |
+| `relationship_owner_ids` | ✓ | ✓ | Relationship owners. |
+| `watcher_ids` | ✓ | ✓ | Watchers (users who follow the vendor/service for notifications). |
 
 ## Create a vendor
 
@@ -69,6 +79,18 @@ Creates a parent vendor. Returns `201 Created` with the full vendor object.
 
 <ParamField body="external_id" type="string">
   Your system's identifier for this vendor (e.g. an Ariba request ID). Stored and echoed back; useful for correlation.
+</ParamField>
+
+<ParamField body="risk_analyst_ids" type="string[]">
+  Risk analyst user IDs (`cbuser_...`) to assign. See [assigning people](#assigning-people-analysts-owners-watchers).
+</ParamField>
+
+<ParamField body="relationship_owner_ids" type="string[]">
+  Relationship owner user IDs (`cbuser_...`) to assign.
+</ParamField>
+
+<ParamField body="watcher_ids" type="string[]">
+  Watcher user IDs (`cbuser_...`) to assign.
 </ParamField>
 
 <ParamField body="primary_contact" type="object">
@@ -147,6 +169,7 @@ print(resp.json())
   "tags": [],
   "risk_analyst_ids": [],
   "relationship_owner_ids": [],
+  "watcher_ids": [],
   "inherent_risk_level_id": null,
   "residual_risk_level_id": null,
   "engagement_type": null,
@@ -202,13 +225,34 @@ Creates a service under an existing vendor. Returns `201 Created`.
   Tag IDs (`cbtag_...`) to attach to the service.
 </ParamField>
 
+<ParamField body="relationship_owner_ids" type="string[]">
+  Relationship owner user IDs (`cbuser_...`) to assign. See [assigning people](#assigning-people-analysts-owners-watchers).
+</ParamField>
+
+<ParamField body="watcher_ids" type="string[]">
+  Watcher user IDs (`cbuser_...`) to assign.
+</ParamField>
+
+<ParamField body="primary_contact" type="object">
+  The service point-of-contact (see [the primary contact object](#the-primary-contact-object)). If supplied, `email` is required and validated.
+</ParamField>
+
+<Note>
+  Services do **not** have risk analysts — risk analysts are assigned on the parent vendor. Sending `risk_analyst_ids` to a service endpoint has no effect.
+</Note>
+
 ### Example request
 
 ```bash cURL
 curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/services" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{ "name": "ACME_Sup_Test1 — Primary Service" }'
+  -d '{
+    "name": "ACME_Sup_Test1 — Primary Service",
+    "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
+    "watcher_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
+    "primary_contact": { "email": "service-owner@supplier1.example.com" }
+  }'
 ```
 
 ### Example response
@@ -223,6 +267,9 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
   "description": null,
   "external_id": null,
   "tags": [],
+  "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
+  "watcher_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
+  "primary_contact": { "email": "service-owner@supplier1.example.com", "name": null, "title": null, "phone_number": null },
   "created_at": 1746576000
 }
 ```
@@ -235,6 +282,9 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
 <ResponseField name="description" type="string | null">Service description.</ResponseField>
 <ResponseField name="external_id" type="string | null">Your external identifier, if supplied.</ResponseField>
 <ResponseField name="tags" type="string[]">Tag value strings (empty array if none).</ResponseField>
+<ResponseField name="relationship_owner_ids" type="string[]">Relationship owner user IDs (`cbuser_...`). Empty array if none.</ResponseField>
+<ResponseField name="watcher_ids" type="string[]">Watcher user IDs (`cbuser_...`). Empty array if none.</ResponseField>
+<ResponseField name="primary_contact" type="object | null">The service point-of-contact (see [the primary contact object](#the-primary-contact-object)), or `null`.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
 
 ### Error responses
@@ -268,9 +318,12 @@ Updates a service. Only included fields change. Returns the updated [service obj
 <ParamField body="name" type="string">Service name.</ParamField>
 <ParamField body="description" type="string">Service description.</ParamField>
 <ParamField body="tag_ids" type="string[]">Replace the service's tag set (tag IDs `cbtag_...`).</ParamField>
+<ParamField body="relationship_owner_ids" type="string[]">Replace the relationship owner set (user IDs `cbuser_...`). Pass `[]` to clear.</ParamField>
+<ParamField body="watcher_ids" type="string[]">Replace the watcher set (user IDs `cbuser_...`). Pass `[]` to clear.</ParamField>
+<ParamField body="primary_contact" type="object">Replace the service point-of-contact (see [the primary contact object](#the-primary-contact-object)). When supplied, `email` is required and validated.</ParamField>
 
 <Note>
-  `external_id` is set only at creation and is not updatable here.
+  `external_id` is set only at creation and is not updatable here. Services do not have risk analysts.
 </Note>
 
 ### Example request
@@ -324,6 +377,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
   "tags": ["processes_pii", "saas"],
   "risk_analyst_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
   "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
+  "watcher_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
   "inherent_risk_level_id": "cbsclvl_7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
   "residual_risk_level_id": "cbsclvl_3f4e5d6c7b8a9b0c1d2e3f4a5b6c7d8e",
   "engagement_type": "saas_platform",
@@ -343,6 +397,9 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
       "description": null,
       "external_id": null,
       "tags": [],
+      "relationship_owner_ids": [],
+      "watcher_ids": [],
+      "primary_contact": null,
       "created_at": 1746576000
     }
   ],
@@ -364,6 +421,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 <ResponseField name="tags" type="string[]">Tag value strings (empty array if none).</ResponseField>
 <ResponseField name="risk_analyst_ids" type="string[]">Assigned risk analyst user IDs (`cbuser_...`).</ResponseField>
 <ResponseField name="relationship_owner_ids" type="string[]">Relationship owner user IDs (`cbuser_...`).</ResponseField>
+<ResponseField name="watcher_ids" type="string[]">Watcher user IDs (`cbuser_...`).</ResponseField>
 <ResponseField name="inherent_risk_level_id" type="string | null">Scale level ID (`cbsclvl_...`) for inherent risk.</ResponseField>
 <ResponseField name="residual_risk_level_id" type="string | null">Scale level ID (`cbsclvl_...`) for residual risk.</ResponseField>
 <ResponseField name="engagement_type" type="string | null">Type of engagement with this vendor.</ResponseField>
@@ -400,8 +458,9 @@ Updates one or more fields. Only included fields change; omitted fields are unto
 <ParamField body="hq_location" type="string">Headquarters location.</ParamField>
 <ParamField body="status_id" type="string">ID (`cbst_...`) of a status record to transition to.</ParamField>
 <ParamField body="tag_ids" type="string[]">Replace the entire tag set, using tag IDs (`cbtag_...`).</ParamField>
-<ParamField body="risk_analyst_ids" type="string[]">Replace the risk analyst set (user IDs `cbuser_...`).</ParamField>
-<ParamField body="relationship_owner_ids" type="string[]">Replace the relationship owner set (user IDs `cbuser_...`).</ParamField>
+<ParamField body="risk_analyst_ids" type="string[]">Replace the risk analyst set (user IDs `cbuser_...`). Pass `[]` to clear.</ParamField>
+<ParamField body="relationship_owner_ids" type="string[]">Replace the relationship owner set (user IDs `cbuser_...`). Pass `[]` to clear.</ParamField>
+<ParamField body="watcher_ids" type="string[]">Replace the watcher set (user IDs `cbuser_...`). Pass `[]` to clear.</ParamField>
 <ParamField body="inherent_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for inherent risk.</ParamField>
 <ParamField body="residual_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for residual risk.</ParamField>
 <ParamField body="use_case" type="string">How the vendor is used.</ParamField>
