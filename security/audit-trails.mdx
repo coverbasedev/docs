@@ -1,0 +1,93 @@
+---
+title: "Audit trails"
+description: "Every action — dashboard, API, and AI — is logged in a tamper-evident audit trail you can read and export through the API."
+icon: "list-timeline"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase records what happened, who did it, and when — across the dashboard, the public API, and AI assistants — in a single audit trail. You can review it in the UI and pull it programmatically through the audit API, so it can flow into your SIEM, your GRC platform, or your own evidence packages.
+
+## What is captured
+
+<CardGroup cols={2}>
+  <Card title="Dashboard actions" icon="window">
+    State-changing actions taken by users in the dashboard are recorded against the acting user.
+  </Card>
+
+  <Card title="Public-API calls" icon="code">
+    Every authenticated `/v1/*` call is recorded as an `external_api_call`, capturing the method, route, status, and the key that made it.
+  </Card>
+
+  <Card title="AI tool calls" icon="robot">
+    Every MCP tool call is logged with the OAuth user identity, the tool, its parameters, and the outcome — in the same trail as dashboard and API activity.
+  </Card>
+
+  <Card title="Authentication events" icon="key">
+    Credential use and key lifecycle events are logged for security monitoring and incident response.
+  </Card>
+</CardGroup>
+
+## Public-API audit records
+
+Each authenticated public-API request is recorded in your organization's activity log as `type=external_api_call` with `target_type=external_api_request`. Every record captures:
+
+- the HTTP method, request path, and matched route template
+- the response status code and duration in milliseconds
+- the names of the query parameters used (values are **not** recorded)
+- the `ak_*` key ID and human-readable name that authenticated the request
+- the client IP and a per-request correlation ID
+
+<Note>
+  Request and response **bodies are never persisted** in the audit log — only metadata about the call. This keeps the trail useful for forensics without itself becoming a sensitive data store.
+</Note>
+
+## Reading and exporting the audit log
+
+The audit trail is available in the dashboard and through the API, so you can export it on whatever schedule your program requires.
+
+<CardGroup cols={2}>
+  <Card title="In the dashboard" icon="table-list">
+    Find it under **Settings → Audit log**. API activity is grouped under **Integrations**.
+  </Card>
+
+  <Card title="Through the API" icon="cloud-arrow-down">
+    Read it programmatically with `GET /v1/system_audit_log` and `GET /v1/system_audit_log/metadata`.
+  </Card>
+</CardGroup>
+
+### Authentication for the audit API
+
+The audit read endpoints accept **either** of:
+
+- a **dashboard session JWT** (member, siloed-member, admin, or guest role), or
+- an **`ak_*` API key carrying the [`audit:read` scope](/conventions#api-key-scopes)** — for headless export pipelines.
+
+```bash Export the system audit log
+curl "https://api.coverbase.app/v1/system_audit_log" \
+  -H "Authorization: Bearer ak_live_xxx"   # key must carry the audit:read scope
+```
+
+<Tip>
+  Mint a dedicated, scope-limited key for your log-export pipeline. A key that only needs to read the audit log should carry **only** `audit:read` and nothing else, following least privilege. See [API key scopes](/conventions#api-key-scopes).
+</Tip>
+
+### Retention
+
+Audit records are retained in line with the retention periods described in our agreements and privacy policy. For long-term retention beyond that window, export the log on a recurring schedule into your own system of record.
+
+## Build a defensible evidence trail
+
+<Steps>
+  <Step title="Provision a scoped export key">
+    Have an admin mint an `ak_*` key with the `audit:read` scope for your export job.
+  </Step>
+  <Step title="Pull on a schedule">
+    Poll `GET /v1/system_audit_log` on a fixed cadence, paging through results. See [pagination](/conventions#pagination).
+  </Step>
+  <Step title="Ship to your system of record">
+    Forward records into your SIEM or GRC platform so your auditors see Coverbase activity alongside the rest of your environment.
+  </Step>
+</Steps>
