@@ -1,0 +1,61 @@
+---
+title: "Data protection"
+description: "Encryption, tenant isolation, key management, retention, and deletion."
+icon: "lock"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Your vendor data, assessment evidence, and contracts are protected in transit and at rest, isolated to your organization, and held only as long as you need it.
+
+## Encryption
+
+<CardGroup cols={2}>
+  <Card title="In transit" icon="lock">
+    All connections use TLS 1.2 or higher, with certificates from recognized authorities. There is no unencrypted surface — the API, the dashboard, and the MCP server are HTTPS only.
+  </Card>
+
+  <Card title="At rest" icon="database">
+    Customer data is encrypted at rest in our managed data stores and object storage using industry-standard algorithms.
+  </Card>
+</CardGroup>
+
+## Tenant isolation
+
+Coverbase is multi-tenant, and isolation between tenants is enforced in depth rather than at a single boundary.
+
+- **Every record is org-scoped.** Each object carries the ID of its owning organization, and that scope is enforced at the data-access layer on every read and write — not only at the API edge.
+- **Credentials are single-org.** An API key authenticates to exactly one organization; everything it reads or writes is implicitly scoped to that org. A request can never reach another tenant's data by changing an ID. See [API conventions](/conventions#authentication).
+- **AI access inherits the boundary.** MCP tool calls run with the connected user's permissions and cannot escalate beyond what that user could do in the UI. See [MCP permissions](/mcp/permissions).
+
+<Note>
+  A resource ID that does not belong to your organization is treated as not found (`404`) — the same response as an ID that does not exist — so existence in another tenant is never leaked.
+</Note>
+
+## Key and secret management
+
+Application secrets and credentials are stored in a managed secrets service (AWS Secrets Manager), not in source code or configuration files. Secrets are never committed to source control, and access to them is restricted and logged.
+
+## Network controls
+
+Organizations can lock down where API access is allowed to originate from.
+
+<Card title="API IP allowlist" icon="network-wired" href="/conventions#api-ip-allowlist">
+  Restrict all public-API (`ak_...` key) requests to a set of IPv4/IPv6 CIDRs. The control is fail-closed and uses the unspoofable load-balancer-provided client IP. See [API IP allowlist](/conventions#api-ip-allowlist).
+</Card>
+
+## Data residency
+
+Customer data is hosted on managed cloud infrastructure. For specific data-residency requirements, contact [security@coverbase.ai](mailto:security@coverbase.ai) to discuss your needs.
+
+## Retention and deletion
+
+- **Retention.** We retain customer data for the life of your subscription and the period defined in your agreement and our privacy policy.
+- **Deletion.** On contract termination, customer data is deleted in line with the agreed terms. You can also delete or archive records yourself through the dashboard and API throughout the engagement.
+- **Backups.** Deleted data ages out of backups according to the backup-retention schedule.
+
+<Card title="Privacy policy" icon="user-shield" href="https://www.coverbase.com/privacy-policy">
+  See the Coverbase Privacy Policy for how we handle personal data, including data-subject requests.
+</Card>

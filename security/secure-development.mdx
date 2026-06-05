@@ -1,0 +1,61 @@
+---
+title: "Secure development"
+description: "Our secure SDLC: review, automated gates, dependency and secret scanning, and least-privilege CI/CD."
+icon: "code-branch"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Security is built into how we ship, not bolted on afterward. Every change to Coverbase flows through a secure software-development lifecycle (SDLC) with mandatory review and automated quality and security gates before it reaches production.
+
+## Change management
+
+<CardGroup cols={2}>
+  <Card title="Peer review required" icon="users">
+    All code changes are made on branches and merged through pull requests. Changes require review and must pass automated checks before merge to the main branch.
+  </Card>
+
+  <Card title="Protected main branch" icon="shield-halved">
+    The production branch is protected. Direct pushes are disallowed; merges go through review and a green check suite.
+  </Card>
+
+  <Card title="Traceable history" icon="clock-rotate-left">
+    Every change is attributable to an author and a reviewer, with linear, auditable history from commit to deploy.
+  </Card>
+
+  <Card title="Controlled releases" icon="rocket">
+    Deployments are automated through CI/CD, so what runs in production is exactly what was reviewed and built.
+  </Card>
+</CardGroup>
+
+## Automated quality and security gates
+
+Every pull request runs an automated check ladder before it can merge:
+
+| Gate | What it enforces |
+| ---- | ---------------- |
+| Type checking | Static type analysis across all services (backend and frontend) catches whole classes of defects before runtime. |
+| Linting and formatting | Enforced style and lint rules keep the codebase consistent and flag risky patterns. |
+| Automated tests | Unit, integration, and end-to-end suites must pass. |
+| Dependency scanning | Third-party dependencies are scanned for known vulnerabilities and kept current. |
+| Secret scanning | Automated scanning blocks credentials and secrets from being committed. |
+
+## Dependency and supply-chain hygiene
+
+- Dependencies are pinned and their lockfiles are checked in CI, so the build is reproducible and a dependency cannot change underneath us silently.
+- Known-vulnerable dependencies are surfaced and upgraded on a priority basis.
+- CI/CD runs with least-privilege credentials scoped to the task at hand.
+
+## Infrastructure as code
+
+Production infrastructure is defined as code and provisioned through reviewed, version-controlled pipelines (Pulumi on AWS). Infrastructure changes go through the same review and approval path as application code, so configuration drift and unreviewed production changes are prevented.
+
+## Separation of environments
+
+Development, testing, and production are separated. A full, isolated [sandbox](/conventions#base-urls) environment lets customers and integrators build and test against the API without touching production data.
+
+## Secure-by-default patterns
+
+The platform is built around defensive patterns that are enforced in code review and by automated rules — for example, mandatory per-organization data scoping at the data-access layer, authenticated-by-default API routes, and constrained credential scopes. New code inherits these protections by construction rather than relying on each engineer to remember them.

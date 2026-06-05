@@ -1,0 +1,55 @@
+---
+title: "AI governance"
+description: "How we select, test, and constrain the AI models that power Coverbase — and how we handle your data."
+icon: "brain-circuit"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase uses AI to read evidence, draft assessments, extract contract clauses, and surface risk. Because those outputs feed real risk decisions, we govern the AI the same way we govern the rest of the platform: with deliberate model selection, testing, human oversight, and strict data handling.
+
+## Model selection and hosting
+
+<CardGroup cols={2}>
+  <Card title="Enterprise-grade models" icon="microchip">
+    We run leading foundation models through enterprise model hosting (AWS Bedrock), keeping inference inside our trusted cloud boundary rather than calling consumer endpoints.
+  </Card>
+
+  <Card title="No training on your data" icon="shield-halved">
+    Customer data sent to the models we use is not used to train those foundation models. Your data is used to serve your requests, not to improve a third party's model.
+  </Card>
+</CardGroup>
+
+## Testing and evaluation
+
+AI behavior is tested, not assumed. We treat model-driven features as systems that must be measured before and after they change.
+
+- **Evaluations.** Model-driven features are exercised against evaluation suites so we can measure output quality and catch regressions when prompts or models change.
+- **Confidence signals.** Where the model produces a judgment, we surface internal confidence signals to reviewers so low-confidence outputs get extra scrutiny.
+- **Pre-release validation.** Prompt and model changes go through the same reviewed [secure-development](/security/secure-development) pipeline as the rest of the platform.
+
+## Human oversight
+
+<CardGroup cols={2}>
+  <Card title="Human in the loop" icon="user-check">
+    AI generates and proposes; people decide. Assessment scoring, findings, and analyst commentary remain reviewable and editable by your team before they become part of the record.
+  </Card>
+
+  <Card title="Explicit confirmation for AI writes" icon="hand">
+    Through the MCP server, every AI-initiated action that creates, updates, or deletes data requires explicit confirmation — the assistant cannot silently mutate your data. See [MCP security](/mcp/security#write-action-protection).
+  </Card>
+</CardGroup>
+
+## Guardrails and data handling
+
+- **Permission inheritance.** AI assistants connected through MCP act with the connected user's permissions and cannot exceed them. See [MCP permissions](/mcp/permissions).
+- **Scoped context.** User-provided context is bounded before it is sent to a model — inputs are truncated to conservative limits — and prompts are structured to keep instructions and data clearly separated.
+- **Tenant boundary preserved.** Model-driven features operate within the same per-organization isolation as everything else; AI cannot reach across tenants. See [Tenant isolation](/security/data-protection#tenant-isolation).
+
+## Transparency
+
+<Card title="What we log and don't retain" icon="list-timeline" href="/mcp/security">
+  AI tool calls are logged to your audit trail with user identity, parameters, and outcome. We do not retain the prompts, conversation context, or assistant responses from MCP sessions. See [MCP security and privacy](/mcp/security).
+</Card>
