@@ -1,0 +1,299 @@
+---
+title: "Documents API"
+description: "Upload vendor documents, link them to vendors, services, and assessments, and download them."
+icon: "file-arrow-up"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A **document** (`cbvdoc_...`) is an evidence file (SOC 2 report, pentest report, policy, contract, questionnaire, diagram, …) that belongs to a **vendor** (`cbvndr_...`). A document can additionally be linked to any number of that vendor's **services** (`cbsvc_...`) and **assessments** (`cbqsrw_...`).
+
+Use this API to upload a document, attach it where it belongs, list and inspect documents, fetch a short-lived download URL, re-link, and archive.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, idempotency, pagination, and the error envelope.
+
+| Method | Path | Idempotent |
+| ------ | ---- | ---------- |
+| `POST` | `/v1/documents` | Yes (`Idempotency-Key`) |
+| `GET` | `/v1/documents` | — |
+| `GET` | `/v1/documents/{document_id}` | — |
+| `GET` | `/v1/documents/{document_id}/download` | — |
+| `PATCH` | `/v1/documents/{document_id}` | No |
+| `DELETE` | `/v1/documents/{document_id}` | No |
+
+<Note>
+  **Smart limits.** Uploads are capped at **100 MiB** per file. Allowed file
+  types: `pdf`, `doc`, `docx`, `rtf`, `txt`, `md`, `xls`, `xlsx`, `xlsm`, `csv`,
+  `ppt`, `pptx`, `png`, `jpg`, `jpeg`, `gif`, `webp`, `zip`. Anything else is
+  rejected with `400 unsupported_file_type`; an oversized file is rejected with
+  `413 file_too_large`. List responses page at `limit` 1–200 (default 50).
+</Note>
+
+## Upload a document
+
+<ParamField path="method" type="POST">
+  `POST /v1/documents`
+</ParamField>
+
+Uploads a file and creates a document attached to a vendor. The request is
+`multipart/form-data` — send the file plus its links in one call. Returns
+`201 Created` with the document object.
+
+After upload, Coverbase asynchronously classifies the document (and, where
+applicable, runs AI analysis). The returned `status` reflects this in-progress
+state; poll `GET /v1/documents/{document_id}` to observe it settle.
+
+### Form fields
+
+<ParamField body="file" type="file" required>
+  The document file (`multipart/form-data` part).
+</ParamField>
+
+<ParamField body="vendor_id" type="string" required>
+  The owning vendor ID (`cbvndr_...`).
+</ParamField>
+
+<ParamField body="service_ids" type="string[]">
+  Service IDs (`cbsvc_...`) to link the document to. Repeat the form field once
+  per service.
+</ParamField>
+
+<ParamField body="assessment_ids" type="string[]">
+  Assessment IDs (`cbqsrw_...`) to attach the document to as supporting evidence.
+</ParamField>
+
+<ParamField body="document_type" type="string">
+  Optional document type slug (e.g. `soc2_type2_auditor_report`,
+  `penetration_test_report`, `commercial_contract`). Omit it to let Coverbase
+  infer the type from the file. An unknown slug returns `422 invalid_document_type`.
+</ParamField>
+
+<ParamField body="name" type="string">
+  Optional display name. Defaults to the uploaded filename.
+</ParamField>
+
+### Headers
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer ak_...`
+</ParamField>
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional. Replaying the same key within 24 hours returns the original `201` body. See [Idempotency](/conventions#idempotency).
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/documents" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Idempotency-Key: acme-soc2-2026q1" \
+  -F "file=@./acme_soc2.pdf;type=application/pdf" \
+  -F "vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+  -F "service_ids=cbsvc_1a2b" \
+  -F "assessment_ids=cbqsrw_9f8e" \
+  -F "document_type=soc2_type2_auditor_report" \
+  -F "name=ACME SOC 2 Type II"
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.environ["COVERBASE_API_KEY"]
+BASE_URL = "https://sandbox.api.coverbase.app"
+
+with open("acme_soc2.pdf", "rb") as fh:
+    resp = requests.post(
+        f"{BASE_URL}/v1/documents",
+        headers={
+            "Authorization": f"Bearer {API_KEY}",
+            "Idempotency-Key": "acme-soc2-2026q1",
+        },
+        data={
+            "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+            "service_ids": ["cbsvc_1a2b"],
+            "assessment_ids": ["cbqsrw_9f8e"],
+            "document_type": "soc2_type2_auditor_report",
+            "name": "ACME SOC 2 Type II",
+        },
+        files={"file": ("acme_soc2.pdf", fh, "application/pdf")},
+        timeout=120,
+    )
+resp.raise_for_status()
+print(resp.json())
+```
+
+</CodeGroup>
+
+### Example response
+
+`201 Created` — the document object:
+
+```json
+{
+  "id": "cbvdoc_2f1c9a7b6d5e4f3a2b1c0d9e8f7a6b5c",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "name": "ACME SOC 2 Type II",
+  "extension": "pdf",
+  "size": 482113,
+  "document_type": "soc2_type2_auditor_report",
+  "status": "created",
+  "service_ids": ["cbsvc_1a2b"],
+  "assessment_ids": ["cbqsrw_9f8e"],
+  "created_at": 1749340800,
+  "updated_at": 1749340800
+}
+```
+
+## The document object
+
+<ResponseField name="id" type="string">Document ID (`cbvdoc_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">Owning vendor ID.</ResponseField>
+<ResponseField name="name" type="string">Display name.</ResponseField>
+<ResponseField name="extension" type="string">Normalized file extension (no leading dot).</ResponseField>
+<ResponseField name="size" type="integer">File size in bytes.</ResponseField>
+<ResponseField name="document_type" type="string | null">The classified/declared document type slug, or `null` if not yet classified.</ResponseField>
+<ResponseField name="status" type="string | null">Processing status (e.g. `created`, `analyzing`, `complete`).</ResponseField>
+<ResponseField name="service_ids" type="string[]">Linked service IDs.</ResponseField>
+<ResponseField name="assessment_ids" type="string[]">Assessments the document is attached to.</ResponseField>
+<ResponseField name="created_at" type="integer">Creation time (Unix epoch seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Last-update time (Unix epoch seconds).</ResponseField>
+
+## List documents
+
+<ParamField path="method" type="GET">
+  `GET /v1/documents`
+</ParamField>
+
+Returns a paginated list of documents. Combine the filters to narrow the result.
+
+<ParamField query="vendor_id" type="string">Only documents owned by this vendor.</ParamField>
+<ParamField query="service_id" type="string">Only documents linked to this service.</ParamField>
+<ParamField query="assessment_id" type="string">Only documents attached to this assessment.</ParamField>
+<ParamField query="limit" type="integer">Page size, 1–200 (default 50).</ParamField>
+<ParamField query="offset" type="integer">Pagination offset (default 0).</ParamField>
+
+```bash cURL
+curl "https://sandbox.api.coverbase.app/v1/documents?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&limit=50" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+```json
+{
+  "data": [ { "id": "cbvdoc_...", "vendor_id": "cbvndr_...", "name": "ACME SOC 2 Type II", "...": "..." } ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+## Get a document
+
+<ParamField path="method" type="GET">
+  `GET /v1/documents/{document_id}`
+</ParamField>
+
+Returns a single document's metadata and links, or `404 document_not_found`.
+
+```bash cURL
+curl "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c9a7b6d5e4f3a2b1c0d9e8f7a6b5c" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+## Download a document
+
+<ParamField path="method" type="GET">
+  `GET /v1/documents/{document_id}/download`
+</ParamField>
+
+Returns a short-lived (one hour) presigned URL for the document's file. Follow
+the returned `url` with a plain `GET` (no `Authorization` header) to fetch the
+bytes — it serves the file as an attachment with the original filename.
+
+```bash cURL
+# 1. Get the presigned URL
+curl "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c.../download" \
+  -H "Authorization: Bearer ak_live_xxx"
+
+# 2. Follow it to download the file
+curl -L -o acme_soc2.pdf "https://<presigned-s3-url>"
+```
+
+```json
+{
+  "url": "https://<bucket>.s3.amazonaws.com/<key>?X-Amz-Signature=...",
+  "filename": "ACME SOC 2 Type II.pdf",
+  "expires_in": 3600
+}
+```
+
+## Update a document
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/documents/{document_id}`
+</ParamField>
+
+Updates the name, type, and links. All fields are optional; omitted fields are
+left unchanged. Supplying a list for `service_ids` / `assessment_ids`
+**replaces** the existing set (pass `[]` to clear it).
+
+<ParamField body="name" type="string">Replacement display name.</ParamField>
+<ParamField body="document_type" type="string">Replacement document type slug.</ParamField>
+<ParamField body="service_ids" type="string[]">Replaces the set of linked services.</ParamField>
+<ParamField body="assessment_ids" type="string[]">Replaces the set of attached assessments.</ParamField>
+
+```bash cURL
+curl -X PATCH "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "service_ids": ["cbsvc_1a2b", "cbsvc_3c4d"], "assessment_ids": ["cbqsrw_9f8e"] }'
+```
+
+## Archive a document
+
+<ParamField path="method" type="DELETE">
+  `DELETE /v1/documents/{document_id}`
+</ParamField>
+
+Archives (soft-deletes) the document. The underlying record is retained for
+audit but no longer appears in list results.
+
+```bash cURL
+curl -X DELETE "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+```json
+{ "id": "cbvdoc_2f1c...", "is_archived": true, "archived_at": 1749427200 }
+```
+
+## Attaching documents to assessments
+
+There are two ways to link a document to an assessment:
+
+1. **At upload time** — pass `assessment_ids` to `POST /v1/documents` (or
+   `service_ids` to attach to services).
+2. **At assessment-create time** — upload the document first, then pass its ID
+   in `supporting_document_ids` when calling
+   [`POST /v1/assessments`](/api-reference/assessments).
+3. **Later** — `PATCH /v1/documents/{document_id}` with `assessment_ids` /
+   `service_ids`.
+
+## Errors
+
+| Status | `code` | When |
+| ------ | ------ | ---- |
+| `400` | `unsupported_file_type` | The file extension is not in the allowlist. |
+| `413` | `file_too_large` | The file exceeds the 100 MiB limit. |
+| `422` | `invalid_document_type` | `document_type` is not a known slug. |
+| `404` | `vendor_not_found` | The `vendor_id` does not exist in your org. |
+| `404` | `document_not_found` | The document does not exist in your org. |
+| `404` | `assessment_not_found` | A filtered `assessment_id` does not exist. |
+| `409` | `document_not_ready` | The document has no stored file to download yet. |
+
+See the [error envelope](/conventions#errors) for the response shape.
