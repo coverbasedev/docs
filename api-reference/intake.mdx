@@ -29,7 +29,10 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 Creates the vendor, the intake session, and one questionnaire response per
 questionnaire, then dispatches asynchronous AI processing. Returns
 `201 Created` with the new `session_id`. Replaying the same `external_id`
-returns the existing `session_id` with `200 OK` and does not reprocess.
+returns the existing `session_id` with `200 OK` and does not reprocess — the
+original request's data (including `context`) is retained, and any changed
+fields in the replay are ignored. To analyze a vendor with updated context,
+create a new request with a new `external_id`.
 
 ### Body fields
 
@@ -50,6 +53,10 @@ returns the existing `session_id` with `200 OK` and does not reprocess.
   research), so the inherent risk analysis is driven by what you already know
   about the engagement. Maximum 100,000 characters. The context is persisted on
   the intake session, so later reprocessing runs reuse it.
+
+  Note that roughly the first 20,000 characters are included in each
+  question's evidence (longer context is truncated per question), so put the
+  most decision-relevant facts first rather than padding toward the limit.
 </ParamField>
 
 <ParamField body="vendor_website" type="string">
