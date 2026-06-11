@@ -57,6 +57,8 @@ create a new request with a new `external_id`.
   Note that roughly the first 20,000 characters are included in each
   question's evidence (longer context is truncated per question), so put the
   most decision-relevant facts first rather than padding toward the limit.
+  When your context exceeds that cap, the create response sets
+  `context_truncated: true`.
 </ParamField>
 
 <ParamField body="vendor_website" type="string">
@@ -129,9 +131,14 @@ session_id = resp.json()["session_id"]
 
 ```json
 {
-  "session_id": "cbintksn_7c1d9e2b41f04c5e8a3b6d0f9e2c4a71"
+  "session_id": "cbintksn_7c1d9e2b41f04c5e8a3b6d0f9e2c4a71",
+  "context_truncated": false
 }
 ```
+
+`context_truncated` is `true` when the submitted `context` exceeds the
+per-question evidence cap — the full text is stored, but each question prompt
+only receives the leading portion.
 
 ## Get an intake session
 
