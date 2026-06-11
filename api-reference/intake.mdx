@@ -1,0 +1,211 @@
+---
+title: "Intake API"
+description: "Create vendor intake requests programmatically, pass unstructured context, and let Coverbase auto-answer the inherent risk questionnaire."
+icon: "inbox-in"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+An **intake session** (`cbintksn_...`) is a vendor intake request. Creating one through this API registers the vendor, creates the intake request in the dashboard's **Vendor Intake** queue, and kicks off AI processing that auto-answers the selected inherent risk questionnaire(s). Reviewers then approve or deny the request in the dashboard; on approval, the questionnaire-derived inherent risk scores are applied to the vendor and its services.
+
+Use this API to embed Coverbase intake inside another system (procurement tool, ticketing, internal portal): POST the request — including any free-form context you already have — and poll for the generated answers.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, and the error envelope.
+
+| Method | Path | Idempotent |
+| ------ | ---- | ---------- |
+| `POST` | `/v1/intake/api/sessions` | Yes (`external_id`) |
+| `GET` | `/v1/intake/api/sessions/{session_id}` | — |
+| `GET` | `/v1/intake/api/sessions/external/{external_id}` | — |
+
+## Create an intake session
+
+<ParamField path="method" type="POST">
+  `POST /v1/intake/api/sessions`
+</ParamField>
+
+Creates the vendor, the intake session, and one questionnaire response per
+questionnaire, then dispatches asynchronous AI processing. Returns
+`201 Created` with the new `session_id`. Replaying the same `external_id`
+returns the existing `session_id` with `200 OK` and does not reprocess — the
+original request's data (including `context`) is retained, and any changed
+fields in the replay are ignored. To analyze a vendor with updated context,
+create a new request with a new `external_id`.
+
+### Body fields
+
+<ParamField body="vendor_name" type="string" required>
+  Name of the vendor the intake request is for.
+</ParamField>
+
+<ParamField body="questionnaire_ids" type="string[]" required>
+  Inherent risk questionnaire IDs (`cbqstnr_...`) to auto-answer. At least one
+  is required; unknown IDs return `404`.
+</ParamField>
+
+<ParamField body="context" type="string">
+  Unstructured free-form context about the engagement — procurement ticket
+  text, requester emails, architecture notes, security questionnaire excerpts,
+  anything. Coverbase uses it as the **highest-priority evidence** when
+  auto-answering the questionnaire (ahead of uploaded documents and web
+  research), so the inherent risk analysis is driven by what you already know
+  about the engagement. Maximum 100,000 characters. The context is persisted on
+  the intake session, so later reprocessing runs reuse it.
+
+  Note that roughly the first 20,000 characters are included in each
+  question's evidence (longer context is truncated per question), so put the
+  most decision-relevant facts first rather than padding toward the limit.
+  When your context exceeds that cap, the create response sets
+  `context_truncated: true`.
+</ParamField>
+
+<ParamField body="vendor_website" type="string">
+  Public website of the vendor. Improves web research and disambiguation.
+</ParamField>
+
+<ParamField body="vendor_description" type="string">
+  Short description of what the vendor does.
+</ParamField>
+
+<ParamField body="use_case" type="string">
+  What your organization intends to use the vendor for.
+</ParamField>
+
+<ParamField body="external_id" type="string">
+  Your identifier for this request (e.g. the procurement ticket number).
+  Enforced unique per org; replays are idempotent and you can fetch the
+  session by this ID later.
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/intake/api/sessions" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vendor_name": "Acme Analytics",
+    "vendor_website": "https://acme-analytics.example",
+    "use_case": "Product analytics on first-party event data",
+    "questionnaire_ids": ["cbqstnr_2f6c1f0a"],
+    "external_id": "PROC-4821",
+    "context": "From procurement ticket PROC-4821: Acme will ingest pseudonymized product events (no payment data) via server-side SDK. Hosting is AWS us-east-1, single-tenant per customer. They hold SOC 2 Type II (report attached to the ticket) and support SAML SSO + SCIM. Estimated spend $40k/yr, business owner is the Growth team."
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.environ["COVERBASE_API_KEY"]
+BASE_URL = "https://sandbox.api.coverbase.app"
+
+resp = requests.post(
+    f"{BASE_URL}/v1/intake/api/sessions",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    json={
+        "vendor_name": "Acme Analytics",
+        "vendor_website": "https://acme-analytics.example",
+        "use_case": "Product analytics on first-party event data",
+        "questionnaire_ids": ["cbqstnr_2f6c1f0a"],
+        "external_id": "PROC-4821",
+        "context": (
+            "From procurement ticket PROC-4821: Acme will ingest "
+            "pseudonymized product events (no payment data) via server-side "
+            "SDK. Hosting is AWS us-east-1, single-tenant per customer. They "
+            "hold SOC 2 Type II and support SAML SSO + SCIM."
+        ),
+    },
+)
+resp.raise_for_status()
+session_id = resp.json()["session_id"]
+```
+
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "session_id": "cbintksn_7c1d9e2b41f04c5e8a3b6d0f9e2c4a71",
+  "context_truncated": false
+}
+```
+
+`context_truncated` is `true` when the submitted `context` exceeds the
+per-question evidence cap — the full text is stored, but each question prompt
+only receives the leading portion.
+
+## Get an intake session
+
+<ParamField path="method" type="GET">
+  `GET /v1/intake/api/sessions/{session_id}`
+</ParamField>
+
+Returns the session status and the per-question answers generated so far. Also
+available by your own identifier:
+`GET /v1/intake/api/sessions/external/{external_id}`.
+
+### Session status
+
+| `status` | Meaning |
+| -------- | ------- |
+| `pending` | Created; processing has not produced answers yet |
+| `processing` | AI answering is in flight |
+| `complete` | Answers generated; the request is ready for reviewer triage in the dashboard |
+| `failed` | Processing failed for every question (e.g. dispatch failure) — contact support or retry with a new request |
+
+Each entry in `answers[]` carries `question_id`, `question_text`,
+`response_type` (`free_text`, `single_select`, `multi_select`), the generated
+`answer_text` or `selected_options`, the model's `reasoning`, and a per-answer
+`status` (`answered`, `pending`, `failed`). `failed_count` summarizes failed
+answers.
+
+### Example response
+
+```json
+{
+  "session_id": "cbintksn_7c1d9e2b41f04c5e8a3b6d0f9e2c4a71",
+  "external_id": "PROC-4821",
+  "status": "complete",
+  "vendor_name": "Acme Analytics",
+  "vendor_website": "https://acme-analytics.example",
+  "created_at": 1765432100,
+  "updated_at": 1765432190,
+  "failed_count": 0,
+  "answers": [
+    {
+      "question_id": "cbqstn_91b2",
+      "question_text": "Will the vendor process personal data?",
+      "response_type": "single_select",
+      "answer_text": "Yes",
+      "selected_options": ["Yes"],
+      "reasoning": "The provided context states Acme ingests pseudonymized product events, which is personal data under GDPR.",
+      "status": "answered"
+    }
+  ]
+}
+```
+
+## How context drives inherent risk
+
+1. **Evidence assembly.** For every questionnaire question, Coverbase builds an
+   evidence stack ordered by reliability: your provided `context`, then intake
+   follow-up responses, then uploaded documents, then targeted web research.
+2. **Auto-answering.** The answer agent answers each question from that
+   evidence, recording its reasoning per answer. Questions it cannot answer are
+   flagged for human review rather than guessed.
+3. **Scoring & review.** The answered inherent risk questionnaire produces the
+   IRQ score and per-domain risk breakdown shown on the intake request in the
+   dashboard. A reviewer approves or denies the request; approval applies the
+   inherent risk scores to the vendor and its services.
+
+<Note>
+  The intake request created by this API appears immediately in the
+  dashboard's **Vendor Intake** queue, exactly like a portal-submitted
+  request — same triage workflow, same finalize/approve flow.
+</Note>
