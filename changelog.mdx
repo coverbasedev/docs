@@ -4,6 +4,22 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-06-17 — List vendors, discover questionnaires, filter supplier exports
+
+New read endpoints for discovering IDs without leaving the API, plus a name filter on supplier exports.
+
+### New features
+
+- **List vendors.** `GET /v1/vendors` lists the org's vendors (newest first), with a case-insensitive `name` substring filter, an exact `external_id` lookup, and `limit`/`offset` pagination — so you can enumerate vendors or map your own identifier to a Coverbase vendor ID. See the [Vendors API reference](/api-reference/vendors#list-vendors).
+- **List questionnaires.** `GET /v1/intake/api/questionnaires` returns the org's questionnaires (`id`, `name`, `type`), with an optional `type` filter — use it to discover the `questionnaire_ids` that [`POST /v1/intake/api/sessions`](/api-reference/intake#create-an-intake-session) requires. See the [Intake API reference](/api-reference/intake#list-questionnaires).
+
+### Updates
+
+- **Supplier export filter.** [`GET /v1/export/{report_name}`](/export) now accepts a `supplier_name` query parameter that filters vendor-based reports (e.g. the all-suppliers report) by name.
+- **Import API troubleshooting.** Clarified the most common `404`/`422` causes in the [Import API reference](/import): the path is singular (`/v1/import/...`), the body must be wrapped under `data`, and a service-account key is required.
+
+---
+
 ## 2026-06-08 — Documents API
 
 Upload vendor evidence documents over the REST API and through the MCP server, link them to vendors, services, and assessments, and download them.

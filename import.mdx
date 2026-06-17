@@ -16,6 +16,13 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Submits a batch of records to the specified import report. Records are validated against the report's field mapping, upserted into the target base object using `external_id`, and returned with a per-record result summary.
 
+<Warning>
+  Three things commonly cause a `404` or `422` here:
+  - The path is **`/v1/import/{report_name}`** — singular `import`, not `imports`. A request to `/v1/imports/...` returns a generic `404 Not Found`.
+  - The body must be an **array wrapped under `data`**: `{"data": [ { ... } ]}`. A bare record object will not validate.
+  - The Import API requires a **service-account API key**. See [API keys](/api-reference/api-keys).
+</Warning>
+
 ### Path parameters
 
 <ParamField path="report_name" type="string" required>
