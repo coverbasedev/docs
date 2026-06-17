@@ -23,6 +23,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `POST` | `/v1/vendors` | Yes (`Idempotency-Key`) |
+| `GET` | `/v1/vendors` | — |
 | `GET` | `/v1/vendors/{vendor_id}` | — |
 | `PATCH` | `/v1/vendors/{vendor_id}` | No |
 | `POST` | `/v1/vendors/{vendor_id}/services` | No |
@@ -352,6 +353,88 @@ curl -X PATCH "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba6288214
 | 400 | `{"detail": {"code": "invalid_service", "message": "..."}}` | Update rejected by a business rule. |
 | 404 | `{"detail": {"code": "service_not_found", "message": "Service not found."}}` | The service does not exist, or does not belong to `vendor_id`, or is not in the API key's org. |
 | 422 | Standard validation error | Body failed schema validation. |
+
+## List vendors
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors`
+</ParamField>
+
+Lists vendors in the API key's org, newest first. Without filters it returns
+every vendor, paginated. Use it to enumerate vendors, resolve a vendor by name,
+or map your own identifier to a Coverbase vendor ID.
+
+<Note>
+  List rows are a **lightweight summary** — they omit the nested `services` and
+  the personnel-assignment arrays. Fetch [`GET /v1/vendors/{vendor_id}`](#retrieve-a-vendor)
+  for the full object.
+</Note>
+
+### Query parameters
+
+<ParamField query="name" type="string">
+  Case-insensitive substring match on the vendor (or service) name.
+</ParamField>
+
+<ParamField query="external_id" type="string">
+  Exact match on the vendor's `external_id` — handy for mapping your system's
+  identifier back to a Coverbase vendor.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Page size, 1–200.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of rows to skip, for pagination.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/vendors?name=acme&limit=50" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+`200 OK`:
+
+```json
+{
+  "items": [
+    {
+      "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "external_id": "ariba-req-7821",
+      "name": "ACME_Sup_Test1",
+      "website": "https://supplier1.example.com",
+      "description": null,
+      "hq_location": null,
+      "status": "Active",
+      "status_id": "cbst_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      "tags": ["saas"],
+      "use_case": "Customer support ticketing",
+      "tier": "tier_2",
+      "primary_contact": null,
+      "created_at": 1732292930,
+      "updated_at": 1746575800
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+<ResponseField name="items" type="object[]">
+  The page of vendor summaries. Each carries `id`, `external_id`, `name`,
+  `website`, `description`, `hq_location`, `status`, `status_id`, `tags`,
+  `use_case`, `tier`, `primary_contact`, `created_at`, and `updated_at`. (No
+  `services` or personnel arrays — see the note above.)
+</ResponseField>
+<ResponseField name="total" type="integer">Total vendors matching the filters (across all pages).</ResponseField>
+<ResponseField name="limit" type="integer">The page size used.</ResponseField>
+<ResponseField name="offset" type="integer">The offset used.</ResponseField>
 
 ## Retrieve a vendor
 
