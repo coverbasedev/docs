@@ -1,0 +1,289 @@
+---
+title: "Analyst & Reviewer guide"
+description: "The day-to-day of vendor risk in Coverbase — triage intake, launch assessments, review and correct AI findings, follow up with vendors, and close the loop."
+icon: "user-check"
+hidden: true
+---
+
+<Info>
+  This guide is part of the unlisted [User Guides](/user-guides/overview) collection. It's for **analysts, reviewers, and InfoSec SMEs** doing daily vendor reviews. It assumes your environment is already configured — if you're the one setting it up, start with the [Admin & Setup guide](/user-guides/admin-setup).
+</Info>
+
+Welcome. Coverbase reads vendor documents and measures them against your controls, so your job shifts from hunting through PDFs to **judging results**. A typical assessment measures a hundred-plus controls and raises just a handful of material issues — in one real example, 111 controls produced 5.
+
+No prior Coverbase experience needed. Here's the loop you'll run:
+
+<Steps>
+  <Step title="Triage intake">Review enriched new-vendor requests.</Step>
+  <Step title="Launch assessment">Attach control sets and let analysis run.</Step>
+  <Step title="Review issues">Judge the material items, evidence in hand.</Step>
+  <Step title="Correct the AI">Fix wrong or noisy results — permanently.</Step>
+  <Step title="Follow up">Ask vendors only about genuine gaps.</Step>
+  <Step title="Disposition & report">Decide, complete, and export.</Step>
+  <Step title="Watch Radar">Turn monitoring signal into action.</Step>
+</Steps>
+
+<Tip>
+  Two habits make the whole thing work: **validate against source language** (every result carries citations — click through), and **correct the AI when it's wrong** (corrections are permanent, so the issue count drops with every cycle).
+</Tip>
+
+---
+
+## Step 1: Triage new vendor requests
+
+**What this does:** New requests arrive from business requesters already **enriched** — sanctions, financials, security posture, and a redundancy check against your existing portfolio — with most IRQ questions auto-answered by the research agent.
+
+**How to do it:**
+
+1. Open the pending submission and scan the **enrichment readout**. A red flag on sanctions is a fuzzy match to investigate; an unknown vendor with no public presence also flags red.
+2. Check the **redundancy readout** — if the vendor (or a comparable tool) already exists in your portfolio, this may be a new service on an existing record rather than a new onboarding.
+3. Review the **auto-answered IRQ**. A "limited information" flag means the AI couldn't confirm authoritatively — not that a problem exists. Click the **reviewed** checkbox on each answer you validate; your name and timestamp are recorded.
+4. Answer anything flagged for **manual input** (typically the judgment questions your admin marked Required).
+5. If something's ambiguous, use **Request Clarification** to send a templated email back to the requester before approving.
+6. If the requester misidentified an existing vendor, approve the submission and use the **vendor record merge** function to consolidate it under the parent record.
+7. **Accept** to kick off onboarding — the right assessment plan attaches automatically based on tags and inherent risk.
+
+<Frame caption="The intake queue — new requests arrive pre-enriched and pending review, each with its use case, services, and status.">
+  <img src="/images/user-guides/analyst-intake-queue.png" alt="Intake queue of pending vendor requests" />
+</Frame>
+
+<Frame caption="Inside a submission — the enrichment and redundancy readouts, plus the auto-answered IRQ you validate answer by answer.">
+  <img src="/images/user-guides/analyst-intake-detail.png" alt="Intake submission detail with enrichment and auto-answered questions" />
+</Frame>
+
+<Note>
+  **Reading the score:** Inherent risk is the vendor's weighted answers as a percentage of the maximum possible. If a score looks wrong for the vendor type (an API vendor scoring low, say), flag it to your admin — that's a weighting fix, not a you problem.
+</Note>
+
+---
+
+## Step 2: Launch an assessment
+
+**What this does:** Opens the review — attaches control sets, kicks off document collection, and runs the analysis.
+
+**How to do it:**
+
+1. Open the vendor record → **Assessments → New Assessment**. Choose **vendor-level** or **service-level** scope. Multiple assessments can coexist, and one assessment can carry multiple control sets at once (e.g., SIG core plus your bespoke InfoSec set).
+2. Confirm or select the control sets and assessment plan.
+3. Let **automatic evidence collection** run. Coverbase pulls first from its library of vendor-supplied compliance documents, then scrapes the vendor's trust center for anything ungated (form-filling access requests for gated documents), before falling back to asking the vendor.
+4. Where the vendor must be engaged, send the **portal invitation** with a due date — reminders and the pre-signed MNDA your admin configured go out automatically.
+5. Analysis typically completes in roughly **5–10 minutes** once evidence is in; large control sets (a full SIG core is ~300 questions) take longer.
+
+<Frame caption="The assessment workspace — control sets attached in the left rail, and the lifecycle (Collected documents → Analyzed controls → Reviewed results) tracked as it runs.">
+  <img src="/images/user-guides/analyst-assessment-summary.png" alt="Assessment workspace showing control sets and lifecycle" />
+</Frame>
+
+<Note>
+  **Worth knowing:** A vendor uploading a blank or junk document doesn't slip through — the AI analysis fails it automatically. Trust-center scraping lands documents about 20–30% of the time; the portal remains the primary path for smaller and historical vendors.
+</Note>
+
+---
+
+## Step 3: Review the results
+
+**What this does:** The AI has measured every document against every control and raised **issues** where evidence is missing or contradicts the expectation. Your job is judgment, in a deliberate order.
+
+**How to do it:**
+
+1. Start in the **Critical Findings** view, not the full issue list — triage material items first.
+2. Toggle **Assign to Me** to filter to your controls. Issues can be assigned per risk domain (InfoSec to InfoSec SMEs, and so on) or round-robin across the team.
+3. Open each issue: you'll see the **expectation**, the **guidance** the AI used, and the **analysis** citing the specific evidence. Click through to the source language to validate — never take the summary on faith for a material item.
+4. **Spot-check compliant controls too**, especially early on. Passes show the same full evidence chain (plus web-sourced supporting articles), and this is how you catch false negatives while you build trust in the output.
+5. Where two control sets overlap (e.g., SIG core and the out-of-box SOC 2 set raising the same gap twice), mark the duplicate as **not an issue** and tell your admin to drop the redundant set from future assessments.
+
+<Frame caption="The review workspace — results grouped by control set, with each issue's status, score, and reason (e.g., Missing document, Incomplete response).">
+  <img src="/images/user-guides/analyst-review-results.png" alt="Assessment review results grouped by control set" />
+</Frame>
+
+<Frame caption="An issue in detail — the expectation, question, and guidance on the left; the AI's cited analysis and the actual source evidence on the right.">
+  <img src="/images/user-guides/analyst-issue-detail.png" alt="Issue detail view with cited evidence and source document" />
+</Frame>
+
+---
+
+## Step 4: Correct the AI
+
+**What this does:** Turns a wrong or noisy result into a **permanent** improvement. You edit the control's guidance, rerun it on the spot, and — if you accept — the change applies to every future assessment.
+
+**How to do it:**
+
+1. On the issue, choose **Correct the AI**.
+2. Write the missing condition into the guidance — be specific.
+3. **Rerun** the control and confirm the result changes as expected.
+4. **Accept** to save globally, or discard.
+
+<Frame caption="Correct the AI — edit the guidance, rerun the control, and accept to make the fix permanent across all future assessments.">
+  <img src="/images/user-guides/analyst-correct-ai.png" alt="Correct the AI guidance editor" />
+</Frame>
+
+<Accordion title="Real corrections from live reviews" icon="wand-magic-sparkles">
+  - **Clean desk policy** flagged for a SaaS vendor → added "mark fully compliant if the vendor is not a professional services or contracting company with a physical on-site presence" → rerun resolved to no issue.
+  - **SOC 2 currency** → tightened the default 12-month window to 6 months on the control — and the draft vendor follow-up regenerated itself to reflect the new window.
+  - **Employment contractual agreements** → added "accept an information security training attestation as sufficient evidence" → issue resolved and saved for all future assessments.
+</Accordion>
+
+<Warning>
+  **Be specific, not lenient.** Distinguish a public company from a startup, a SaaS vendor from professional services, rather than broadly relaxing a control. Specific guidance is what makes an exception defensible to a regulator — and what keeps the same false positive from ever coming back.
+</Warning>
+
+---
+
+## Step 5: Follow up with the vendor
+
+**What this does:** For genuine gaps, sends the vendor a **contextualized** question — referencing what they already submitted — through the portal.
+
+**How to do it:**
+
+1. On an issue, choose **Draft Follow-up** and use **AI Autofill** — it writes the question in context ("we reviewed your SOC 2 and it doesn't address X") rather than pasting raw control text, which vendors respond to far better.
+2. For volume: select all issues → **Create Follow-ups → AI Autofill** runs across the batch → set the portal due date and send in one step.
+3. Pick the email template and add any vendor-specific instructions; the internal requester is CC'd automatically.
+4. The vendor answers and uploads new evidence directly in the portal; responses flow back onto the issues.
+
+<Frame caption="Draft Follow-up with AI Autofill — a question written in the context of what the vendor already submitted.">
+  <img src="/images/user-guides/analyst-draft-followup.png" alt="Draft follow-up with AI autofill" />
+</Frame>
+
+<Tip>
+  **Pace yourself.** Go one-by-one for your first assessments — reviewing each drafted follow-up is how you tune guidance and tone. Switch to bulk once you trust the output.
+</Tip>
+
+---
+
+## Step 6: Disposition, complete, and report
+
+**What this does:** Closes the review — every remaining issue gets a decision, the vendor gets a status and a reassessment date, and the record becomes a report.
+
+### Your three dispositions per issue
+
+<CardGroup cols={3}>
+  <Card title="Accept the risk" icon="circle-check">
+    Records a timestamped rationale on the record, audit-backed.
+  </Card>
+  <Card title="Keep the follow-up open" icon="clock">
+    The issue stays pending vendor response.
+  </Card>
+  <Card title="Promote to a finding" icon="flag">
+    **Action → Add Finding**, with AI autofill for consistent language; assign a named owner and a due date. Findings persist beyond the assessment.
+  </Card>
+</CardGroup>
+
+### Then complete the assessment
+
+1. Set the **onboarding status** (custom statuses supported) and your **recommendation**.
+2. Confirm the **reassessment timeline** — it auto-sets from the risk rating but is fully overridable; anything unresolved converts to findings, not deleted.
+3. **Export the report:** Standard PDF for most reviews, Executive Summary for leadership, or Full (every control with all evidence) when an examiner asks. Your organization's branded template fills itself automatically.
+
+<Frame caption="A completed assessment — inherent risk, assessment score, and residual risk side by side, with the AI-generated executive summary and a recommendation.">
+  <img src="/images/user-guides/analyst-disposition.png" alt="Completed assessment summary with risk scores and recommendation" />
+</Frame>
+
+---
+
+## Step 7: Contracts and clause reviews
+
+**What this does:** The contracts module extracts key terms from MSAs, SOWs, and DPAs — value, effective date, term and renewal, indemnity, billing, data return — and compares vendor paper against your preferred language.
+
+**How to do it:**
+
+1. Upload the contract to the vendor's **Documents**, setting the document type manually for MSAs, SOWs, and order forms.
+2. Open the **Contracts** module to review extracted terms and the clause inventory — or just ask in natural language: "what does this agreement say about insurance?" queries across all of the vendor's agreements at once.
+3. Run a **clause review** against your organization's clause sets — the output shows deltas from your acceptable / fallback / unacceptable tiers, by severity. This is materiality analysis, not redlining; actual redlines stay in Word.
+4. Generate follow-up drafts for negotiation points, export the review to Excel, or assign it to legal in-platform.
+
+<Frame caption="A contract record — extracted lifecycle, value, term dates, and an AI summary of parties, billing, SLAs, liability, and termination.">
+  <img src="/images/user-guides/analyst-contract-overview.png" alt="Contract overview with extracted terms and AI summary" />
+</Frame>
+
+<Frame caption="Extracted contract terms — value, effective date, term and renewal, and more, pulled straight from the paper.">
+  <img src="/images/user-guides/analyst-contract-terms.png" alt="Extracted contract terms" />
+</Frame>
+
+<Frame caption="A clause review — vendor language scored against your acceptable / fallback / unacceptable tiers, by severity.">
+  <img src="/images/user-guides/analyst-clause-review.png" alt="Clause review showing deltas from preferred language" />
+</Frame>
+
+<Note>
+  Contract findings can fold into assessment reports (e.g., an FFIEC control set applied to the contract, unified via a custom report template), and supersession is tracked so the record reflects what's currently in force.
+</Note>
+
+---
+
+## Step 8: Work Radar alerts
+
+**What this does:** Radar watches external sources for events touching your third and fourth parties. Your job is to turn signal into action — and keep noise out of the program.
+
+**How to do it:**
+
+1. Review the **alerts feed** for your detectors. Fourth-party mapping means one event (say, a compromised identity provider) surfaces every vendor exposed through it.
+2. Open a **case** on anything worth investigating — a case is preliminary, not yet a confirmed problem — and tag the affected vendors.
+3. Send a **vendor inquiry** from the case if you need their confirmation or remediation plan.
+4. **Close** the case if the vendor is unaffected; **promote** it to a finding (owner + due date) if confirmed; **trigger an off-cycle reassessment** straight from the event when warranted.
+5. If a detector keeps firing on non-actionable items, flag it — detector guidance and severity thresholds are quick admin fixes.
+
+<Frame caption="The Radar dashboard — events, incidents, assessments, and reassessments over time, with the alerts feed grouped by detector below.">
+  <img src="/images/user-guides/analyst-radar-dashboard.png" alt="Radar dashboard with event timeline and alerts feed" />
+</Frame>
+
+<Frame caption="Radar cases — preliminary investigations tagged to affected vendors, ready to close, promote to a finding, or trigger a reassessment.">
+  <img src="/images/user-guides/analyst-radar-cases.png" alt="Radar cases view" />
+</Frame>
+
+---
+
+## Step 9: Obligations at a glance
+
+Alongside what you require of vendors, Coverbase extracts what **vendors require of you**: CUECs pulled verbatim from SOC reports and shared responsibilities from contracts and terms.
+
+As a reviewer, you'll validate extractions against source language, assign owners and due dates, and send attestation requests to business stakeholders through a trimmed-down portal.
+
+<Frame caption="Obligations — CUECs and shared responsibilities extracted from documents, ready to validate, assign, and send for attestation.">
+  <img src="/images/user-guides/analyst-obligations.png" alt="Obligations overview" />
+</Frame>
+
+<Note>
+  The full obligations workflow — validation, ownership, and stakeholder attestations — gets its own dedicated guide, which we'll add to this User Guides collection.
+</Note>
+
+---
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="How long does analysis take?">
+    Roughly 5–10 minutes for a typical assessment once evidence is collected; very large control sets (a full SIG core is ~300 questions) run longer. Issue counts drop over time as guidance is tuned — the first-pass reduction is typically around 80% versus reviewing every control by hand.
+  </Accordion>
+  <Accordion title="Will the same assessment give identical results twice?">
+    Not exactly — AI models are non-deterministic, so two runs can differ slightly at the margins. Extraction is deliberately tuned to over-surface rather than miss. Specific control guidance narrows the variance; results are stable on well-tuned sets.
+  </Accordion>
+  <Accordion title="What if the AI is wrong?">
+    That's what review is for — every result carries citations to source language, so errors are visible fast. Use **Correct the AI** to fix it permanently rather than just dismissing it; your corrections become the record.
+  </Accordion>
+  <Accordion title="Do vendors actually respond to the portal?">
+    A bare portal invite lands around 50%. Contextualized follow-ups, the pre-signed MNDA, and automatic reminder cadences push that meaningfully higher — and the automated collection paths mean many vendors never need to be asked at all.
+  </Accordion>
+  <Accordion title="Can Coverbase get documents from gated trust centers?">
+    It downloads anything ungated automatically and form-fills access requests for gated documents. It doesn't log into credentialed portals or read your inbox — documents that arrive by email get uploaded manually.
+  </Accordion>
+  <Accordion title="What file formats work best?">
+    PDF — citations and evidence highlighting are strongest there. DOCX is supported for extraction; download web-based terms and upload them for parsing.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Ready to go?
+
+Pick a vendor you know well, launch an assessment, and judge the results against a document set you could grade in your sleep — that's the fastest way to build trust in the output.
+
+<CardGroup cols={2}>
+  <Card title="Assessment Quick Reference" icon="bolt" href="/user-guides/assessment-quick-reference">
+    A one-page cheat sheet to keep open while you work.
+  </Card>
+  <Card title="Admin & Setup guide" icon="sliders" href="/user-guides/admin-setup">
+    How the environment behind these workflows is configured.
+  </Card>
+</CardGroup>
+
+<Card title="Need help?" icon="envelope" href="mailto:support@coverbase.ai">
+  Email [support@coverbase.ai](mailto:support@coverbase.ai), or ask your Coverbase contact to run a live working session with your team.
+</Card>
