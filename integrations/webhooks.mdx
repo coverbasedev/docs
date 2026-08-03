@@ -14,9 +14,9 @@ Webhooks are the outbound half of an integration. This page documents how events
 
 When a subscribed event occurs, Coverbase POSTs a JSON envelope to **every active webhook subscribed to that event type**. Deliveries originate from three sources, and all of them are recorded in [delivery history](/integrations/webhook-deliveries):
 
-- **Domain-event fan-out** — a domain event (e.g. a vendor is created) fans out to every subscription for that event type.
-- **Workflow `send_webhook` action** — a workflow automation explicitly delivers its triggering event. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
-- **Manual test** — the [test endpoint](/api-reference/webhooks#test-a-webhook) sends a one-off delivery to a single subscription.
+- **Domain-event fan-out**: a domain event (e.g. a vendor is created) fans out to every subscription for that event type.
+- **Workflow `send_webhook` action**: a workflow automation explicitly delivers its triggering event. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
+- **Manual test**: the [test endpoint](/api-reference/webhooks#test-a-webhook) sends a one-off delivery to a single subscription.
 
 For one source event, the **same `event_id` is shared across all webhooks** in the fan-out. Receivers can use it to dedupe a fan-out and to correlate a multi-subscription delivery.
 
@@ -40,7 +40,7 @@ A delivery is an HTTP `POST` with a JSON body in this exact envelope:
 | `occurred_at` | integer | Unix timestamp in **seconds**, generated at send time. |
 | `data` | object | Event-specific payload. For real events these are the catalog fields for that event type (and `data` echoes `event_type`). For a manual test, `data` is your custom `payload` (default `{"test": true}`). |
 
-The envelope is exactly these four keys — there is no top-level `workflow_run_id` or any other field.
+The envelope is exactly these four keys; there is no top-level `workflow_run_id` or any other field.
 
 ### Request headers
 
@@ -116,16 +116,16 @@ app.post(
 | HTTP method | `POST` |
 | Connection timeout | 10 seconds per attempt |
 | Retries | Up to 5 attempts on failure (timeout or connection error) |
-| Retry backoff | None — Hatchet retries immediately; no exponential backoff, no jitter |
-| Ordering | Not guaranteed — deliveries are unordered |
-| Guarantee | At-least-once — the same `event_id` may be delivered more than once |
+| Retry backoff | None. Hatchet retries immediately; no exponential backoff, no jitter |
+| Ordering | Not guaranteed; deliveries are unordered |
+| Guarantee | At-least-once; the same `event_id` may be delivered more than once |
 | Endpoint requirement | Public HTTPS endpoint (see [URL restrictions](#url-restrictions)) |
 
 `occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` quickly to acknowledge; non-`2xx`, timeouts, and connection errors are retried up to 5 times in rapid succession.
 
 ### Source IP
 
-Coverbase does **not** publish a fixed egress IP range for outbound webhook deliveries. Authenticate the sender by **HMAC signature verification** (see [Signature verification](#signature-verification)) — not by source IP. The compute fleet is autoscaled and the public IPs that originate deliveries change frequently.
+Coverbase does **not** publish a fixed egress IP range for outbound webhook deliveries. Authenticate the sender by **HMAC signature verification** (see [Signature verification](#signature-verification)), not by source IP. The compute fleet is autoscaled and the public IPs that originate deliveries change frequently.
 
 If you operate behind a network perimeter that requires a static allow-list, route deliveries through a customer-controlled HTTPS proxy with a stable egress IP and forward to the real receiver after re-verifying the signature.
 
@@ -141,7 +141,7 @@ The same check is **re-applied with DNS resolution at delivery time**, so a host
 
 ## Event catalog
 
-These are the **only** values valid in a subscription's `events` array and the only event types emitted. The `events` field is strictly validated against this set — see the [behavior change](#strict-event-type-validation) below. Use the exact, case-sensitive strings.
+These are the **only** values valid in a subscription's `events` array and the only event types emitted. The `events` field is strictly validated against this set; see the [behavior change](#strict-event-type-validation) below. Use the exact, case-sensitive strings.
 
 | `event_type` | `data` fields |
 | ------------ | ------------- |
@@ -174,13 +174,13 @@ These are the **only** values valid in a subscription's `events` array and the o
 | `Reassessment.Deleted` | `reassessment_id` |
 
 <Note>
-  A **radar alert** is a `RadarDetectorResult` — subscribe to `RadarDetectorResult.Created` to be notified of new alerts and `RadarDetectorResult.Updated` (whose `field_diffs` will include `is_dismissed`) for triage activity. `*.Updated` events carry a `field_diffs` object mapping each changed field to its `{ "old_value", "new_value" }`. A soft-archive (`is_archived` → `true`) surfaces as `*.Deleted`, not `*.Updated`. See the [Radar](/api-reference/radar) and [Reassessments](/api-reference/reassessments) APIs.
+  A **radar alert** is a `RadarDetectorResult`: subscribe to `RadarDetectorResult.Created` to be notified of new alerts and `RadarDetectorResult.Updated` (whose `field_diffs` will include `is_dismissed`) for triage activity. `*.Updated` events carry a `field_diffs` object mapping each changed field to its `{ "old_value", "new_value" }`. A soft-archive (`is_archived` → `true`) surfaces as `*.Deleted`, not `*.Updated`. See the [Radar](/api-reference/radar) and [Reassessments](/api-reference/reassessments) APIs.
 </Note>
 
 All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
 
 <Note>
-  `webhook.test` is a valid value only for the [test endpoint's](/api-reference/webhooks#test-a-webhook) `event_type` field. It is **not** a subscribable event type — it will be rejected if used in a subscription's `events` array.
+  `webhook.test` is a valid value only for the [test endpoint's](/api-reference/webhooks#test-a-webhook) `event_type` field. It is **not** a subscribable event type; it will be rejected if used in a subscription's `events` array.
 </Note>
 
 ### Strict event-type validation

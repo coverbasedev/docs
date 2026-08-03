@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-A **reassessment** (`cbrsm_...`) is a draft batch of assessments to run against a set of vendors — typically prompted by a [radar event or alert](/api-reference/radar). It lets you curate the vendor set and choose an assessment plan, then run it, without ever opening a case.
+A **reassessment** (`cbrsm_...`) is a draft batch of assessments to run against a set of vendors, typically prompted by a [radar event or alert](/api-reference/radar). It lets you curate the vendor set and choose an assessment plan, then run it, without ever opening a case.
 
 A reassessment moves through four statuses:
 
@@ -43,7 +43,7 @@ None of these honor `Idempotency-Key`.
   `POST /v1/reassessments`
 </ParamField>
 
-Returns `201 Created`. Creates a `draft` reassessment from a radar event with an initial vendor set. The assessment plan is optional up front — set it later with a `PATCH` before running.
+Returns `201 Created`. Creates a `draft` reassessment from a radar event with an initial vendor set. The assessment plan is optional up front; set it later with a `PATCH` before running.
 
 ### Request body
 
@@ -86,7 +86,7 @@ Returns the [reassessment object](#reassessment-object).
 <ResponseField name="assessment_plan_id" type="string | null">Linked assessment plan (`cbasmtpl_...`).</ResponseField>
 <ResponseField name="radar_event_id" type="string | null">Source radar event (`cbrevent_...`).</ResponseField>
 <ResponseField name="alert_ids" type="string[]">Radar alerts that drove the reassessment.</ResponseField>
-<ResponseField name="vendors" type="object[]">Per-vendor entries — see below.</ResponseField>
+<ResponseField name="vendors" type="object[]">Per-vendor entries; see below.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
 <ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
 
@@ -167,7 +167,7 @@ Close a reassessment without running it (`dismissed`).
   `POST /v1/reassessments/{reassessment_id}/run`
 </ParamField>
 
-Create an assessment from the linked plan for each **included** vendor, then mark the reassessment `run`. Requires `assessment_plan_id` to be set first — otherwise `400 missing_assessment_plan`. This **never** creates a case.
+Create an assessment from the linked plan for each **included** vendor, then mark the reassessment `run`. Requires `assessment_plan_id` to be set first; otherwise `400 missing_assessment_plan`. This **never** creates a case.
 
 ### Example request
 
@@ -188,5 +188,5 @@ All three return the refreshed [reassessment object](#reassessment-object).
 
 ## Related
 
-- [Radar API](/api-reference/radar) — the events and alerts that prompt reassessments.
-- [Webhooks](/integrations/webhooks#event-catalog) — subscribe to `Reassessment.*` events.
+- [Radar API](/api-reference/radar): the events and alerts that prompt reassessments.
+- [Webhooks](/integrations/webhooks#event-catalog): subscribe to `Reassessment.*` events.

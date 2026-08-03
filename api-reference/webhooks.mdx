@@ -27,11 +27,11 @@ Creates a webhook subscription. Returns `201 Created`.
 </ParamField>
 
 <ParamField body="events" type="string[]" required>
-  Event type strings to subscribe to. **Strictly validated** against the [event catalog](/integrations/webhooks#event-catalog) — any value not in the catalog fails with `422 invalid_event_types`. Use the exact, case-sensitive values (e.g. `Vendor.Created`).
+  Event type strings to subscribe to. **Strictly validated** against the [event catalog](/integrations/webhooks#event-catalog); any value not in the catalog fails with `422 invalid_event_types`. Use the exact, case-sensitive values (e.g. `Vendor.Created`).
 </ParamField>
 
 <ParamField body="secret" type="string" required>
-  Shared secret used to sign deliveries (HMAC-SHA256). **Must be at least 16 characters.** Write-only — it is never returned in any response.
+  Shared secret used to sign deliveries (HMAC-SHA256). **Must be at least 16 characters.** Write-only; it is never returned in any response.
 </ParamField>
 
 <ParamField body="description" type="string">
@@ -137,7 +137,7 @@ print(resp.json())
 </ResponseField>
 
 <ResponseField name="last_delivery_status" type="string | null">
-  Status of the most recent recorded delivery attempt — one of `delivered`, `timeout`, `error`, `skipped` — or `null` if there are no recorded deliveries yet.
+  Status of the most recent recorded delivery attempt (one of `delivered`, `timeout`, `error`, `skipped`), or `null` if there are no recorded deliveries yet.
 </ResponseField>
 
 <ResponseField name="delivery_success_rate" type="number | null">
@@ -206,7 +206,7 @@ Updates a webhook subscription. Only the fields you include are changed; omitted
 </ParamField>
 
 <ParamField body="events" type="string[]">
-  Replace the subscribed event list. Strictly validated against the [event catalog](/integrations/webhooks#event-catalog) — an unsupported value fails with `422 invalid_event_types`.
+  Replace the subscribed event list. Strictly validated against the [event catalog](/integrations/webhooks#event-catalog); an unsupported value fails with `422 invalid_event_types`.
 </ParamField>
 
 <ParamField body="secret" type="string">
@@ -270,12 +270,12 @@ curl -X DELETE "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b
   `POST /v1/webhooks/{webhook_id}/test`
 </ParamField>
 
-Enqueues a test delivery to the webhook's URL. The delivery is dispatched asynchronously, so the response confirms the test was **enqueued** — it does not contain the receiver's HTTP status.
+Enqueues a test delivery to the webhook's URL. The delivery is dispatched asynchronously, so the response confirms the test was **enqueued**; it does not contain the receiver's HTTP status.
 
 ### Request body
 
 <ParamField body="event_type" type="string" default="webhook.test">
-  Event type string to send in the test delivery. Unlike subscription `events`, this is **not** validated against the catalog — any string is accepted, including `webhook.test`.
+  Event type string to send in the test delivery. Unlike subscription `events`, this is **not** validated against the catalog; any string is accepted, including `webhook.test`.
 </ParamField>
 
 <ParamField body="payload" type="object">

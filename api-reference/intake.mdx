@@ -10,16 +10,16 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 An **intake session** (`cbintksn_...`) is a vendor intake request. Creating one through this API registers the vendor, creates the intake request in the dashboard's **Vendor Intake** queue, and kicks off AI processing that auto-answers the selected inherent risk questionnaire(s). Reviewers then approve or deny the request in the dashboard; on approval, the questionnaire-derived inherent risk scores are applied to the vendor and its services.
 
-Use this API to embed Coverbase intake inside another system (procurement tool, ticketing, internal portal): POST the request — including any free-form context you already have — and poll for the generated answers.
+Use this API to embed Coverbase intake inside another system (procurement tool, ticketing, internal portal): POST the request (including any free-form context you already have) and poll for the generated answers.
 
 All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, and the error envelope.
 
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
-| `GET` | `/v1/intake/api/questionnaires` | — |
+| `GET` | `/v1/intake/api/questionnaires` | - |
 | `POST` | `/v1/intake/api/sessions` | Yes (`external_id`) |
-| `GET` | `/v1/intake/api/sessions/{session_id}` | — |
-| `GET` | `/v1/intake/api/sessions/external/{external_id}` | — |
+| `GET` | `/v1/intake/api/sessions/{session_id}` | - |
+| `GET` | `/v1/intake/api/sessions/external/{external_id}` | - |
 
 ## List questionnaires
 
@@ -79,7 +79,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/intake/api/questionnaires?type
 Creates the vendor, the intake session, and one questionnaire response per
 questionnaire, then dispatches asynchronous AI processing. Returns
 `201 Created` with the new `session_id`. Replaying the same `external_id`
-returns the existing `session_id` with `200 OK` and does not reprocess — the
+returns the existing `session_id` with `200 OK` and does not reprocess; the
 original request's data (including `context`) is retained, and any changed
 fields in the replay are ignored. To analyze a vendor with updated context,
 create a new request with a new `external_id`.
@@ -98,7 +98,7 @@ create a new request with a new `external_id`.
 </ParamField>
 
 <ParamField body="context" type="string">
-  Unstructured free-form context about the engagement — procurement ticket
+  Unstructured free-form context about the engagement: procurement ticket
   text, requester emails, architecture notes, security questionnaire excerpts,
   anything. Coverbase uses it as the **highest-priority evidence** when
   auto-answering the questionnaire (ahead of uploaded documents and web
@@ -106,7 +106,7 @@ create a new request with a new `external_id`.
   about the engagement. Maximum 100,000 characters. The context is persisted on
   the intake session, so later reprocessing runs reuse it.
 
-  Note that roughly the first 20,000 characters are included in each
+  Roughly the first 20,000 characters are included in each
   question's evidence (longer context is truncated per question), so put the
   most decision-relevant facts first rather than padding toward the limit.
   When your context exceeds that cap, the create response sets
@@ -189,7 +189,7 @@ session_id = resp.json()["session_id"]
 ```
 
 `context_truncated` is `true` when the submitted `context` exceeds the
-per-question evidence cap — the full text is stored, but each question prompt
+per-question evidence cap; the full text is stored, but each question prompt
 only receives the leading portion.
 
 ## Get an intake session
@@ -209,7 +209,7 @@ available by your own identifier:
 | `pending` | Created; processing has not produced answers yet |
 | `processing` | AI answering is in flight |
 | `complete` | Answers generated; the request is ready for reviewer triage in the dashboard |
-| `failed` | Processing failed for every question (e.g. dispatch failure) — contact support or retry with a new request |
+| `failed` | Processing failed for every question (e.g. dispatch failure); contact support or retry with a new request |
 
 Each entry in `answers[]` carries `question_id`, `question_text`,
 `response_type` (`free_text`, `single_select`, `multi_select`), the generated
@@ -259,5 +259,5 @@ answers.
 <Note>
   The intake request created by this API appears immediately in the
   dashboard's **Vendor Intake** queue, exactly like a portal-submitted
-  request — same triage workflow, same finalize/approve flow.
+  request: same triage workflow, same finalize/approve flow.
 </Note>

@@ -1,6 +1,6 @@
 ---
 title: "Users API"
-description: "Provision users, change org roles, and deprovision — for SailPoint / IGA-driven lifecycle."
+description: "Provision users, change org roles, and deprovision, for SailPoint / IGA-driven lifecycle."
 icon: "user"
 ---
 
@@ -11,7 +11,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 The Users API provisions Coverbase accounts and manages their organization role and lifecycle. It is designed for identity-governance (SailPoint / IGA) integrations: the upstream system owns approval, this API creates the account + org membership so SSO can authenticate the user on first login.
 
 <Info>
-  Provisioning creates the Coverbase account and an org membership in **`invited`** status. It does **not** create a login session — the user is linked to your IdP by email on first SSO. SailPoint owns the upstream approval; this API only reflects role/lifecycle into Coverbase.
+  Provisioning creates the Coverbase account and an org membership in **`invited`** status. It does **not** create a login session. The user is linked to your IdP by email on first SSO. SailPoint owns the upstream approval; this API only reflects role/lifecycle into Coverbase.
 </Info>
 
 All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior.
@@ -19,12 +19,12 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `POST` | `/v1/users` | Yes (`Idempotency-Key`) |
-| `GET` | `/v1/users` | — |
-| `GET` | `/v1/users/{user_id}` | — |
+| `GET` | `/v1/users` | - |
+| `GET` | `/v1/users/{user_id}` | - |
 | `PATCH` | `/v1/users/{user_id}` | No |
 
 <Tip>
-  Syncing relationship owners, watchers, or risk analysts from an external system (e.g. ServiceNow)? Those [vendor/service fields](/api-reference/vendors#assigning-people-analysts-owners-watchers) take Coverbase user IDs, not emails. Use [`GET /v1/users?email=`](#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID, and `POST /v1/users` to create the user if they don't exist yet — it returns the existing user if they do.
+  Syncing relationship owners, watchers, or risk analysts from an external system (e.g. ServiceNow)? Those [vendor/service fields](/api-reference/vendors#assigning-people-analysts-owners-watchers) take Coverbase user IDs, not emails. Use [`GET /v1/users?email=`](#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID, and `POST /v1/users` to create the user if they don't exist yet; it returns the existing user if they do.
 </Tip>
 
 ## Org roles
@@ -48,7 +48,7 @@ The aliases `member`, `basic_member`, `org:basic_member` (→ `org:member`) and 
   `POST /v1/users`
 </ParamField>
 
-Creates the account + org membership (`invited`), or returns the existing user. Returns `201 Created` on create, or **`200 OK`** if a user with that email already exists in the org — so this call is safe to use as create-if-missing and always yields the user's `cbuser_...` ID.
+Creates the account + org membership (`invited`), or returns the existing user. Returns `201 Created` on create, or **`200 OK`** if a user with that email already exists in the org. This call is safe to use as create-if-missing and always yields the user's `cbuser_...` ID.
 
 <Info>
   Idempotent create-or-get: a same-org email match returns `200` with the existing user (not `409`). A `409 user_exists` is only returned when the email belongs to a user in a **different** org (emails are globally unique). The email match is case-insensitive.
@@ -57,7 +57,7 @@ Creates the account + org membership (`invited`), or returns the existing user. 
 ### Request body
 
 <ParamField body="email" type="string" required>
-  The user's email — validated as a proper email address. Used to link the account to your IdP on first SSO.
+  The user's email, validated as a proper email address. Used to link the account to your IdP on first SSO.
 </ParamField>
 
 <ParamField body="first_name" type="string">
@@ -129,7 +129,7 @@ print(resp.status_code, resp.json())
 
 ### Example response
 
-`201 Created` (new user), or `200 OK` (existing user — the stored object, whose `status` is its current membership state such as `active`):
+`201 Created` (new user), or `200 OK` (existing user; the stored object, whose `status` is its current membership state such as `active`):
 
 ```json
 {
@@ -170,7 +170,7 @@ print(resp.status_code, resp.json())
   `GET /v1/users`
 </ParamField>
 
-Lists the org's users, or resolves a single user by email. This is the supported way to build an **email → user ID** mapping when syncing assignments (relationship owners, watchers, risk analysts) from an external system such as ServiceNow — those fields take Coverbase user IDs, so resolve the email here first.
+Lists the org's users, or resolves a single user by email. This is the supported way to build an **email → user ID** mapping when syncing assignments (relationship owners, watchers, risk analysts) from an external system such as ServiceNow; those fields take Coverbase user IDs, so resolve the email here first.
 
 ### Query parameters
 
@@ -258,7 +258,7 @@ user_id = items[0]["id"] if items else None  # resolve email -> cbuser_ id
 <ResponseField name="offset" type="integer">Echo of the requested offset.</ResponseField>
 
 <Tip>
-  To create-if-missing and always end up with the user's ID: look up the email here, and if `items` is empty call `POST /v1/users` to provision them — or just call `POST /v1/users` directly, which returns the existing user (`200`) when the email is already present.
+  To create-if-missing and always end up with the user's ID: look up the email here, and if `items` is empty call `POST /v1/users` to provision them; or just call `POST /v1/users` directly, which returns the existing user (`200`) when the email is already present.
 </Tip>
 
 ## Retrieve a user

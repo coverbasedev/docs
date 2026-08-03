@@ -17,9 +17,9 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `POST` | `/v1/documents` | Yes (`Idempotency-Key`) |
-| `GET` | `/v1/documents` | — |
-| `GET` | `/v1/documents/{document_id}` | — |
-| `GET` | `/v1/documents/{document_id}/download` | — |
+| `GET` | `/v1/documents` | - |
+| `GET` | `/v1/documents/{document_id}` | - |
+| `GET` | `/v1/documents/{document_id}/download` | - |
 | `PATCH` | `/v1/documents/{document_id}` | No |
 | `DELETE` | `/v1/documents/{document_id}` | No |
 
@@ -38,7 +38,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 </ParamField>
 
 Uploads a file and creates a document attached to a vendor. The request is
-`multipart/form-data` — send the file plus its links in one call. Returns
+`multipart/form-data`: send the file plus its links in one call. Returns
 `201 Created` with the document object.
 
 After upload, Coverbase asynchronously classifies the document (and, where
@@ -132,7 +132,7 @@ print(resp.json())
 
 ### Example response
 
-`201 Created` — the document object:
+`201 Created`: the document object:
 
 ```json
 {
@@ -213,7 +213,7 @@ curl "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c9a7b6d5e4f3a2b1c
 
 Returns a short-lived (one hour) presigned URL for the document's file. Follow
 the returned `url` with a plain `GET` (no `Authorization` header) to fetch the
-bytes — it serves the file as an attachment with the original filename.
+bytes; it serves the file as an attachment with the original filename.
 
 ```bash cURL
 # 1. Get the presigned URL
@@ -276,12 +276,12 @@ curl -X DELETE "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
 
 There are two ways to link a document to an assessment:
 
-1. **At upload time** — pass `assessment_ids` to `POST /v1/documents` (or
+1. **At upload time**: pass `assessment_ids` to `POST /v1/documents` (or
    `service_ids` to attach to services).
-2. **At assessment-create time** — upload the document first, then pass its ID
+2. **At assessment-create time**: upload the document first, then pass its ID
    in `supporting_document_ids` when calling
    [`POST /v1/assessments`](/api-reference/assessments).
-3. **Later** — `PATCH /v1/documents/{document_id}` with `assessment_ids` /
+3. **Later**: `PATCH /v1/documents/{document_id}` with `assessment_ids` /
    `service_ids`.
 
 ## Errors

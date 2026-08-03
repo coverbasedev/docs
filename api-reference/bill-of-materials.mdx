@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-A **bill of materials** (`cbbom_...`) is a machine-readable inventory of the components that make up a vendor's product or a specific service. Upload one as a document, and Coverbase parses it in the background into a searchable list of [components](#the-component-object) (`cbbomc_...`) — each traceable back to the exact source file and vendor it came from.
+A **bill of materials** (`cbbom_...`) is a machine-readable inventory of the components that make up a vendor's product or a specific service. Upload one as a document, and Coverbase parses it in the background into a searchable list of [components](#the-component-object) (`cbbomc_...`), each traceable back to the exact source file and vendor it came from.
 
 Supported BOM kinds: **SBOM** (software), **AIBOM** (AI/ML models and datasets), **HBOM** (hardware), **SaaSBOM**, and `other`. Supported formats are **CycloneDX (JSON)** and **SPDX (JSON)**; files in any other format are still stored, but are not parsed into components.
 
@@ -17,18 +17,18 @@ All endpoints are org-scoped to the API key and require the **`bill-of-materials
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `POST` | `/v1/bill_of_materials` | No |
-| `GET` | `/v1/bill_of_materials/latest` | — |
-| `GET` | `/v1/bill_of_materials` | — |
-| `GET` | `/v1/bill_of_materials/{bom_id}` | — |
-| `GET` | `/v1/bill_of_materials/{bom_id}/components` | — |
-| `GET` | `/v1/bill_of_materials/components` | — |
+| `GET` | `/v1/bill_of_materials/latest` | - |
+| `GET` | `/v1/bill_of_materials` | - |
+| `GET` | `/v1/bill_of_materials/{bom_id}` | - |
+| `GET` | `/v1/bill_of_materials/{bom_id}/components` | - |
+| `GET` | `/v1/bill_of_materials/components` | - |
 | `POST` | `/v1/bill_of_materials/{bom_id}/archive` | No |
 
 ## How BOMs are versioned
 
-A BOM is uploaded as a document and can be linked to **a vendor, a single service, multiple services, or the vendor only** — the same linking model as vendor documents.
+A BOM is uploaded as a document and can be linked to **a vendor, a single service, multiple services, or the vendor only**, the same linking model as vendor documents.
 
-**Many BOMs can be uploaded over time** for the same vendor or service, and the platform keeps **all of them** as history. Only the **latest** (most recently uploaded, non-archived) BOM is "applied" — it is the one shown as current on the vendor or service page and returned by [`GET /v1/bill_of_materials/latest`](#get-the-current-applied-bom). Older BOMs remain viewable and downloadable as history via [`GET /v1/bill_of_materials`](#list-the-upload-history). [Archiving a BOM](#archive-a-bom) drops it from "latest" but keeps it in history.
+**Many BOMs can be uploaded over time** for the same vendor or service, and the platform keeps **all of them** as history. Only the **latest** (most recently uploaded, non-archived) BOM is "applied": it is the one shown as current on the vendor or service page and returned by [`GET /v1/bill_of_materials/latest`](#get-the-current-applied-bom). Older BOMs remain viewable and downloadable as history via [`GET /v1/bill_of_materials`](#list-the-upload-history). [Archiving a BOM](#archive-a-bom) drops it from "latest" but keeps it in history.
 
 ### Parse lifecycle
 
@@ -67,7 +67,7 @@ On upload a BOM starts at `parse_status: "pending"` and is parsed asynchronously
 <ResponseField name="id" type="string">Component ID (`cbbomc_...`).</ResponseField>
 <ResponseField name="bill_of_materials_id" type="string">The BOM this component belongs to (`cbbom_...`).</ResponseField>
 <ResponseField name="vendor_document_id" type="string">The source file the component was parsed from (`cbvdoc_...`).</ResponseField>
-<ResponseField name="name" type="string">Component name. **Required** — the one field always present.</ResponseField>
+<ResponseField name="name" type="string">Component name. **Required**: the one field always present.</ResponseField>
 <ResponseField name="version" type="string | null">Component version.</ResponseField>
 <ResponseField name="purl" type="string | null">Package URL (PURL).</ResponseField>
 <ResponseField name="cpe" type="string | null">Common Platform Enumeration identifier.</ResponseField>
@@ -137,7 +137,7 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/bill_of_materials" \
 
 ### Example response
 
-`200 OK` — the new [bill of materials object](#the-bill-of-materials-object), freshly registered:
+`200 OK`: the new [bill of materials object](#the-bill-of-materials-object), freshly registered:
 
 ```json
 {
@@ -183,7 +183,7 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/bill_of_materials" \
   `GET /v1/bill_of_materials/latest`
 </ParamField>
 
-Returns the latest applied BOM — with its [components](#the-component-object) — for a vendor **or** a service. Returns `null` if none has been uploaded.
+Returns the latest applied BOM (with its [components](#the-component-object)) for a vendor **or** a service. Returns `null` if none has been uploaded.
 
 ### Query parameters
 
@@ -213,7 +213,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/latest?servi
 
 ### Example response
 
-`200 OK` — a [bill of materials object](#the-bill-of-materials-object) with `components`, or `null`:
+`200 OK`: a [bill of materials object](#the-bill-of-materials-object) with `components`, or `null`:
 
 ```json
 {
@@ -271,7 +271,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/latest?servi
   `GET /v1/bill_of_materials`
 </ParamField>
 
-Returns the full upload history for a vendor or service, **newest first**. The first item is the currently applied BOM. Items are summaries — `components` is `null`; use [Retrieve a BOM](#retrieve-a-bom) or [List components of a BOM](#list-components-of-a-bom) to pull components.
+Returns the full upload history for a vendor or service, **newest first**. The first item is the currently applied BOM. Items are summaries: `components` is `null`; use [Retrieve a BOM](#retrieve-a-bom) or [List components of a BOM](#list-components-of-a-bom) to pull components.
 
 ### Query parameters
 
@@ -304,7 +304,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials?vendor_id=cb
 
 ### Example response
 
-`200 OK` — a page of [bill of materials objects](#the-bill-of-materials-object) (summaries, no `components`):
+`200 OK`: a page of [bill of materials objects](#the-bill-of-materials-object) (summaries, no `components`):
 
 ```json
 {
@@ -404,7 +404,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/cbbom_9f8e7d
 
 ### Example response
 
-`200 OK` — a page of [component objects](#the-component-object):
+`200 OK`: a page of [component objects](#the-component-object):
 
 ```json
 {
@@ -440,7 +440,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/bill_of_materials/cbbom_9f8e7d
   `GET /v1/bill_of_materials/components`
 </ParamField>
 
-Search components across **all** of a vendor's BOMs at once. Because every component carries its `bill_of_materials_id` and `vendor_document_id`, each match traces straight back to the source file it came from — answering questions like "has this vendor ever shipped a BOM containing `log4j`?"
+Search components across **all** of a vendor's BOMs at once. Because every component carries its `bill_of_materials_id` and `vendor_document_id`, each match traces straight back to the source file it came from, answering questions like "has this vendor ever shipped a BOM containing `log4j`?"
 
 ### Query parameters
 
@@ -488,7 +488,7 @@ The response is a page of [component objects](#the-component-object) (`{ "data":
   `POST /v1/bill_of_materials/{bom_id}/archive`
 </ParamField>
 
-Archives a BOM. It drops out of "latest" — the next most recent non-archived BOM becomes the applied one — but stays in history and remains retrievable (and shows in the history list when `include_archived=true`).
+Archives a BOM. It drops out of "latest" (the next most recent non-archived BOM becomes the applied one) but stays in history and remains retrievable (and shows in the history list when `include_archived=true`).
 
 ### Path parameters
 
@@ -513,7 +513,7 @@ The response is the updated [bill of materials object](#the-bill-of-materials-ob
 
 ## MCP / assistant access
 
-The Coverbase [MCP server](/mcp/overview) exposes BOMs read-only through the `query_vendors` dispatcher tool — no new top-level tools. Two new `kind` values join the existing ones (`documents`, `document_summary`, `risk_summary`, …):
+The Coverbase [MCP server](/mcp/overview) exposes BOMs read-only through the `query_vendors` dispatcher tool, with no new top-level tools. Two new `kind` values join the existing ones (`documents`, `document_summary`, `risk_summary`, …):
 
 | `kind` | Returns | Args |
 | ------ | ------- | ---- |
