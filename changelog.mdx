@@ -4,26 +4,26 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
-## 2026-07-20 — AI control sets, expanded detector library, integration directory
+## 2026-07-20: AI control sets, expanded detector library, integration directory
 
 New out-of-the-box AI-governance control sets, a larger Supplier Radar detector library with a dedicated AI segment, and a documented directory of external integrations.
 
 ### New features
 
-- **AI-governance control sets.** The [Control Set library](/control-library#ai-governance) adds five built-in frameworks — **AIUC-1**, **ISO/IEC 42001:2023**, the **EU AI Act**, the **OWASP Top 10 for LLM Applications (2025)**, and **MITRE ATLAS** — bringing the library to 47 templates spanning 3,975 curated controls.
+- **AI-governance control sets.** The [Control Set library](/control-library#ai-governance) adds five built-in frameworks (**AIUC-1**, **ISO/IEC 42001:2023**, the **EU AI Act**, the **OWASP Top 10 for LLM Applications (2025)**, and **MITRE ATLAS**), bringing the library to 47 templates spanning 3,975 curated controls.
 - **Detector library page.** A new [Detector library](/products/detector-library) reference documents all 75 Supplier Radar detector templates across 7 segments, including a new **AI & Model Risk** segment (prompt injection, model safety incidents, training-data/IP disputes, AI regulatory enforcement, and more).
 - **Integration directory.** A new [Integration directory](/integrations/directory) lists the external systems Coverbase connects with by category, including a new **AI Governance & Safety** category, a **Compliance Automation & Trust Management** category, and additions such as Aravo across GRC, procurement, and cybersecurity.
 
 ---
 
-## 2026-06-17 — List vendors, discover questionnaires, filter supplier exports
+## 2026-06-17: List vendors, discover questionnaires, filter supplier exports
 
 New read endpoints for discovering IDs without leaving the API, plus a name filter on supplier exports.
 
 ### New features
 
-- **List vendors.** `GET /v1/vendors` lists the org's vendors (newest first), with a case-insensitive `name` substring filter, an exact `external_id` lookup, and `limit`/`offset` pagination — so you can enumerate vendors or map your own identifier to a Coverbase vendor ID. See the [Vendors API reference](/api-reference/vendors#list-vendors).
-- **List questionnaires.** `GET /v1/intake/api/questionnaires` returns the org's questionnaires (`id`, `name`, `type`), with an optional `type` filter — use it to discover the `questionnaire_ids` that [`POST /v1/intake/api/sessions`](/api-reference/intake#create-an-intake-session) requires. See the [Intake API reference](/api-reference/intake#list-questionnaires).
+- **List vendors.** `GET /v1/vendors` lists the org's vendors (newest first), with a case-insensitive `name` substring filter, an exact `external_id` lookup, and `limit`/`offset` pagination, so you can enumerate vendors or map your own identifier to a Coverbase vendor ID. See the [Vendors API reference](/api-reference/vendors#list-vendors).
+- **List questionnaires.** `GET /v1/intake/api/questionnaires` returns the org's questionnaires (`id`, `name`, `type`), with an optional `type` filter. Use it to discover the `questionnaire_ids` that [`POST /v1/intake/api/sessions`](/api-reference/intake#create-an-intake-session) requires. See the [Intake API reference](/api-reference/intake#list-questionnaires).
 
 ### Updates
 
@@ -32,7 +32,7 @@ New read endpoints for discovering IDs without leaving the API, plus a name filt
 
 ---
 
-## 2026-06-08 — Documents API
+## 2026-06-08: Documents API
 
 Upload vendor evidence documents over the REST API and through the MCP server, link them to vendors, services, and assessments, and download them.
 
@@ -47,19 +47,19 @@ Upload vendor evidence documents over the REST API and through the MCP server, l
 
 ---
 
-## 2026-06-04 — Vendor fact sheet API
+## 2026-06-04: Vendor fact sheet API
 
 Read and regenerate a vendor's AI-generated fact sheet (company intelligence) over the REST API.
 
 ### New features
 
-- **Vendor fact sheet API.** `GET /v1/vendors/{vendor_id}/fact-sheet` returns the vendor's fact sheet — company profile, products, public perception, financials, people, compliance/legal, and security posture — along with a generation `status`. `POST /v1/vendors/{vendor_id}/fact-sheet/refresh` queues a (re)generation and returns `202 Accepted`; poll the read endpoint until `status` is `"completed"`. See the [Vendors API reference](/api-reference/vendors#the-vendor-fact-sheet).
+- **Vendor fact sheet API.** `GET /v1/vendors/{vendor_id}/fact-sheet` returns the vendor's fact sheet (company profile, products, public perception, financials, people, compliance/legal, and security posture) along with a generation `status`. `POST /v1/vendors/{vendor_id}/fact-sheet/refresh` queues a (re)generation and returns `202 Accepted`; poll the read endpoint until `status` is `"completed"`. See the [Vendors API reference](/api-reference/vendors#the-vendor-fact-sheet).
 
 ---
 
-## 2026-06-04 — List and resolve users by email
+## 2026-06-04: List and resolve users by email
 
-The Users API can now look up a user by email and returns the existing user on a duplicate create — so external systems (e.g. ServiceNow) can build an email → user ID mapping for relationship-owner / watcher / risk-analyst assignments.
+The Users API can now look up a user by email and returns the existing user on a duplicate create, so external systems (e.g. ServiceNow) can build an email → user ID mapping for relationship-owner / watcher / risk-analyst assignments.
 
 ### New features
 
@@ -68,13 +68,13 @@ The Users API can now look up a user by email and returns the existing user on a
 ### Updates
 
 - **`POST /v1/users` is now create-or-get.** When a user with the supplied email already exists in the org, the endpoint returns `200 OK` with that user (so you can resolve its `cbuser_...` ID) instead of `409 user_exists`. A `409` is now only returned when the email belongs to a user in a **different** org (emails are globally unique).
-- **Assigning people by email.** The [vendor & service](/api-reference/vendors#assigning-people-analysts-owners-watchers) `relationship_owner_ids`, `watcher_ids`, and `risk_analyst_ids` fields still take user IDs — the Users API is the supported path to resolve those IDs from emails.
+- **Assigning people by email.** The [vendor & service](/api-reference/vendors#assigning-people-analysts-owners-watchers) `relationship_owner_ids`, `watcher_ids`, and `risk_analyst_ids` fields still take user IDs. The Users API is the supported path to resolve those IDs from emails.
 
 ---
 
-## 2026-06-02 — Bill of Materials
+## 2026-06-02: Bill of Materials
 
-Upload, version, and search machine-readable bills of materials (SBOM, AIBOM, HBOM, SaaSBOM) for vendors and services — over the REST API and through the MCP server.
+Upload, version, and search machine-readable bills of materials (SBOM, AIBOM, HBOM, SaaSBOM) for vendors and services, over the REST API and through the MCP server.
 
 ### New features
 
@@ -82,7 +82,7 @@ Upload, version, and search machine-readable bills of materials (SBOM, AIBOM, HB
 
 ### Updates
 
-- **MCP & AI assistants.** The `query_vendors` tool gained two read-only kinds — `bill_of_materials` (the latest applied BOM and its components) and `bill_of_materials_history` (every uploaded BOM for a vendor, newest first). See the [example prompts](/mcp/example-prompts#bill-of-materials).
+- **MCP & AI assistants.** The `query_vendors` tool gained two read-only kinds: `bill_of_materials` (the latest applied BOM and its components) and `bill_of_materials_history` (every uploaded BOM for a vendor, newest first). See the [example prompts](/mcp/example-prompts#bill-of-materials).
 - **Conventions.** The ID-prefix table now lists `cbbom_` (bill of materials) and `cbbomc_` (component). See [IDs](/conventions#ids).
 
 <Note>
@@ -91,14 +91,14 @@ Upload, version, and search machine-readable bills of materials (SBOM, AIBOM, HB
 
 ---
 
-## 2026-05-29 — Radar & reassessments come to the API
+## 2026-05-29: Radar & reassessments come to the API
 
-Programmatic access to continuous monitoring: create radar events, triage alerts, and drive reassessments end-to-end — plus webhooks for all three.
+Programmatic access to continuous monitoring: create radar events, triage alerts, and drive reassessments end-to-end, plus webhooks for all three.
 
 ### New features
 
 - **Radar API.** Create radar events (`POST /v1/radar/events`), list and retrieve events, and list, retrieve, dismiss, and undismiss radar alerts. Dismissing with `suppress_similar` teaches the detector to suppress similar alerts going forward. See the [Radar API reference](/api-reference/radar).
-- **Reassessments API.** Create a reassessment from a radar event with its vendors, curate the vendor set (add vendors, opt vendors in/out), set the assessment plan, then `confirm`, `dismiss`, or `run` it. Running creates one assessment per included vendor from the linked plan — and never opens a case. See the [Reassessments API reference](/api-reference/reassessments).
+- **Reassessments API.** Create a reassessment from a radar event with its vendors, curate the vendor set (add vendors, opt vendors in/out), set the assessment plan, then `confirm`, `dismiss`, or `run` it. Running creates one assessment per included vendor from the linked plan, and never opens a case. See the [Reassessments API reference](/api-reference/reassessments).
 - **Radar & reassessment webhooks.** Subscribe to `RadarEvent.*`, `RadarDetectorResult.*` (radar alerts), and `Reassessment.*` events. `*.Updated` events carry per-field `field_diffs`; soft-archives surface as `*.Deleted`. See the [event catalog](/integrations/webhooks#event-catalog).
 
 ### Updates
@@ -107,15 +107,15 @@ Programmatic access to continuous monitoring: create radar events, triage alerts
 
 ---
 
-## 2026-05-22 — This week at Coverbase
+## 2026-05-22: This week at Coverbase
 
 A big week for the public API: self-serve key management, deeper workflow visibility, automatic webhook delivery, and tighter network controls.
 
 ### New features
 
 - **Self-serve API key management.** Admins can now list, create, rotate, and revoke their org's `ak_*` keys without filing a support ticket. Rotation is atomic, so you'll never have two valid keys live at the same time. See the [API Keys reference](/api-reference/api-keys).
-- **Scoped admin API keys.** Admins can mint long-lived `ak_*` keys carrying the `keys:manage` and/or `audit:read` scopes, so key management and audit-log reads can run headlessly — without a short-lived dashboard JWT. The admin-JWT path is unchanged and still works. Granting scopes stays an admin-only action (a scoped key cannot grant scopes to itself or any other key), and a key missing the required scope gets `403 insufficient_scope`. See [API key scopes](/conventions#api-key-scopes).
-- **List workflow runs.** Page through workflow run history with filters for workflow name, status, and time range — no need to know a run ID up front. See [List workflow runs](/api-reference/workflows#list-workflow-runs).
+- **Scoped admin API keys.** Admins can mint long-lived `ak_*` keys carrying the `keys:manage` and/or `audit:read` scopes, so key management and audit-log reads can run headlessly, without a short-lived dashboard JWT. The admin-JWT path is unchanged and still works. Granting scopes stays an admin-only action (a scoped key cannot grant scopes to itself or any other key), and a key missing the required scope gets `403 insufficient_scope`. See [API key scopes](/conventions#api-key-scopes).
+- **List workflow runs.** Page through workflow run history with filters for workflow name, status, and time range. No need to know a run ID up front. See [List workflow runs](/api-reference/workflows#list-workflow-runs).
 - **Archive an assessment via API.** `DELETE /v1/assessments/{id}` mirrors the in-product Archive action: it soft-deletes the assessment along with its evals and findings, closes the portal if open, and cancels any in-flight workflow runs. See [Cancel (archive) an assessment](/api-reference/assessments#cancel-archive-an-assessment).
 - **Public API audit log.** Every authenticated `/v1/*` call is now recorded and visible to admins under **Settings → Audit log** (Integrations group), or via `GET /v1/system_audit_log`. Request and response bodies are never persisted. See [Public API audit log](/conventions#public-api-audit-log).
 - **Org-level API IP allowlist.** Restrict all public API traffic to a set of CIDRs. Requests from outside the allowlist are rejected with `403 ip_not_allowed`. See [API IP allowlist](/conventions#api-ip-allowlist).
@@ -123,13 +123,13 @@ A big week for the public API: self-serve key management, deeper workflow visibi
 
 ### Updates
 
-- **Per-stage workflow outcomes.** `GET /v1/workflows/runs/{id}` now returns the outcome of every executed step — status (`success`, `failed`, `skipped`), an optional message, the artifacts consumed and produced, and a per-step timestamp. Existing fields are unchanged. `completed_at` also now populates on canceled runs.
-- **Automatic webhook delivery is live.** Subscribed webhooks now receive a fan-out delivery whenever a matching domain event occurs — not just from the manual test endpoint. All webhooks for a single source event share an `event_id` so receivers can dedupe. See [Webhooks](/integrations/webhooks).
-- **Webhook delivery history.** Inspect every delivery attempt — event fan-out, manual test, or workflow-triggered — via the new `GET /v1/webhooks/{id}/deliveries` endpoint, and review aggregate stats (`last_delivery_status`, `delivery_success_rate`, `delivery_count`) on the webhook itself. See [Webhook delivery history](/integrations/webhook-deliveries).
+- **Per-stage workflow outcomes.** `GET /v1/workflows/runs/{id}` now returns the outcome of every executed step: status (`success`, `failed`, `skipped`), an optional message, the artifacts consumed and produced, and a per-step timestamp. Existing fields are unchanged. `completed_at` also now populates on canceled runs.
+- **Automatic webhook delivery is live.** Subscribed webhooks now receive a fan-out delivery whenever a matching domain event occurs. Previously only the manual test endpoint dispatched a delivery. All webhooks for a single source event share an `event_id` so receivers can dedupe. See [Webhooks](/integrations/webhooks).
+- **Webhook delivery history.** Inspect every delivery attempt (event fan-out, manual test, or workflow-triggered) via the new `GET /v1/webhooks/{id}/deliveries` endpoint, and review aggregate stats (`last_delivery_status`, `delivery_success_rate`, `delivery_count`) on the webhook itself. See [Webhook delivery history](/integrations/webhook-deliveries).
 
 ### Breaking changes
 
-- **Webhook event types are now strictly validated.** Creating or updating a webhook with an event type outside the [event catalog](/integrations/webhooks#event-catalog) now returns `422 invalid_event_types`. Casing matters — use `Vendor.Created`, not `vendor.created`. Review your registered subscriptions before your next deploy.
+- **Webhook event types are now strictly validated.** Creating or updating a webhook with an event type outside the [event catalog](/integrations/webhooks#event-catalog) now returns `422 invalid_event_types`. Casing matters: use `Vendor.Created`, not `vendor.created`. Review your registered subscriptions before your next deploy.
 - **Webhook URLs are SSRF-restricted.** Webhook `url` must be a public HTTPS endpoint. Non-HTTPS URLs, URLs with credentials or non-standard ports, and URLs resolving to private, loopback, link-local, or metadata addresses are rejected with `400 invalid_url`. The same check runs at delivery time (DNS-rebinding safe).
 
 ### Fixes
@@ -138,19 +138,19 @@ A big week for the public API: self-serve key management, deeper workflow visibi
 
 ---
 
-## 2026-05-21 — Self-serve API keys, workflow run listing, assessment archive, audit log
+## 2026-05-21: Self-serve API keys, workflow run listing, assessment archive, audit log
 
 Additive features answering common customer questions on day-2 operations of the public API.
 
 ### Additive
 
-- **Self-serve `ak_*` API key management.** New [API Keys API](/api-reference/api-keys) lets an org admin list, create, rotate, and revoke their organization's public-API keys without contacting Coverbase support. Rotation is atomic: a new key is minted, then the old one is revoked; if the revoke fails the new key is rolled back so there's never a window with two simultaneously-valid keys. At launch these endpoints were JWT-only (`ak_*` keys could not manage other keys); they now also accept an `ak_*` key carrying the `keys:manage` scope — see the **scoped admin API keys** entry above.
-- **`GET /v1/workflows/runs` — list workflow runs.** Page through workflow run history without already knowing the run ID. Filterable by `workflow_name`, `status` (repeatable), and a created-at time range. Returns a `step_count` per run for at-a-glance progress. See [Workflows API → List workflow runs](/api-reference/workflows#list-workflow-runs).
+- **Self-serve `ak_*` API key management.** New [API Keys API](/api-reference/api-keys) lets an org admin list, create, rotate, and revoke their organization's public-API keys without contacting Coverbase support. Rotation is atomic: a new key is minted, then the old one is revoked; if the revoke fails the new key is rolled back so there's never a window with two simultaneously-valid keys. At launch these endpoints were JWT-only (`ak_*` keys could not manage other keys); they now also accept an `ak_*` key carrying the `keys:manage` scope. See the **scoped admin API keys** entry above.
+- **`GET /v1/workflows/runs`: list workflow runs.** Page through workflow run history without already knowing the run ID. Filterable by `workflow_name`, `status` (repeatable), and a created-at time range. Returns a `step_count` per run for at-a-glance progress. See [Workflows API → List workflow runs](/api-reference/workflows#list-workflow-runs).
 - **Per-stage workflow outcomes.** `GET /v1/workflows/runs/{id}` now surfaces the action outcome of every executed step: `status` (`success` / `failed` / `skipped`), an optional `message` (carries the failure reason on failure), the consumed and produced `artifacts` (with `role` of `trigger` or `result`), and the step's `created_at`. The previous response (component id, name, action_type, updated_at) is unchanged so this is additive. `completed_at` now also populates on `canceled`.
-- **`DELETE /v1/assessments/{id}` — cancel / archive an assessment.** Mirrors the in-product Archive action: soft-deletes the assessment plus its evals and findings, closes the portal if open, and best-effort cancels any in-flight workflow runs targeting the assessment. Idempotent at the row level. See [Assessments API → Cancel (archive) an assessment](/api-reference/assessments#cancel-archive-an-assessment).
+- **`DELETE /v1/assessments/{id}`: cancel / archive an assessment.** Mirrors the in-product Archive action: soft-deletes the assessment plus its evals and findings, closes the portal if open, and best-effort cancels any in-flight workflow runs targeting the assessment. Idempotent at the row level. See [Assessments API → Cancel (archive) an assessment](/api-reference/assessments#cancel-archive-an-assessment).
 - **Public-API audit log.** Every authenticated `/v1/*` request now writes a `CbActivity` row (`type=external_api_call`, `target_type=external_api_request`) with the method, path, route template, status code, duration, query parameter names, `ak_*` key id+name, client IP, and a request correlation ID. Visible to admins in **Settings → Audit log** under the *Integrations* group, and via `GET /v1/system_audit_log`. Request and response bodies are never persisted. See [API conventions → Public API audit log](/conventions#public-api-audit-log).
 
-## 2026-05-16 — Webhook event-type validation, SSRF restrictions, delivery history, and API IP allowlist
+## 2026-05-16: Webhook event-type validation, SSRF restrictions, delivery history, and API IP allowlist
 
 Reconciled against the `claude/webhook-ui-workflow` source branch. Two breaking changes and two additive features.
 
@@ -162,11 +162,11 @@ Reconciled against the `claude/webhook-ui-workflow` source branch. Two breaking 
 ### Additive
 
 - **Automatic event delivery is live.** Subscribed webhooks now receive a fan-out delivery whenever a matching domain event occurs (previously only the manual test endpoint dispatched a delivery). All webhooks for one source event share a single `event_id` so receivers can dedupe the fan-out. The prior "automatic event delivery is not yet wired up" caveat has been removed.
-- **Webhook delivery history.** New `GET /v1/webhooks/{id}/deliveries` endpoint (paginated, newest first) and a new [Webhook delivery history](/integrations/webhook-deliveries) page. Every attempt — event fan-out, manual test, or workflow-triggered — is recorded. The webhook object now also returns `last_delivery_status`, `delivery_success_rate`, and `delivery_count`.
+- **Webhook delivery history.** New `GET /v1/webhooks/{id}/deliveries` endpoint (paginated, newest first) and a new [Webhook delivery history](/integrations/webhook-deliveries) page. Every attempt (event fan-out, manual test, or workflow-triggered) is recorded. The webhook object now also returns `last_delivery_status`, `delivery_success_rate`, and `delivery_count`.
 - **Org-level API IP allowlist.** An org can restrict all `/v1/*` public API requests to a set of CIDRs via `api_ip_allowlist` on the org object (`POST /v1/org/{id}`). Requests from outside the allowlist get `403 ip_not_allowed`; the control fails closed. See [API conventions → API IP allowlist](/conventions#api-ip-allowlist).
 - **Workflow `send_webhook` action.** Workflow automations can deliver their triggering event to subscribed webhooks, with an optional event-type override and an optional `webhook_ids` subset. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
 
-## 2026-05-16 — Reconciled against the deployed source branch
+## 2026-05-16: Reconciled against the deployed source branch
 
 Corrected the reference against the branch actually deployed to the sandbox. Changes vs. the prior pass:
 
@@ -174,36 +174,36 @@ Corrected the reference against the branch actually deployed to the sandbox. Cha
 - **Vendor `services`.** The vendor object now includes a `services` array (nested [service objects](/api-reference/vendors#service-object)).
 - **Service updates.** Added `PATCH /v1/vendors/{vendor_id}/services/{service_id}` (name / description / tag_ids → `service_not_found` 404, `invalid_service` 400). Service create now accepts `tag_ids`; the service object includes a `tags` string array.
 - **User `email` is validated.** `POST /v1/users` rejects a non-email `email` with `422`; `409 user_exists` is also returned on a create race / global uniqueness conflict.
-- **Findings: exactly one target.** `POST /v1/findings` now requires *exactly one* of `vendor_id`/`assessment_id` — supplying neither **or both** fails with `422` ("Exactly one of vendor_id or assessment_id must be provided.").
+- **Findings: exactly one target.** `POST /v1/findings` now requires *exactly one* of `vendor_id`/`assessment_id`: supplying neither **or both** fails with `422` ("Exactly one of vendor_id or assessment_id must be provided.").
 
-## 2026-05-16 — Full sandbox surface documented
+## 2026-05-16: Full sandbox surface documented
 
 Added complete reference coverage for the endpoints available on the sandbox API that were previously undocumented:
 
-- **Users API** — `POST /v1/users` (provision, idempotent), `GET /v1/users/{id}`, `PATCH /v1/users/{id}` (role change / deprovision via `is_archived`). Documented org role values, `409 user_exists`, and the `invited`/`active`/`inactive` membership states.
-- **Vendor & service creation** — `POST /v1/vendors` (idempotent) and `POST /v1/vendors/{id}/services` (not idempotent). Added the vendor `tier` field and `external_id` create input.
-- **Findings API** — `GET`/`POST /v1/findings`, `GET`/`PATCH /v1/findings/{id}`. Documented the vendor/assessment filter, `limit`/`offset` pagination, the `cbtask_` ID prefix, and the "one of vendor_id/assessment_id required" rule.
-- **Obligations API** — `GET`/`POST /v1/obligations`, `GET`/`PATCH /v1/obligations/{id}`. Documented the `satisfied`/`not_satisfied` status enum, CUEC type, and pagination.
-- **Workflows** — the get-run response now documents `steps[]`; added `409 workflow_disabled` and `502 workflow_dispatch_failed`; clarified that running a workflow genuinely dispatches the engine (`Workflow.RunRequested`).
+- **Users API**: `POST /v1/users` (provision, idempotent), `GET /v1/users/{id}`, `PATCH /v1/users/{id}` (role change / deprovision via `is_archived`). Documented org role values, `409 user_exists`, and the `invited`/`active`/`inactive` membership states.
+- **Vendor & service creation**: `POST /v1/vendors` (idempotent) and `POST /v1/vendors/{id}/services` (not idempotent). Added the vendor `tier` field and `external_id` create input.
+- **Findings API**: `GET`/`POST /v1/findings`, `GET`/`PATCH /v1/findings/{id}`. Documented the vendor/assessment filter, `limit`/`offset` pagination, the `cbtask_` ID prefix, and the "one of vendor_id/assessment_id required" rule.
+- **Obligations API**: `GET`/`POST /v1/obligations`, `GET`/`PATCH /v1/obligations/{id}`. Documented the `satisfied`/`not_satisfied` status enum, CUEC type, and pagination.
+- **Workflows**: the get-run response now documents `steps[]`; added `409 workflow_disabled` and `502 workflow_dispatch_failed`; clarified that running a workflow genuinely dispatches the engine (`Workflow.RunRequested`).
 - Added the sandbox base URL (`https://sandbox.api.coverbase.app`) and a pagination section to [API conventions](/conventions); expanded the ID-prefix table (`cbtask_`, `cboblg_`, `cbsvc_`, `cbvdoc_`) and the idempotency support matrix.
 
 <Note>
   This surface is verified against the deployed sandbox API. Confirm production parity with Coverbase before pointing production traffic at endpoints you first integrated on sandbox.
 </Note>
 
-## 2026-05-16 — Documentation reconciled with the API
+## 2026-05-16: Documentation reconciled with the API
 
 The API reference was rebuilt to exactly match the implemented public API. Highlights:
 
 - **Resource surface corrected.** Fixed schemas for the vendors, assessments, workflows, and webhooks endpoints. (The Users, vendor/service creation, Findings, and Obligations endpoints were documented in the following entry once the deployed sandbox surface was confirmed.)
 - **Vendor schema fixed.** `status` is a label string (not an object); `tags` is a string array (not objects). Added `status_id`. Removed fields that the API does not return (`raw_irq_score`, `next_assessment_date`, `last_assessment_outcome`).
 - **Assessment schema fixed.** Removed the non-existent `risk_type`, `doc_collection_mode`, and `products` request fields. `control_set_ids` is required. Status values corrected to the real enum. Idempotency replays return the original `201` body (no `409 idempotency_conflict`).
-- **Workflow schema fixed.** Run status values are `started`/`completed`/`canceled`/`failed`. The get-run response returns only run metadata — no `checkpoints_reached` or `output`. Removed the non-existent `429 rate_limited` / `400 invalid_input` errors and the non-existent `POST /v1/workflows/runs` alternative.
+- **Workflow schema fixed.** Run status values are `started`/`completed`/`canceled`/`failed`. The get-run response returns only run metadata: no `checkpoints_reached` or `output`. Removed the non-existent `429 rate_limited` / `400 invalid_input` errors and the non-existent `POST /v1/workflows/runs` alternative.
 - **Webhook signing documented from source.** Signature header is `Coverbase-Signature` (lowercase hex HMAC-SHA256 of the raw body, keyed by the registered secret). Deliveries also send `X-Coverbase-Event-Id` and `X-Coverbase-Event-Type`. Envelope is exactly `{event_id, event_type, occurred_at, data}`. Retries are bounded at 5 attempts with a 10s per-attempt timeout (no documented multi-hour backoff window).
 - **Event catalog corrected** to the emission-backed `SupportedEventType` values with exact casing (e.g. `Vendor.Created`, not `vendor.created`). Removed invented events (`evaluation.flagged`, `evidence.requested`, etc.).
 - Added a shared [API conventions](/conventions) page (auth, IDs, timestamps, idempotency, error envelope).
 
 ### Open questions
 
-- **Automatic event delivery.** ~~No code path fans domain events out to subscribed webhook endpoints.~~ **Resolved 2026-05-16:** automatic fan-out is now implemented — see the latest changelog entry above and the [Webhooks](/integrations/webhooks) guide.
+- **Automatic event delivery.** ~~No code path fans domain events out to subscribed webhook endpoints.~~ **Resolved 2026-05-16:** automatic fan-out is now implemented. See the latest changelog entry above and the [Webhooks](/integrations/webhooks) guide.
 - **`supporting_document_ids` ID prefix.** The assessment create field accepts document IDs; the precise prefix is intentionally left unspecified pending confirmation.

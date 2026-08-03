@@ -1,6 +1,6 @@
 ---
 title: "Audit trails"
-description: "Every action — dashboard, API, and AI — is logged in an audit trail you can read in the dashboard and export through the API."
+description: "Every action across the dashboard, API, and AI is logged in an audit trail you can read in the dashboard and export through the API."
 icon: "list-timeline"
 ---
 
@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Coverbase records what happened, who did it, and when — across the dashboard, the public API, and AI assistants. You can review it in the UI and pull it programmatically through the audit API, so it can flow into your SIEM, your GRC platform, or your own evidence packages.
+Coverbase records what happened, who did it, and when, across the dashboard, the public API, and AI assistants. You can review it in the UI and pull it programmatically through the audit API, so it can flow into your SIEM, your GRC platform, or your own evidence packages.
 
 ## Two audit surfaces
 
@@ -20,7 +20,7 @@ Coverbase keeps audit data on two complementary surfaces, backed by the same und
   </Card>
 
   <Card title="Per-object activity trails" icon="list-check">
-    The change history of an individual record — a vendor, assessment, finding, contract, and so on. Shown on each record's activity feed in the dashboard, readable via `GET /v1/activity`, and queryable by AI assistants through the MCP server.
+    The change history of an individual record: a vendor, assessment, finding, contract, and so on. Shown on each record's activity feed in the dashboard, readable via `GET /v1/activity`, and queryable by AI assistants through the MCP server.
   </Card>
 </CardGroup>
 
@@ -50,12 +50,12 @@ Both surfaces are scoped to your organization. No audit data crosses organizatio
   </Card>
 
   <Card title="Integration and key lifecycle" icon="plug">
-    API keys, MCP API keys, external integrations, and API sources — added, updated, and deactivated.
+    API keys, MCP API keys, external integrations, and API sources: added, updated, and deactivated.
   </Card>
 </CardGroup>
 
 <Note>
-  **Exporting the audit log is itself audited.** Every Excel export from the audit log page is recorded as an `audit_log_exported` event, including the number of rows exported — so reviewing the trail leaves a trail.
+  **Exporting the audit log is itself audited.** Every Excel export from the audit log page is recorded as an `audit_log_exported` event, including the number of rows exported, so reviewing the trail leaves a trail.
 </Note>
 
 ## Event groups and event types
@@ -75,7 +75,7 @@ Every system audit event carries a machine-readable **event type** and rolls up 
 
 The **Archive** group collects every deactivation, archival, and deletion event across all categories, so destructive changes can be reviewed in one place.
 
-`GET /v1/system_audit_log/metadata` returns this taxonomy programmatically — use it to populate filter pickers or keep an export pipeline in sync as new event types are added.
+`GET /v1/system_audit_log/metadata` returns this taxonomy programmatically. Use it to populate filter pickers or keep an export pipeline in sync as new event types are added.
 
 ## What each record contains
 
@@ -92,12 +92,12 @@ Every audit record includes:
 
 Two details worth knowing about the `data` payload:
 
-- **Updates are recorded as field-level diffs** — you can see exactly which fields changed and their before/after values, not just that "something was updated."
-- **Sign-in events carry session forensics** — the user's email, client IP address, user agent, and browser, sourced from the identity provider's session events.
+- **Updates are recorded as field-level diffs**: you can see exactly which fields changed and their before/after values, not just that "something was updated."
+- **Sign-in events carry session forensics**: the user's email, client IP address, user agent, and browser, sourced from the identity provider's session events.
 
 ## Reviewing the audit log in the dashboard
 
-The system-wide audit log lives at **Settings → Audit Logs**. By default it shows **all event groups** for the **last 30 days**, newest first — nothing is hidden by default.
+The system-wide audit log lives at **Settings → Audit Logs**. By default it shows **all event groups** for the **last 30 days**, newest first; nothing is hidden by default.
 
 <Steps>
   <Step title="Filter">
@@ -115,7 +115,7 @@ Results are paginated (25–250 rows per page, 50 by default), with summary card
 
 ### Who can see it
 
-Access to the audit log is governed by your organization's roles. For organizations using custom roles, the **Audit trail** resource carries `read` and `export` permissions and is always organization-wide — it cannot be scoped to assigned records. Headless access uses an `ak_*` API key carrying the `audit:read` scope (see below).
+Access to the audit log is governed by your organization's roles. For organizations using custom roles, the **Audit trail** resource carries `read` and `export` permissions and is always organization-wide; it cannot be scoped to assigned records. Headless access uses an `ak_*` API key carrying the `audit:read` scope (see below).
 
 ## Reading the audit log through the API
 
@@ -131,8 +131,8 @@ curl "https://api.coverbase.app/v1/system_audit_log?start_ts=1748736000&event_gr
 | Parameter | Description |
 | --- | --- |
 | `start_ts` / `end_ts` | Unix timestamps (seconds) bounding the window. |
-| `event_groups` | Repeatable — one or more of the groups above. |
-| `event_types` | Repeatable — one or more specific event types. |
+| `event_groups` | Repeatable: one or more of the groups above. |
+| `event_types` | Repeatable: one or more specific event types. |
 | `search` | Free-text search, same semantics as the dashboard search box. |
 | `limit` | Page size, 1–500 (default 100). |
 | `offset` | Pagination offset (default 0). |
@@ -141,15 +141,15 @@ Responses are ordered newest first and include `X-Total-Count` and `Content-Rang
 
 ### Companion endpoints
 
-- **`GET /v1/system_audit_log/metadata`** — the event group and event type taxonomy with display labels.
-- **`POST /v1/system_audit_log/export_ack`** — records an `audit_log_exported` event; the dashboard calls this after every Excel export. If you build your own export tooling, call it too so exports stay visible in the trail.
+- **`GET /v1/system_audit_log/metadata`**: the event group and event type taxonomy with display labels.
+- **`POST /v1/system_audit_log/export_ack`**: records an `audit_log_exported` event; the dashboard calls this after every Excel export. If you build your own export tooling, call it too so exports stay visible in the trail.
 
 ### Authentication for the audit API
 
 The audit read endpoints accept **either** of:
 
 - a **dashboard session JWT**, subject to your organization's role permissions, or
-- an **`ak_*` API key carrying the [`audit:read` scope](/conventions#api-key-scopes)** — for headless export pipelines.
+- an **`ak_*` API key carrying the [`audit:read` scope](/conventions#api-key-scopes)**, for headless export pipelines.
 
 <Tip>
   Mint a dedicated, scope-limited key for your log-export pipeline. A key that only needs to read the audit log should carry **only** `audit:read` and nothing else, following least privilege. See [API key scopes](/conventions#api-key-scopes).
@@ -157,11 +157,11 @@ The audit read endpoints accept **either** of:
 
 ## Per-object activity trails
 
-Separate from the system-wide log, every major record keeps its own activity trail — creations, field updates, notes, exports, and submissions against that specific object, each attributed to the acting user (or **System** for automated changes).
+Separate from the system-wide log, every major record keeps its own activity trail: creations, field updates, notes, exports, and submissions against that specific object, each attributed to the acting user (or **System** for automated changes).
 
-- **In the dashboard** — shown on the record's activity feed (for example, a vendor's or assessment's activity tab).
-- **Through the API** — `GET /v1/activity` with `target_type` and `target_id` query parameters returns the trail for one object; `related_activity=true` pulls in activity from related records (for example, an assessment's findings).
-- **Through AI assistants** — the Coverbase [MCP server](/mcp/overview) exposes the trail via `query_platform` with `kind: "audit_trail"` for vendors, assessments, assessment reviews, contracts, findings, services, obligations, follow-ups, portals, vendor documents, work queue items, and evals. The built-in `who_changed_this` prompt scripts a full audit investigation for one object.
+- **In the dashboard**: shown on the record's activity feed (for example, a vendor's or assessment's activity tab).
+- **Through the API**: `GET /v1/activity` with `target_type` and `target_id` query parameters returns the trail for one object; `related_activity=true` pulls in activity from related records (for example, an assessment's findings).
+- **Through AI assistants**: the Coverbase [MCP server](/mcp/overview) exposes the trail via `query_platform` with `kind: "audit_trail"` for vendors, assessments, assessment reviews, contracts, findings, services, obligations, follow-ups, portals, vendor documents, work queue items, and evals. The built-in `who_changed_this` prompt scripts a full audit investigation for one object.
 
 ## Public-API audit records
 
@@ -176,14 +176,14 @@ Each authenticated public-API request is recorded in your organization's activit
 Audit records are written after the response is sent, so auditing never delays or fails your API calls.
 
 <Note>
-  Request and response **bodies are never persisted** in the audit log — only metadata about the call. This keeps the trail useful for forensics without itself becoming a sensitive data store.
+  Request and response **bodies are never persisted** in the audit log, only metadata about the call. This keeps the trail useful for forensics without itself becoming a sensitive data store.
 </Note>
 
 ## AI assistant (MCP) activity
 
 AI assistant activity is covered at two layers:
 
-- **Changes made through MCP appear in the audit surfaces.** MCP tool calls run as the connected user, so writes land in the same per-object activity trails — and, for configuration surfaces like controls, custom fields, and Radar detectors, the system-wide audit log — attributed to that user, exactly as if they had made the change in the dashboard. MCP API key creation and revocation appear in the **Integrations** group.
+- **Changes made through MCP appear in the audit surfaces.** MCP tool calls run as the connected user, so writes land in the same per-object activity trails (and, for configuration surfaces like controls, custom fields, and Radar detectors, the system-wide audit log), attributed to that user, exactly as if they had made the change in the dashboard. MCP API key creation and revocation appear in the **Integrations** group.
 - **Tool invocations are logged server-side.** Every MCP tool call (including reads) is recorded in Coverbase's security logs with the user identity, organization, tool name, sanitized parameters, and outcome, for security monitoring and incident response. Credentials and high-risk PII are redacted before logging. See [MCP security and privacy](/mcp/security) for details.
 
 ## Retention

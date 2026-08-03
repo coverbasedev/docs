@@ -17,7 +17,7 @@ This page covers behavior shared by every public API endpoint. Read it once; the
 | Production | `https://api.coverbase.app` |
 | Sandbox | `https://sandbox.api.coverbase.app` |
 
-All requests are JSON over HTTPS. Every path is versioned under `/v1`. The sandbox is a full, isolated copy of the API for integration testing — build and run your integration there first, then repoint the base URL at production.
+All requests are JSON over HTTPS. Every path is versioned under `/v1`. The sandbox is a full, isolated copy of the API for integration testing. Build and run your integration there first, then repoint the base URL at production.
 
 ## Authentication
 
@@ -29,10 +29,10 @@ Authorization: Bearer ak_...
 
 Two credential types are accepted:
 
-- **Service-account API key** (`ak_...`) — the primary credential for integrations. A Coverbase admin mints it from the dashboard (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account. By default a key carries no scopes and can only call ordinary `/v1/*` routes; an admin can additionally grant it elevated [scopes](#api-key-scopes).
-- **Logged-in user JWT** — the dashboard session token, useful for first-party scripts running as a specific user.
+- **Service-account API key** (`ak_...`): the primary credential for integrations. A Coverbase admin mints it from the dashboard (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account. By default a key carries no scopes and can only call ordinary `/v1/*` routes; an admin can additionally grant it elevated [scopes](#api-key-scopes).
+- **Logged-in user JWT**: the dashboard session token, useful for first-party scripts running as a specific user.
 
-Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/api-reference/api-keys) — no support ticket required.
+Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/api-reference/api-keys). No support ticket required.
 
 ### API key scopes
 
@@ -45,7 +45,7 @@ Most `ak_*` keys carry **no scopes**: they authenticate ordinary `/v1/*` calls b
 
 These admin endpoints accept **either** an admin dashboard JWT **or** an `ak_*` key carrying the required scope, so you can run them headlessly without a short-lived session token. The JWT path is unchanged: key management requires the org `admin` role; audit-log reads accept the same dashboard roles as before (member, siloed-member, admin, guest).
 
-Scopes can only be granted from an **admin dashboard session (JWT)**. A scoped key cannot grant scopes — not to itself and not to another key — so a leaked integration key can never escalate its own access. A request that passes `scopes` without an admin JWT is rejected with `403 scope_grant_forbidden`; a call to a scoped endpoint with a key that lacks the required scope returns `403 insufficient_scope`.
+Scopes can only be granted from an **admin dashboard session (JWT)**. A scoped key cannot grant scopes, not to itself and not to another key, so a leaked integration key can never escalate its own access. A request that passes `scopes` without an admin JWT is rejected with `403 scope_grant_forbidden`; a call to a scoped endpoint with a key that lacks the required scope returns `403 insufficient_scope`.
 
 There is no unauthenticated surface. An invalid/expired/revoked key returns `401 "Invalid or expired API key."`. A credential whose role is not allowed on the public API returns `401 "Unauthorized role."`.
 
@@ -59,9 +59,9 @@ Every authenticated call that lands on a `/v1/*` public-API route is recorded in
 - the `ak_*` key ID and human-readable name that authenticated the request
 - the client IP and a per-request correlation ID
 
-Bodies are never persisted. The records surface in the dashboard under **Settings → Audit log** (filtered to the **Integrations** group) and through `GET /v1/system_audit_log` (and `GET /v1/system_audit_log/metadata`). Both read endpoints accept **either** a dashboard session JWT (member, siloed-member, admin, or guest role — unchanged from before) **or** an `ak_*` key that carries the [`audit:read` scope](#api-key-scopes).
+Bodies are never persisted. The records surface in the dashboard under **Settings → Audit log** (filtered to the **Integrations** group) and through `GET /v1/system_audit_log` (and `GET /v1/system_audit_log/metadata`). Both read endpoints accept **either** a dashboard session JWT (member, siloed-member, admin, or guest role, unchanged from before) **or** an `ak_*` key that carries the [`audit:read` scope](#api-key-scopes).
 
-Requests that fail authentication before the `ak_*` key resolves (e.g. an unknown or revoked key returning `401`) are not stored in the activity log — they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
+Requests that fail authentication before the `ak_*` key resolves (e.g. an unknown or revoked key returning `401`) are not stored in the activity log; they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
 
 ### Test your credentials
 
@@ -121,7 +121,7 @@ The org object (`GET`/`POST /v1/org/{id}`) now includes `api_ip_allowlist` (a st
 ```
 
 <Warning>
-  Add the egress IPs of your integration **before** enabling the allowlist, and keep a dashboard admin path available — a too-narrow allowlist locks every API client out until it is widened or cleared from the dashboard.
+  Add the egress IPs of your integration **before** enabling the allowlist, and keep a dashboard admin path available: a too-narrow allowlist locks every API client out until it is widened or cleared from the dashboard.
 </Warning>
 
 ### Find your current IP
@@ -130,7 +130,7 @@ The org object (`GET`/`POST /v1/org/{id}`) now includes `api_ip_allowlist` (a st
   `GET /v1/whoami/ip`
 </ParamField>
 
-A convenience endpoint (authenticated) that returns the caller's source IP as the API sees it — the load-balancer-appended, unspoofable value. This is the **same value** evaluated by the org `api_ip_allowlist` check, so use it to confirm which IP to allowlist (it backs the dashboard editor's "Add my current IP" helper).
+A convenience endpoint (authenticated) that returns the caller's source IP as the API sees it: the load-balancer-appended, unspoofable value. This is the **same value** evaluated by the org `api_ip_allowlist` check, so use it to confirm which IP to allowlist (it backs the dashboard editor's "Add my current IP" helper).
 
 ```bash cURL
 curl -sS "https://api.coverbase.app/v1/whoami/ip" \
@@ -138,12 +138,12 @@ curl -sS "https://api.coverbase.app/v1/whoami/ip" \
 ```
 
 <ResponseField name="client_ip" type="string | null">
-  The caller's source IP. `null` if the IP cannot be determined — the same condition under which a configured allowlist fails closed.
+  The caller's source IP. `null` if the IP cannot be determined: the same condition under which a configured allowlist fails closed.
 </ResponseField>
 
 ## IDs
 
-Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (e.g. `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque — never parse or construct them.
+Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (e.g. `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque: never parse or construct them.
 
 | Prefix | Resource |
 | ------ | -------- |
@@ -168,12 +168,12 @@ Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characte
 | `cborg_` | Organization |
 
 <Note>
-  Findings are internally called "tasks", so finding IDs use the `cbtask_` prefix. This is expected — a `cbtask_...` value **is** a finding ID.
+  Findings are internally called "tasks", so finding IDs use the `cbtask_` prefix. This is expected. A `cbtask_...` value **is** a finding ID.
 </Note>
 
 ## Timestamps
 
-Every timestamp is a **Unix epoch value in seconds** (integer) — not milliseconds, not ISO-8601. This applies to `created_at`, `updated_at`, `initiated_at`, `started_at`, `completed_at`, `due_date`, `occurred_at`, and `attempted_at`.
+Every timestamp is a **Unix epoch value in seconds** (integer), not milliseconds, not ISO-8601. This applies to `created_at`, `updated_at`, `initiated_at`, `started_at`, `completed_at`, `due_date`, `occurred_at`, and `attempted_at`.
 
 ## Idempotency
 
@@ -190,7 +190,7 @@ State-changing `POST`s that support safe retries accept an optional `Idempotency
 | `POST /v1/webhooks` and other webhook writes | **No** (header ignored) |
 | `PATCH` endpoints | **No** |
 
-Behavior on supported endpoints: keys are scoped to **(org, endpoint, key)** and expire **24 hours** after first use. A replay within the window returns the **original response body verbatim** (same status) and creates nothing new. A replay is never rejected — there is no conflict error. Sending the header to an endpoint that does not support it is harmless but has no effect.
+Behavior on supported endpoints: keys are scoped to **(org, endpoint, key)** and expire **24 hours** after first use. A replay within the window returns the **original response body verbatim** (same status) and creates nothing new. A replay is never rejected; there is no conflict error. Sending the header to an endpoint that does not support it is harmless but has no effect.
 
 <Tip>
   Use a stable identifier from the source system (a procurement request ID, a ticket number) as the idempotency key so source-side retries deduplicate naturally.
@@ -215,7 +215,7 @@ Application errors use FastAPI's `detail` envelope. Most endpoints return a code
 { "detail": { "code": "vendor_not_found", "message": "Vendor not found." } }
 ```
 
-`POST /v1/assessments` is the one exception — creation failures use a free-form `error` key:
+`POST /v1/assessments` is the one exception. Creation failures use a free-form `error` key:
 
 ```json
 { "detail": { "error": "..." } }
@@ -239,8 +239,8 @@ Bodies/params that fail schema validation return `422` with FastAPI's standard a
 | ------ | ------- |
 | `400` | Rejected by a business rule (bad reference ID, weak secret, non-HTTPS URL, missing vendor/assessment on a finding). |
 | `401` | Missing/invalid credential, or a role not allowed on the public API. |
-| `403` | Authenticated but not authorized — the key lacks a required scope (`insufficient_scope`), a non-admin tried to grant scopes (`scope_grant_forbidden`), or the client IP is outside the org allowlist (`ip_not_allowed`). |
+| `403` | Authenticated but not authorized: the key lacks a required scope (`insufficient_scope`), a non-admin tried to grant scopes (`scope_grant_forbidden`), or the client IP is outside the org allowlist (`ip_not_allowed`). |
 | `404` | Resource not found or not in the API key's org. |
-| `409` | Conflict — e.g. `user_exists`, or running a disabled workflow (`workflow_disabled`). |
+| `409` | Conflict: e.g. `user_exists`, or running a disabled workflow (`workflow_disabled`). |
 | `422` | Request body/query failed schema validation. |
 | `502` | A downstream dispatch failed (e.g. `workflow_dispatch_failed`); safe to retry. |

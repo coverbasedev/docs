@@ -23,12 +23,12 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `POST` | `/v1/vendors` | Yes (`Idempotency-Key`) |
-| `GET` | `/v1/vendors` | — |
-| `GET` | `/v1/vendors/{vendor_id}` | — |
+| `GET` | `/v1/vendors` | - |
+| `GET` | `/v1/vendors/{vendor_id}` | - |
 | `PATCH` | `/v1/vendors/{vendor_id}` | No |
 | `POST` | `/v1/vendors/{vendor_id}/services` | No |
 | `PATCH` | `/v1/vendors/{vendor_id}/services/{service_id}` | No |
-| `GET` | `/v1/vendors/{vendor_id}/fact-sheet` | — |
+| `GET` | `/v1/vendors/{vendor_id}/fact-sheet` | - |
 | `POST` | `/v1/vendors/{vendor_id}/fact-sheet/refresh` | No |
 
 ## The primary contact object
@@ -42,20 +42,20 @@ Both vendor and service endpoints accept/return a `primary_contact`. On a vendor
 | `title` | string \| null | Contact title. |
 | `phone_number` | string \| null | Contact phone. |
 
-On read, `primary_contact` is derived from the stored contact personnel (first entry with an email) — for vendors it falls back to the vendor's security contact email. It is `null` if no contact is set.
+On read, `primary_contact` is derived from the stored contact personnel (first entry with an email); for vendors it falls back to the vendor's security contact email. It is `null` if no contact is set.
 
 ## Assigning people (analysts, owners, watchers)
 
-Vendors and services accept optional personnel assignments as arrays of user IDs (`cbuser_...`). All are **optional**; on create, omit them to assign no one. On update (`PATCH`), supplying an array **replaces** the existing set — pass `[]` to clear it, or omit the field to leave it unchanged.
+Vendors and services accept optional personnel assignments as arrays of user IDs (`cbuser_...`). All are **optional**; on create, omit them to assign no one. On update (`PATCH`), supplying an array **replaces** the existing set; pass `[]` to clear it, or omit the field to leave it unchanged.
 
 | Field | Vendor | Service | Meaning |
 | ----- | ------ | ------- | ------- |
-| `risk_analyst_ids` | ✓ | — | Risk analysts. **Vendor-only** — services do not have risk analysts. |
+| `risk_analyst_ids` | ✓ | - | Risk analysts. **Vendor-only**: services do not have risk analysts. |
 | `relationship_owner_ids` | ✓ | ✓ | Relationship owners. |
 | `watcher_ids` | ✓ | ✓ | Watchers (users who follow the vendor/service for notifications). |
 
 <Tip>
-  These fields take Coverbase user IDs, not emails. Syncing from an external system (e.g. ServiceNow) that keys on email? Use the [Users API](/api-reference/users#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID — `GET /v1/users?email=` looks one up, and `POST /v1/users` provisions the user if they don't exist yet (returning the existing user if they do).
+  These fields take Coverbase user IDs, not emails. Syncing from an external system (e.g. ServiceNow) that keys on email? Use the [Users API](/api-reference/users#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID; `GET /v1/users?email=` looks one up, and `POST /v1/users` provisions the user if they don't exist yet (returning the existing user if they do).
 </Tip>
 
 ## Create a vendor
@@ -165,7 +165,7 @@ print(resp.json())
 
 ### Example response
 
-`201 Created` — the full vendor object (see [response fields](#vendor-object) below):
+`201 Created`: the full vendor object (see [response fields](#vendor-object) below):
 
 ```json
 {
@@ -209,7 +209,7 @@ print(resp.json())
 Creates a service under an existing vendor. Returns `201 Created`.
 
 <Note>
-  This endpoint does **not** honor `Idempotency-Key` — sending the header is harmless but has no effect. Retrying after a successful create makes a second service.
+  This endpoint does **not** honor `Idempotency-Key`; sending the header is harmless but has no effect. Retrying after a successful create makes a second service.
 </Note>
 
 ### Path parameters
@@ -249,7 +249,7 @@ Creates a service under an existing vendor. Returns `201 Created`.
 </ParamField>
 
 <Note>
-  Services do **not** have risk analysts — risk analysts are assigned on the parent vendor. Sending `risk_analyst_ids` to a service endpoint has no effect.
+  Services do **not** have risk analysts; risk analysts are assigned on the parent vendor. Sending `risk_analyst_ids` to a service endpoint has no effect.
 </Note>
 
 ### Example request
@@ -259,7 +259,7 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "ACME_Sup_Test1 — Primary Service",
+    "name": "ACME_Sup_Test1 - Primary Service",
     "relationship_owner_ids": ["cbuser_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0"],
     "watcher_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
     "primary_contact": { "email": "service-owner@supplier1.example.com" }
@@ -274,7 +274,7 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
 {
   "id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
   "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-  "name": "ACME_Sup_Test1 — Primary Service",
+  "name": "ACME_Sup_Test1 - Primary Service",
   "description": null,
   "external_id": null,
   "tags": [],
@@ -343,7 +343,7 @@ Updates a service. Only included fields change. Returns the updated [service obj
 curl -X PATCH "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/services/cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{ "name": "ACME_Sup_Test1 — Renamed Service" }'
+  -d '{ "name": "ACME_Sup_Test1 - Renamed Service" }'
 ```
 
 ### Error responses
@@ -365,7 +365,7 @@ every vendor, paginated. Use it to enumerate vendors, resolve a vendor by name,
 or map your own identifier to a Coverbase vendor ID.
 
 <Note>
-  List rows are a **lightweight summary** — they omit the nested `services` and
+  List rows are a **lightweight summary**; they omit the nested `services` and
   the personnel-assignment arrays. Fetch [`GET /v1/vendors/{vendor_id}`](#retrieve-a-vendor)
   for the full object.
 </Note>
@@ -377,7 +377,7 @@ or map your own identifier to a Coverbase vendor ID.
 </ParamField>
 
 <ParamField query="external_id" type="string">
-  Exact match on the vendor's `external_id` — handy for mapping your system's
+  Exact match on the vendor's `external_id`; handy for mapping your system's
   identifier back to a Coverbase vendor.
 </ParamField>
 
@@ -430,7 +430,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors?name=acme&limit=50" \
   The page of vendor summaries. Each carries `id`, `external_id`, `name`,
   `website`, `description`, `hq_location`, `status`, `status_id`, `tags`,
   `use_case`, `tier`, `primary_contact`, `created_at`, and `updated_at`. (No
-  `services` or personnel arrays — see the note above.)
+  `services` or personnel arrays; see the note above.)
 </ResponseField>
 <ResponseField name="total" type="integer">Total vendors matching the filters (across all pages).</ResponseField>
 <ResponseField name="limit" type="integer">The page size used.</ResponseField>
@@ -486,7 +486,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
     {
       "id": "cbsvc_3c2b1a098f7e6d5c4b3a2918374655ab",
       "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-      "name": "ACME_Sup_Test1 — Primary Service",
+      "name": "ACME_Sup_Test1 - Primary Service",
       "description": null,
       "external_id": null,
       "tags": [],
@@ -540,7 +540,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 Updates one or more fields. Only included fields change; omitted fields are untouched. The full, refreshed vendor object is returned.
 
 <Note>
-  Every body field is optional. Sending `null` for a field is treated the same as omitting it (no change) — there is no clear-to-null behavior.
+  Every body field is optional. Sending `null` for a field is treated the same as omitting it (no change); there is no clear-to-null behavior.
 </Note>
 
 ### Request body
@@ -572,7 +572,7 @@ curl -X PATCH "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba6288214
   -H "Content-Type: application/json" \
   -d '{
     "status_id": "cbst_offboarding7f8e9d0c1b2a3f4e5d6c7b8a9f0e1d2c",
-    "use_case": "Legacy system — winding down"
+    "use_case": "Legacy system, winding down"
   }'
 ```
 
@@ -588,7 +588,7 @@ The response is the full vendor object (same shape as [Retrieve a vendor](#vendo
 
 ## The vendor fact sheet
 
-The **fact sheet** is AI-generated company intelligence about a vendor — company profile, products, public perception, financials, leadership, compliance/legal posture, and security posture. Coverbase assembles it from public sources; in the dashboard it powers the vendor "Fact Sheet" tab and its PDF export. These two endpoints let you read that data and trigger a regeneration programmatically.
+The **fact sheet** is AI-generated company intelligence about a vendor: company profile, products, public perception, financials, leadership, compliance/legal posture, and security posture. Coverbase assembles it from public sources; in the dashboard it powers the vendor "Fact Sheet" tab and its PDF export. These two endpoints let you read that data and trigger a regeneration programmatically.
 
 Generation is **asynchronous**. Trigger it with the refresh endpoint, then poll the fact sheet endpoint until `status` is `"completed"`.
 
@@ -605,7 +605,7 @@ Generation is **asynchronous**. Trigger it with the refresh endpoint, then poll 
   `GET /v1/vendors/{vendor_id}/fact-sheet`
 </ParamField>
 
-Returns the current fact sheet for a vendor. A vendor that has never had a fact sheet generated returns `200` with `status: null` and every section `null` — it is **not** a `404`.
+Returns the current fact sheet for a vendor. A vendor that has never had a fact sheet generated returns `200` with `status: null` and every section `null`; it is **not** a `404`.
 
 #### Path parameters
 
@@ -652,7 +652,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 
 <ResponseField name="vendor_id" type="string">The vendor ID (`cbvndr_...`).</ResponseField>
 <ResponseField name="entity_id" type="string | null">ID of the underlying entity that holds the fact sheet data. `null` if the vendor is not yet linked to an entity.</ResponseField>
-<ResponseField name="status" type="string | null">Generation status — `null`, `"pending"`, `"completed"`, or `"failed"` (see the [status table](#the-vendor-fact-sheet) above).</ResponseField>
+<ResponseField name="status" type="string | null">Generation status: `null`, `"pending"`, `"completed"`, or `"failed"` (see the [status table](#the-vendor-fact-sheet) above).</ResponseField>
 <ResponseField name="progress" type="string[]">Section names completed so far in the in-progress / most recent run. Empty array if none.</ResponseField>
 <ResponseField name="generated_at" type="integer | null">Unix timestamp (seconds) the fact sheet was last updated. `null` if never generated.</ResponseField>
 <ResponseField name="company_profile" type="object | null">Company profile (name, website, industry, HQ, founding year, headcount, revenue, etc.). `null` until generated.</ResponseField>
@@ -682,7 +682,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 Queues a (re)generation of the vendor's fact sheet and returns immediately with `202 Accepted` and `status: "pending"`. Existing fact sheet data is cleared at the start of the run, so a `GET` made right after a refresh reflects the `pending` state. Poll the [fact sheet endpoint](#retrieve-a-vendors-fact-sheet) until `status` is `"completed"`.
 
 <Note>
-  This endpoint is not idempotent — each call queues a fresh generation run.
+  This endpoint is not idempotent; each call queues a fresh generation run.
 </Note>
 
 #### Path parameters
