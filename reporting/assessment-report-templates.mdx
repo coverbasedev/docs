@@ -1,0 +1,210 @@
+---
+title: "Custom Word report templates"
+description: "Build a .docx assessment report template: placeholder syntax, AI-written sections, repeating findings tables, signature anchors, and the rules that govern substitution."
+icon: "file-word"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A report template is an ordinary Word document that contains **placeholders**. When you export an assessment against the template, Coverbase copies the document, replaces each placeholder with live data, and returns a finished `.docx` with your formatting intact.
+
+For the complete list of what you can put between the braces, see the [placeholder reference](/reporting/template-placeholders).
+
+## Uploading a template
+
+<Steps>
+  <Step title="Enable custom report templates">
+    An admin turns on the **Assessment report templates** toggle in **Settings > Assessment settings**. The upload panel appears directly below the toggle. Until this is on, the Word export option does not appear on assessments.
+  </Step>
+  <Step title="Author the .docx">
+    Write your report in Word exactly as you want it to look. Put placeholders wherever data should appear. Start from the sample template linked in the upload dialog if you want a working example.
+  </Step>
+  <Step title="Upload it">
+    In the **Assessment report templates** panel, click **Add new template**, drop in the `.docx`, and give it a template name. The name is what analysts pick from at export time.
+  </Step>
+  <Step title="Export an assessment against it">
+    On any assessment, choose the Word export, pick the template, and confirm the filename. Generation runs in the background and the document appears when it is ready.
+  </Step>
+</Steps>
+
+<Warning>
+  Only `.docx` is accepted, up to 100 MiB. `.doc`, `.dotx`, `.rtf`, and PDF uploads are rejected. If Word reports your file as `.docx` but the upload still fails, open it in Word and re-save as `.docx`; files renamed from another format fail the content check.
+</Warning>
+
+## Placeholder syntax
+
+Every placeholder is double braces around an entity, a `::` separator, and a field name.
+
+```text
+{{entity::field name}}
+```
+
+```text expandable
+{{vendor::name}}
+{{vendor::description}}
+{{assessment::residual risk}}
+{{assessment::completed at}}
+{{services::inherent risk}}
+{{reviews::outcome}}
+{{vendor::Data Classification}}
+```
+
+Four rules govern how they are matched:
+
+- **Case-insensitive.** `{{Vendor::Name}}` and `{{vendor::name}}` are the same placeholder.
+- **Whitespace-tolerant.** `{{ vendor :: name }}` works. Leading and trailing whitespace inside the braces is trimmed.
+- **Formatting-tolerant.** A placeholder still resolves when Word has split it across several runs, which happens routinely during editing. A placeholder that spans a paragraph break also resolves in ordinary body text, but not inside a table cell, so keep placeholders in tables within a single paragraph.
+- **Not nestable.** `{{vendor::{{name}}}}` is not supported. Never put braces inside a placeholder.
+
+### Entities
+
+| Entity | Resolves to |
+| ------ | ----------- |
+| `vendor` | The vendor the assessment belongs to |
+| `assessment` | The assessment being exported |
+| `services` | All services in scope on the assessment, flattened into one value per field |
+| `reviews` | The whole-assessment reviews on the assessment, flattened into one value per field |
+| `agent` | AI-written prose, generated from a prompt you write in the template |
+| `findings` | A repeating table row, one row per finding |
+
+Anything else is left untouched. `{{org::name}}` stays in the document verbatim, because `org` is not a supported entity.
+
+### Custom fields
+
+Custom fields are addressed by their configured name, lowercased. A vendor custom field called **Data Classification** is `{{vendor::data classification}}`. Custom fields are available on `vendor`, `assessment`, and `services`.
+
+<Note>
+  System fields win collisions. If you create a vendor custom field named "Name", `{{vendor::name}}` still resolves to the vendor's system name field.
+</Note>
+
+## AI-written sections
+
+An `{{agent::...}}` placeholder is a prompt, not a field lookup. Coverbase runs an agent against the assessment and drops its answer into the document.
+
+```text
+{{agent::Write a two paragraph executive summary of this vendor's security posture, aimed at a non-technical audience.}}
+
+{{agent::List the three most material risks identified in this assessment and the compensating control for each.}}
+
+{{agent::Summarize the vendor's incident response commitments and note any gaps against our standard.}}
+```
+
+The agent is given vendor fields, assessment fields, evaluation summaries, findings, reviews, and questionnaire excerpts as preloaded context, and it can call tools to fetch vendor data, assessment data, services, findings, reviews, commitments, and questionnaire responses for anything not already loaded.
+
+**Agent output is rendered as formatted Word content**, not as raw text. The following markdown is honored:
+
+| Markdown | Renders as |
+| -------- | ---------- |
+| `**bold**` | Bold run |
+| `*italic*` | Italic run |
+| `***bold italic***` | Bold and italic run |
+| `==highlight==` | Highlighted run |
+| `- item` | Bulleted list, nesting by indentation |
+| `1. item` | Numbered list, nesting by indentation |
+| Blank line | Paragraph break |
+
+Headings and markdown tables are not rendered. Ask for prose and lists.
+
+The agent inherits the **character** formatting of the run the placeholder sits in, so a placeholder in 10pt Calibri produces 10pt Calibri prose. If a bold label precedes the placeholder in the same paragraph, put the placeholder in its own non-bold run or the generated text comes out bold.
+
+**Paragraph** properties behave differently depending on how much the agent writes:
+
+| Agent output | Paragraph properties |
+| ------------ | -------------------- |
+| A single paragraph | The host paragraph's properties are kept, including its style, indentation, and list membership |
+| Multiple paragraphs or any list | Each generated block gets its own paragraph properties. Generated lists are built with their own numbering, independent of any list the placeholder sat in |
+
+<Warning>
+  Do not put `{{agent::...}}` inside a list item and expect the generated bullets to continue that list. A prompt that returns a list produces a fresh list with its own numbering, not a continuation of the host list. Put list-producing prompts in a plain paragraph of their own.
+</Warning>
+
+<Warning>
+  Each agent placeholder is an independent LLM call. A template with twenty prompts costs twenty generations, runs at most eight of them concurrently, and takes correspondingly longer. Keep prompts specific and few. Identical prompt text anywhere in the template is deduplicated and answered once.
+</Warning>
+
+When an agent cannot answer, the document gets a short marker instead of prose:
+
+| Marker | Meaning |
+| ------ | ------- |
+| `Not available` | The agent ran but found no data to answer the prompt |
+| `[Generation timed out]` | The prompt exceeded the per-prompt budget of 300 seconds |
+| `[Generation failed]` | The agent errored on that prompt |
+| `[Agent error]` | The whole agent batch failed to start |
+
+## Repeating findings tables
+
+`{{findings::<set>::<column>}}` placeholders turn a table row into a repeating row. Build a two-row table: a header row, and one body row holding the placeholders. Coverbase clones the body row once per finding.
+
+| ID | Title | Risk | Due |
+| --- | --- | --- | --- |
+| `{{findings::new::id}}` | `{{findings::new::title}}` | `{{findings::new::risk level}}` | `{{findings::new::due date}}` |
+
+There are two sets:
+
+| Set | Contents |
+| --- | -------- |
+| `new` | Findings raised by this assessment |
+| `pre_existing` | Still-open findings on the same vendor that came from somewhere else |
+
+Rules that apply to findings tables:
+
+- **A row belongs to exactly one set.** The first set referenced in the row wins. Placeholders from the other set in that same row resolve to empty text, so do not mix `new` and `pre_existing` in one row.
+- **Empty sets collapse to one row.** A set with no findings renders a single row reading "No new findings" or "No pre-existing open findings".
+- **Tables anywhere are covered.** Body tables, tables nested inside cells, and tables in headers and footers all expand.
+- **Only inside tables.** A `{{findings::...}}` placeholder in ordinary body text is left in the document verbatim.
+- **Capped at 100 rows per set.** Larger sets are truncated.
+- **Keep each placeholder in one cell.** A placeholder split across two cells is not matched.
+
+## Signature anchors
+
+If the report is going out for signature, place DocuSign anchor strings in the template. They pass through generation as ordinary text and are read when the signature request is created, positioning each signer's tabs at the anchor.
+
+| Anchor | Purpose |
+| ------ | ------- |
+| `/sn1/` through `/sn5/` | Signature block for signer 1 through 5 |
+| `/date_signed1/` through `/date_signed5/` | Date-signed tab |
+| `/date1/` through `/date5/` | Date tab |
+| `/full_name1/`, `/first_name1/`, `/last_name1/` | Name tabs, numbered per signer |
+| `/title1/` through `/title5/` | Signer title tab |
+| `/organization1/` through `/organization5/` | Signer organization tab |
+
+Anchors are plain text in the document. Set them in white or a small font size if you do not want them visible in the final PDF.
+
+Two things to know about how they are handled:
+
+- **Signature anchors are recorded at generation time.** Only `/sn1/` through `/sn5/` are scanned for and stored on the generated report. The other tab anchors are read from the document when the signature request is created, so they do not need to be recorded earlier.
+- **A missing anchor blocks sending.** Creating a signature request fails if a signer is assigned an anchor that is not present in the document. If you add a third signer, add `/sn3/` to the template first.
+
+## What happens to unresolved placeholders
+
+<AccordionGroup>
+  <Accordion title="A known field that has no value" defaultOpen icon="circle-question">
+    The placeholder text stays in the document. This is deliberate: a blank space hides the problem, while a visible `{{vendor::use cases}}` tells the report author that the field is empty in Coverbase. Fill in the source data and re-export.
+  </Accordion>
+
+  <Accordion title="A field name that does not exist" icon="triangle-exclamation">
+    The placeholder text stays in the document, and the field is recorded on the generated document as an unknown field. This usually means a typo, or a custom field that was renamed or disabled after the template was written.
+  </Accordion>
+
+  <Accordion title="An entity that is not supported" icon="ban">
+    Nothing happens at all. The text is not recognized as a placeholder and passes through untouched.
+  </Accordion>
+
+  <Accordion title="An unknown findings column" icon="table">
+    The cell renders empty and the column is recorded as an unknown field. The row still repeats correctly.
+  </Accordion>
+</AccordionGroup>
+
+## Authoring tips
+
+- **Type placeholders in one go.** Word splits text into runs when you edit mid-word, add a spellcheck correction, or paste. Substitution handles split runs, but the cleanest way to avoid surprises is to type the whole placeholder without stopping, or paste it as plain text.
+- **Avoid autocorrect damage.** Word can turn `::` or straight quotes inside a prompt into other characters. Check that a placeholder still reads exactly as you typed it.
+- **Style the placeholder, not the paragraph.** A placeholder inherits the formatting of its own run. If the label before it is bold and you do not want bold output, make sure the placeholder itself is not bold.
+- **Test with a real assessment.** Export against an assessment that has findings, several services, and completed reviews. Empty-state behavior differs from populated behavior.
+- **Keep one template per audience.** A short executive template and a long evidence template beat one template with everything in it, because agent prompts you do not need still cost a generation.
+
+<Note>
+  When a previously generated report is regenerated in place rather than exported fresh, findings tables are left as they are. Findings rows are expanded on the export path only.
+</Note>

@@ -1,0 +1,77 @@
+---
+title: "Reporting overview"
+description: "How Coverbase turns assessment data into deliverable documents: custom Word report templates, standard exports, and the placeholder system that fills them."
+icon: "file-lines"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase produces two kinds of assessment deliverable. Standard exports give you a fixed, complete dump of an assessment. Custom Word report templates give you a document that looks exactly like your firm's house report, filled in automatically from live assessment data.
+
+## Reporting surfaces
+
+<CardGroup cols={2}>
+  <Card title="Custom Word report templates" icon="file-word" href="/reporting/assessment-report-templates">
+    Upload a `.docx` file containing placeholders. Coverbase clones it per assessment, substitutes vendor, assessment, service, review, and finding data, and returns a finished Word document.
+  </Card>
+
+  <Card title="Placeholder reference" icon="brackets-curly" href="/reporting/template-placeholders">
+    Every placeholder you can write in a template, what it resolves to, and how it is formatted.
+  </Card>
+
+  <Card title="Standard PDF export" icon="file-pdf">
+    A fixed-layout PDF of a single assessment, no template required. Choose an executive summary, standard, or full export, and toggle sections such as findings, reviews, follow-ups, notes, evidence snippet images, and the activity log.
+  </Card>
+
+  <Card title="Bulk spreadsheet exports" icon="file-excel">
+    Org-level `.xlsx` exports covering many assessments at once: a filtered list of assessments, or every assessment result within a date range. These are not per-assessment exports and have no section toggles.
+  </Card>
+
+  <Card title="Export API" icon="arrow-up-from-bracket" href="/export-api-concepts">
+    Pull the underlying assessment, evaluation, and finding objects as JSON and build reporting in your own BI or GRC stack.
+  </Card>
+</CardGroup>
+
+## Which one to use
+
+| You want | Use |
+| -------- | --- |
+| A branded, client-ready report with your own narrative sections and layout | [Custom Word report template](/reporting/assessment-report-templates) |
+| A complete record of everything in one assessment, including evidence snippets and the activity log | Standard PDF export, full mode |
+| Many assessments in a spreadsheet for filtering or pivoting | Bulk `.xlsx` export |
+| Assessment data in your own warehouse, dashboard, or regulator submission pipeline | [Export API](/export-api-concepts) |
+
+## How a custom report is generated
+
+<Steps>
+  <Step title="An admin uploads a template">
+    A `.docx` file with placeholders is uploaded once, from the **Assessment report templates** panel in **Settings > Assessment settings**, and reused across assessments.
+  </Step>
+  <Step title="An analyst exports an assessment against that template">
+    From the assessment page, choose the template and a filename. The request returns immediately with a document ID; generation runs as a background job.
+  </Step>
+  <Step title="Coverbase resolves the placeholders">
+    Static placeholders are read straight from the database. `{{agent::...}}` placeholders are answered by an LLM that has the assessment loaded as context. Findings table rows are cloned once per finding.
+  </Step>
+  <Step title="The finished document lands in your documents">
+    The generated `.docx` is stored as an org document. The export dialog tracks progress and offers the download when the job completes.
+  </Step>
+</Steps>
+
+<Note>
+  Custom Word report templates are gated per organization. If the export option is not visible on the assessment page, an admin needs to enable custom assessment report templates in organization assessment settings.
+</Note>
+
+## Terminology
+
+The mechanism has a few names in the wild. This documentation uses **placeholder** throughout.
+
+| Term | Where you will see it |
+| ---- | --------------------- |
+| Placeholder | This documentation, and the stored `placeholder_values` map on a generated report |
+| Template variable | The in-app help text on the template upload dialog |
+| Tag, merge field, mustache | Common informal names, since the syntax borrows `{{ }}` from Mustache |
+
+The syntax resembles Mustache but is not Mustache. There are no sections, no partials, no inverted blocks, and no nesting. Everything Coverbase supports is listed in the [placeholder reference](/reporting/template-placeholders).
