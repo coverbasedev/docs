@@ -30,7 +30,7 @@ For the complete list of what you can put between the braces, see the [placehold
 </Steps>
 
 <Warning>
-  Only `.docx` is accepted. `.doc`, `.dotx`, `.rtf`, and PDF uploads are rejected. If Word reports your file as `.docx` but the upload still fails, open it in Word and re-save as `.docx`; files renamed from another format fail the content check.
+  Only `.docx` is accepted, up to 100 MiB. `.doc`, `.dotx`, `.rtf`, and PDF uploads are rejected. If Word reports your file as `.docx` but the upload still fails, open it in Word and re-save as `.docx`; files renamed from another format fail the content check.
 </Warning>
 
 ## Placeholder syntax
@@ -55,7 +55,7 @@ Four rules govern how they are matched:
 
 - **Case-insensitive.** `{{Vendor::Name}}` and `{{vendor::name}}` are the same placeholder.
 - **Whitespace-tolerant.** `{{ vendor :: name }}` works. Leading and trailing whitespace inside the braces is trimmed.
-- **Formatting-tolerant.** A placeholder still resolves when Word has split it across several runs, and even when it spans a paragraph break.
+- **Formatting-tolerant.** A placeholder still resolves when Word has split it across several runs, which happens routinely during editing. A placeholder that spans a paragraph break also resolves in ordinary body text, but not inside a table cell, so keep placeholders in tables within a single paragraph.
 - **Not nestable.** `{{vendor::{{name}}}}` is not supported. Never put braces inside a placeholder.
 
 ### Entities
@@ -107,7 +107,18 @@ The agent is given vendor fields, assessment fields, evaluation summaries, findi
 
 Headings and markdown tables are not rendered. Ask for prose and lists.
 
-The agent inherits the character formatting of the run the placeholder sits in, and the paragraph properties of the paragraph that hosts it. Put `{{agent::...}}` inside a bulleted paragraph and the generated list stays inside that list.
+The agent inherits the **character** formatting of the run the placeholder sits in, so a placeholder in 10pt Calibri produces 10pt Calibri prose. If a bold label precedes the placeholder in the same paragraph, put the placeholder in its own non-bold run or the generated text comes out bold.
+
+**Paragraph** properties behave differently depending on how much the agent writes:
+
+| Agent output | Paragraph properties |
+| ------------ | -------------------- |
+| A single paragraph | The host paragraph's properties are kept, including its style, indentation, and list membership |
+| Multiple paragraphs or any list | Each generated block gets its own paragraph properties. Generated lists are built with their own numbering, independent of any list the placeholder sat in |
+
+<Warning>
+  Do not put `{{agent::...}}` inside a list item and expect the generated bullets to continue that list. A prompt that returns a list produces a fresh list with its own numbering, not a continuation of the host list. Put list-producing prompts in a plain paragraph of their own.
+</Warning>
 
 <Warning>
   Each agent placeholder is an independent LLM call. A template with twenty prompts costs twenty generations, runs at most eight of them concurrently, and takes correspondingly longer. Keep prompts specific and few. Identical prompt text anywhere in the template is deduplicated and answered once.
@@ -148,7 +159,7 @@ Rules that apply to findings tables:
 
 ## Signature anchors
 
-If the report is going out for signature, place DocuSign anchor strings in the template. Coverbase detects them during generation and records them on the generated document so a signature request can position tabs.
+If the report is going out for signature, place DocuSign anchor strings in the template. They pass through generation as ordinary text and are read when the signature request is created, positioning each signer's tabs at the anchor.
 
 | Anchor | Purpose |
 | ------ | ------- |
@@ -160,6 +171,11 @@ If the report is going out for signature, place DocuSign anchor strings in the t
 | `/organization1/` through `/organization5/` | Signer organization tab |
 
 Anchors are plain text in the document. Set them in white or a small font size if you do not want them visible in the final PDF.
+
+Two things to know about how they are handled:
+
+- **Signature anchors are recorded at generation time.** Only `/sn1/` through `/sn5/` are scanned for and stored on the generated report. The other tab anchors are read from the document when the signature request is created, so they do not need to be recorded earlier.
+- **A missing anchor blocks sending.** Creating a signature request fails if a signer is assigned an anchor that is not present in the document. If you add a third signer, add `/sn3/` to the template first.
 
 ## What happens to unresolved placeholders
 
