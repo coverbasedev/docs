@@ -1,0 +1,166 @@
+---
+title: "Template placeholder reference"
+description: "Every placeholder available in a Coverbase Word report template, what it resolves to, and how the value is formatted."
+icon: "brackets-curly"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+This is the complete list of placeholders you can write in an [assessment report template](/reporting/assessment-report-templates). Field names are matched case-insensitively, and whitespace around the entity, the `::`, and the field name is ignored.
+
+## Vendor
+
+`{{vendor::<field>}}` resolves against the vendor that the assessment belongs to.
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{vendor::name}}` | Vendor name |
+| `{{vendor::description}}` | Vendor description |
+| `{{vendor::location}}` | Vendor headquarters location |
+| `{{vendor::use cases}}` | The vendor's use case text |
+| `{{vendor::relationship owners}}` | Comma-separated display names of the relationship owners |
+| `{{vendor::risk analysts}}` | Comma-separated display names of the risk analysts |
+| `{{vendor::watchers}}` | Comma-separated display names of the watchers |
+| `{{vendor::dri}}` | The vendor service requestor recorded on the vendor |
+| `{{vendor::<custom field name>}}` | Any enabled vendor custom field, addressed by its name |
+
+## Assessment
+
+`{{assessment::<field>}}` resolves against the assessment being exported. Dates are formatted `YYYY-MM-DD` in the timezone supplied at export time.
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{assessment::residual risk}}` | Residual risk level name. Falls back to `Low` when no level is set |
+| `{{assessment::inherent risk}}` | Inherent risk level name |
+| `{{assessment::assignee}}` | Display name of the assignee |
+| `{{assessment::approval option}}` | Label of the selected approval option |
+| `{{assessment::completed at}}` | Date the assessment was completed |
+| `{{assessment::next vendor assessment}}` | The vendor's next assessment date, or `Never` when reassessment is disabled |
+| `{{assessment::recommendation}}` | `Status: recommendation text`, using whichever parts are present |
+| `{{assessment::assessment score}}` | Average score, else percent score with a `%` suffix, else summed score, to one decimal place |
+| `{{assessment::vendor documents}}` | Bulleted list of the non-archived supporting document names |
+| `{{assessment::summary}}` | The assessment summary body, flattened to plain text. Markdown headings become uppercase lines and list markers become bullets |
+| `{{assessment::open issues}}` | Bulleted list of open issues as `#<number> <title>` |
+| `{{assessment::<custom field name>}}` | Any enabled assessment custom field, addressed by its name |
+
+## Services
+
+`{{services::<field>}}` covers **all** services in scope on the assessment, flattened into a single value.
+
+When the assessment has one service, the value is the bare field value. When it has more than one, the value becomes a bulleted block of `• Service name - value`, and services with no value for that field are dropped. When the assessment has no services, every services placeholder is empty.
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{services::name}}` | Comma-separated list of service names. This one is always comma-separated, never bulleted |
+| `{{services::description}}` | Service descriptions |
+| `{{services::inherent risk}}` | Inherent risk level name per service |
+| `{{services::relationship owners}}` | Relationship owners per service |
+| `{{services::watchers}}` | Watchers per service |
+| `{{services::next assessment date}}` | Next assessment date per service, or `Never` |
+| `{{services::<custom field name>}}` | Any enabled service custom field, addressed by its name |
+
+## Reviews
+
+`{{reviews::<field>}}` covers the whole-assessment reviews on the assessment. Domain-scoped reviews from the risk profile are excluded, matching the other exports.
+
+Formatting follows the same rule as services: a single review renders bare, several reviews render as a bulleted block keyed by a row label. The row label is the review name, falling back to the reviewer, falling back to `Review 1`, `Review 2`, and so on.
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{reviews::summary}}` | One self-contained line per review, `<label> — <outcome>: <notes>`. Outcome falls back to `Pending` |
+| `{{reviews::reviewer}}` | Reviewer per review |
+| `{{reviews::status}}` | Review status label |
+| `{{reviews::outcome}}` | Review outcome label |
+| `{{reviews::description}}` | Review description |
+| `{{reviews::notes}}` | Reviewer notes |
+| `{{reviews::last updated}}` | Date the review was last updated |
+
+<Tip>
+  Use `{{reviews::summary}}` when there is more than one reviewer. The individual field placeholders each produce their own bulleted list, so reading a reviewer's outcome next to their notes means cross-referencing two lists. `summary` keeps each reviewer's label, outcome, and notes on one line.
+</Tip>
+
+## Findings
+
+`{{findings::<set>::<column>}}` only works **inside a table row**. The row is cloned once per finding in the set. See [repeating findings tables](/reporting/assessment-report-templates#repeating-findings-tables) for how to lay the table out.
+
+Sets:
+
+| Set | Contents |
+| --- | -------- |
+| `new` | Findings raised by this assessment |
+| `pre_existing` | Still-open findings on the same vendor that did not come from this assessment |
+
+Columns, usable with either set:
+
+| Column | Value |
+| ------ | ----- |
+| `id`, `public id`, `public idx` | The finding's public reference number |
+| `title` | Finding title |
+| `description` | Finding description |
+| `status` | Finding status |
+| `due date` | Due date, `YYYY-MM-DD` in the export timezone |
+| `risk level` | Risk level name |
+| `risk severity` | Risk severity |
+| `severity` | Severity |
+| `urgency` | Urgency |
+| `assignee`, `assigned to` | Display name of the assignee |
+| `created by` | Display name of the creator |
+| `control`, `control expectation` | The control expectation the finding was raised against |
+| `score` | Score level name |
+| `resolution timeline` | Resolution timeline in days, as a number |
+
+Rows where a column has no value render that cell empty. Each set is capped at 100 rows.
+
+## Agent
+
+`{{agent::<your prompt>}}` generates prose from the assessment. The whole text after `::` is the prompt.
+
+```text
+{{agent::Write a short executive summary of this assessment for a board audience.}}
+```
+
+Output is rendered as Word content, honoring `**bold**`, `*italic*`, `***bold italic***`, `==highlight==`, and bulleted and numbered lists. Headings and markdown tables are not rendered. See [AI-written sections](/reporting/assessment-report-templates#ai-written-sections) for the full behavior, including timeout and failure markers.
+
+## Custom field formatting
+
+Custom fields render according to their configured type.
+
+| Field type | Renders as |
+| ---------- | ---------- |
+| Text, long text | The stored text |
+| Number | Formatted number, or formatted currency when the field is configured as currency |
+| Date | `YYYY-MM-DD` in the export timezone |
+| Boolean | The stored value |
+| User | Comma-separated display names of the selected users |
+| Select | Every option listed, with `✅` on the selected one and `◻️` on the rest |
+| Multi-select | Every option listed, with `✅` on each selected one and `◻️` on the rest |
+
+<Note>
+  Select and multi-select fields with more than 10 options collapse to a plain comma-separated list of only the selected values. A marked list of 70 country options is unreadable in a report, so Coverbase drops the unselected ones automatically.
+</Note>
+
+## Quick lookup
+
+<AccordionGroup>
+  <Accordion title="I need the vendor's name and description" icon="building">
+    `{{vendor::name}}` and `{{vendor::description}}`.
+  </Accordion>
+
+  <Accordion title="I need the risk rating that came out of this assessment" icon="gauge">
+    `{{assessment::residual risk}}` for the outcome, `{{assessment::inherent risk}}` for the starting point, `{{assessment::assessment score}}` for the numeric score.
+  </Accordion>
+
+  <Accordion title="I need a table of the issues we raised" icon="table-list">
+    A two-row table with `{{findings::new::id}}`, `{{findings::new::title}}`, `{{findings::new::risk level}}`, and `{{findings::new::due date}}` in the body row.
+  </Accordion>
+
+  <Accordion title="I need the approver and their decision" icon="user-check">
+    `{{reviews::summary}}` for everything on one line per reviewer, or `{{assessment::approval option}}` for the approval decision recorded on the assessment itself.
+  </Accordion>
+
+  <Accordion title="I need a narrative paragraph that is not a field" icon="wand-magic-sparkles">
+    `{{agent::...}}` with a specific prompt. Say who the audience is and how long the answer should be.
+  </Accordion>
+</AccordionGroup>
