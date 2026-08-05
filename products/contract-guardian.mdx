@@ -1,6 +1,6 @@
 ---
 title: "Contract Guardian"
-description: "Contract analysis and redline surfacing for third-party agreements."
+description: "Contract analysis, clause review, and redline surfacing for third-party agreements."
 icon: "file-contract"
 ---
 
@@ -8,7 +8,13 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Contract Guardian extracts clauses, detects missing clauses, analyzes liability and indemnity, surfaces AI-usage provisions, and flags deviations from an organization-defined playbook. It re-evaluates on amendment so the contractual control surface stays aligned with the live risk profile maintained in Supplier Radar.
+Contract Guardian extracts clauses, detects missing clauses, analyzes liability and indemnity, surfaces AI-usage provisions, and flags deviations from an organization-defined playbook. Rerun it against amendments and addenda so the contractual control surface stays aligned with the live risk profile maintained in Supplier Radar.
+
+The core idea: you write down your standard once, as tiers of acceptable language. Coverbase then finds the vendor's version of each clause, decides which tier it lands in, and gives your reviewer a short list of deviations with the source text quoted and highlighted — instead of an agreement to read end to end.
+
+<Note>
+  This is materiality analysis, not redlining. Guardian tells you which clauses deviate and how far. The redline itself still happens in your word processor.
+</Note>
 
 ## What it does
 
@@ -30,6 +36,60 @@ Contract Guardian extracts clauses, detects missing clauses, analyzes liability 
   </Card>
 </CardGroup>
 
+## Clause sets and risk tiers
+
+A **clause set** is your playbook. Each **reference clause** in it is one standard you hold vendors to, carrying a severity, guidance that tells the matcher how to find the clause, the contract components it applies to, and a set of **variants** — versions of the clause language at different levels of acceptability, tiered 1 to 5.
+
+Coverbase matches the vendor's actual language to the closest variant, and the tier drives the verdict:
+
+| Risk tier | Meaning | Clause state |
+| --- | --- | --- |
+| 1–2 | Preferred or acceptable | **Conforming** |
+| 3 | Negotiable, warrants a look | **Needs review** |
+| 4–5 | Materially worse, or unacceptable | **Non-conforming** |
+
+Two guardrails sit on top: a low-confidence match is escalated to **Needs review** rather than auto-passing, and language found outside the components a clause was scoped to is escalated the same way. Where no language is found, the result is **Missing** when the relevant component is present in the contract, and **Not applicable** when it isn't.
+
+### Three ways to build one
+
+<CardGroup cols={3}>
+  <Card title="Clause set library" icon="books">
+    Copy the packaged **SaaS Vendor Risk Clause Set** — 15 reference clauses spanning liability, indemnity, confidentiality, data protection, IP, service levels, audit, and AI use, each with multi-tier language already written. Your copy is fully editable.
+  </Card>
+
+  <Card title="From your own paper" icon="file-import">
+    Upload your template MSA or DPA as a baseline contract. Guardian extracts reference clauses grounded in exact language from your document and creates a clause set from them, ready for you to add fallback tiers.
+  </Card>
+
+  <Card title="By hand" icon="pen-ruler">
+    Author reference clauses directly for narrow, high-stakes standards. Clauses are versioned, so edits never rewrite the history of reviews already run.
+  </Card>
+</CardGroup>
+
+## Review and triage
+
+<CardGroup cols={2}>
+  <Card title="Component-aware analysis" icon="layer-group">
+    Guardian first detects the logical components inside the linked documents — MSA, DPA, order form, SLA, NDA, SCCs, AI addendum, amendments — then evaluates each reference clause only where it belongs.
+  </Card>
+
+  <Card title="Evidence-backed verdicts" icon="highlighter">
+    Each result carries the extracted vendor language, the matched variant, a confidence score, the source document and page, and highlighted evidence in the PDF.
+  </Card>
+
+  <Card title="Assessment insights" icon="link">
+    Where the vendor has a completed assessment, flagged clauses are cross-referenced against that evidence and given a suggested disposition — no action, revise language, add clause, or escalate — with citations back into the assessment.
+  </Card>
+
+  <Card title="Triage as the unit of work" icon="list-check">
+    Reviewers mark each flag as no action, accepted risk, or false positive, or escalate it to a tracked finding. The system verdict and the human decision are both preserved on the record.
+  </Card>
+</CardGroup>
+
+<Card title="Follow-up drafts" icon="envelope">
+  Select the deviations worth pushing back on and generate an outbound follow-up draft built from those specific clauses. Nothing sends automatically — copy it, or escalate to a finding.
+</Card>
+
 ## How to integrate
 
 <CardGroup cols={2}>
@@ -38,7 +98,7 @@ Contract Guardian extracts clauses, detects missing clauses, analyzes liability 
   </Card>
 
   <Card title="Re-evaluation on amendment" icon="arrows-rotate">
-    Submit amendments and addenda to trigger re-evaluation against the existing contract, surfacing what changed in the controlled obligation surface.
+    Add amendments and addenda to the contract and rerun the review against the existing paper, surfacing what changed in the controlled obligation surface.
   </Card>
 </CardGroup>
 
@@ -56,8 +116,12 @@ Contract Guardian extracts clauses, detects missing clauses, analyzes liability 
   <Accordion title="Living obligation tracking" icon="heart-pulse">
     Guardian-extracted obligations feed the Coverbase obligation surface, where they can be assigned, tracked, and linked to controls. When a vendor's risk profile changes in Supplier Radar, contractual obligations are already in scope.
   </Accordion>
+
+  <Accordion title="Field-level contract inventory" icon="table-list">
+    Pair clause review with [Document Insights](/products/document-insights) to populate the contract record itself: value, term dates, notice periods, liability caps, and governing law extracted from every document with page citations.
+  </Accordion>
 </AccordionGroup>
 
 <Note>
-  Contract Guardian results integrate with the Coverbase obligation and finding surfaces, accessible through the [Export API](/export-api-concepts) and [MCP server](/mcp/overview).
+  Setting this up? The [Contract Guardian guide](/user-guides/contract-guardian) walks through building a clause set, writing risk-tier variants, and running your first review. Contract Guardian results integrate with the Coverbase obligation and finding surfaces, accessible through the [Export API](/export-api-concepts) and [MCP server](/mcp/overview).
 </Note>
