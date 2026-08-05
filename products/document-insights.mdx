@@ -1,0 +1,103 @@
+---
+title: "Document Insights"
+description: "Org-defined fields extracted from every document, with a verbatim source quote, page citation, and confidence on each value."
+icon: "file-magnifying-glass"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Document Insights turns any document your organization collects into structured, queryable data. You define the fields once — an effective date, a liability cap, a breach-notification window, an audit period — and Coverbase populates them automatically whenever a matching document is processed. Every value carries a verbatim source quote, a page citation, and a confidence level, so a reviewer can verify it without opening the file.
+
+Insights are the field-level layer of contract intelligence. [Contract Guardian](/products/contract-guardian) is the language-level layer, comparing vendor clause language against your playbook. They run over the same documents and feed the same records.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Org-defined fields" icon="sliders">
+    You decide what gets extracted. Each insight has a name, a description that instructs the model, a value type (text, number, date, yes/no), and a mode. No fixed schema to work around.
+  </Card>
+
+  <Card title="Grounded values" icon="quote-left">
+    Every value is verified against the document before it's saved. The supporting quote must appear in the source as a contiguous span, and the cited page is corrected to where the quote actually lives.
+  </Card>
+
+  <Card title="Scoped by document type" icon="filter">
+    Insights apply to the document types you choose, individually or through groups that share scope. A liability-cap field runs on MSAs, not on SOC 2 reports.
+  </Card>
+
+  <Card title="Two extraction modes" icon="shuffle">
+    **Extract** copies a value verbatim from the page. **Synthesize** answers an interpretive question and cites the language that supports the answer.
+  </Card>
+</CardGroup>
+
+## Extract vs Synthesize
+
+The mode determines who composes the value: the document, or the model.
+
+| Mode | Behavior | Use it for |
+| --- | --- | --- |
+| **Extract** | The value is copied verbatim from the document. Coverbase verifies that both the value and its supporting quote appear in the source. If they don't, the insight returns empty rather than guessing. | Dates, party names, jurisdictions, printed figures, named frameworks — anything you could highlight with a marker |
+| **Synthesize** | The model composes an interpreted answer and must cite a verbatim quote supporting it. Returns empty when the document can't answer. | Yes/no judgments, rollups across sections, normalized verdicts, values the contract implies but never prints |
+
+<Note>
+  A **yes/no** insight in Extract mode only succeeds if the document literally contains "Yes", "No", "True", or "False". Contracts don't. Set boolean insights to Synthesize.
+</Note>
+
+The [Document Insights guide](/user-guides/document-insights) covers mode selection in depth, along with a starter library of insight definitions to copy.
+
+## What each value carries
+
+| Field | Description |
+| --- | --- |
+| Value | Stored in its declared type. Dates normalize to ISO `YYYY-MM-DD`; numbers strip currency symbols and separators |
+| Source quote | The exact span from the document supporting the value, verified to exist in the source |
+| Page number | 1-indexed physical page containing the quote |
+| Confidence | `high` when explicitly stated, `medium` when inferred, `low` when uncertain |
+| Reasoning | Notes on ambiguities or assumptions made during extraction |
+| Source type | `ai_extracted` or `manual`, so hand-corrected values are always distinguishable |
+
+## How it runs
+
+<CardGroup cols={2}>
+  <Card title="Automatically on upload" icon="bolt">
+    When a document finishes processing, every enabled insight matching its type is extracted in the same pass. Insights grouped by mode run as separate calls.
+  </Card>
+
+  <Card title="On demand" icon="arrows-rotate">
+    Re-extract a whole document or a single insight after you add or reword a definition. New definitions do not backfill documents already processed.
+  </Card>
+
+  <Card title="Native document handling" icon="file-pdf">
+    PDFs are read natively, including their layout. Long documents are chunked with page overlap and results merged, preserving original page numbering. Excel workbooks are grounded per worksheet.
+  </Card>
+
+  <Card title="Exports and rollups" icon="table">
+    Insights roll up onto the contract record, feed the contract AI summary, and export to CSV with every value, citation, and confidence intact.
+  </Card>
+</CardGroup>
+
+## Common workflows
+
+<AccordionGroup>
+  <Accordion title="Contract term inventory" defaultOpen icon="file-contract">
+    Define the fifteen fields your team asks of every agreement — value, effective date, term, renewal, notice period, liability cap, governing law, data return, audit rights — and get them populated on every contract as it lands, instead of maintaining a spreadsheet by hand.
+  </Accordion>
+
+  <Accordion title="Evidence metadata at scale" icon="boxes-stacked">
+    Extract audit periods, report scopes, certification expiry dates, and auditor names from SOC 2s and ISO certificates so evidence freshness can be tracked without a human reading each report.
+  </Accordion>
+
+  <Accordion title="Portfolio questions" icon="magnifying-glass-chart">
+    Once a field exists on every contract, portfolio-wide questions become answerable: which agreements auto-renew inside 60 days, which permit customer data in model training, which cap vendor liability below one year's fees.
+  </Accordion>
+
+  <Accordion title="Human-in-the-loop correction" icon="pen">
+    Any value is editable. A corrected value is marked as manual with the user recorded, so a reviewer can see at a glance how much a document needed hand-checking.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  Insight values surface on the document, on the contract record, in the contract AI summary, and through the [MCP server](/mcp/overview) for natural-language querying.
+</Note>
