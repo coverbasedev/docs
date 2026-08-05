@@ -83,7 +83,7 @@ Formatting follows the same rule as services: a single review renders bare, seve
 
 ## Findings
 
-`{{findings::<set>::<column>}}` only works **inside a table row**. The row is cloned once per finding in the set. See [repeating findings tables](/reporting/assessment-report-templates#repeating-findings-tables) for how to lay the table out.
+`{{findings::<set>::<column>}}` only works **inside a table row**. The row is cloned once per finding in the set. See [repeating findings tables](/reporting/assessment-report-templates#repeating-findings-tables) for how to lay the table out, and [one table per risk domain](/reporting/assessment-report-templates#one-table-per-risk-domain) to split findings by risk domain.
 
 Sets:
 
@@ -108,10 +108,23 @@ Columns, usable with either set:
 | `assignee`, `assigned to` | Display name of the assignee |
 | `created by` | Display name of the creator |
 | `control`, `control expectation` | The control expectation the finding was raised against |
+| `risk domain`, `risk domains` | Risk domain of the control the finding was raised against. Comma-separated when the finding spans controls in several domains |
 | `score` | Score level name |
 | `resolution timeline` | Resolution timeline in days, as a number |
 
 Rows where a column has no value render that cell empty. Each set is capped at 100 rows.
+
+### Scoping a table to one risk domain
+
+`{{findings::<set>::<risk domain>::<column>}}` narrows a table to the findings whose controls belong to one risk domain, so a report can carry a separate table per domain:
+
+```text
+{{findings::new::Information Security::title}}
+{{findings::new::Privacy::title}}
+{{findings::pre_existing::BRM::title}}
+```
+
+The domain is the name as configured in **Settings → Risk domains**, matched ignoring case and surrounding spaces. It resolves per finding through the control the finding was raised against: the control section's risk domain when it sets one, otherwise the control set's. A domain with no findings renders "No new findings for Privacy"; a domain your org does not have is reported as an unknown placeholder.
 
 ## Agent
 
@@ -154,6 +167,10 @@ Custom fields render according to their configured type.
 
   <Accordion title="I need a table of the issues we raised" icon="table-list">
     A two-row table with `{{findings::new::id}}`, `{{findings::new::title}}`, `{{findings::new::risk level}}`, and `{{findings::new::due date}}` in the body row.
+  </Accordion>
+
+  <Accordion title="I need a separate issues table for each risk domain" icon="layer-group">
+    One table per domain, each using `{{findings::new::<risk domain>::<column>}}` — for example `{{findings::new::Privacy::title}}`. Or keep one table and add a `{{findings::new::risk domain}}` cell to label each row.
   </Accordion>
 
   <Accordion title="I need the approver and their decision" icon="user-check">
