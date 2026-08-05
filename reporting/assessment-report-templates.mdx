@@ -148,10 +148,35 @@ There are two sets:
 | `new` | Findings raised by this assessment |
 | `pre_existing` | Still-open findings on the same vendor that came from somewhere else |
 
+### One table per risk domain
+
+Add a risk domain between the set and the column — `{{findings::<set>::<risk domain>::<column>}}` — to narrow a table to the findings whose controls belong to that domain. Use one table per domain to get a "New Information Security findings", "New Privacy findings", "New BRM findings" structure:
+
+**Table 1 — New Information Security findings**
+
+| ID | Title | Risk |
+| --- | --- | --- |
+| `{{findings::new::Information Security::id}}` | `{{findings::new::Information Security::title}}` | `{{findings::new::Information Security::risk level}}` |
+
+**Table 2 — New Privacy findings**
+
+| ID | Title | Risk |
+| --- | --- | --- |
+| `{{findings::new::Privacy::id}}` | `{{findings::new::Privacy::title}}` | `{{findings::new::Privacy::risk level}}` |
+
+Write the domain exactly as it is named in **Settings → Risk domains**; matching ignores case and surrounding spaces. A finding's domain comes from the control it was raised against — the control section's risk domain if it has one, otherwise the control set's. Findings not raised against a control (and controls with no domain at either level) appear in the unscoped tables only.
+
+If you would rather keep one table and label each row, use the `risk domain` column instead:
+
+| Title | Risk domain |
+| --- | --- |
+| `{{findings::new::title}}` | `{{findings::new::risk domain}}` |
+
 Rules that apply to findings tables:
 
-- **A row belongs to exactly one set.** The first set referenced in the row wins. Placeholders from the other set in that same row resolve to empty text, so do not mix `new` and `pre_existing` in one row.
-- **Empty sets collapse to one row.** A set with no findings renders a single row reading "No new findings" or "No pre-existing open findings".
+- **A row belongs to exactly one set.** The first set referenced in the row wins. Placeholders from the other set — or from a different risk domain — in that same row resolve to empty text, so do not mix `new` and `pre_existing`, or two domains, in one row.
+- **Empty sets collapse to one row.** A set with no findings renders a single row reading "No new findings" or "No pre-existing open findings", with " for `<risk domain>`" appended when the table is scoped to a domain.
+- **A misspelled risk domain is reported.** The table renders its empty state and the placeholder is recorded on the generated document as an unknown field, so a typo does not quietly pass as "no findings in this domain".
 - **Tables anywhere are covered.** Body tables, tables nested inside cells, and tables in headers and footers all expand.
 - **Only inside tables.** A `{{findings::...}}` placeholder in ordinary body text is left in the document verbatim.
 - **Capped at 100 rows per set.** Larger sets are truncated.
