@@ -7,6 +7,8 @@ hidden: true
 
 <Info>
   This guide is part of the [User Guides](/user-guides/overview) collection. It's for analysts, reviewers, and InfoSec SMEs doing daily vendor reviews. It assumes your environment is already configured. If you're the one setting it up, start with the [Admin and setup guide](/user-guides/admin-setup).
+
+  This page is the wide view of the job. For a screen-by-screen walkthrough of one assessment from intake to export, see [How to run an assessment](/user-guides/running-an-assessment).
 </Info>
 
 Welcome. Coverbase reads vendor documents and measures them against your controls, so your job shifts from hunting through PDFs to judging results. A typical assessment measures a hundred-plus controls and raises a handful of material issues. In one real case, 111 controls produced 5.
@@ -41,6 +43,13 @@ New requests arrive from business requesters already enriched with sanctions, fi
 6. If the requester misidentified an existing vendor, approve the submission and use the vendor record merge function to consolidate it under the parent record.
 7. Accept to kick off onboarding. The right assessment plan attaches automatically based on tags and inherent risk.
 
+The requester sees three steps on their side — **Select Vendor**, **Additional Information**, **Review Questionnaires** — and Coverbase does most of the typing for them. Two parts of that flow change what lands in your queue:
+
+- **Pre-Qualification** runs on the vendor name at step 1 and tells the requester if the vendor is already onboarded, or if an approved vendor already covers the use case. It's the cheapest risk reduction in the whole process, and it's why some requests never reach you.
+- **The autofilled IRQ** at step 3 arrives with a confidence badge per answer (green *High confidence*, amber *Review this response*) and the reasoning and sources behind each one. Work the amber ones first; amber means Coverbase wasn't confident, and the reasoning usually names exactly what was missing.
+
+Responses can't be edited by the requester after submission, so anything wrong is yours to correct on the way through.
+
 <Frame caption="The intake queue. New requests arrive pre-enriched and pending review, each with its use case, services, and status.">
   <img src="/images/user-guides/analyst-intake-queue.png" alt="Intake queue of pending vendor requests" />
 </Frame>
@@ -60,10 +69,13 @@ New requests arrive from business requesters already enriched with sanctions, fi
 Launching an assessment opens the review. It attaches control sets, kicks off document collection, and runs the analysis.
 
 1. Open the vendor record, then go to **Assessments → New Assessment**. Choose vendor-level or service-level scope. Multiple assessments can coexist, and one assessment can carry multiple control sets at once, like SIG core plus your bespoke InfoSec set.
-2. Confirm or select the control sets and assessment plan.
-3. Let automatic evidence collection run. Coverbase pulls first from its library of vendor-supplied compliance documents, then scrapes the vendor's trust center for anything ungated (it form-fills access requests for gated documents), before falling back to asking the vendor.
-4. Where the vendor has to be engaged, send the portal invitation with a due date. Reminders and the pre-signed MNDA your admin configured go out automatically.
-5. Analysis usually finishes in roughly 5 to 10 minutes once evidence is in. Large control sets take longer, and a full SIG core is around 300 questions.
+2. Pick the **Assessment Plan**. This is the whole of the setup: control sets and questionnaires aren't chosen assessment by assessment, they come from the plan. Selecting one shows a summary — how many control sets and questionnaires, manual or automatic collection, whether it targets residual risk, and who reviews it. Read that summary; it's the fastest way to catch a plan that's heavier or lighter than the vendor warrants. Leaving it on **None** creates an assessment with no control sets attached.
+3. Add more than one vendor if you're starting a batch. Each gets its own assessment from the same plan, which is how annual reviews are best run. The button reads **Create Assessments** for that reason.
+4. Let evidence collection run. The **Documents** tab offers five routes that combine freely, each showing how much is available before you click: **Import from existing vendor docs**, **Request from vendor** (the portal, with its current status), **Request automatic collection**, **Import from Coverbase Library** (curated documents Coverbase already holds — often substantial for well-known vendors), and **Retrieve from Trust Center** (needs a Trust Center URL on the vendor record). Below the cards, **Upload vendor documents** takes files you hold yourself. In automatic mode Coverbase pulls from its library first, then scrapes the vendor's trust center for anything ungated (it form-fills access requests for gated documents), before falling back to asking the vendor.
+5. Where the vendor has to be engaged, send the portal invitation with a due date. Reminders and the pre-signed MNDA your admin configured go out automatically. The vendor can't submit until the required items are done, and when they upload, analysis of the affected controls starts on its own.
+6. Analysis takes roughly 5 to 10 minutes on a small evidence set and 20 to 30 minutes when there's a lot to read — a long SOC 2 takes considerably longer than a certificate of insurance. Large control sets add to it, and a full SIG core is around 300 questions. You don't need to keep the tab open.
+
+The left panel tracks the assessment through four stages — **Collecting Documents**, **Analyzing Controls**, **Review Results**, **Quality Control** — and always tells you what it's waiting for, with a shortcut into that work.
 
 <Frame caption="The assessment workspace. Control sets attached in the left rail, and the lifecycle (collected documents, then analyzed controls, then reviewed results) tracked as it runs.">
   <img src="/images/user-guides/analyst-assessment-summary.png" alt="Assessment workspace showing control sets and lifecycle" />
@@ -84,6 +96,12 @@ The AI has measured every document against every control and raised issues where
 3. Open each issue. You'll see the expectation, the guidance the AI used, and the analysis citing the specific evidence. Click through to the source language to validate. Never take the summary on faith for a material item.
 4. Spot-check compliant controls too, especially early on. Passes show the same full evidence chain, plus web-sourced supporting articles, and this is how you catch false negatives while you build trust in the output.
 5. Where two control sets overlap, say SIG core and the out-of-box SOC 2 set raising the same gap twice, mark the duplicate as not an issue and tell your admin to drop the redundant set from future assessments.
+
+**Getting around the workspace.** Eleven tabs run across the top; most days you need the first two. **Summary** carries the recommendation, the score and its compliance band, review progress, and the risk domain table — Overall Vendor Risk plus a row per domain with inherent risk, residual risk, and the assigned reviewer. Rows reading "Not set" against residual risk haven't been reviewed yet, so that column is your to-do list. **Issues** holds one result per control, opening filtered to the ones raised as issues. The remaining nine (Controls, Findings, Emails, Work Queue, Documents, Activity, Notes, Properties, SLAs) carry supporting detail and the audit trail.
+
+**Working the Issues tab.** Three toggles switch between all results, issues only, and open follow-ups, each with a count. **Group by** defaults to **Control Section**, so results cluster by control set and section with that section's reviewers on the group header. Select rows, or **Select all**, and an action bar appears with everything you can do at once: **Accept risk**, **Add Finding**, **Create follow-ups**, **Delete follow-ups**, **Lock**, and **Draft new email**. On a large assessment this is the single biggest time-saver — bulk-drafting follow-ups for every missing-document issue is one action rather than a hundred.
+
+**Inside a result.** The left column shows the expectation, the question as the vendor sees it, the guidance, the source control set, and the weight, with the evaluation and its bulleted analysis beneath. Three controls sit above the evaluation: **Correct the AI**, **Preserve** (pins a result so later runs don't overwrite it), and **Edit**. The right column holds Evidence, Follow-up, Findings, Emails, and Activity, with prev/next controls so you can work straight through the list without going back. Each piece of evidence names its source document and page, quotes the passage, and previews the page with the passage highlighted — that highlight is what makes a result defensible when an examiner asks why a control passed.
 
 <Frame caption="The review workspace. Results grouped by control set, with each issue's status, score, and reason (Missing document, Incomplete response, and so on).">
   <img src="/images/user-guides/analyst-review-results.png" alt="Assessment review results grouped by control set" />
@@ -129,6 +147,13 @@ For genuine gaps, you send the vendor a contextualized question that references 
 3. Pick the email template and add any vendor-specific instructions. The internal requester is CC'd automatically.
 4. The vendor answers and uploads new evidence directly in the portal, and responses flow back onto the issues.
 
+A few things worth knowing about the mechanics:
+
+- **Saving a follow-up creates a draft, it doesn't send.** Follow-ups are drafted individually and sent together, so the vendor gets one consolidated request instead of a trickle of emails. The bar at the top of the Issues tab shows how many drafts are waiting, alongside **Configure portal** (what the vendor sees) and **Manage sent follow-ups** (what's already out).
+- **Name the evidence you want.** Under **Required document types**, say what the vendor should attach, so the request is specific rather than "please send evidence". **Use control question and response** reuses the original control wording if the autofilled version isn't right.
+- **Some vendors prefer a spreadsheet.** **Download workbook** and **Import responses** on the Issues tab let a vendor work offline and come back in.
+- **Reanalysis is narrow.** When the vendor submits, only the controls selected for follow-up run again. A result that comes back reads **Response received** and its analysis is rewritten to account for what the vendor said, often moving from *Not Compliant* to *Fully Compliant* where the gap was documentation rather than practice. To re-evaluate everything from scratch — after changing the plan or control sets — use the rerun option from the assessment **Actions** menu instead.
+
 <Frame caption="Draft Follow-up with AI Autofill. A question written in the context of what the vendor already submitted.">
   <img src="/images/user-guides/analyst-draft-followup.png" alt="Draft follow-up with AI autofill" />
 </Frame>
@@ -139,9 +164,27 @@ For genuine gaps, you send the vendor a contextualized question that references 
 
 ---
 
-## Step 6: Disposition, complete, and report
+## Step 6: Reviews, disposition, and reporting
 
-This closes the review. Every remaining issue gets a decision, the vendor gets a status and a reassessment date, and the record becomes a report.
+This closes the review. Domain reviewers sign off, every remaining issue gets a decision, the vendor gets a status and a reassessment date, and the record becomes a report.
+
+### Domain reviews and quality control
+
+Each risk domain can carry its own reviewer, which is what lets several teams work one assessment — InfoSec on the security domains, Legal on the contractual ones, Compliance on regulatory. The Summary tab reports progress as a count of completed reviews.
+
+A reviewer opens their domain with **Start review**. Until someone does, the domain shows *Not started* and its residual risk stays "Not set".
+
+- Reviewers are set per domain or control set and can be changed at any time.
+- Reviewers are notified when results are ready for them, and risk analysts and administrators can resend reminders.
+- Your organization can optionally prevent anyone who isn't a risk analyst or administrator from completing assessments.
+
+Once the reviews are in, the assessment moves to **Quality Control**, the last stage on the tracker, for a final pass.
+
+<Warning>
+  Depending on configuration, **Complete Assessment** stays disabled until the domain reviews are finished. If the button is greyed out, look at the review column rather than the score.
+</Warning>
+
+### Dispositioning issues
 
 You have three dispositions per issue:
 
@@ -157,11 +200,18 @@ You have three dispositions per issue:
   </Card>
 </CardGroup>
 
-Then complete the assessment:
+### Completing and exporting
 
-1. Set the onboarding status (custom statuses are supported) and your recommendation.
-2. Confirm the reassessment timeline. It auto-sets from the risk rating but is fully overridable, and anything unresolved converts to findings rather than getting deleted.
-3. Export the report. Use Standard PDF for most reviews, Executive Summary for leadership, or Full (every control with all evidence) when an examiner asks. Your organization's branded template fills itself in automatically.
+Click **Complete Assessment** on the Summary tab. The dialog asks for four things:
+
+1. **Action** — approve, reject, or whichever outcomes your organization uses.
+2. **Vendor Status** — where this leaves the vendor in its lifecycle, for example *Active*. Custom statuses are supported.
+3. **Next Vendor Reassessment Date** — set for you from the risk tier and the completion date, typically a year out, and fully overridable if this vendor needs watching sooner. Anything unresolved converts to findings rather than getting deleted.
+4. **Recommendation** — the written conclusion that carries into exports, so write it properly rather than leaving it thin.
+
+**Risk Scoring Changes** expands to show how this assessment moved the vendor's scores. Worth a look before you confirm.
+
+Then export. **Export Report** offers four formats — PDF, Excel, CSV, and Word — and your organization's branded template fills itself in automatically. Match the format to the audience: PDF for anything leaving the company, Excel or CSV when someone wants to sort and filter the results themselves, and Word when the output has to drop into an existing house template (the Word export can be driven from a custom [reporting template](/reporting/assessment-report-templates)). Scope matters as much as format — Standard for most reviews, Executive Summary for leadership, and Full when an examiner asks. The fullest export includes every result, all document evidence, the activity log, follow-ups, and notes, and can run to hundreds of pages.
 
 <Frame caption="A completed assessment. Inherent risk, assessment score, and residual risk side by side, with the AI-generated executive summary and a recommendation.">
   <img src="/images/user-guides/analyst-disposition.png" alt="Completed assessment summary with risk scores and recommendation" />
@@ -246,7 +296,7 @@ As a reviewer, you'll validate extractions against source language, assign owner
 
 <AccordionGroup>
   <Accordion title="How long does analysis take?">
-    Roughly 5 to 10 minutes for a typical assessment once evidence is collected. Very large control sets run longer, and a full SIG core is around 300 questions. Issue counts drop over time as guidance is tuned, and the first-pass reduction is typically around 80% versus reviewing every control by hand.
+    Roughly 5 to 10 minutes for a typical assessment once evidence is collected, and 20 to 30 minutes when the document set is large — a long SOC 2 report takes considerably longer to read than a certificate of insurance. Very large control sets run longer still, and a full SIG core is around 300 questions. You don't need to keep the tab open. Issue counts drop over time as guidance is tuned, and the first-pass reduction is typically around 80% versus reviewing every control by hand.
   </Accordion>
   <Accordion title="Will the same assessment give identical results twice?">
     Not exactly. AI models are non-deterministic, so two runs can differ slightly at the margins. Extraction is deliberately tuned to over-surface rather than miss. Specific control guidance narrows the variance, and results are stable on well-tuned sets.
@@ -271,7 +321,10 @@ As a reviewer, you'll validate extractions against source language, assign owner
 
 Pick a vendor you know well, launch an assessment, and judge the results against a document set you could grade in your sleep. That's the fastest way to build trust in the output.
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
+  <Card title="How to run an assessment" icon="list-check" href="/user-guides/running-an-assessment">
+    The screen-by-screen walkthrough of one assessment, intake to export.
+  </Card>
   <Card title="Assessment quick reference" icon="bolt" href="/user-guides/assessment-quick-reference">
     A one-page cheat sheet to keep open while you work.
   </Card>
