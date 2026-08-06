@@ -1,0 +1,172 @@
+---
+title: "Import clause sets from a spreadsheet"
+description: "Build a clause set in Excel and upload it: the workbook format, every column explained, what happens on re-upload, and how to read the import result."
+icon: "file-import"
+hidden: true
+---
+
+<Info>
+  This page is part of the [User Guides](/user-guides/overview) collection and goes with the [Contract Guardian guide](/user-guides/contract-guardian), which covers clause sets end to end. Read this one when your standards already live in a spreadsheet.
+</Info>
+
+Most legal teams already have their clause playbook written down somewhere — a Word annex, a negotiation matrix, a tab in someone's workbook. Rather than retyping it clause by clause, put it in the Coverbase template and upload it. One file can carry several clause sets, each with its full multi-tier variant language.
+
+<Note>
+  This is an alternative to the three routes in the main guide (copy the packaged library, generate from your own paper, or build by hand). Use whichever gets your standards in fastest — you can mix them, and edit everything afterwards.
+</Note>
+
+## Get the template
+
+On **Configuration → Clause Sets**, open the **New Clause Set** menu and choose **Download import template**. You get an `.xlsx` workbook with three sheets:
+
+| Sheet | Purpose |
+| --- | --- |
+| **Clauses** | The only sheet that gets imported. One row per clause. |
+| **Instructions** | A copy of the rules on this page, so the file travels with its own documentation. |
+| **Reference Values** | The accepted values for Severity, Risk Tier, and Component Types. |
+
+The template ships with two filled-in example rows. Delete them before you upload, or edit them in place — they exist to show the shape.
+
+<Warning>
+  Keep the header row on the **Clauses** sheet intact. Columns are matched by header name, not position, so you can reorder or add columns freely — but a renamed or deleted required header fails the upload.
+</Warning>
+
+## Fill it in
+
+Each row is one clause. Rows that share a **Clause Set** value are grouped into a single clause set.
+
+### Required columns
+
+<ParamField path="Clause Set" type="text" required>
+  The name of the clause set this clause belongs to. Repeat the same value on every row in the set. A file with `FN Master Agreement` on thirteen rows and `FN Privacy Commitment` on fifteen produces two clause sets.
+</ParamField>
+
+<ParamField path="Identifier" type="text" required>
+  Your stable reference for the clause, like `MSA-001` or `PC-010`. Must be unique within its clause set. This is what reviewers quote in tickets and email, so pick a scheme you can live with.
+</ParamField>
+
+<ParamField path="Name" type="text" required>
+  What reviewers see. Use the heading a lawyer would recognize — "Limitation of liability", not "LoL cap v2".
+</ParamField>
+
+<ParamField path="Severity" type="text" required>
+  One of **Critical**, **High**, **Medium**, or **Low**. Drives triage order and grouping; it does not change the verdict. Reserve Critical for clauses that would block a signature.
+</ParamField>
+
+<ParamField path="Variant 1 Risk Tier, Variant 1 Label, Variant 1 Clause Text" type="text" required>
+  Every clause needs at least one variant. See [Variants](#variants) below.
+</ParamField>
+
+### Optional columns
+
+<ParamField path="Clause Set Description" type="text">
+  Shown on the clause set. Repeat it on every row in the set. It is applied **only when the import creates the set** — importing into a clause set that already exists never overwrites its description.
+</ParamField>
+
+<ParamField path="Guidance" type="text">
+  Written for the AI. This is what tells the matcher how to find and evaluate the clause, and it is the single highest-leverage field in the file. The [Contract Guardian guide](/user-guides/contract-guardian) shows the four-section format that works: aliases, typical contract types, extraction signals, common deviations.
+</ParamField>
+
+<ParamField path="Rationale" type="text">
+  Written for humans. Why the clause matters — the context a reviewer needs when they hit a deviation at 5pm.
+</ParamField>
+
+<ParamField path="Applicable Component Types" type="text">
+  Which parts of a contract this clause should be found in, separated by `|`. For example: `Master Service Agreement|Order Form|Statement of Work`. Leave blank to apply everywhere. Use the values from the **Reference Values** sheet.
+</ParamField>
+
+<ParamField path="Category" type="text">
+  Groups related clauses in the clause set view. Leave it out and Coverbase derives one from the clause name (`Fee increase cap` becomes `fee_increase_cap`), which is exactly what happens when you create a clause in the UI without one. Add the column when you want your own taxonomy — `limitation_of_liability`, `indemnification`, `audit_rights`.
+</ParamField>
+
+### Variants
+
+Variants are the heart of the system: they define the tiers of language you're willing to accept, from most protective to minimally acceptable. During review, the vendor's actual language is scored against them.
+
+The template ships with three variant slots. Each is a group of three columns:
+
+| Column | Accepted values |
+| --- | --- |
+| `Variant N Risk Tier` | `1 - Preferred`, `2 - Acceptable`, `3 - Fallback` (a bare `1`, `2`, or `3` also works) |
+| `Variant N Label` | A short name for the tier, like "3% annual cap" |
+| `Variant N Clause Text` | The acceptable clause language for that tier |
+
+Rules worth knowing:
+
+- **Variant 1 is required.** Variants 2 and 3 are optional — leave all three cells of an unused variant blank.
+- **Each variant on a clause needs a distinct risk tier.** Two variants both marked `1 - Preferred` fails that row.
+- **You can add more slots.** Add `Variant 4 Risk Tier`, `Variant 4 Label`, and `Variant 4 Clause Text` columns and they will be imported. Tiers run from 1 to 5.
+- **Tiers don't have to be contiguous.** A clause with a Tier 1 and a Tier 3 and nothing in between is perfectly normal.
+
+<Tip>
+  A single Tier 1 variant is a floor, not a playbook — it marks anything that isn't your exact preferred language as needing review. If your file has one variant per clause, expect a noisy first review. Add the language you'd actually accept in negotiation before you run the set in anger.
+</Tip>
+
+## Upload it
+
+On **Configuration → Clause Sets**, open the **New Clause Set** menu, choose **Import from spreadsheet**, and drop the file in. Files must be `.xlsx` or `.xlsm`.
+
+Coverbase reads the **Clauses** sheet only. The Instructions and Reference Values sheets are ignored, so you can annotate them freely.
+
+### What happens to each row
+
+The result panel reports every row by its spreadsheet row number, in one of three states.
+
+<AccordionGroup>
+  <Accordion title="Created" icon="check">
+    The clause was added, with all of its variants. New clauses land at the end of their clause set, in file order.
+  </Accordion>
+  <Accordion title="Already existed" icon="circle">
+    A clause with that Identifier is already in the target clause set, so the row was skipped and **nothing about the existing clause changed**.
+
+    This is deliberate. An accidental re-upload of a stale file can't quietly overwrite language your team negotiated. It also means the spreadsheet is not an editing tool: to change a clause that's already in Coverbase, edit it in the clause detail view, where the change is versioned and the old wording is kept.
+  </Accordion>
+  <Accordion title="Error" icon="triangle-exclamation">
+    Something in the row couldn't be read — an unrecognized severity, a component type that isn't in the reference list, a clause with no variants, two variants sharing a tier, or a missing required value.
+
+    Rows are independent. One bad row is reported and skipped; every other row still imports. Fix the reported rows and upload the file again — the rows that already imported come back as "already existed", so re-uploading the whole corrected file is the normal fix, not a problem.
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  If **every** row fails, nothing is saved at all — including any clause set the file would have created. You won't be left with an empty set to clean up.
+</Note>
+
+### New sets versus existing sets
+
+Coverbase matches the **Clause Set** column against the names of your active clause sets, ignoring case.
+
+- **No match** — the clause set is created, and its description comes from the Clause Set Description column.
+- **A match** — the clauses are appended to that existing set, keeping its current name and description. New clauses go after the ones already there.
+- **Archived sets are not matched.** To replace a clause set wholesale, archive the old one and import the file: you get a clean new set, and reviews that ran against the old one stay readable.
+
+<Warning>
+  Because matching is by name, renaming a clause set in Coverbase and then re-uploading the original file creates a **second** set rather than adding to the renamed one. Update the Clause Set column in your file when you rename.
+</Warning>
+
+## After the import
+
+Imported clause sets are created **active**, so they're immediately available to run. Before you point one at a live contract:
+
+<Steps>
+  <Step title="Spot-check the variants">
+    Open two or three clauses and confirm the tier language came across whole. Long clause text is the most common casualty of copy-paste between documents.
+  </Step>
+  <Step title="Fill in the guidance">
+    Clauses imported without a Guidance value still match, but they match on the name alone. Adding aliases and extraction signals is what turns a decent match rate into a good one.
+  </Step>
+  <Step title="Run it against a contract you already know">
+    Pick an agreement whose answers you can predict, run a review, and compare. Tune the tiers before you roll the set out.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+| What you see | What it means |
+| --- | --- |
+| "Missing required column(s)" | A required header was renamed or deleted on the Clauses sheet. Compare against a fresh template download. |
+| "Invalid file format" | The file isn't `.xlsx` or `.xlsm`. Export from Excel or Sheets as `.xlsx` — a `.csv` won't work, because it can't carry multiple sheets. |
+| "Unable to read the Excel file" | The upload is corrupt or isn't really a workbook. Re-export it. |
+| Every row says "already existed" | The clause set name matched a set you'd already imported into. Expected on a re-upload; check the set contents before assuming it failed. |
+| Two clause sets with almost the same name | Trailing spaces or a rename. Names are matched exactly (ignoring case), so `FN Master Agreement ` and `FN Master Agreement` are different sets. |
+| A clause imported but never matches during review | Usually empty Guidance, or Applicable Component Types scoped to a component that isn't in the contract. Clear the component types to let it apply everywhere and re-run. |
