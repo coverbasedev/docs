@@ -12,12 +12,12 @@ hidden: true
 Most legal teams already have their clause playbook written down somewhere — a Word annex, a negotiation matrix, a tab in someone's workbook. Rather than retyping it clause by clause, put it in the Coverbase template and upload it. One file can carry several clause sets, each with its full multi-tier variant language.
 
 <Note>
-  This is an alternative to the three routes in the main guide (copy the packaged library, generate from your own paper, or build by hand). Use whichever gets your standards in fastest — you can mix them, and edit everything afterwards.
+  This is an alternative to the three routes in the main guide: copy the packaged library, [generate from your own paper](/user-guides/baseline-contract-extraction), or build by hand. Use whichever gets your standards in fastest — you can mix them, and edit everything afterwards. If your standard is a contract rather than a spreadsheet, baseline extraction is the faster start.
 </Note>
 
 ## Get the template
 
-On **Configuration → Clause Sets**, open the **New Clause Set** menu and choose **Download import template**. You get an `.xlsx` workbook with three sheets:
+On **Configuration → Clause Sets**, open the **Add Clause Set** menu and choose **Download Import Template**. You get an `.xlsx` workbook with three sheets:
 
 | Sheet | Purpose |
 | --- | --- |
@@ -26,6 +26,8 @@ On **Configuration → Clause Sets**, open the **New Clause Set** menu and choos
 | **Reference Values** | The accepted values for Severity, Risk Tier, and Component Types. |
 
 The template ships with two filled-in example rows. Delete them before you upload, or edit them in place — they exist to show the shape.
+
+One workbook can carry up to **1000 clause rows** and must be **20MB or smaller**. Over either limit the upload is refused whole rather than partly imported, so you never have to work out which rows made it.
 
 <Warning>
   Keep the header row on the **Clauses** sheet intact. Columns are matched by header name, not position, so you can reorder or add columns freely — but a renamed or deleted required header fails the upload.
@@ -104,7 +106,7 @@ Rules worth knowing:
 
 ## Upload it
 
-On **Configuration → Clause Sets**, open the **New Clause Set** menu, choose **Import from spreadsheet**, and drop the file in. Files must be `.xlsx` or `.xlsm`.
+On **Configuration → Clause Sets**, open the **Add Clause Set** menu, choose **Import from Spreadsheet**, and drop the file in. Files must be `.xlsx` or `.xlsm`.
 
 Coverbase reads the **Clauses** sheet only. The Instructions and Reference Values sheets are ignored, so you can annotate them freely.
 
@@ -167,6 +169,8 @@ Imported clause sets are created **active**, so they're immediately available to
 | "Missing required column(s)" | A required header was renamed or deleted on the Clauses sheet. Compare against a fresh template download. |
 | "Invalid file format" | The file isn't `.xlsx` or `.xlsm`. Export from Excel or Sheets as `.xlsx` — a `.csv` won't work, because it can't carry multiple sheets. |
 | "Unable to read the Excel file" | The upload is corrupt or isn't really a workbook. Re-export it. |
+| "The Clauses sheet has N rows, more than the 1000 supported in one import." | One workbook can carry 1000 clause rows. Nothing is imported — split the file and upload the parts. |
+| "The uploaded workbook exceeds the maximum supported size." | Files are capped at 20MB. Usually means embedded images or a stray sheet of pasted data; delete those, or split the file. |
 | Every row says "already existed" | The clause set name matched a set you'd already imported into. Expected on a re-upload; check the set contents before assuming it failed. |
 | Two clause sets with almost the same name | Trailing spaces or a rename. Names are matched exactly (ignoring case), so `FN Master Agreement ` and `FN Master Agreement` are different sets. |
 | A clause imported but never matches during review | Usually empty Guidance, or Applicable Component Types scoped to a component that isn't in the contract. Clear the component types to let it apply everywhere and re-run. |
