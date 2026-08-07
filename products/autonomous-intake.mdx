@@ -1,6 +1,6 @@
 ---
 title: "Autonomous Intake"
-description: "Procurement-embedded intake that classifies requests, triggers the right risk path, and orchestrates downstream work."
+description: "Vendor intake that researches the vendor, catches duplicate spend, screens it, and drafts the risk questionnaire, then routes every request into the TPRM program at the correct depth."
 icon: "inbox-in"
 ---
 
@@ -8,21 +8,37 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Autonomous Intake removes the manual routing layer between procurement and risk teams. It classifies incoming third-party requests, triggers the appropriate risk path, and orchestrates downstream assessment work so every engagement enters the TPRM program at the correct depth.
+Autonomous Intake removes the manual routing layer between procurement and risk teams. A requester says what they want; Coverbase identifies the vendor, checks whether you already pay for something that does the job, screens the company, drafts the inherent risk questionnaire, and puts a complete request in front of a reviewer. Every engagement enters the TPRM program at the correct depth, and the requester spends minutes rather than an afternoon.
 
 ## What it does
 
 <CardGroup cols={2}>
   <Card title="Free-form submission parsing" icon="message-lines">
-    Accept intake submissions in their natural form, requester context, vendor identity, intended use, data types, without forcing rigid form structure.
+    Accept submissions in their natural form — requester context, vendor identity, intended use, data types — without forcing a rigid form structure.
+  </Card>
+
+  <Card title="Vendor identity research" icon="magnifying-glass">
+    Identify the company from a name: what it does, its website, its headquarters, its trust center. The requester confirms the match before anything else runs, so a request is never filed against the wrong Acme.
+  </Card>
+
+  <Card title="Redundancy detection" icon="clone">
+    Rank your existing vendors against the request and surface prior relationships, so a second tool for a job an approved vendor already covers gets caught before the spend, not during review.
+  </Card>
+
+  <Card title="Pre-qualification screening" icon="shield-halved">
+    Screen financial stability, security posture, and sanctions exposure as part of the flow. Each check is separately switchable, and a vendor that doesn't clear is surfaced to a human rather than auto-rejected.
+  </Card>
+
+  <Card title="Questionnaire autofill" icon="wand-magic-sparkles">
+    Answer the inherent risk questionnaire from public sources and the context supplied, with per-answer confidence and the reasoning behind each. The requester validates rather than types.
   </Card>
 
   <Card title="Risk stripe classification" icon="layer-group">
-    Classify each request into a risk tier based on data sensitivity, criticality, and engagement type. Drives which controls apply.
+    Classify each request into a risk tier from data sensitivity, criticality, and engagement type. Drives which controls apply.
   </Card>
 
   <Card title="Control set selection" icon="folder-tree">
-    Map the classified request to the required control set, including any custom controls layered on top of your baseline standard.
+    Map the classified request to the required control set, including any custom controls layered on your baseline standard.
   </Card>
 
   <Card title="Workflow sequencing" icon="diagram-project">
@@ -30,34 +46,51 @@ Autonomous Intake removes the manual routing layer between procurement and risk 
   </Card>
 </CardGroup>
 
-## How to integrate
+## Three ways in, one process
 
-<CardGroup cols={2}>
-  <Card title="Intake submission" icon="paper-plane">
-    POST a free-form intake payload to receive a classification, control set, and workflow plan back.
+A request can arrive three ways. All three produce the same intake session, obey the same configuration, and land in the same reviewer queue.
+
+<CardGroup cols={3}>
+  <Card title="The portal" icon="browser">
+    A requester fills in the browser form: select vendor, add information, review questionnaires.
   </Card>
 
-  <Card title="Workflow state" icon="list-tree">
-    Track the orchestrated workflow as it executes across Copilot, Inspect, and Guardian.
+  <Card title="The API" icon="code" href="/api-reference/intake">
+    `POST` a free-form payload from procurement or ticketing and poll for the generated answers.
   </Card>
 
-  <Card title="Intake API" icon="code" href="/api-reference/intake">
-    The endpoint reference: create sessions, pass unstructured context, poll for the auto-answered questionnaire.
-  </Card>
-
-  <Card title="Intake in chat" icon="comments" href="/mcp/vendor-intake">
-    Run the whole request conversationally through the MCP server. Same session, same review queue.
+  <Card title="Chat" icon="comments" href="/mcp/vendor-intake">
+    An AI assistant runs the whole request conversationally through the MCP server.
   </Card>
 </CardGroup>
+
+## You decide which steps run
+
+Intake is configuration, not a fixed script. Your intake portal decides which steps exist, and every surface honours it — including chat, which will not reintroduce a step you deliberately turned off.
+
+| Step | What you control |
+| ---- | ---------------- |
+| Vendor search | Matching against your existing vendors, web alternatives, and prior assessment history, each separately switchable. |
+| Pre-qualification | Financial, security, and sanctions checks, each separately switchable. |
+| Questionnaire | Which questionnaires attach to the intake. |
+| Document upload | Whether supporting evidence is collected at intake. |
+
+## Submitting is not approval
+
+<Warning>
+  A completed intake request is a request, not permission. A vendor record created through intake sits in **Created** status; it is not an approved vendor until a reviewer decides the request.
+</Warning>
+
+This is the point of the product. The requester gets a fast, guided path and a clear answer about what happens next; the risk team keeps the decision.
 
 ## Common workflows
 
 <AccordionGroup>
-  <Accordion title="Conversational intake" icon="comments">
+  <Accordion title="Conversational intake" defaultOpen icon="comments">
     A requester asks an AI assistant for the tool they want ("I want to start using PostHog"), and the assistant runs the request: confirms the vendor's identity against research, surfaces existing vendors that already cover the need, runs the screening the portal configures, and walks the inherent risk questionnaire one question at a time. No form, and no requester who has to learn the word "intake". See [Vendor intake in chat](/mcp/vendor-intake).
   </Accordion>
 
-  <Accordion title="Procurement system embedding" defaultOpen icon="puzzle-piece">
+  <Accordion title="Procurement system embedding" icon="puzzle-piece">
     Embed Autonomous Intake directly into your procurement tool (Coupa, Ariba, ServiceNow). When a requester opens a new vendor request, Intake classifies it and pre-fills the risk path before the request leaves procurement.
   </Accordion>
 
@@ -68,7 +101,23 @@ Autonomous Intake removes the manual routing layer between procurement and risk 
   <Accordion title="Self-service intake" icon="person">
     Let requesters submit through a simple form (or even free-form email). Intake handles classification, owner assignment, and follow-up question routing so risk teams aren't the bottleneck.
   </Accordion>
+
+  <Accordion title="Reviewer triage" icon="list-check">
+    Requests arrive pre-enriched with the screening results, the duplicate readout, and the auto-answered questionnaire. Reviewers validate rather than research, and can approve, reject, or send a request back with a specific question. This works in the dashboard or in chat.
+  </Accordion>
 </AccordionGroup>
+
+## Guides
+
+<CardGroup cols={2}>
+  <Card title="Requesting a new vendor" icon="cart-shopping" href="/user-guides/requesting-a-vendor">
+    For the business requester: what you'll be asked, how to file it, and what happens after you submit.
+  </Card>
+
+  <Card title="Analyst and reviewer guide" icon="user-check" href="/user-guides/analyst-reviewer">
+    For the risk team: triaging the queue, reading the enrichment, and validating auto-answered questions.
+  </Card>
+</CardGroup>
 
 <Note>
   Autonomous Intake is configured in the dashboard and exposed programmatically through the platform API. See the [Intake API reference](/api-reference/intake) for creating intake requests with free-form context. Talk to your account manager about API access if it's not yet enabled on your plan.

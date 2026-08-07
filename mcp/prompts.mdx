@@ -1,0 +1,169 @@
+---
+title: "Canned prompts"
+description: "Nineteen scripted TPRM workflows you can invoke by name instead of describing what you want."
+icon: "wand-magic-sparkles"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Alongside its tools, the server publishes **prompts**: scripted multi-turn workflows you invoke by name. Each one hands the assistant a sequence to follow, so you get the same shape of output every time instead of whatever the model improvises.
+
+How you invoke one depends on your client. In Claude, prompts appear in the attachment or slash menu once the connector is added. In other clients, look for "prompts" or "templates" in the MCP integration.
+
+<Note>
+  Prompts are a convenience, not a gate. Everything below is reachable by just describing what you want. The value is repeatability: the same review runs the same way each week, and the steps that are easy to skip don't get skipped.
+</Note>
+
+<Warning>
+  Prompts that lead to a write always instruct the assistant to get your explicit confirmation first. A prompt never grants standing permission to mutate data.
+</Warning>
+
+## Vendor intake
+
+<AccordionGroup>
+  <Accordion title="submit_intake_request" defaultOpen icon="inbox-in">
+    **Argument:** `vendor_name`
+
+    Files a new vendor intake request end to end: opens the session, reads your portal configuration, researches and confirms the vendor's identity, surfaces existing vendors that already cover the need, runs your configured screening, and walks the inherent risk questionnaire one question at a time.
+
+    See [Vendor intake in chat](/mcp/vendor-intake) for the full flow.
+  </Accordion>
+
+  <Accordion title="triage_intake_queue" icon="list-check">
+    **No arguments.**
+
+    Walks every pending-review intake session in turn: the requester's use case and services, the enrichment and duplicate readout, the screening verdict, and the questionnaire answers.
+  </Accordion>
+
+  <Accordion title="review_intake" icon="gavel">
+    **Argument:** `intake_session_id`
+
+    Approve, reject, or request follow-up on one intake session.
+  </Accordion>
+
+  <Accordion title="onboard_new_vendor" icon="triangle-exclamation">
+    **Arguments:** `vendor_name`, `use_case` (optional)
+
+    Adds a bare vendor record with **no due diligence**. Only for when you explicitly want to skip intake. The assistant states what you're giving up before it creates anything.
+  </Accordion>
+</AccordionGroup>
+
+## Assessments and controls
+
+<AccordionGroup>
+  <Accordion title="review_assessment" defaultOpen icon="clipboard-check">
+    **Argument:** `assessment_id`
+
+    Walks approving or sending back one assessment.
+  </Accordion>
+
+  <Accordion title="false_positive_review" icon="check-double">
+    **Argument:** `assessment_id`
+
+    Walks one assessment's flagged issues, clears the false positives, and suggests guidance fixes so the same control stops misfiring next time.
+  </Accordion>
+
+  <Accordion title="tune_control_guidance" icon="sliders">
+    **Argument:** `days` (default 180)
+
+    Finds over-flagging controls across recent assessments and tunes their AI guidance to cut false positives. The companion to `false_positive_review`: one fixes the instance, this one fixes the cause.
+  </Accordion>
+
+  <Accordion title="assessment_report" icon="file-lines">
+    **Argument:** `assessment_id`
+
+    Produces an executive-ready report for a single assessment.
+  </Accordion>
+
+  <Accordion title="vendor_onboarding_review" icon="clipboard-list">
+    **Argument:** `vendor_name`
+
+    Generates a pre-onboarding due diligence checklist for a new vendor.
+  </Accordion>
+</AccordionGroup>
+
+## Findings, evidence, and obligations
+
+<AccordionGroup>
+  <Accordion title="chase_overdue_findings" defaultOpen icon="user-clock">
+    **No arguments.**
+
+    Walks overdue and open findings, grouped so you can chase the right owners.
+  </Accordion>
+
+  <Accordion title="expiring_evidence_triage" icon="calendar-xmark">
+    **No arguments.**
+
+    Identifies and prioritizes vendors with expiring or missing evidence.
+  </Accordion>
+
+  <Accordion title="evidence_health_check" icon="file-shield">
+    **Argument:** `vendor_id`
+
+    An evidence health audit for one vendor.
+  </Accordion>
+
+  <Accordion title="contract_renewal_briefing" icon="file-contract">
+    **Argument:** `months_ahead` (default 6)
+
+    Contracts expiring in the next N months, with the vendor risk context attached.
+  </Accordion>
+</AccordionGroup>
+
+## Monitoring and investigation
+
+<AccordionGroup>
+  <Accordion title="triage_radar_alerts" defaultOpen icon="satellite-dish">
+    **Argument:** `days` (default 7)
+
+    Walks new radar alerts and what to do about each.
+  </Accordion>
+
+  <Accordion title="vendor_risk_deep_dive" icon="magnifying-glass-chart">
+    **Argument:** `vendor_name`
+
+    A deep dive into one vendor's risk posture.
+  </Accordion>
+
+  <Accordion title="who_changed_this" icon="clock-rotate-left">
+    **Arguments:** `object_type`, `object_id`
+
+    Investigates the audit trail for a single platform object. The answer to "who changed this, and when".
+  </Accordion>
+</AccordionGroup>
+
+## Reporting
+
+<AccordionGroup>
+  <Accordion title="weekly_briefing" defaultOpen icon="calendar-week">
+    **Argument:** `days` (default 7)
+
+    A weekly TPRM executive briefing. The most-used prompt for a Monday standup.
+  </Accordion>
+
+  <Accordion title="portfolio_risk_briefing" icon="chart-simple">
+    **No arguments.**
+
+    An executive risk briefing across the vendor portfolio.
+  </Accordion>
+
+  <Accordion title="board_report" icon="presentation-screen">
+    **Argument:** `days` (default 90)
+
+    A board-ready program report over a quarter-length window.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Example prompts" icon="comments" href="/mcp/example-prompts">
+    Free-form phrasing for the same workflows, when you don't want to invoke a prompt by name.
+  </Card>
+
+  <Card title="Tool reference" icon="screwdriver-wrench" href="/mcp/tool-reference">
+    The 11 tools these prompts drive, and every route each one covers.
+  </Card>
+</CardGroup>

@@ -96,7 +96,7 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Which of our vendors use AWS as a subprocessor?" defaultOpen icon="diagram-project">
     > Which of our vendors use AWS as a subprocessor, and what is the current risk tier for each?
 
-    The assistant calls `search_soc2_nth_party_usage` with relevant aliases (AWS, Amazon Web Services, S3, EC2), gets back the list of dependent vendors, then calls `get_vendor_risk_summary` for each to surface tier and open findings count.
+    The assistant calls `query_radar(kind="soc2_nth_party")` with relevant aliases in `llm_query_terms` (AWS, Amazon Web Services, S3, EC2), gets back the list of dependent vendors, then calls `query_vendors(kind="risk_summary")` for each to surface tier and open findings count.
   </Accordion>
 
   <Accordion title="Blast-radius analysis during an incident" icon="explosion">
@@ -108,7 +108,7 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Top-N highest-risk vendors with key findings" icon="chart-simple">
     > Build me a one-page report of our top 10 highest-risk vendors with their key open findings.
 
-    The assistant calls `get_portfolio_risk_report` with `top_n=10`, then drills into each vendor with `get_vendor_detail` to extract the relevant findings.
+    The assistant calls `get_report(report_name="portfolio_risk", top_n=10)`, then drills into each vendor with `query_vendors(kind="detail")` to extract the relevant findings.
   </Accordion>
 </AccordionGroup>
 
@@ -118,13 +118,13 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Full vendor risk summary" icon="building">
     > Give me a full risk summary for Acme Corp, including any open findings and recent radar alerts.
 
-    The assistant calls `search_vendors` to resolve the name to an ID, then `get_vendor_detail` to pull the consolidated profile in a single call.
+    The assistant calls `query_vendors(kind="search")` to resolve the name to an ID, then `query_vendors(kind="detail")` to pull the consolidated profile in a single call.
   </Accordion>
 
   <Accordion title="Assessment review prep" icon="clipboard-check">
     > Summarize assessment cbassmt\_abc123 and list the controls that need human review.
 
-    The assistant calls `get_assessment_detail` and surfaces the control evaluations that are flagged or have open findings, so the reviewer can focus on what matters.
+    The assistant calls `query_assessments(kind="detail")` and surfaces the control evaluations that are flagged or have open findings, so the reviewer can focus on what matters.
   </Accordion>
 
   <Accordion title="Assessment backlog visibility" icon="list-check">
@@ -140,19 +140,19 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Weekly program standup" defaultOpen icon="calendar-week">
     > What is happening across our TPRM program this week? Show me recent assessments, open findings, and radar alerts.
 
-    The assistant calls `get_org_activity_digest` with `days=7` and reasonable limits. This is the single most useful prompt for a daily standup or weekly review.
+    The assistant calls `get_report(report_name="org_activity", days=7)` with reasonable limits. This is the single most useful prompt for a daily standup or weekly review.
   </Accordion>
 
   <Accordion title="Overdue findings by owner" icon="user-clock">
     > Show me every vendor with overdue findings and their owners so I can chase them.
 
-    The assistant calls `get_findings_detail` org-wide with a status filter for open and a date filter for past-due, then groups by assignee.
+    The assistant calls `query_findings(kind="list_detailed")` org-wide with a status filter for open and a date filter for past-due, then groups by assignee.
   </Accordion>
 
   <Accordion title="Tier-1 radar check" icon="satellite-dish">
     > Are there any new radar alerts on our tier-1 vendors in the past 24 hours?
 
-    The assistant calls `list_radar_alerts` filtered by vendor ID for the tier-1 list, or asks `get_org_activity_digest` for a 1-day window.
+    The assistant calls `query_radar(kind="alerts")` filtered by vendor ID for the tier-1 list, or asks `get_report(report_name="org_activity", days=1)`.
   </Accordion>
 </AccordionGroup>
 
@@ -162,13 +162,13 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Expiring contracts with unresolved findings" icon="file-contract">
     > What contracts expire in the next 90 days, and which of those vendors have unresolved findings?
 
-    The assistant calls `search_contracts` with the date filter, then for each result calls `search_findings` scoped to that vendor.
+    The assistant calls `query_engagements_contracts(kind="contracts")` with the date filter, then for each result calls `query_findings(kind="search")` scoped to that vendor.
   </Accordion>
 
   <Accordion title="Unassigned upcoming obligations" icon="circle-question">
     > Are there any obligations coming due next month that have not been assigned to anyone?
 
-    The assistant calls `search_obligations` filtered by due date and missing assignee.
+    The assistant calls `query_engagements_contracts(kind="obligations")` filtered by due date and missing assignee.
   </Accordion>
 </AccordionGroup>
 
@@ -178,7 +178,7 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Latest SBOM and its components" defaultOpen icon="cubes">
     > Show me the latest software bill of materials for vendor Acme and list its components.
 
-    The assistant calls `search_vendors` to resolve the name, then `query_vendors(kind="bill_of_materials", vendor_id=…)` to pull the current applied BOM and its components in one call.
+    The assistant calls `query_vendors(kind="search")` to resolve the name, then `query_vendors(kind="bill_of_materials", vendor_id=…)` to pull the current applied BOM and its components in one call.
   </Accordion>
 
   <Accordion title="License screening" icon="scale-balanced">
@@ -226,19 +226,19 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Add a note to a vendor" icon="note-sticky">
     > Add a note to vendor Acme Corp: following up with their security team next week.
 
-    The assistant proposes: _"I am about to add a note to Acme Corp with the text 'following up with their security team next week.' Confirm?"_ After your approval, it calls `add_note` with `confirm=true`.
+    The assistant proposes: _"I am about to add a note to Acme Corp with the text 'following up with their security team next week.' Confirm?"_ After your approval, it calls `mutate(entity="note", action="add", data={…, "confirm": true})`.
   </Accordion>
 
   <Accordion title="Create a finding on an assessment" icon="flag">
     > Create a finding on assessment cbassmt\_abc123 titled "Missing encryption at rest evidence" and assign it to me.
 
-    The assistant proposes the finding (title, body, assessment ID, assignee), waits for confirmation, then calls `create_finding_tool`.
+    The assistant proposes the finding (title, body, assessment ID, assignee), waits for confirmation, then calls `mutate(entity="finding", action="create", data={…, "confirm": true})`.
   </Accordion>
 
   <Accordion title="Update a vendor's risk tier" icon="arrow-up-right-dots">
     > Update the risk tier of vendor Globex to Tier 1.
 
-    The assistant proposes the change to the vendor status, confirms, then calls `update_vendor_tool` with the relevant status ID.
+    The assistant proposes the change to the vendor status, confirms, then calls `mutate(entity="vendor", action="update", data={…, "confirm": true})` with the relevant status ID.
   </Accordion>
 
   <Accordion title="Log a radar event for a vendor" icon="satellite-dish">
@@ -259,3 +259,36 @@ The full intake request runs in conversation. You don't need to say "intake" for
     The assistant lists reassessments via `query_radar(kind="reassessments")` to check for an existing one, then proposes a new reassessment (radar event, vendors, optional plan) and calls `mutate(entity="reassessment", action="create", data={..., "confirm": true})`. This never opens a case.
   </Accordion>
 </AccordionGroup>
+## Tuning the AI
+
+<AccordionGroup>
+  <Accordion title="Find controls that flag too often" defaultOpen icon="chart-mixed">
+    > Which of our controls raise issues most often? I think some are misfiring.
+
+    The assistant calls `get_report(report_name="control_flag_rates")` to rank controls by issue-flag rate across recent assessments, with a volume floor so a control evaluated twice doesn't top the list. Pass `format='csv'` if you want it in a spreadsheet.
+  </Accordion>
+
+  <Accordion title="Clear false positives on one assessment" icon="check-double">
+    > Go through the flagged issues on assessment cbassmt\_abc123 with me and clear the ones that aren't real.
+
+    The assistant walks each flagged evaluation with its evidence, and for the ones you clear calls `mutate(entity="eval", action="update", data={..., "is_issue": false, "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Fix the control so it stops misfiring" icon="sliders">
+    > That control keeps flagging vendors who do have MFA. Rewrite its guidance.
+
+    The assistant proposes new expectation, evaluation instruction, or evidence requirement text, confirms, then calls `mutate(entity="control", action="update", data={..., "confirm": true})`. Material edits create a new version rather than overwriting the old one. Re-run the analysis with `mutate(entity="assessment", action="rerun", ...)` to re-evaluate against the new guidance.
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Canned prompts" icon="wand-magic-sparkles" href="/mcp/prompts">
+    Nineteen scripted workflows you can invoke by name, including `weekly_briefing`, `submit_intake_request`, and `tune_control_guidance`.
+  </Card>
+
+  <Card title="Tool reference" icon="screwdriver-wrench" href="/mcp/tool-reference">
+    Every route these prompts resolve to, and the parameters each accepts.
+  </Card>
+</CardGroup>
