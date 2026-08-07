@@ -1,6 +1,6 @@
 ---
-title: "Import clause sets from a spreadsheet"
-description: "Build a clause set in Excel and upload it: the workbook format, every column explained, what happens on re-upload, and how to read the import result."
+title: "Import and export clause sets as spreadsheets"
+description: "Build a clause set in Excel and upload it, or export one back out: the workbook format, every column explained, what happens on re-upload, and how to read the import result."
 icon: "file-import"
 hidden: true
 ---
@@ -162,6 +162,35 @@ Imported clause sets are created **active**, so they're immediately available to
   </Step>
 </Steps>
 
+## Export a clause set
+
+The same workbook works in both directions. On **Configuration → Clause Sets**, select a set, open the **⋯** menu on the right of its header, and choose **Export to Spreadsheet**. You get an `.xlsx` file named after the set — `fn-master-agreement.xlsx` — with the same three sheets a template download has, and one row per clause.
+
+The exported file is a valid import file. That is the point of it:
+
+<Steps>
+  <Step title="Branch a playbook">
+    Export a set, change the **Clause Set** column to a new name, and import it. You get a second set with the same clauses — a regional variant, a stricter tier for a critical vendor, a draft you can edit without touching the live set.
+  </Step>
+  <Step title="Review it away from the app">
+    Send the workbook to counsel who don't have a Coverbase login. Every tier of language is in the file, in the columns they already know how to read.
+  </Step>
+  <Step title="Keep a copy">
+    A point-in-time snapshot of what your standard said, in a format that outlives any one tool.
+  </Step>
+</Steps>
+
+<Warning>
+  **Export is not an edit-and-put-back loop.** Re-importing an exported file into the *same* clause set does nothing: every Identifier already exists, so every row comes back as "already existed". That's the same rule that protects you from a stale re-upload, and it applies here too. To change a clause that is already in Coverbase, edit it in the clause detail view, where the change is versioned.
+</Warning>
+
+Two things about the file's contents are worth knowing:
+
+- **Only current, non-archived clauses are included.** Archived clauses and superseded versions are left out, because importing them back would recreate them as new clauses.
+- **Variant columns are sized to the set.** A set whose widest clause has five tiers exports five variant slots; a set where every clause has one tier exports one. Clauses with fewer tiers leave the extra slots blank.
+
+Clause text longer than 32,000 characters is truncated in the export, marked with `… [truncated]`, because Excel refuses to open a file with a larger cell. Nothing in Coverbase is changed — but don't re-import a file that shows that marker without restoring the full text first.
+
 ## Troubleshooting
 
 | What you see | What it means |
@@ -174,3 +203,5 @@ Imported clause sets are created **active**, so they're immediately available to
 | Every row says "already existed" | The clause set name matched a set you'd already imported into. Expected on a re-upload; check the set contents before assuming it failed. |
 | Two clause sets with almost the same name | Trailing spaces or a rename. Names are matched exactly (ignoring case), so `FN Master Agreement ` and `FN Master Agreement` are different sets. |
 | A clause imported but never matches during review | Usually empty Guidance, or Applicable Component Types scoped to a component that isn't in the contract. Clear the component types to let it apply everywhere and re-run. |
+| An exported file imports as all "already existed" | You imported it back into the set it came from. Change the **Clause Set** column to a new name first — export branches a set, it doesn't edit one. |
+| An exported clause ends in `… [truncated]` | The clause text was over Excel's 32,000-character cell limit. The full text is intact in Coverbase; restore it in the file before re-importing. |
