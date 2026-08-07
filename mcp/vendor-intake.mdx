@@ -1,0 +1,157 @@
+---
+title: "Vendor intake in chat"
+description: "File a complete vendor intake request through an AI assistant: identity confirmation, alternatives, pre-qualification, and the inherent risk questionnaire, without opening the portal."
+icon: "inbox-in"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The vendor intake request a requester normally fills in through the browser portal can be run end to end in conversation. The assistant opens the request, researches the vendor, confirms you have the right company, shows you what you already own that might do the job, runs the screening your org configured, walks the inherent risk questionnaire with you, and submits it to your review queue.
+
+The result is the same intake session (`cbintksn_...`) the portal produces. It lands in the same **Vendor Intake** queue, carries the same questionnaire answers, and waits on the same reviewer.
+
+<Note>
+  Intake is one of three ways into the same process. The [Intake API](/api-reference/intake) is for embedding intake in another system, the portal is for a requester at a browser, and this page is for chat. All three produce the same session and the same review.
+</Note>
+
+## Starting one
+
+You don't need to know the word "intake". The assistant recognizes the intent from ordinary phrasing:
+
+- "I want to add a new vendor, Marqeta."
+- "I want to start using PostHog."
+- "We're onboarding Datadog."
+- "Can we buy this? My team needs it for load testing."
+- "Run due diligence on Acme."
+- "Is Snowflake approved?"
+
+That last one resolves first: the assistant looks the vendor up, and if there's no approved record, offers to start the intake rather than answering "no" and stopping.
+
+<Warning>
+  **A new vendor request never becomes a bare vendor record.** Creating a vendor directly would leave a row in your registry with no due diligence attached to it, and a duplicate to clean up later. The assistant routes these to intake instead. If you genuinely want a record with no diligence, say so explicitly, and the assistant will tell you what you're giving up before it creates one.
+</Warning>
+
+## What the assistant does
+
+<Steps>
+  <Step title="Opens the request">
+    From the vendor name alone. You are not interrogated for a use case first, because the assistant can offer you real choices once it has researched the vendor. If the name matches vendors you already have, it shows you the candidates and asks which one, rather than guessing or silently creating a new vendor.
+  </Step>
+
+  <Step title="Reads your portal configuration">
+    Before running anything. Your intake portal decides which steps exist, and the assistant reads that first so a step your org turned off is never run in the first place. See [Your configuration is the script](#your-configuration-is-the-script).
+  </Step>
+
+  <Step title="Researches the vendor, then confirms it with you">
+    What the company does, its website, its headquarters location, its trust center, and the match confidence. You get that profile and confirm it's the right company before anything else happens. Two vendors called Acme is the ordinary case, not the edge case, and a request filed against the wrong one wastes a full review cycle.
+  </Step>
+
+  <Step title="Shows you what else could serve the need">
+    Existing vendors in your portfolio that do the same job, prior relationships with this vendor, and alternatives found on the web, to the extent your portal enables each. If something already approved covers this, you're told before you commit, not after the request is filed. Catching the duplicate purchase is what intake is for.
+  </Step>
+
+  <Step title="Offers use cases and services as menus">
+    Not as blank questions. You get a numbered list of what this vendor is actually bought for, drawn from the research, and another of the candidate services in scope. Every menu takes an answer that isn't on it, so you're never forced into a choice that doesn't fit.
+  </Step>
+
+  <Step title="Runs screening as a step, not a question">
+    Pre-qualification (financial stability, security posture, sanctions) and the duplicate check run as part of the flow, and the assistant reports what came back. It still asks your go-ahead before each write. The difference is that it tells you what happens next instead of asking whether to bother. Only a *failed* screen is handed back to you as a decision.
+  </Step>
+
+  <Step title="Drafts the questionnaire answers">
+    Coverbase's AI answers what it can from the context you gave and public sources, the same background process the web intake uses. This takes a moment; the assistant waits for it.
+  </Step>
+
+  <Step title="Walks the questionnaire with you, one question at a time">
+    Each drafted answer arrives marked **AI draft, needs confirmation**, with the reasoning behind it. You accept, correct, or replace it. The questionnaire is not optional and the assistant won't offer to skip it; if you stop partway, it tells you the request stays incomplete.
+  </Step>
+
+  <Step title="Submits for review">
+    Which fails if a required question is still unanswered, and moves the request to pending review.
+  </Step>
+</Steps>
+
+## Submitting is not approval
+
+<Warning>
+  Filing an intake request is not permission to buy, sign, or deploy anything.
+</Warning>
+
+At the end of the flow a vendor record may exist in Coverbase, but it sits in **Created** status. It is not an approved vendor. Your security or due diligence team reviews the submitted request and decides it, and only that decision authorizes use.
+
+A well-behaved assistant says this explicitly when it closes out the flow rather than leaving you to infer it from a green checkmark. If yours ends an intake in a way that reads like approval, that's worth reporting to us.
+
+## Your configuration is the script
+
+The steps above are not hardcoded. Your organization's intake portal decides which of them exist, and the assistant reads that configuration before it runs anything.
+
+| Portal ask | What it enables in chat |
+| ---------- | ----------------------- |
+| **Vendor search** | Vendor matching, existing-vendor alternatives, web alternatives, and prior assessment history. Each is separately switchable. |
+| **Pre-qualification** | Financial, security, and sanctions screening. Each check is separately switchable. |
+| **Questionnaire** | The inherent risk questionnaire attached to the intake. |
+| **Document upload** | Attaching supporting evidence to the request. |
+
+An ask you removed means the step is off, and the assistant will not reintroduce it in conversation. If your org turned off web alternatives, or prior assessment history, or pre-qualification, chat honours that. This matters because a chat interface is otherwise easy to talk into doing extra work you deliberately disabled.
+
+<Tip>
+  If the assistant runs a step you don't expect, ask it what your portal configuration reports. It can read the enabled and disabled steps back to you directly.
+</Tip>
+
+## Every write asks first
+
+Opening the request, recording an answer, running pre-qualification, and submitting are all writes, and every one of them requires your explicit approval before it executes. The assistant proposes the change in chat and waits.
+
+This is the same human-in-the-loop rule that applies to [every write tool](/mcp/overview) on the MCP server. Intake is not exempt from it, and the guided flow doesn't turn into an autonomous one.
+
+## What still needs the app
+
+Two question types have no sensible chat representation and report themselves as app-only:
+
+- **Contact questions**, whose answer is a structured person record.
+- **Document-upload question types**, which need a file picker.
+
+The assistant gives you a deep link to finish those in Coverbase. Everything else completes in the conversation.
+
+## Reviewing what comes in
+
+The other half of intake is the reviewer's, and it also runs in chat. The assistant can walk your pending-review queue, summarize each submission with its enrichment and screening results, and approve, reject, or request follow-up, each with confirmation.
+
+Reviewers who prefer the dashboard lose nothing: sessions filed through chat appear in the **Vendor Intake** queue exactly as portal submissions do.
+
+## Prompts
+
+The server ships canned prompts that script these flows, so you can invoke one instead of describing what you want:
+
+| Prompt | What it does |
+| ------ | ------------ |
+| `submit_intake_request` | Files a new vendor intake request end to end. |
+| `triage_intake_queue` | Walks every pending-review intake session. |
+| `review_intake` | Approves, rejects, or requests follow-up on one session. |
+| `onboard_new_vendor` | Adds a bare vendor record with no due diligence. Only when you explicitly want to skip intake. |
+
+<Card title="Example prompts" icon="comments" href="/mcp/example-prompts#vendor-intake">
+  Realistic phrasing for each of these, and what the assistant does with it.
+</Card>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Intake API" icon="code" href="/api-reference/intake">
+    The REST path: create sessions programmatically and poll for generated answers. For embedding intake in procurement or ticketing.
+  </Card>
+
+  <Card title="Autonomous Intake" icon="inbox-in" href="/products/autonomous-intake">
+    The product: classification, risk stripe selection, and downstream workflow orchestration.
+  </Card>
+
+  <Card title="Connecting your client" icon="plug" href="/mcp/connecting">
+    Set up Claude, Cursor, VS Code, or any MCP client against the Coverbase server.
+  </Card>
+
+  <Card title="Permissions" icon="lock" href="/mcp/permissions">
+    What the connected assistant can see and do, and how that maps to your Coverbase role.
+  </Card>
+</CardGroup>

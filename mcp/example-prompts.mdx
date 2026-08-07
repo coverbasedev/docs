@@ -10,6 +10,86 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Use these as inspiration, not a script. The patterns below cover the workflows most customers run on a daily and weekly basis.
 
+## Vendor intake
+
+The full intake request runs in conversation. You don't need to say "intake" for any of these; the assistant recognizes the intent. See [Vendor intake in chat](/mcp/vendor-intake) for the whole flow.
+
+<AccordionGroup>
+  <Accordion title="Request a new vendor" defaultOpen icon="inbox-in">
+    > I want to start using PostHog for product analytics.
+
+    The assistant opens an intake session, reads your portal configuration to see which steps your org enabled, researches PostHog and confirms with you that it has the right company, offers a menu of concrete use cases and in-scope services, surfaces any existing vendor of yours that already covers analytics, runs the screening your portal configures, then walks the inherent risk questionnaire with you one question at a time. Every write asks first.
+  </Accordion>
+
+  <Accordion title="Request without naming the vendor" icon="cart-shopping">
+    > My team needs a load testing tool and we're looking at k6. Can we buy it?
+
+    Same flow. "Can we buy this" and "my team needs" are intake requests, not questions about policy. The assistant starts the request rather than answering in the abstract.
+  </Accordion>
+
+  <Accordion title="Check approval status, then file if needed" icon="circle-question">
+    > Is Snowflake approved for us to use?
+
+    The assistant resolves the name to a vendor, checks its onboarding status, and reports it. If there's no approved record, it offers to start the intake rather than stopping at "no".
+  </Accordion>
+
+  <Accordion title="See what you already own before committing" icon="clone">
+    > We're about to sign with Mixpanel. Do we already have something that does this?
+
+    Vendor matching ranks your existing vendors against the request and surfaces prior relationships, so a duplicate purchase gets caught before the request is filed rather than during review. Web alternatives appear too, if your portal enables them.
+  </Accordion>
+
+  <Accordion title="Correct a wrong vendor match" icon="user-xmark">
+    > That's the wrong Acme. I mean the payments one, acme.io, not the logistics company.
+
+    The assistant takes the correction and re-runs matching or picks another candidate. An unconfirmed match is never carried forward into the request.
+  </Accordion>
+
+  <Accordion title="Pick up an intake you left half-finished" icon="clock-rotate-left">
+    > Where did my Datadog request get to? Let's finish it.
+
+    The assistant finds the open session, reports which questions are still unanswered or still carrying unconfirmed AI drafts, and resumes the walkthrough there.
+  </Accordion>
+
+  <Accordion title="Ask what your org's intake actually runs" icon="sliders">
+    > What steps does our intake process include?
+
+    The assistant reads your portal configuration and reports which steps are enabled and which your org turned off. Useful when you're not sure whether pre-qualification or web alternatives are part of your flow.
+  </Accordion>
+
+  <Accordion title="Add a vendor with no due diligence" icon="triangle-exclamation">
+    > Just add Figma as a vendor record. Skip the intake questionnaire, we already did the review offline.
+
+    The only path to a bare vendor record. The assistant states plainly that the vendor will carry no due diligence, waits for you to confirm that, and only then creates it. Requests that don't explicitly ask to skip intake go through the full flow instead.
+  </Accordion>
+</AccordionGroup>
+
+### Reviewing what comes in
+
+<AccordionGroup>
+  <Accordion title="Work the pending review queue" defaultOpen icon="list-check">
+    > Walk me through everything waiting in the intake queue.
+
+    The assistant lists pending-review sessions and takes them one at a time: the requester's use case and services, the enrichment and duplicate readout, the pre-qualification verdict per criterion, and the questionnaire answers with their inherent risk score.
+  </Accordion>
+
+  <Accordion title="Decide one submission" icon="gavel">
+    > Review the intake request for Marqeta and tell me whether anything looks off.
+
+    The assistant pulls the full submission, flags weak or inconsistent answers, and proposes approve, reject, or request-follow-up. The decision is a write, so it waits for your confirmation.
+  </Accordion>
+
+  <Accordion title="Send a request back for more detail" icon="rotate-left">
+    > Their data-types answer is too vague. Send it back and ask what customer PII actually flows to them.
+
+    The assistant proposes the follow-up request with your question attached, confirms, and returns the session to the requester.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Submitting an intake request is not approval. At the end of the requester flow a vendor record may exist, but it sits in **Created** status and nobody should start using the vendor until a reviewer decides the request.
+</Warning>
+
 ## Portfolio and subprocessor analysis
 
 <AccordionGroup>
