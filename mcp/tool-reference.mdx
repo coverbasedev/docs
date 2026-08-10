@@ -41,7 +41,7 @@ Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_ter
 
 ### `query_assessments`
 
-Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, `query`, `control_set_id`, `issues_only`, `unresolved_only`, `limit`.
+Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, `query`, `control_set_id`, `issues_only`, `unresolved_only`, `limit`, `full_text`, `analysis_offset`.
 
 | `kind` | Returns |
 | ------ | ------- |
@@ -49,9 +49,11 @@ Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, 
 | `detail` | Full assessment: control evaluations, findings with titles, people, documents. |
 | `details_legacy` | The previous detail shape, for compatibility. |
 | `evals` | Per-control evaluation results. Filterable to issues only or unresolved only. |
-| `eval_detail` | One control evaluation in full. |
+| `eval_detail` | One control evaluation in full, including the AI's complete reasoning. |
 | `plans` | Assessment plans. |
 | `follow_ups` | Follow-ups attached to an assessment. |
+
+Reading a long AI analysis: `eval_detail` renders the AI's reasoning whole up to a generous cap. If an analysis is longer than that, the response says so and names the follow-up call that returns the rest — pass `full_text=true` for every section at maximum length, or `analysis_offset` to page through the analysis from a given character. A capped response always announces itself, so a partial analysis is never presented as the complete reasoning.
 
 ### `query_findings`
 
