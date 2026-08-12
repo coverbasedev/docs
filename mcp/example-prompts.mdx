@@ -134,6 +134,34 @@ The full intake request runs in conversation. You don't need to say "intake" for
   </Accordion>
 </AccordionGroup>
 
+## Vendor intelligence
+
+<AccordionGroup>
+  <Accordion title="Is this company real?" defaultOpen icon="building-columns">
+    > Is Acme Corp a real registered company? Show me the legal entity and where you got it from.
+
+    The assistant calls `query_vendors(kind="company_registration")`, which returns the validated corporate identity from GLEIF, OpenCorporates, and SEC EDGAR — official registered name, status, jurisdiction, and identifiers — with a link to each register's record. If nothing matched confidently, it says so rather than offering the nearest guess.
+  </Accordion>
+
+  <Accordion title="Financial health check before renewal" icon="chart-line">
+    > What's the financial health score for Acme Corp, and has it moved in the last year?
+
+    The assistant calls `query_vendors(kind="financial_health")` and reports the score, risk band, **confidence tier**, pillar breakdown, and 3- and 12-month movement, along with the sources behind each figure and any that were unavailable.
+  </Accordion>
+
+  <Accordion title="Comparing vendors on financial health" icon="scale-balanced">
+    > Which of my tier-1 vendors are in the High or Very High financial risk bands?
+
+    The assistant resolves the vendor set, then pulls `query_vendors(kind="financial_health")` per vendor. Ask it to group by confidence tier: a Tier C score is inferred from signals and a Tier A score is computed from filed statements, so the two are not directly comparable and a ranking that mixes them is misleading.
+  </Accordion>
+
+  <Accordion title="Checking the entity you are contracting with" icon="file-signature">
+    > Is the entity on the Acme contract the same one that's registered and in good standing?
+
+    The assistant pulls `query_vendors(kind="company_registration")` for the registered legal name and status and compares it against the counterparty on the contract. A mismatch between the contracting entity and the registered entity is a real finding, not a formatting difference.
+  </Accordion>
+</AccordionGroup>
+
 ## Program health and continuous monitoring
 
 <AccordionGroup>
