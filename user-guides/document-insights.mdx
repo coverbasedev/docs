@@ -63,8 +63,10 @@ Every extracted value arrives with its receipts:
 2. **On demand, per document.** Open a document's Insights tab and choose **Refresh all**. Use this after you add or reword an insight, since existing documents were processed against the old definition.
 3. **On demand, per insight.** Re-extract a single insight from the row's actions when you've just tightened its description.
 
+4. **In bulk, across history.** A new insight starts empty on every document you already hold. **Configuration → Document Insights → Document types** shows exactly how many, and a backfill re-extracts them. See [Backfilling history](#backfilling-history).
+
 <Warning>
-  Adding a new insight does not backfill your existing documents. New definitions apply to documents processed after the change. Re-extract the handful of documents you care about, or accept that the field fills in going forward.
+  Adding a new insight does not fill your existing documents on its own. Until you run a backfill, the field only populates on documents processed after the change.
 </Warning>
 
 ---
@@ -92,8 +94,10 @@ Go to **Configuration → Document Insights**. You need the org-settings update 
   <Step title="Scope it to document types">
     Choose the document types this insight applies to, or inherit them from the group. **Leaving the list empty applies the insight to every document type** — rarely what you want, and it means Coverbase will hunt for a liability cap inside a SOC 2 report.
   </Step>
-  <Step title="Test it on a real document before you roll it out">
-    Open a representative document, go to its **Insights** tab, and use **Add insight** there. That flow previews the extraction live against the open document so you can see the value, the quote, and the confidence before committing the definition. Iterate on the description until it holds up on two or three real documents, then save.
+  <Step title="Test it on real documents before you roll it out">
+    Use **Test on documents** in the insight editor. It runs your definition against up to five of your most recent matching documents and shows the value, the quote, the page, and the confidence for each — without saving anything. Iterate on the description until it holds up, then save.
+
+    Nobody should discover an ambiguous description by backfilling three thousand documents.
   </Step>
 </Steps>
 
@@ -295,6 +299,131 @@ Scope to SLA, MSA, AI addendum.
 
 ---
 
+## Auditing coverage
+
+Writing an insight is the easy half. Knowing whether it worked across your whole corpus is the half that decides whether anyone trusts the field.
+
+**Configuration → Document Insights** answers that. Three tabs over the same data:
+
+<AccordionGroup>
+  <Accordion title="Insights — is each definition healthy?" icon="list-check" defaultOpen>
+    Your library, with coverage on every row: how many eligible documents carry a value, how many of those had verified evidence, and how many are waiting for a human to accept an unverified answer. Select several rows to enable, disable, rescope, regroup, archive, or backfill them in one action.
+  </Accordion>
+
+  <Accordion title="Document types — is this type well covered?" icon="table-cells">
+    A matrix: document types down the side, insights across the top, a fill rate in every cell. This is the view that answers "what do we actually extract from an MSA, and how well?" — a question the old settings page could not answer at all.
+
+    An em-dash means the insight isn't scoped to that document type. A percentage means it is.
+  </Accordion>
+
+  <Accordion title="Extractions — is this specific value right?" icon="magnifying-glass">
+    Every extraction in the org, filterable by insight, document type, confidence, whether the evidence was verified, and whether the value was AI-extracted or hand-corrected.
+
+    Filter to low confidence and unverified evidence and you have a review queue. Click any row to open that document with the Insights tab already scrolled to the value in question — you never leave the list to check a value.
+  </Accordion>
+</AccordionGroup>
+
+### Two kinds of blank
+
+A missing value means one of two opposite things, and telling them apart is most of what makes this useful:
+
+| What you see | What it means | What to do |
+| --- | --- | --- |
+| **Attempted, empty** | Extraction ran and found nothing | Read the values on the Extractions tab. Usually the description is ambiguous, or the mode is wrong, or the clause genuinely isn't in the vendor's paper |
+| **Stale** (amber badge) | The insight was created after the document was last processed, so it has never run against it | Backfill. The badge is the button |
+
+<Tip>
+  A brand-new insight shows 100% stale and 0% filled. That is not a broken definition — it is a definition that has not run yet. Backfill first, *then* judge the fill rate.
+</Tip>
+
+---
+
+## Backfilling history
+
+A backfill re-extracts documents you already hold, so a new or reworded insight applies to your whole corpus instead of only to what arrives next.
+
+<Steps>
+  <Step title="Scope it">
+    Pick the insights, and optionally narrow by document type or vendor. Starting from a stale badge in the coverage matrix pre-fills the scope for you.
+  </Step>
+  <Step title="Choose what to re-run">
+    **Never attempted** (the default) only touches documents the insight has never run against. **Missing only** also re-runs documents that were attempted and came back empty — use this after rewording a description. **All** re-runs everything, replacing existing AI values.
+  </Step>
+  <Step title="Read the estimate">
+    Before you confirm, Coverbase tells you how many documents it will process and roughly how many model calls that costs. Extraction batches every matching insight into one pass per document, so adding insights to a backfill is close to free — adding documents is what costs.
+  </Step>
+  <Step title="Watch it run">
+    A progress bar tracks dispatch. Large backfills run for a while; you can leave the page, and you can cancel, which stops further documents being queued.
+  </Step>
+</Steps>
+
+<Note>
+  A backfill never overwrites a value someone corrected by hand, in any mode. Manual values are the one thing automation will not take back.
+</Note>
+
+<Warning>
+  Backfills are capped per run and per day. If a scope is too large, narrow it by document type or vendor and run it in batches — the cap exists so a single click can't spend an unbounded amount on model calls.
+</Warning>
+
+---
+
+## Retiring an insight
+
+Two different actions, easy to confuse, so the distinction is worth stating plainly:
+
+| Action | What happens | Reversible |
+| --- | --- | --- |
+| **Disable** | Stops extracting. The insight stays in your working set and its values stay visible | Yes |
+| **Archive** | Retires the definition. Stops extracting, hides it from documents, keeps every value ever extracted | Yes — restore it any time |
+| **Delete** | Permanently removes the definition **and every value ever extracted for it**, including hand corrections | **No** |
+
+<Warning>
+  Delete is not the safe default. It is only available on an already-archived insight, and it makes you confirm the exact number of extracted values it will destroy. Archive is almost always what you want.
+</Warning>
+
+---
+
+## Promoting an insight to a custom field
+
+An insight lives on a document. Your team works from vendor, contract, and assessment records. Promotion carries the value across.
+
+<Steps>
+  <Step title="Open the insight and choose Promote to custom field">
+    Link an existing custom field of a compatible type, or create one from the insight's name and type.
+
+    Text fills Text, Number fills Number, Date fills Date, Yes/No fills Yes/No. Select and multi-select aren't supported yet.
+  </Step>
+  <Step title="Set the gates">
+    **Require verified evidence** (on by default) skips answers whose quote could not be located in the source. **Minimum confidence** skips anything below the bar. Together these decide how conservative the promotion is.
+  </Step>
+  <Step title="Choose what happens when the field already has a value">
+    **Never overwrite** only ever fills an empty field. **Fill if empty** also refreshes a value this same insight wrote before. **Latest document wins** additionally replaces values written from older documents — the right choice for a vendor-level field fed by many documents.
+  </Step>
+  <Step title="Backfill the field">
+    Leave the backfill box checked and Coverbase populates the field across every document you already hold.
+  </Step>
+</Steps>
+
+<Note>
+  A promoted value keeps a link to the document, page, and verbatim quote it came from, so a field on a contract record can show a reviewer *why* it holds that value.
+</Note>
+
+<Warning>
+  Promotion never overwrites a value a person typed — not on backfill, not on a later upload, under any conflict policy.
+</Warning>
+
+---
+
+## Sharing a library between orgs
+
+**Export** on the Document Insights module produces a JSON file of your definitions: names, descriptions, types, modes, and document-type scope. No values, no ids.
+
+**Import** replays that file into another org, matching on the insight's stable key. Existing definitions are skipped unless you explicitly opt into overwriting them, so reimporting a shared library never silently reverts local prompt tuning.
+
+This is also the easiest way to review an insight library in a pull request.
+
+---
+
 ## Reviewing and correcting values
 
 The AI drafts; you decide. Every value is editable, and your edit sticks.
@@ -320,11 +449,12 @@ The AI drafts; you decide. Every value is editable, and your edit sticks.
 
 <AccordionGroup>
   <Accordion title="The insight comes back empty on documents that clearly contain the answer" icon="circle-question" defaultOpen>
-    Almost always one of three things:
+    Almost always one of four things:
 
-    1. **Wrong mode.** A Yes/No or an interpreted value set to Extract will return empty rather than guess. Switch to Synthesize.
-    2. **Wrong document-type scope.** If the insight isn't scoped to the type that document was classified as, it never ran. Check the document's type on its detail panel, and check the insight's document types (or its group's).
-    3. **The description names the wrong thing.** The model looked for what you described and didn't find it. Add the aliases the clause actually hides under.
+    1. **It never ran on that document.** If the insight was created after the document was processed, it has never been attempted there. Check the coverage matrix — a *stale* badge means backfill, not a broken definition.
+    2. **Wrong mode.** A Yes/No or an interpreted value set to Extract will return empty rather than guess. Switch to Synthesize.
+    3. **Wrong document-type scope.** If the insight isn't scoped to the type that document was classified as, it never ran. Check the document's type on its detail panel, and check the insight's document types (or its group's).
+    4. **The description names the wrong thing.** The model looked for what you described and didn't find it. Add the aliases the clause actually hides under.
   </Accordion>
   <Accordion title="A Yes/No insight keeps failing" icon="toggle-off">
     Set it to **Synthesize**. In Extract mode a boolean can only be populated from literal "Yes"/"No"/"True"/"False" text in the document, which contracts don't contain.
