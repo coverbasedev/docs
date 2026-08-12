@@ -655,10 +655,10 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 <ResponseField name="status" type="string | null">Generation status: `null`, `"pending"`, `"completed"`, or `"failed"` (see the [status table](#the-vendor-fact-sheet) above).</ResponseField>
 <ResponseField name="progress" type="string[]">Section names completed so far in the in-progress / most recent run. Empty array if none.</ResponseField>
 <ResponseField name="generated_at" type="integer | null">Unix timestamp (seconds) the fact sheet was last updated. `null` if never generated.</ResponseField>
-<ResponseField name="company_profile" type="object | null">Company profile (name, website, industry, HQ, founding year, headcount, revenue, etc.). `null` until generated.</ResponseField>
+<ResponseField name="company_profile" type="object | null">Company profile (name, website, industry, HQ, founding year, headcount, revenue, etc.). Includes `registry_validation` — the validated corporate identity, with a citation per contributing register. `null` until generated.</ResponseField>
 <ResponseField name="products" type="object | null">Known products and offerings. `null` until generated.</ResponseField>
 <ResponseField name="public_perception" type="object | null">News mentions, third-party reviews (BBB, Trustpilot, CFPB), and competitors. `null` until generated.</ResponseField>
-<ResponseField name="financials" type="object | null">Public/private status, market cap, ticker/exchange, funding, and transactions. `null` until generated.</ResponseField>
+<ResponseField name="financials" type="object | null">Public/private status, market cap, ticker/exchange, funding, and transactions. Includes `financial_health` — the Coverbase Financial Health Score — when your organization has that feature enabled. `null` until generated.</ResponseField>
 <ResponseField name="people" type="object | null">Leadership and headcount estimate. `null` until generated.</ResponseField>
 <ResponseField name="compliance_legal" type="object | null">Legal actions, enforcement actions, and data-privacy certifications. `null` until generated.</ResponseField>
 <ResponseField name="security_posture" type="object | null">Trust center URL, security contact, and known security incidents. `null` until generated.</ResponseField>
@@ -666,6 +666,26 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 <Note>
   Section objects are best-effort and their internal shape may evolve as Coverbase improves enrichment. Treat the presence of each field defensively; any individual section can be `null` even when `status` is `"completed"` if no data was found for it.
 </Note>
+
+#### Vendor intelligence sections
+
+Two sections carry outside-in intelligence assembled from registries of record rather than from a language model. Both cite their sources. See [Vendor Intelligence](/products/vendor-intelligence) for what each field means.
+
+<ResponseField name="company_profile.registry_validation" type="object | null">
+  Validated corporate identity from GLEIF, OpenCorporates, and SEC EDGAR: `official_name`, `registration_status`, `jurisdiction`, `incorporation_date`, addresses, and the identifiers `lei`, `duns`, `company_number`, and `cik`. `is_validated` is `true` only when a register matched with high confidence; `match_decision` and `match_confidence` expose the match quality. `sources` carries one entry per contributing register with its `identifier` and a `url` to the record.
+
+  Present for every organization. `null` until a lookup has run.
+</ResponseField>
+
+<ResponseField name="financials.financial_health" type="object | null">
+  The Coverbase Financial Health Score. `scorecard` holds `score` (0-100), `band` (`very_high` through `very_low`), `confidence_tier` (`A`, `B`, or `C`), `as_of`, the `pillars` breakdown, `vitals`, `peer_group` and `peer_percentile`, `events`, `overrides_applied`, `provenance` (source → as-of date), and `unavailable_sources`. `history` carries prior scores for trend.
+
+  Returned only when your organization has the Financial Health Score enabled; `null` otherwise.
+</ResponseField>
+
+<Warning>
+  Scores are only directly comparable within the same `confidence_tier`. Tier A is computed from filed financial statements; Tier C is inferred from funding, headcount, and corporate-standing signals. Do not rank vendors across tiers on `score` alone.
+</Warning>
 
 #### Error responses
 

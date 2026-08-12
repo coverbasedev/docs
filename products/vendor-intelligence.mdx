@@ -1,0 +1,139 @@
+---
+title: "Vendor Intelligence"
+description: "Corporate identity and financial health for every vendor, from authoritative sources, with a citation on every fact."
+icon: "building-columns"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Vendor Intelligence answers two questions about a company without asking the company anything: **is this corporation real and in good standing**, and **is it financially sound enough to depend on**. Both answers are assembled from registries of record and regulatory filings, and every figure on screen names the source it came from.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Corporate registration validation" icon="building-columns">
+    Confirms the legal entity behind a vendor against GLEIF, OpenCorporates, and SEC EDGAR: official registered name, status, jurisdiction, incorporation date, addresses, and identifiers (LEI, DUNS, company number, SEC CIK).
+  </Card>
+
+  <Card title="Coverbase Financial Health Score" icon="chart-line">
+    A 0-100 score with five risk bands and a directional trend, computed from filed financial statements where they exist and from funding, headcount, and corporate-standing signals where they do not.
+  </Card>
+
+  <Card title="Confidence tiers" icon="layer-group">
+    Every score is published with the class of data behind it, so an inferred number is never presented with the authority of an audited one.
+  </Card>
+
+  <Card title="Citations on every fact" icon="link">
+    Each register is named with the identifier it matched on and a link to the record. A reviewer can verify a claim at its source instead of taking the platform's word for it.
+  </Card>
+</CardGroup>
+
+## Corporate registration
+
+Coverbase searches each register by company name, scores every candidate against the vendor's name, and binds a record only on a high-confidence match. A short or ambiguous name (for example, "Meta") binds only when two independent registers agree on the same legal entity.
+
+When nothing matches confidently, the card shows **Needs review** rather than quietly picking the closest hit. That distinction matters: binding the wrong "Acme Holdings" is worse than returning nothing.
+
+| Source | What it establishes |
+| ------ | ------------------- |
+| **GLEIF** | Authoritative legal name, LEI, entity and registration status, jurisdiction, legal and headquarters addresses |
+| **OpenCorporates** | Company number, jurisdiction, incorporation date, current status, link to the source registry |
+| **SEC EDGAR** | US public-company validation: CIK, ticker, state of incorporation, SIC industry |
+| **Dun & Bradstreet** | DUNS number, where your organization has its own D&B entitlement |
+
+## Financial Health Score
+
+The score runs 0-100, where higher is healthier, and maps to five risk bands from Very High Risk to Very Low Risk. It is designed to land in the same mental model as a RapidRatings FHR, with a different acquisition model behind it: no supplier outreach, portfolio-wide coverage from day one, and a refresh on every fact-sheet run.
+
+### Confidence tiers
+
+The tier is the most important thing on the card. It is derived from the data that actually resolved — never declared — and it travels with the score everywhere the score goes.
+
+| Tier | Backing data | What it means |
+| ---- | ------------ | ------------- |
+| **A — Filed financials** | Financial statements the company filed with a regulator (SEC EDGAR XBRL) | The full ratio battery. Statement-grade. |
+| **B — Estimated financials** | Estimated revenue and EBITDA plus capital structure | Partial ratios computed on estimates. |
+| **C — Signals-based** | Funding, headcount, corporate standing, adverse events | Inferred. No financial statements were available. |
+
+<Warning>
+  Scores are only directly comparable **within** the same confidence tier. A Tier C 72 and a Tier A 72 are different claims about different evidence. Never rank a Tier A vendor against a Tier C vendor on score alone.
+</Warning>
+
+If a vendor's filings stop resolving, it drops to a lower tier and the card says so. It does not keep presenting a statement-grade number built on estimates.
+
+### What the card shows
+
+- **Score, risk band, and confidence tier**, with 3-month and 12-month movement
+- **Score breakdown** across five pillars — financial core, capital position, momentum, adverse events, corporate standing — each with the weight it carried
+- **Financial vitals**: revenue and growth, operating margin, current ratio, debt/EBITDA, interest coverage, free cash flow margin, estimated runway, total raised, headcount, last funding round
+- **Registered entity standing**: status, jurisdiction, and filing compliance
+- **Peer context**: the industry cohort the vendor was ranked inside and its percentile within it
+- **Score history**, plotted as discrete restatements rather than a smooth line, because each point is a separate computation
+- **Adverse events** with their date, review status, and a link to the source that reported each one
+- **Score overrides**, with the reason any cap or floor was applied
+- **Sources**, each with the date its data was true, plus the sources that were unavailable
+
+### Peer comparison
+
+A ratio only means something against a comparable set: 4x debt/EBITDA reads very differently at a utility than at a software company. Coverbase ranks each vendor inside its own SIC industry cohort, drawn from the population of filers that reported the same concept in the same period.
+
+When that cohort is too small to support a percentile, the score falls back to a wider group **and says so on the card**. A disclosed wide cohort is honest; an undisclosed one is misleading.
+
+### Adverse events
+
+Events that bear on financial health — bankruptcy filings, going-concern doubt, mass layoffs, auditor changes, delistings, CFO departures, down rounds, material impairments, regulatory actions, late filings — are weighted by severity and decay over time, so a two-year-old event does not weigh the same as last month's.
+
+Events awaiting human confirmation are labeled **Needs review**. Dismissed events stay on the record for audit but stop counting against the score.
+
+## Where it appears
+
+<CardGroup cols={2}>
+  <Card title="Vendor fact sheet" icon="file-lines">
+    Both the **Corporate Registration** and **Coverbase Financial Health Score** cards appear on a vendor's fact sheet, refreshed on the regular fact-sheet cadence.
+  </Card>
+
+  <Card title="Assessments" icon="clipboard-check">
+    Registry facts are supplied to control evaluations as authoritative evidence, ranked ahead of every web result. See [how evidence is sourced](#how-evidence-is-sourced).
+  </Card>
+
+  <Card title="Intake and inherent risk" icon="inbox">
+    Autofill and inherent-risk scoring consult the registers before searching the web, so a new vendor request is scored against its registered identity.
+  </Card>
+
+  <Card title="MCP" icon="robot" href="/mcp/tool-reference">
+    Ask conversationally: "What's the financial health score for Acme?" or "Is Acme a real registered company?"
+  </Card>
+</CardGroup>
+
+## How evidence is sourced
+
+A common assumption is that "web search" means handing a query to a search engine and reading the top results. That is not how Coverbase gathers evidence.
+
+<Steps>
+  <Step title="Registries of record are consulted first">
+    For any question about a company's identity, GLEIF, OpenCorporates, and SEC EDGAR are queried before any web crawl. Those facts enter as authoritative evidence in the prioritized bucket, ahead of every web result.
+  </Step>
+
+  <Step title="The register wins a conflict">
+    Where a registry and a web page disagree on a corporate fact, the model is instructed that the registry is correct. A register states a company's legal name and status as a matter of record; a search engine states whatever ranked well today.
+  </Step>
+
+  <Step title="Web results are graded before they can be cited">
+    Every candidate is classified for relevance to the specific control being evaluated **and** for publisher accountability — authoritative, reputable, or unreliable. Anything below the control set's minimum credibility is discarded, not merely ranked lower.
+  </Step>
+</Steps>
+
+A control set configured to require authoritative sources will not cite a blog post. It will report that it found nothing, which is the correct answer.
+
+## Availability
+
+Vendor Intelligence is rolling out progressively.
+
+- **Corporate registration validation** is populated for every organization on each fact-sheet refresh.
+- **Financial Health Score** and **registry-first retrieval** are enabled per organization. Contact your Coverbase representative to have them turned on.
+
+<Note>
+  Coverage is honest about its edges. SEC EDGAR covers roughly 7,000 US filers, so many private vendors score at Tier C. OpenCorporates coverage varies by jurisdiction. DUNS requires your own D&B entitlement. In every case the card names which sources were consulted and which were unavailable, rather than presenting a thinner answer as a complete one.
+</Note>
