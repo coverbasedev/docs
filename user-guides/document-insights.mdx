@@ -9,7 +9,7 @@ hidden: true
   This guide is part of the [User Guides](/user-guides/overview) collection. It pairs with the [Contract Guardian guide](/user-guides/contract-guardian), which covers clause sets and clause reviews. Insights are the *field-level* half of contract intelligence; clause review is the *language-level* half.
 </Info>
 
-A **document insight** is a field you want pulled out of every document of a given type. You define it once — a name, a description, a type, and a mode — and from then on Coverbase populates it automatically whenever a matching document is processed, with a page citation and a verbatim source quote attached to the value.
+A **document insight** is a field you want pulled out of every document of a given type. You define it once (a name, a description, a type, and a mode), and from then on Coverbase populates it automatically whenever a matching document is processed, with a page citation and a verbatim source quote attached to the value.
 
 Insights are not limited to contracts. Any document type can carry them: an insurance certificate's coverage limit, a SOC 2's audit period, a DPA's subprocessor notification window. Contracts are just where most teams start, because that's where the same fifteen questions get asked of every agreement.
 
@@ -37,7 +37,7 @@ Every extracted value arrives with its receipts:
 </CardGroup>
 
 <Note>
-  When a document genuinely doesn't contain the answer, the insight comes back empty rather than guessed. An empty insight is a finding, not a failure — it usually means the clause is missing from the vendor's paper.
+  When a document genuinely doesn't contain the answer, the insight comes back empty rather than guessed. An empty insight is a finding rather than a failure, and it usually means the clause is missing from the vendor's paper.
 </Note>
 
 ## Where insights show up
@@ -47,7 +47,7 @@ Every extracted value arrives with its receipts:
     Open any document and switch to the **Insights** tab. This is the full view: every insight configured for that document type, with values, confidence, source quotes, and page links. From here you can edit a value by hand, add a one-off insight, re-extract, or export the whole set to CSV.
   </Accordion>
   <Accordion title="On the contract record" icon="file-contract">
-    The **Overview** tab of a contract rolls up insights across every linked document, grouped by field. Insights with no extracted value are hidden here to cut noise — open the individual document to see the blanks.
+    The **Overview** tab of a contract rolls up insights across every linked document, grouped by field. Insights with no extracted value are hidden here to cut noise. Open the individual document to see the blanks.
   </Accordion>
   <Accordion title="Inside the contract AI summary" icon="sparkles">
     Extracted insights are fed to the model that writes the contract summary and populates the contract risk profile. Better insights produce a better summary, so the two improve together.
@@ -83,7 +83,7 @@ Go to **Configuration → Document Insights**. You need the org-settings update 
     **Insight name** is what reviewers see in the UI and in exports. Use the term your team actually says: *Liability cap*, *Governing law*, *Termination notice period*. The name is also the first thing the AI reads, so a vague name costs you accuracy.
   </Step>
   <Step title="Write the description">
-    This is the instruction. See [Writing descriptions that work](#writing-descriptions-that-work) below — it is worth more than every other setting combined.
+    This is the instruction. See [Writing descriptions that work](#writing-descriptions-that-work) below. It is worth more than every other setting combined.
   </Step>
   <Step title="Pick the type">
     **Text**, **Number**, **Date**, or **Yes/No**. The type controls how the value is stored, validated, sorted, and displayed. Choosing Number for a monetary field also unlocks the **Currency (USD)** display format.
@@ -92,10 +92,10 @@ Go to **Configuration → Document Insights**. You need the org-settings update 
     **Extract** or **Synthesize**. This is the decision the next section is entirely about.
   </Step>
   <Step title="Scope it to document types">
-    Choose the document types this insight applies to, or inherit them from the group. **Leaving the list empty applies the insight to every document type** — rarely what you want, and it means Coverbase will hunt for a liability cap inside a SOC 2 report.
+    Choose the document types this insight applies to, or inherit them from the group. **Leaving the list empty applies the insight to every document type**, which is rarely what you want: it means Coverbase will hunt for a liability cap inside a SOC 2 report.
   </Step>
   <Step title="Test it on real documents before you roll it out">
-    Use **Test on documents** in the insight editor. It runs your definition against up to five of your most recent matching documents and shows the value, the quote, the page, and the confidence for each — without saving anything. Iterate on the description until it holds up, then save.
+    Use **Test on documents** in the insight editor. It runs your definition against up to five of your most recent matching documents and shows the value, the quote, the page, and the confidence for each, without saving anything. Iterate on the description until it holds up, then save.
 
     Nobody should discover an ambiguous description by backfilling three thousand documents.
   </Step>
@@ -108,15 +108,15 @@ Go to **Configuration → Document Insights**. You need the org-settings update 
 This is the setting people get wrong most often, and the fix is simple once you have the mental model.
 
 <CardGroup cols={2}>
-  <Card title="Extract — copy what's printed" icon="pen-line">
-    The value already exists as literal text on the page. The model's only job is to find it and copy it exactly. Coverbase then verifies that both the value and its supporting quote appear in the document, word for word. Nothing is paraphrased, and nothing is invented — if it isn't there, the insight comes back empty.
+  <Card title="Extract: copy what's printed" icon="pen-line">
+    The value already exists as literal text on the page. The model's only job is to find it and copy it exactly. Coverbase then verifies that both the value and its supporting quote appear in the document, word for word. Nothing is paraphrased, and nothing is invented. If it isn't there, the insight comes back empty.
   </Card>
-  <Card title="Synthesize — answer a question" icon="sparkles">
+  <Card title="Synthesize: answer a question" icon="sparkles">
     The answer requires reading and judgment: rolling up several clauses, translating legalese into a plain verdict, or deciding what language *means*. The model writes the answer in its own words, but it still has to cite a verbatim quote from the document to support it. If the document can't answer the question, the value comes back empty.
   </Card>
 </CardGroup>
 
-Both modes are grounded. The difference is not "strict vs loose" — it's **who composes the value**. In Extract mode the document composes it. In Synthesize mode the model composes it and the document has to back it up.
+Both modes are grounded. What changes between them is **who composes the value**. In Extract mode the document composes it. In Synthesize mode the model composes it and the document has to back it up.
 
 ### The decision table
 
@@ -137,11 +137,11 @@ Both modes are grounded. The difference is not "strict vs loose" — it's **who 
   A **Yes/No** insight in **Extract** mode only succeeds if the document literally contains the word "Yes", "No", "True", or "False". Contracts essentially never do. Set every Yes/No insight to **Synthesize** unless you are reading a checkbox-style form or a completed questionnaire.
 </Warning>
 
-This is the single most common misconfiguration. "Do we have audit rights?" in Extract mode will return empty on a contract that plainly grants audit rights — because the phrase *"Yes"* doesn't appear in Section 8.3. The same insight in Synthesize mode reads Section 8.3, answers **Yes**, and cites the clause.
+This is the single most common misconfiguration. "Do we have audit rights?" in Extract mode will return empty on a contract that plainly grants audit rights, because the phrase *"Yes"* doesn't appear in Section 8.3. The same insight in Synthesize mode reads Section 8.3, answers **Yes**, and cites the clause.
 
 ### The same question, both ways
 
-Take one requirement — *do we have the right to run a penetration test?* — and see how the mode changes what you get.
+Take one requirement (*do we have the right to run a penetration test?*) and see how the mode changes what you get.
 
 <Tabs>
   <Tab title="Extract">
@@ -150,7 +150,7 @@ Take one requirement — *do we have the right to run a penetration test?* — a
 
     **Description:** The verbatim sentence granting or restricting the customer's right to conduct penetration testing or security testing of the vendor's systems.
 
-    **Result:** `"Customer may, no more than once per twelve (12) month period and upon thirty (30) days' prior written notice, conduct penetration testing of the Services."` — page 14, confidence high.
+    **Result:** `"Customer may, no more than once per twelve (12) month period and upon thirty (30) days' prior written notice, conduct penetration testing of the Services."` on page 14, confidence high.
 
     Good when a lawyer needs the exact operative language for a redline. Useless for filtering, because every vendor words it differently.
   </Tab>
@@ -160,7 +160,7 @@ Take one requirement — *do we have the right to run a penetration test?* — a
 
     **Description:** Does the customer have a contractual right to perform penetration testing or security testing against the vendor's production environment? Answer Yes only if testing is affirmatively permitted, including where it requires notice or scheduling. Answer No if testing is prohibited, or if the contract only offers third-party test summaries in place of customer testing.
 
-    **Result:** `Yes` — quoting the same sentence on page 14, confidence high.
+    **Result:** `Yes`, quoting the same sentence on page 14, confidence high.
 
     Good when you want to sort your portfolio by which vendors you can actually test. The nuance about notice periods lives in the quote; the filterable answer lives in the value.
   </Tab>
@@ -176,7 +176,7 @@ Take one requirement — *do we have the right to run a penetration test?* — a
 - If you'd have to read a paragraph and then say a sentence back, use **Synthesize**.
 - Every Yes/No is **Synthesize**.
 - A Number or Date that appears verbatim is **Extract**; one you'd have to calculate is **Synthesize**.
-- When you genuinely can't decide, start with **Synthesize** — you'll get an answer with a quote attached, and you can tighten to Extract later once you've seen how the language actually reads.
+- When you genuinely can't decide, start with **Synthesize**. You'll get an answer with a quote attached, and you can tighten to Extract later once you've seen how the language actually reads.
 
 <Note>
   Mixing modes across your insight set is completely normal and costs nothing. Coverbase groups insights by mode and runs each group as its own pass over the document.
@@ -230,7 +230,7 @@ A description that performs well usually has four parts:
 
 ## A starter library
 
-There's no packaged template for insights the way there is for [clause sets](/user-guides/contract-guardian#start-from-the-clause-set-library) — insight definitions are yours to write, because they encode what your program tracks. Use this as the copy-and-adapt starting point. Group them, scope them to your contract document types, and delete anything you won't actually look at.
+There's no packaged template for insights the way there is for [clause sets](/user-guides/contract-guardian#start-from-the-clause-set-library). Insight definitions are yours to write, because they encode what your program tracks. Use this as the copy-and-adapt starting point. Group them, scope them to your contract document types, and delete anything you won't actually look at.
 
 ### Group: Contract basics
 
@@ -294,7 +294,7 @@ Scope to SLA, MSA, AI addendum.
 | Human review of AI decisions | Yes/No | Synthesize | Does the agreement commit the vendor to human oversight or review of automated decisions affecting the customer? |
 
 <Note>
-  Notice the pattern in this library: **Extract** shows up where the contract prints a value (dates, jurisdictions, figures, named frameworks), and **Synthesize** shows up everywhere the answer is a judgment or a normalization. That ratio — roughly one Extract for every two Synthesize — is typical of a mature contract insight set.
+  Notice the pattern in this library: **Extract** shows up where the contract prints a value (dates, jurisdictions, figures, named frameworks), and **Synthesize** shows up everywhere the answer is a judgment or a normalization. That ratio, roughly one Extract for every two Synthesize, is typical of a mature contract insight set.
 </Note>
 
 ---
@@ -306,20 +306,20 @@ Writing an insight is the easy half. Knowing whether it worked across your whole
 **Configuration → Document Insights** answers that. Three tabs over the same data:
 
 <AccordionGroup>
-  <Accordion title="Insights — is each definition healthy?" icon="list-check" defaultOpen>
+  <Accordion title="Insights: is each definition healthy?" icon="list-check" defaultOpen>
     Your library, with coverage on every row: how many eligible documents carry a value, how many of those had verified evidence, and how many are waiting for a human to accept an unverified answer. Select several rows to enable, disable, rescope, regroup, archive, or backfill them in one action.
   </Accordion>
 
-  <Accordion title="Document types — is this type well covered?" icon="table-cells">
-    A matrix: document types down the side, insights across the top, a fill rate in every cell. This is the view that answers "what do we actually extract from an MSA, and how well?" — a question the old settings page could not answer at all.
+  <Accordion title="Document types: is this type well covered?" icon="table-cells">
+    A matrix: document types down the side, insights across the top, a fill rate in every cell. This is the view that answers "what do we actually extract from an MSA, and how well?", a question the old settings page could not answer at all.
 
     An em-dash means the insight isn't scoped to that document type. A percentage means it is.
   </Accordion>
 
-  <Accordion title="Extractions — is this specific value right?" icon="magnifying-glass">
+  <Accordion title="Extractions: is this specific value right?" icon="magnifying-glass">
     Every extraction in the org, filterable by insight, document type, confidence, whether the evidence was verified, and whether the value was AI-extracted or hand-corrected.
 
-    Filter to low confidence and unverified evidence and you have a review queue. Click any row to open that document with the Insights tab already scrolled to the value in question — you never leave the list to check a value.
+    Filter to low confidence and unverified evidence and you have a review queue. Click any row to open that document with the Insights tab already scrolled to the value in question, so you never leave the list to check a value.
   </Accordion>
 </AccordionGroup>
 
@@ -333,7 +333,7 @@ A missing value means one of two opposite things, and telling them apart is most
 | **Stale** (amber badge) | The insight was created after the document was last processed, so it has never run against it | Backfill. The badge is the button |
 
 <Tip>
-  A brand-new insight shows 100% stale and 0% filled. That is not a broken definition — it is a definition that has not run yet. Backfill first, *then* judge the fill rate.
+  A brand-new insight shows 100% stale and 0% filled. That means the definition has not run yet. Backfill first, *then* judge the fill rate.
 </Tip>
 
 ---
@@ -347,10 +347,10 @@ A backfill re-extracts documents you already hold, so a new or reworded insight 
     Pick the insights, and optionally narrow by document type or vendor. Starting from a stale badge in the coverage matrix pre-fills the scope for you.
   </Step>
   <Step title="Choose what to re-run">
-    **Never attempted** (the default) only touches documents the insight has never run against. **Missing only** also re-runs documents that were attempted and came back empty — use this after rewording a description. **All** re-runs everything, replacing existing AI values.
+    **Never attempted** (the default) only touches documents the insight has never run against. **Missing only** also re-runs documents that were attempted and came back empty; use this after rewording a description. **All** re-runs everything, replacing existing AI values.
   </Step>
   <Step title="Read the estimate">
-    Before you confirm, Coverbase tells you how many documents it will process and roughly how many model calls that costs. Extraction batches every matching insight into one pass per document, so adding insights to a backfill is close to free — adding documents is what costs.
+    Before you confirm, Coverbase tells you how many documents it will process and roughly how many model calls that costs. Extraction batches every matching insight into one pass per document, so adding insights to a backfill is close to free. Adding documents is what costs.
   </Step>
   <Step title="Watch it run">
     A progress bar tracks dispatch. Large backfills run for a while; you can leave the page, and you can cancel, which stops further documents being queued.
@@ -362,19 +362,19 @@ A backfill re-extracts documents you already hold, so a new or reworded insight 
 </Note>
 
 <Warning>
-  Backfills are capped per run and per day. If a scope is too large, narrow it by document type or vendor and run it in batches — the cap exists so a single click can't spend an unbounded amount on model calls.
+  Backfills are capped per run and per day. If a scope is too large, narrow it by document type or vendor and run it in batches. The cap exists so a single click can't spend an unbounded amount on model calls.
 </Warning>
 
 ---
 
 ## Retiring an insight
 
-Two different actions, easy to confuse, so the distinction is worth stating plainly:
+Two different actions, easy to confuse:
 
 | Action | What happens | Reversible |
 | --- | --- | --- |
 | **Disable** | Stops extracting. The insight stays in your working set and its values stay visible | Yes |
-| **Archive** | Retires the definition. Stops extracting, hides it from documents, keeps every value ever extracted | Yes — restore it any time |
+| **Archive** | Retires the definition. Stops extracting, hides it from documents, keeps every value ever extracted | Yes, restore it any time |
 | **Delete** | Permanently removes the definition **and every value ever extracted for it**, including hand corrections | **No** |
 
 <Warning>
@@ -397,7 +397,7 @@ An insight lives on a document. Your team works from vendor, contract, and asses
     **Require verified evidence** (on by default) skips answers whose quote could not be located in the source. **Minimum confidence** skips anything below the bar. Together these decide how conservative the promotion is.
   </Step>
   <Step title="Choose what happens when the field already has a value">
-    **Never overwrite** only ever fills an empty field. **Fill if empty** also refreshes a value this same insight wrote before. **Latest document wins** additionally replaces values written from older documents — the right choice for a vendor-level field fed by many documents.
+    **Never overwrite** only ever fills an empty field. **Fill if empty** also refreshes a value this same insight wrote before. **Latest document wins** additionally replaces values written from older documents, which is the right choice for a vendor-level field fed by many documents.
   </Step>
   <Step title="Backfill the field">
     Leave the backfill box checked and Coverbase populates the field across every document you already hold.
@@ -409,7 +409,7 @@ An insight lives on a document. Your team works from vendor, contract, and asses
 </Note>
 
 <Warning>
-  Promotion never overwrites a value a person typed — not on backfill, not on a later upload, under any conflict policy.
+  Promotion never overwrites a value a person typed: not on backfill, not on a later upload, not under any conflict policy.
 </Warning>
 
 ---
@@ -430,7 +430,7 @@ The AI drafts; you decide. Every value is editable, and your edit sticks.
 
 <AccordionGroup>
   <Accordion title="Check the quote before you trust the value" icon="quote-left" defaultOpen>
-    Use **Show details** on any insight to see the source quote, page number, confidence, and the model's reasoning. Scan low-confidence values first — they're flagged precisely because the model wasn't sure.
+    Use **Show details** on any insight to see the source quote, page number, confidence, and the model's reasoning. Scan low-confidence values first; they're flagged precisely because the model wasn't sure.
   </Accordion>
   <Accordion title="Correct a value by hand" icon="pen">
     Edit the value directly on the Insights tab. The record switches from AI-extracted to manual and records who changed it. Manual values survive re-extraction of other fields, and the source type shows up in the CSV export so you can see at a glance how much hand-correcting a document needed.
@@ -451,7 +451,7 @@ The AI drafts; you decide. Every value is editable, and your edit sticks.
   <Accordion title="The insight comes back empty on documents that clearly contain the answer" icon="circle-question" defaultOpen>
     Almost always one of four things:
 
-    1. **It never ran on that document.** If the insight was created after the document was processed, it has never been attempted there. Check the coverage matrix — a *stale* badge means backfill, not a broken definition.
+    1. **It never ran on that document.** If the insight was created after the document was processed, it has never been attempted there. Check the coverage matrix: a *stale* badge means backfill, not a broken definition.
     2. **Wrong mode.** A Yes/No or an interpreted value set to Extract will return empty rather than guess. Switch to Synthesize.
     3. **Wrong document-type scope.** If the insight isn't scoped to the type that document was classified as, it never ran. Check the document's type on its detail panel, and check the insight's document types (or its group's).
     4. **The description names the wrong thing.** The model looked for what you described and didn't find it. Add the aliases the clause actually hides under.
