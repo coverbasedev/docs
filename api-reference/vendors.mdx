@@ -641,12 +641,108 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
   },
   "products": { "products": [{ "name": "Helpdesk", "description": "Ticketing platform" }] },
   "public_perception": { "news_mentions": [], "competitors": [] },
-  "financials": { "public_private": "private", "market_cap_usd": null },
+  "financials": {
+    "public_private": "private",
+    "market_cap_usd": null,
+    "financial_health": {
+      "scorecard": {
+        "score": 68,
+        "band": "moderate",
+        "confidence_tier": "C",
+        "as_of": "2026-08-12",
+        "pillars": [
+          {
+            "pillar": "capital_position",
+            "score": 50,
+            "weight": 0.25,
+            "contributions": [
+              {
+                "label_key": "current_ratio",
+                "score": 62,
+                "weight": 0.5,
+                "value": 1.82,
+                "unit": "ratio",
+                "detail_key": null,
+                "peer_ranked": true,
+                "as_of": "2026-03-31"
+              },
+              {
+                "label_key": "registration_status",
+                "score": 50,
+                "weight": 0.5,
+                "value": null,
+                "unit": "categorical",
+                "detail_key": "unknown",
+                "peer_ranked": false,
+                "as_of": null
+              }
+            ]
+          }
+        ],
+        "provenance": { "edgar": "2026-03-31" },
+        "unavailable_sources": ["pitchbook"]
+      },
+      "history": [{ "as_of": "2026-05-12", "score": 65, "band": "moderate" }]
+    }
+  },
   "people": { "leadership": [{ "name": "Jordan Lee", "title": "CEO" }] },
   "compliance_legal": { "legal_actions": [] },
-  "security_posture": { "trust_center_url": "https://trust.supplier1.example.com", "security_incidents": [] }
+  "security_posture": {
+    "trust_center_url": "https://trust.supplier1.example.com",
+    "security_incidents": [],
+    "external_intelligence": {
+      "domain": "supplier1.example.com",
+      "generated_at": 1746575800,
+      "overall_score": 84,
+      "overall_grade": "B",
+      "predictive_index": 12,
+      "factor_scores": [
+        {
+          "factor": "email_security",
+          "score": 45,
+          "grade": "F",
+          "data_available": true,
+          "weight": 0.12,
+          "findings": [
+            {
+              "code": "dmarc_policy_none",
+              "severity": "high",
+              "subject": "supplier1.example.com",
+              "detail": "p=none",
+              "penalty": 25,
+              "first_seen": "2026-01-04",
+              "last_seen": "2026-08-12"
+            },
+            {
+              "code": "dkim_weak_key",
+              "severity": "moderate",
+              "subject": "selector1",
+              "detail": "1024-bit",
+              "penalty": 15,
+              "first_seen": "2026-08-12",
+              "last_seen": "2026-08-12"
+            }
+          ]
+        },
+        {
+          "factor": "tls_configuration",
+          "score": 100,
+          "grade": "A",
+          "data_available": false,
+          "weight": 0.1,
+          "findings": []
+        }
+      ]
+    }
+  }
 }
 ```
+
+<Warning>
+  **Branch on `data_available` before you read `score`.** The second factor in that example was not measured on this run — the probe reached no conclusion — so it was excluded from `overall_score` entirely. But it still serializes as `score: 100`, `grade: "A"`, with its normal `weight`, because a factor that took no deductions starts at 100.
+
+  An integration that renders `factor_scores` without checking `data_available` will show an unmeasured factor as a perfect one. Treat `data_available: false` as "no data", regardless of what `score`, `grade`, and `weight` say.
+</Warning>
 
 #### Fact sheet object
 
@@ -661,7 +757,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 <ResponseField name="financials" type="object | null">Public/private status, market cap, ticker/exchange, funding, and transactions. Includes `financial_health` — the Coverbase Financial Health Score — when your organization has that feature enabled. `null` until generated.</ResponseField>
 <ResponseField name="people" type="object | null">Leadership and headcount estimate. `null` until generated.</ResponseField>
 <ResponseField name="compliance_legal" type="object | null">Legal actions, enforcement actions, and data-privacy certifications. `null` until generated.</ResponseField>
-<ResponseField name="security_posture" type="object | null">Trust center URL, security contact, and known security incidents. `null` until generated.</ResponseField>
+<ResponseField name="security_posture" type="object | null">Trust center URL, security contact, and known security incidents. Includes `external_intelligence` — the measured outside-in security rating — when your organization has that feature enabled. `null` until generated.</ResponseField>
 
 <Note>
   Section objects are best-effort and their internal shape may evolve as Coverbase improves enrichment. Treat the presence of each field defensively; any individual section can be `null` even when `status` is `"completed"` if no data was found for it.
@@ -669,7 +765,11 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 
 #### Vendor intelligence sections
 
-Two sections carry outside-in intelligence assembled from registries of record rather than from a language model. Both cite their sources. See [Vendor Intelligence](/products/vendor-intelligence) for what each field means.
+Three sections carry outside-in intelligence measured from registries of record and from the vendor's own infrastructure, rather than produced by a language model. All three cite their sources. See [Vendor Intelligence](/products/vendor-intelligence) and [Security Intelligence](/products/security-intelligence) for what each field means.
+
+<Note>
+  The Financial Health Score and the measured security rating are optional features in beta, enabled per organization. Write your integration to treat `financials.financial_health` and `security_posture.external_intelligence` as optional: both are `null` for an organization that does not have them enabled, and a section can be `null` even when `status` is `"completed"`.
+</Note>
 
 <ResponseField name="company_profile.registry_validation" type="object | null">
   Validated corporate identity from GLEIF, OpenCorporates, and SEC EDGAR: `official_name`, `registration_status`, `jurisdiction`, `incorporation_date`, addresses, and the identifiers `lei`, `duns`, `company_number`, and `cik`. `is_validated` is `true` only when a register matched with high confidence; `match_decision` and `match_confidence` expose the match quality. `sources` carries one entry per contributing register with its `identifier` and a `url` to the record.
@@ -683,9 +783,61 @@ Two sections carry outside-in intelligence assembled from registries of record r
   Returned only when your organization has the Financial Health Score enabled; `null` otherwise.
 </ResponseField>
 
+<ResponseField name="financials.financial_health.scorecard.pillars[].contributions" type="object[]">
+  The individual inputs behind a pillar score, ordered by weighted shortfall so the input that cost the most comes first. Each entry carries:
+
+  - `label_key` — the feature identifier (for example `operating_margin`, `registration_status`), or the adverse-event type
+  - `score` — what this input scored, 0-100
+  - `weight` — how heavily it counted within the pillar
+  - `value` and `unit` — the measured figure and its unit (`percent`, `ratio`, `months`, `years`, `usd`, `days_overdue`, or `categorical`)
+  - `detail_key` — the category behind a non-numeric input (`unknown`, `dissolved`, `down`). **When this is present, `value` is not a measurement.** A `score` of 50 with `detail_key: "unknown"` means the input could not be determined, not that it was measured as mediocre — render the two cases differently
+  - `peer_ranked` — `false` means the score came from an absolute curve rather than a peer percentile. This is the single most important caveat on any individual number
+  - `as_of` — the date this input's value was true, which is not the date of the refresh
+
+  `label_key` and `detail_key` are open sets: new identifiers appear as sources are added, so map unknown keys to a readable fallback rather than failing.
+</ResponseField>
+
 <Warning>
   Scores are only directly comparable within the same `confidence_tier`. Tier A is computed from filed financial statements; Tier C is inferred from funding, headcount, and corporate-standing signals. Do not rank vendors across tiers on `score` alone.
 </Warning>
+
+<ResponseField name="security_posture.external_intelligence" type="object | null">
+  The measured outside-in security rating, assembled by querying the vendor's own public infrastructure. Top-level fields: `domain` (the domain that was rated), `generated_at` (unix timestamp), `overall_score` (0-100), `overall_grade` (`A` through `F`), `predictive_index` (0-100 likelihood of imminent exploitation), `factor_scores`, and the raw evidence blocks — `vulnerability_findings`, `exposed_services`, `breach_exposures`, `email_authentication`, `web_headers`, `tls_certificate`, `dns_health`, `web_reputation`.
+
+  Returned only when your organization has the measured security rating enabled; `null` otherwise.
+</ResponseField>
+
+<ResponseField name="security_posture.external_intelligence.factor_scores" type="object[]">
+  One entry per scored factor. `factor` is one of `patching_cadence`, `network_security`, `email_security`, `tls_configuration`, `web_application_headers`, `dns_health`, `leaked_information`, `ip_reputation`, `application_security`, `web_reputation`, `domain_squatting`. `score` is 0-100, `grade` is `A` through `F`, and `weight` is the absolute weight the factor carried in `overall_score`.
+
+  `data_available` is the field to branch on, and the one most likely to bite an integration. When it is `false`, the factor could not be measured on this run and was **excluded from `overall_score`** — but it still carries `score: 100`, `grade: "A"`, and its normal `weight`, because a factor that took no deductions never left its starting value. Read `data_available` first and treat `false` as "no data"; rendering or alerting on `score` without that check turns an unmeasured factor into a perfect one.
+
+  Only factors that were actually scored appear in the array. An organization without the measured security rating enabled gets the seven original factors and no entries for `email_security`, `tls_configuration`, `web_application_headers`, or `domain_squatting` at all.
+
+  `findings` carries the structured evidence (below); `drivers` carries the same evidence pre-rendered as English sentences, intended for prompt context rather than display.
+</ResponseField>
+
+<ResponseField name="security_posture.external_intelligence.factor_scores[].findings" type="object[]">
+  The observed facts behind a factor's score, structured so they can be localized:
+
+  - `code` — the finding identifier, which selects the sentence (`dmarc_policy_none`, `dkim_weak_key`, `hsts_missing`, `cookie_not_secure`, …)
+  - `severity` — `critical`, `high`, `moderate`, `low`, or `info`
+  - `subject` — what the finding is about: a host, a DKIM selector, a cookie name, a CVE
+  - `detail` — the observed value, rendered verbatim in every locale (`p=none`, `1024-bit`, `TLSv1.0`)
+  - `penalty` — points this finding cost its factor
+  - `evidence_url` — a link to the record, where one exists
+  - `first_seen` / `last_seen` — ISO-8601 dates carried across refreshes. `first_seen` is how long the finding has stood open, which is often more informative than the finding itself
+
+  `code` is an open set and grows as probes are added. Map an unrecognized code to `subject` and `detail`, which are always human-readable, rather than dropping the finding.
+</ResponseField>
+
+<Warning>
+  A clean `overall_grade` is not evidence of good internal security. Every input is visible from outside the vendor's perimeter and says nothing about access control, key management, secure development, or incident response. Use it to prioritize, not to certify.
+</Warning>
+
+<Note>
+  Enabling the measured security rating changes `overall_score` for existing vendors: the rating goes from seven factors to eleven, with new weights. If you store or alert on `overall_score`, expect a one-time shift when the feature is turned on for your organization.
+</Note>
 
 #### Error responses
 
