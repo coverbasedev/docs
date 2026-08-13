@@ -1,0 +1,144 @@
+---
+title: "Security Intelligence"
+description: "An outside-in security rating measured from the vendor's own infrastructure — every point deducted traceable to a specific observed configuration."
+icon: "shield-halved"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Security Intelligence rates a vendor's external security posture without asking the vendor anything, without an agent, and without a questionnaire. Coverbase queries the vendor's own public infrastructure — its DNS records, its TLS certificate, the headers its web server returns — and scores what it finds.
+
+The distinction that matters: this is **measured**, not reported. A rating built from feed subscriptions tells you what someone said about a vendor. This tells you what the vendor's systems are actually configured to do, today, and shows you the record it read.
+
+<Note>
+  This is an optional feature currently in beta. Let your Coverbase representative know if you'd like it turned on for your organization.
+</Note>
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Reads policy, not presence" icon="magnifying-glass">
+    A domain that publishes SPF and DMARC but sets `~all` and `p=none` blocks nothing. A presence check scores it identically to a domain enforcing `-all` and `p=reject`. Coverbase parses the policy and scores what it would actually do to a forged message.
+  </Card>
+
+  <Card title="Every deduction has a receipt" icon="receipt">
+    Each factor lists the specific findings behind its grade: what was observed, on which host or selector, and how many points it cost. Open the rationale on any factor to see the arithmetic.
+  </Card>
+
+  <Card title="Findings keep their history" icon="clock-rotate-left">
+    A finding carries the date it was first seen. A weak DKIM key that has been open for eleven months is a different conversation than one that appeared last week.
+  </Card>
+
+  <Card title="Unmeasured is not the same as failing" icon="circle-question">
+    When a probe cannot reach a conclusion, that factor is excluded from the rating rather than scored as a failure. A timeout is not evidence about the vendor.
+  </Card>
+</CardGroup>
+
+## What gets measured
+
+Four probes read the vendor's live infrastructure on each fact-sheet refresh. All four are passive: they read published records and make ordinary client requests, the same way any browser or mail server would. Nothing is scanned, brute-forced, or authenticated against.
+
+| Probe | What it reads |
+| ----- | ------------- |
+| **Email authentication** | The SPF `all` qualifier and lookup count, DMARC `p`/`sp`/`pct` and whether reports are collected, DKIM key size across the selectors major senders publish, MTA-STS mode fetched from the well-known URL, TLS-RPT, and BIMI |
+| **Web application headers** | Whether the origin upgrades to HTTPS at all, HSTS and its lifetime, Content-Security-Policy (including report-only-only and `unsafe-inline`), clickjacking cover, MIME-sniffing protection, Referrer and Permissions policies, version banners, and the security flags on every cookie set |
+| **TLS certificate** | Chain trust, whether the certificate actually covers the hostname, days to expiry, and the protocol and cipher negotiated |
+| **Lookalike domains** | Registered typo and homoglyph variants of the vendor's domain that resolve, with mail-capable ones surfaced first |
+
+These sit alongside the feed-based factors Coverbase already scored — vulnerability exposure, network posture, IP and web reputation, and credential leaks — so the rating covers both what the vendor's infrastructure does and what public sources report about it.
+
+## How the score works
+
+The overall score runs 0-100 with a letter grade, computed as a weighted mean across eleven factors. Weights reflect how directly each factor bears on a compromise:
+
+| Factor | Weight | What it covers |
+| ------ | -----: | -------------- |
+| Patching cadence | 18% | Known-exploited and high-EPSS vulnerabilities in the vendor's products |
+| Network security | 14% | Exposed services and administrative interfaces |
+| Email security | 12% | SPF, DMARC, DKIM, MTA-STS — measured as policy |
+| TLS configuration | 10% | Certificate trust, coverage, expiry, negotiated protocol |
+| Web application headers | 10% | HTTPS enforcement, HSTS, CSP, cookie flags |
+| DNS health | 8% | Resolver and record hygiene |
+| Leaked information | 8% | Credentials exposed in known breaches |
+| IP reputation | 7% | Malicious activity attributed to the vendor's addresses |
+| Application security | 6% | Application-layer exposure |
+| Web reputation | 5% | Reputation verdicts from public sources |
+| Domain squatting | 2% | Registered lookalikes that resolve |
+
+Two deliberate constraints on that arithmetic:
+
+<AccordionGroup>
+  <Accordion title="A factor with no data is excluded, not zeroed" icon="circle-minus" defaultOpen>
+    If a probe times out, gets rate-limited, or the vendor's infrastructure simply doesn't answer, that factor drops out of the weighted mean. It is never scored as a failure. A vendor is not penalized for a query that failed on our side, and a clean-looking score is never manufactured from a request that didn't complete.
+
+    The same rule applies in the other direction. HTTPS enforcement is credited only when a plain-HTTP connection is actually refused — a request that merely timed out proves nothing, so it earns nothing.
+  </Accordion>
+
+  <Accordion title="Domain-squatting deductions are capped" icon="ban">
+    Uncapped, this factor measures brand recognition rather than security. Every large brand has dozens of parked typo domains it never registered and cannot remove. Before the cap, GitHub scored 0/100 on it. The cap keeps a real signal — a mail-capable lookalike is worth knowing about — from turning into a penalty for being well known.
+  </Accordion>
+</AccordionGroup>
+
+## Reading a finding
+
+Every factor's rationale lists the individual findings behind its grade. Each one carries:
+
+- **What was observed** — the actual value, such as `p=none`, `1024-bit`, or `TLSv1.0`
+- **Where** — the host, DKIM selector, or cookie name it applies to
+- **What it cost** — the points deducted from that factor
+- **How long it has been open** — the date the finding was first seen, once it has survived a refresh
+
+That last field is the one worth watching. A finding that persists across months has been seen by the vendor's own team too. It has stopped being an oversight and become a decision.
+
+<Tip>
+  Take a finding to the vendor as an observation, not an accusation: "your DMARC record is `p=none`, so mail forged from your domain still gets delivered — is enforcement on the roadmap?" It is a verifiable fact about a public record, and it converts a security review into a specific, answerable question.
+</Tip>
+
+## The predictive index
+
+Alongside the rating, Coverbase publishes a forward-looking index of exploitation likelihood. It is driven by membership in CISA's Known Exploited Vulnerabilities catalog, peak EPSS probability, known ransomware association, and how much attack surface is externally exposed.
+
+The rating answers "how well is this vendor configured?" The predictive index answers "how likely is something to happen soon?" They can diverge, and the divergence is informative: a well-configured vendor running one product with an actively exploited CVE deserves attention that its letter grade alone won't prompt.
+
+## What this does not tell you
+
+<Warning>
+  A clean external profile is **not** evidence of good internal security. Everything here is visible from outside the perimeter. It says nothing about access control, key management, secure development, incident response, or how the vendor treats your data once it's inside their systems. Use it to prioritize and to interrogate — never as a substitute for an assessment.
+</Warning>
+
+Two more limits worth stating plainly:
+
+- **DKIM absence is inconclusive.** DKIM has no discovery mechanism; a verifier learns the selector from a message it received. Coverbase probes the selectors major senders publish, so a domain signing with a private selector reads as unsigned. Absence is therefore scored as *unknown* with a small deduction, never as a failure.
+- **The rating describes the domain we scanned.** A vendor with a well-configured marketing domain and a neglected application domain will rate on whichever one is on file.
+
+## Where it appears
+
+<CardGroup cols={2}>
+  <Card title="Vendor fact sheet" icon="file-lines">
+    The **Security Posture** card carries the score, grade, factor breakdown, and per-factor findings, refreshed on the regular fact-sheet cadence.
+  </Card>
+
+  <Card title="Assessments" icon="clipboard-check">
+    Measured posture is supplied to control evaluations as authoritative evidence, ranked ahead of web results. A control asking about email authentication is answered from the vendor's actual DNS records rather than from a marketing page claiming compliance.
+  </Card>
+
+  <Card title="Intake and inherent risk" icon="inbox">
+    A new vendor request is scored against measured posture before the web is consulted.
+  </Card>
+
+  <Card title="MCP" icon="robot" href="/mcp/tool-reference">
+    Ask conversationally: "What's the security posture for Acme?" or "Which of my vendors have DMARC set to none?"
+  </Card>
+</CardGroup>
+
+## Availability
+
+Security Intelligence is an optional feature in beta, enabled per organization. **Contact your Coverbase representative to have it turned on.**
+
+Organizations without it keep the security rating exactly as it was before this feature shipped — the same seven factors at the same weights. Enabling it adds the four measured factors and re-weights accordingly, so expect ratings to move once it's on. That movement is the point: the new rating distinguishes vendors the old one scored alike.
+
+<Note>
+  See also [Vendor Intelligence](/products/vendor-intelligence) for corporate identity validation and the Coverbase Financial Health Score, which are enabled alongside this feature and follow the same beta arrangement.
+</Note>
