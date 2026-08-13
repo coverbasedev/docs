@@ -66,7 +66,11 @@ The [Document Insights guide](/user-guides/document-insights) covers mode select
   </Card>
 
   <Card title="On demand" icon="arrows-rotate">
-    Re-extract a whole document or a single insight after you add or reword a definition. New definitions do not backfill documents already processed.
+    Re-extract a whole document or a single insight after you add or reword a definition.
+  </Card>
+
+  <Card title="Backfill across history" icon="clock-rotate-left">
+    A new definition starts empty on documents already processed. A backfill re-extracts them in bulk, scoped by insight, document type, or vendor, with a cost estimate before it runs.
   </Card>
 
   <Card title="Native document handling" icon="file-pdf">
@@ -77,6 +81,55 @@ The [Document Insights guide](/user-guides/document-insights) covers mode select
     Insights roll up onto the contract record, feed the contract AI summary, and export to CSV with every value, citation, and confidence intact.
   </Card>
 </CardGroup>
+
+## Auditing coverage
+
+Defining insights is the easy half. Knowing whether they *worked* is the half that decides if anyone trusts the data.
+
+**Configuration → Document Insights** is the module for that. It shows the same set of extractions through three lenses:
+
+| Lens | Answers |
+| --- | --- |
+| **Insights** | What have we defined, and is each definition healthy? |
+| **Document types** | Is this document type well covered? A matrix of document type against insight, with a fill rate in every cell |
+| **Extractions** | Is this specific value right? Every extraction in the org, filterable by confidence, groundedness, and source |
+
+### The number that matters
+
+A blank cell in the coverage matrix means one of two opposite things, and the module keeps them apart:
+
+<CardGroup cols={2}>
+  <Card title="Attempted and empty" icon="magnifying-glass">
+    Extraction ran and found nothing. Either the definition is ambiguous, or the term genuinely isn't in that document. This is a **prompt problem** — open the Extractions tab and read what it actually returned.
+  </Card>
+
+  <Card title="Never attempted" icon="hourglass-start">
+    The insight was created after the document was last processed, so it has never run against it. This is a **backlog problem** — one backfill fixes it. The matrix marks these as *stale*, and the badge is the button.
+  </Card>
+</CardGroup>
+
+## Promoting insights into custom fields
+
+An extraction lives on a document. A custom field lives on the record people actually work from — the vendor, the contract, the assessment. Promotion connects them.
+
+Link an insight to a custom field and Coverbase fills that field from the extraction whenever a matching document is processed, then backfills the field across every document you already hold. The field keeps a pointer to the document, page, and verbatim quote it came from, so a value on a contract record can show you *why* it holds that value.
+
+| Insight type | Fills a custom field of type |
+| --- | --- |
+| Text | Text |
+| Number | Number |
+| Date | Date |
+| Yes/No | Yes/No |
+
+<Note>
+  Select and multi-select fields are not promotable yet — mapping free text onto a fixed option list needs the options fed into the prompt, not matched after the fact.
+</Note>
+
+Two gates decide what gets promoted, and one rule is absolute:
+
+- **Require verified evidence** (on by default) skips any answer whose supporting quote could not be located in the source.
+- **Minimum confidence** skips answers below the bar you set.
+- **A value a person typed is never overwritten.** Not by a backfill, not by a later upload, not by any conflict policy. Automated writes only ever replace other automated writes.
 
 ## Common workflows
 
@@ -99,5 +152,5 @@ The [Document Insights guide](/user-guides/document-insights) covers mode select
 </AccordionGroup>
 
 <Note>
-  Insight values surface on the document, on the contract record, in the contract AI summary, and through the [MCP server](/mcp/overview) for natural-language querying.
+  Insight values surface on the document, on the contract record, in the contract AI summary, on any custom field you promote them to, and through the [MCP server](/mcp/overview) for natural-language querying.
 </Note>
