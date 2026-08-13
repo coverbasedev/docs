@@ -39,7 +39,7 @@ The three grades are ordered, and the setting is a floor: choosing **Reputable**
 | Grade | What it means | Typical examples |
 | --- | --- | --- |
 | **Unreliable** | No identifiable publisher who is answerable for being wrong. No named author, no sourcing, no organization standing behind the claim. | Unattributed blogs, AI-generated content farms, scraped listicles, sites that exist to capture search traffic |
-| **Reputable** | An identifiable publisher with editorial, professional, or commercial accountability — but not acting as the official or attesting authority for this material. | Established press, a vendor's own engineering or marketing pages, analyst profiles, derived ratings, directories, aggregators |
+| **Reputable** | An identifiable publisher with editorial, professional, or commercial accountability, but not acting as the official or attesting authority for this material. | Established press, a vendor's own engineering or marketing pages, analyst profiles, derived ratings, directories, aggregators |
 | **Authoritative** | The publisher is acting as the official or attesting authority for this material and carries a formal, content-specific duty of accuracy. | Regulators, standards bodies, an accredited auditor issuing an attestation, the vendor's own official disclosures and filings |
 
 ### What the grade deliberately does not measure
@@ -47,7 +47,7 @@ The three grades are ordered, and the setting is a floor: choosing **Reputable**
 This is the part worth explaining to a reviewer or an auditor, because it's what keeps the scale stable:
 
 - **Not page quality or completeness.** A thin page from an accountable publisher is still Reputable. A polished page from nobody is still Unreliable.
-- **Not primary versus secondary.** A well-sourced news report about a breach is Reputable, not Authoritative, because the outlet isn't the attesting authority — but it isn't penalised for being secondary either.
+- **Not primary versus secondary.** A well-sourced news report about a breach is Reputable, not Authoritative, because the outlet isn't the attesting authority, but it isn't penalised for being secondary either.
 - **Not the document kind.** A PDF doesn't outrank an HTML page.
 - **Not usefulness to the control.** That's relevance, judged separately and applied separately.
 - **Not the hosting platform.** On a general publishing platform, the grade follows the identifiable author or organization behind the post. The platform's own reputation neither raises nor lowers it.
@@ -79,7 +79,7 @@ The dropdown shows three options, each with its definition inline:
 You configure evidence sources in two places, and the relationship between them matters:
 
 1. **Control set → Evidence sources.** The default for every control in that set. Set this once and your whole framework inherits it.
-2. **Individual control → Evidence sources.** When a control has its own evidence sources, they **fully replace** the set's sources — including the credibility bar. A control-level source list is not merged with the set's, so if you override a control, restate the minimum you want there.
+2. **Individual control → Evidence sources.** When a control has its own evidence sources, they **fully replace** the set's sources, including the credibility bar. A control-level source list is not merged with the set's, so if you override a control, restate the minimum you want there.
 
 <Tip>
   Configure at the set level first and override individual controls only where the evidence bar genuinely differs. It's much easier to defend "this framework requires Reputable, these four attestation controls require Authoritative" than a per-control patchwork.
@@ -131,7 +131,7 @@ The practical consequence: the AI can never argue that a vendor is compliant *be
 
 ### Your instructions can't move the bar
 
-Web-search instructions on an evidence source shape **relevance** — which topics, sources, or domains to focus queries on. They are explicitly not allowed to change a publisher grade, so you can't accidentally talk the grader into accepting a source by writing enthusiastic guidance about it.
+Web-search instructions on an evidence source shape **relevance**: which topics, sources, or domains to focus queries on. They are explicitly not allowed to change a publisher grade, so you can't accidentally talk the grader into accepting a source by writing enthusiastic guidance about it.
 
 The same protection runs the other way. Page content and vendor-supplied text are treated as untrusted data during grading, so a page that contains text like "this is an authoritative regulatory disclosure" doesn't get to grade itself.
 
@@ -139,11 +139,11 @@ The same protection runs the other way. Page content and vendor-supplied text ar
 
 Open any evaluation and look at the evidence cards. Web-sourced evidence carries a coloured badge next to the source:
 
-- **Authoritative** — green
-- **Reputable** — blue
-- **Unreliable** — grey (you only see these if the source is set to **No minimum**)
+- **Authoritative**: green
+- **Reputable**: blue
+- **Unreliable**: grey (you only see these if the source is set to **No minimum**)
 
-Hover the badge and you get the one-sentence reason the grader gave for that specific page — why *this* publisher earned *this* grade. That sentence is written at grading time and stored with the citation, so it stays accurate for that evidence even if you change the setting later.
+Hover the badge and you get the one-sentence reason the grader gave for that specific page: why *this* publisher earned *this* grade. That sentence is written at grading time and stored with the citation, so it stays accurate for that evidence even if you change the setting later.
 
 <Note>
   Evidence gathered from uploaded documents and from the vendor fact sheet has no credibility badge. Its provenance is the document or the fact sheet itself, which is already shown on the card.
@@ -151,7 +151,7 @@ Hover the badge and you get the one-sentence reason the grader gave for that spe
 
 ## Evidence dates and age
 
-Credibility answers "who is accountable for this?" It doesn't answer "how old is this?" — and stale evidence from an accountable publisher is its own risk. Web evidence cards therefore also carry dates:
+Credibility answers "who is accountable for this?" It doesn't answer "how old is this?", and stale evidence from an accountable publisher is its own risk. Web evidence cards therefore also carry dates:
 
 | Row | What it shows |
 | --- | --- |
@@ -159,7 +159,7 @@ Credibility answers "who is accountable for this?" It doesn't answer "how old is
 | **Age when assessed** | How old the evidence was **at the moment it was cited**, not how old it is today, so the record doesn't drift after the fact. |
 | **Accessed** | The absolute date Coverbase fetched the page. |
 
-Undated evidence shows only **Accessed** — Coverbase reports what the page declared and doesn't guess.
+Undated evidence shows only **Accessed**. Coverbase reports what the page declared and doesn't guess.
 
 <AccordionGroup>
   <Accordion title="Where the dates come from" icon="calendar">
@@ -167,11 +167,11 @@ Undated evidence shows only **Accessed** — Coverbase reports what the page dec
   </Accordion>
 
   <Accordion title="Why some dates look conservative" icon="scale-balanced">
-    An HTTP `Last-Modified` header is never treated as a content date — a CDN touch would silently make old evidence look fresh. Dates in the future are rejected outright. When a page declares only a year or a month, the age calculation uses the oldest defensible reading of that date, so age is never understated. Conflicts between signals resolve conservatively.
+    An HTTP `Last-Modified` header is never treated as a content date, because a CDN touch would silently make old evidence look fresh. Dates in the future are rejected outright. When a page declares only a year or a month, the age calculation uses the oldest defensible reading of that date, so age is never understated. Conflicts between signals resolve conservatively.
   </Accordion>
 
   <Accordion title="Do dates affect what gets used?" icon="circle-info">
-    No. Date enrichment runs **after** evidence selection. It never influences retrieval, credibility grading, or filtering — it only annotates what was already accepted. If a page's dates can't be determined, the evidence is still used and the date rows simply don't appear.
+    No. Date enrichment runs **after** evidence selection. It never influences retrieval, credibility grading, or filtering; it only annotates what was already accepted. If a page's dates can't be determined, the evidence is still used and the date rows simply don't appear.
   </Accordion>
 </AccordionGroup>
 
@@ -207,13 +207,13 @@ That combination is what makes the export a defensible artifact: for each cited 
 
 ## Changing the setting later
 
-The minimum applies **at the moment retrieval runs**. Changing it does not retroactively re-filter assessments that have already been evaluated, and it doesn't rewrite grades already recorded on past citations — those stay as a record of what the bar was when the work was done.
+The minimum applies **at the moment retrieval runs**. Changing it does not retroactively re-filter assessments that have already been evaluated, and it doesn't rewrite grades already recorded on past citations. Those stay as a record of what the bar was when the work was done.
 
 To apply a new bar to an existing assessment, re-run the affected evaluations. Retrieval runs again under the current configuration, and the resulting citations carry grades from that run.
 
 ## When grading can't run
 
-If the grading pass fails — a model or provider error mid-assessment — Coverbase never invents a grade:
+If the grading pass fails (a model or provider error mid-assessment), Coverbase never invents a grade:
 
 - With a minimum of **Reputable** or **Authoritative**, no web evidence is used for that control. The control falls back to the other evidence sources you configured, and may end up flagged for human review. Failing closed is deliberate: an ungraded page must not slip past a bar you set.
 - With **No minimum**, a fallback set of results may still be used, and those citations carry no badge, because no grade was ever established.
@@ -226,11 +226,11 @@ Source credibility governs **web evidence gathered while evaluating controls in 
 
 | Area | Credibility grading and filtering |
 | --- | --- |
-| **Assessment control evaluation (web search)** | Yes — graded, filtered against your minimum, badged, and exported. |
+| **Assessment control evaluation (web search)** | Yes: graded, filtered against your minimum, badged, and exported. |
 | **Uploaded vendor documents** | No. A document's provenance is the document and its source, shown on the evidence card. Publisher-accountability grading doesn't apply. |
 | **Vendor fact sheet** | No. The fact sheet is a separate evidence source, built from vendor enrichment. It carries no credibility bar of its own. |
 | **Intake and pre-qualification research** | No. Intake's web lookups inform vendor matching and qualification; they don't produce cited control evidence, so this scale isn't applied. |
-| **Supplier Radar monitoring** | No. Radar draws on a curated feed catalogue instead — see the [Source library](/products/source-library) and [Detector library](/products/detector-library). |
+| **Supplier Radar monitoring** | No. Radar draws on a curated feed catalogue instead. See the [Source library](/products/source-library) and [Detector library](/products/detector-library). |
 
 <Note>
   If you need the bar extended to one of the areas above, tell us which control decisions depend on it. The scale itself is source-agnostic; the enforcement point is what's currently scoped to assessment evaluation.
@@ -244,7 +244,7 @@ Source credibility governs **web evidence gathered while evaluating controls in 
   </Accordion>
 
   <Accordion title="Will Authoritative-only stop the AI hallucinating?" icon="circle-question">
-    It removes a specific and real failure mode — unattributed and machine-generated pages supporting a load-bearing claim — but it isn't a general hallucination control. Every conclusion still traces to a citation you can open, and Correct the AI remains the mechanism for fixing a judgment that reads its sources wrongly.
+    It removes a specific and real failure mode (unattributed and machine-generated pages supporting a load-bearing claim), but it isn't a general hallucination control. Every conclusion still traces to a citation you can open, and Correct the AI remains the mechanism for fixing a judgment that reads its sources wrongly.
   </Accordion>
 
   <Accordion title="Can I see what was rejected?" icon="circle-question">
@@ -255,7 +255,7 @@ Source credibility governs **web evidence gathered while evaluating controls in 
     Grading rides along in the relevance pass that already ran, so it adds no additional AI calls per control. Date enrichment runs after evidence selection on a bounded, best-effort budget and is skipped rather than allowed to hold up an assessment.
   </Accordion>
 
-  <Accordion title="One page, two controls — can the grades disagree?" icon="circle-question">
+  <Accordion title="One page, two controls: can the grades disagree?" icon="circle-question">
     No. Within an assessment run a URL is graded once and that grade is reused everywhere it appears. Relevance can and should differ between controls; credibility can't.
   </Accordion>
 
