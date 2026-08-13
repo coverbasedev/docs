@@ -1,6 +1,6 @@
 ---
 title: "Vendor Intelligence"
-description: "Corporate identity and financial health for every vendor, from authoritative sources, with a citation on every fact."
+description: "Validated corporate identity for every vendor — the legal entity, its standing, and its identifiers — from registries of record, with a citation on every fact."
 icon: "building-columns"
 ---
 
@@ -8,10 +8,12 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Vendor Intelligence answers two questions about a company without asking the company anything: **is this corporation real and in good standing**, and **is it financially sound enough to depend on**. Both answers are assembled from registries of record and regulatory filings, and every figure on screen names the source it came from.
+Vendor Intelligence answers two questions about a company without asking the company anything: **is this corporation real and in good standing**, and **is it financially sound enough to depend on**. This page covers the first — the validated corporate identity every other answer is computed against. The second is the [Financial Health Score](/products/financial-health-score).
+
+Both are assembled from registries of record and regulatory filings, and every figure on screen names the source it came from.
 
 <Note>
-  This is an optional feature currently in beta. Let your Coverbase representative know if you'd like it turned on for your organization. It pairs with [Security Intelligence](/products/security-intelligence), which rates a vendor's external security posture from its own infrastructure.
+  This is an optional feature currently in beta. Let your Coverbase representative know if you'd like it turned on for your organization. It pairs with the [Financial Health Score](/products/financial-health-score) and [Security Intelligence](/products/security-intelligence), which follow the same beta arrangement.
 </Note>
 
 ## What it does
@@ -25,8 +27,8 @@ Vendor Intelligence answers two questions about a company without asking the com
     A 0-100 score with five risk bands and a directional trend, computed from filed financial statements where they exist and from funding, headcount, and corporate-standing signals where they do not.
   </Card>
 
-  <Card title="Confidence tiers" icon="layer-group">
-    Every score is published with the class of data behind it, so an inferred number is never presented with the authority of an audited one.
+  <Card title="Corroboration over closeness" icon="scale-balanced">
+    A short or ambiguous name binds only when two independent registers agree on the same legal entity. Agreement between registers outranks a few points of name similarity.
   </Card>
 
   <Card title="Citations on every fact" icon="link">
@@ -49,66 +51,19 @@ When nothing matches confidently, the card shows **Needs review** rather than qu
 
 ## Financial Health Score
 
-The score runs 0-100, where higher is healthier, and maps to five risk bands from Very High Risk to Very Low Risk. It is designed to land in the same mental model as a RapidRatings FHR, with a different acquisition model behind it: no supplier outreach, portfolio-wide coverage from day one, and a refresh on every fact-sheet run.
+The other half of the answer lives on its own page. The **Coverbase Financial Health Score** is a 0-100 view of whether a vendor is financially sound enough to depend on, computed from filed statements where they exist and from funding, headcount, and corporate-standing signals where they do not — always labelled with which.
 
-### Confidence tiers
+It depends on the corporate identity established above: the score is computed against the legal entity the registers bound, which is why a missed match shows up as a thinner score rather than a wrong one.
 
-The tier is the most important thing on the card. It is derived from the data that actually resolved — never declared — and it travels with the score everywhere the score goes.
-
-| Tier | Backing data | What it means |
-| ---- | ------------ | ------------- |
-| **A — Filed financials** | Financial statements the company filed with a regulator (SEC EDGAR XBRL) | The full ratio battery. Statement-grade. |
-| **B — Estimated financials** | Estimated revenue and EBITDA plus capital structure | Partial ratios computed on estimates. |
-| **C — Signals-based** | Funding, headcount, corporate standing, adverse events | Inferred. No financial statements were available. |
-
-<Warning>
-  Scores are only directly comparable **within** the same confidence tier. A Tier C 72 and a Tier A 72 are different claims about different evidence. Never rank a Tier A vendor against a Tier C vendor on score alone.
-</Warning>
-
-If a vendor's filings stop resolving, it drops to a lower tier and the card says so. It does not keep presenting a statement-grade number built on estimates.
-
-### What the card shows
-
-- **Score, risk band, and confidence tier**, with 3-month and 12-month movement
-- **Score breakdown** across five pillars — financial core, capital position, momentum, adverse events, corporate standing — each with the weight it carried
-- **Financial vitals**: revenue and growth, operating margin, current ratio, debt/EBITDA, interest coverage, free cash flow margin, estimated runway, total raised, headcount, last funding round
-- **Registered entity standing**: status, jurisdiction, and filing compliance
-- **Peer context**: the industry cohort the vendor was ranked inside and its percentile within it
-- **Score history**, plotted as discrete restatements rather than a smooth line, because each point is a separate computation
-- **Adverse events** with their date, review status, and a link to the source that reported each one
-- **Score overrides**, with the reason any cap or floor was applied
-- **Sources**, each with the date its data was true, plus the sources that were unavailable
-
-### Why this score?
-
-A pillar at 50 is not something you can act on or dispute. Open the rationale on any pillar and the card shows the inputs that produced it — each one with the measured value, what it scored, and how heavily it counted.
-
-A capital position of 50, for example, might resolve to a current ratio of 1.8x scoring 62 at a quarter of the weight, debt/EBITDA of 4.1x scoring 38, and a registration status Coverbase could not determine. That last one matters more than it looks: an undeterminable input is labelled as such rather than shown as a bare number, because "50" reads as measured mediocrity when it actually means nobody knows.
-
-Two things travel with every input:
-
-- **Whether it was peer-ranked.** A ratio scored against the vendor's own industry cohort is a much stronger claim than one scored against an absolute curve. The card says which you're looking at.
-- **The date the value was true.** Filed figures lag. An input from a filing two quarters old is labelled with its own as-of date, not the date of the refresh.
-
-The same rationale is available on every factor of the [security rating](/products/security-intelligence#reading-a-finding).
-
-### Peer comparison
-
-A ratio only means something against a comparable set: 4x debt/EBITDA reads very differently at a utility than at a software company. Coverbase ranks each vendor inside its own SIC industry cohort, drawn from the population of filers that reported the same concept in the same period.
-
-When that cohort is too small to support a percentile, the score falls back to a wider group **and says so on the card**. A disclosed wide cohort is honest; an undisclosed one is misleading.
-
-### Adverse events
-
-Events that bear on financial health — bankruptcy filings, going-concern doubt, mass layoffs, auditor changes, delistings, CFO departures, down rounds, material impairments, regulatory actions, late filings — are weighted by severity and decay over time, so a two-year-old event does not weigh the same as last month's.
-
-Events awaiting human confirmation are labeled **Needs review**. Dismissed events stay on the record for audit but stop counting against the score.
+<Card title="Financial Health Score" icon="chart-line" href="/products/financial-health-score">
+  Confidence tiers, the five pillars and how their weights shift by tier, peer-relative ratio scoring, the caps and floors that override a weighted result, adverse events, and an honest account of coverage and limits.
+</Card>
 
 ## Where it appears
 
 <CardGroup cols={2}>
   <Card title="Vendor fact sheet" icon="file-lines">
-    Both the **Corporate Registration** and **Coverbase Financial Health Score** cards appear on a vendor's fact sheet, refreshed on the regular fact-sheet cadence.
+    The **Corporate Registration** card leads the identity column on a vendor's fact sheet, refreshed on the regular fact-sheet cadence.
   </Card>
 
   <Card title="Assessments" icon="clipboard-check">
@@ -148,8 +103,8 @@ A control set configured to require authoritative sources will not cite a blog p
 
 Vendor Intelligence is an optional feature in beta, enabled per organization. **Contact your Coverbase representative to have it turned on.**
 
-Corporate registration validation is populated for every organization on each fact-sheet refresh. The Financial Health Score, registry-first retrieval, and the score rationale described above are the parts that require enabling. Nothing about an existing fact sheet changes until they are on.
+Corporate registration validation is populated for every organization on each fact-sheet refresh. What requires enabling is the presentation of it — the Corporate Registration card, the registry-verification chip, and the shared citation strip — along with registry-first retrieval. Nothing about an existing fact sheet changes until they are on.
 
 <Note>
-  Coverage is honest about its edges. SEC EDGAR covers roughly 7,000 US filers, so many private vendors score at Tier C. OpenCorporates coverage varies by jurisdiction. DUNS requires your own D&B entitlement. In every case the card names which sources were consulted and which were unavailable, rather than presenting a thinner answer as a complete one.
+  Coverage is honest about its edges. OpenCorporates coverage varies by jurisdiction, SEC EDGAR only covers US registrants, and a DUNS number requires your own entitlement with that provider. In every case the card names which sources were consulted and which were unavailable, rather than presenting a thinner answer as a complete one.
 </Note>
