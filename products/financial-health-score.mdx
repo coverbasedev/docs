@@ -1,0 +1,216 @@
+---
+title: "Financial Health Score"
+description: "A 0-100 view of whether a vendor is financially sound enough to depend on, computed from filed statements where they exist and from signals where they do not — always labelled with which."
+icon: "chart-line"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Coverbase Financial Health Score answers one question about a vendor without asking the vendor anything: **is this company financially sound enough to depend on?** It runs 0-100, where higher is healthier, and it is computed from regulatory filings where a company files them and from funding, headcount, and corporate-standing signals where it does not.
+
+What makes it usable in practice is how it's acquired: no supplier outreach, no questionnaire, no waiting on a vendor to opt in. Coverage is portfolio-wide from day one, and every vendor is rescored on each fact-sheet run.
+
+<Note>
+  This is an optional feature currently in beta. Let your Coverbase representative know if you'd like it turned on for your organization.
+</Note>
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="A score with its evidence class attached" icon="layer-group">
+    Every score is published with the confidence tier behind it, so an inferred number is never presented with the authority of an audited one. The tier is derived from what actually resolved — never declared.
+  </Card>
+
+  <Card title="Ratios ranked against real peers" icon="chart-simple">
+    A ratio only means something against a comparable set. Coverbase ranks each vendor inside its own industry cohort, drawn from thousands of filers that reported the same concept in the same period.
+  </Card>
+
+  <Card title="Every input is inspectable" icon="magnifying-glass-chart">
+    Open the rationale on any pillar and you get the inputs behind it: each one's measured value, what it scored, how heavily it counted, and whether it was ranked against peers.
+  </Card>
+
+  <Card title="Distress caps the score outright" icon="triangle-exclamation">
+    A bankruptcy filing or a dissolved registration doesn't get averaged into a weighted mean. It pins the score, and the card says which rule fired.
+  </Card>
+</CardGroup>
+
+## Confidence tiers
+
+**This is the most important thing on the card.** A Tier C 72 and a Tier A 72 are different claims about different evidence. The tier travels with the score everywhere the score goes — into the API, into MCP answers, into exports.
+
+| Tier | Backing data | What you get |
+| ---- | ------------ | ------------ |
+| **A — Filed financials** | Financial statements the company filed with a regulator (SEC EDGAR XBRL) | The full ratio battery, ranked against peers. Statement-grade. |
+| **B — Estimated financials** | Estimated revenue and EBITDA plus capital structure, where your organization has an estimates provider enabled | Partial ratios computed on estimates, full capital position and momentum |
+| **C — Signals only** | Funding, headcount, corporate standing, and adverse events | Capital position, momentum, standing, and events. No financial statements were available. |
+
+<Warning>
+  Scores are only directly comparable **within** a tier. Never rank a Tier A vendor against a Tier C vendor on score alone — build your list, filter to one tier, then compare.
+</Warning>
+
+If a vendor's filings stop resolving, it drops to a lower tier and the card says so. It does not keep presenting a statement-grade number built on estimates.
+
+## What the score is built from
+
+Five pillars. Which ones carry the score depends on the tier, because a tier with no filed statements has nothing to put in the financial core:
+
+| Pillar | Tier A | Tier B | Tier C | What it covers |
+| ------ | -----: | -----: | -----: | -------------- |
+| Financial core | 50% | 30% | — | Margin, liquidity, leverage, coverage, and cash generation from filed statements |
+| Capital position | 15% | 30% | 40% | Runway, debt maturity proximity, time since last raise, down-round history |
+| Momentum | 15% | 20% | 30% | Direction of travel: revenue growth, headcount trend, funding cadence |
+| Adverse events | 15% | 15% | 20% | Distress events weighted by severity, decayed by age |
+| Corporate standing | 5% | 5% | 10% | Registration status, jurisdiction, filing compliance |
+
+The weights renormalize over the pillars that actually exist for a vendor, which is why a Tier C score is not simply a Tier A score with holes in it.
+
+## How a score is computed
+
+<Steps>
+  <Step title="Each raw value is trimmed at its cohort's extremes">
+    A single outlier filer shouldn't set the top or bottom of the scale for everyone else.
+  </Step>
+
+  <Step title="Values are percentile-ranked inside the peer cohort">
+    This is the step that does the real work, and it matters more than any weight. It's what makes 4x debt/EBITDA at a utility and at a software company comparable. Ratios where lower is better — leverage, days sales outstanding, burn — are inverted so that higher always means healthier.
+  </Step>
+
+  <Step title="Level is blended with direction">
+    Where the trend matters as much as the level, the input score is weighted toward the current level but carries a meaningful share of the direction it's moving.
+  </Step>
+
+  <Step title="Events accumulate by severity and decay by age">
+    The events pillar doesn't percentile-rank. It sums decayed severity, so a two-year-old event does not weigh the same as last month's. Positive events carry negative severity and pull the burden back toward zero.
+  </Step>
+
+  <Step title="Pillars aggregate, then the composite renormalizes">
+    Each pillar is a weighted mean over the features present; the composite is a tier-weighted mean over the pillars present.
+  </Step>
+
+  <Step title="The result is smoothed month over month">
+    Damps routine churn so the score doesn't jitter on noise.
+  </Step>
+
+  <Step title="Caps and floors apply last, unblended">
+    An override is not averaged in — see [caps and floors](#caps-and-floors) below.
+  </Step>
+
+  <Step title="The score maps to a risk band">
+    0-19 Very High Risk · 20-39 High · 40-59 Medium · 60-79 Low · 80-100 Very Low.
+  </Step>
+</Steps>
+
+### Two rules that shape everything
+
+<AccordionGroup>
+  <Accordion title="A vendor is never penalized for something we could not compute" icon="circle-minus" defaultOpen>
+    Missing features drop out and the remaining weights renormalize. The cost of sparse data is paid by the **confidence tier**, not by the score — otherwise a poorly-covered vendor would look distressed purely for being poorly covered, which is a very expensive kind of wrong.
+
+    The same applies at the ratio level: a ratio with a zero, missing, or wrong-signed denominator is treated as *absent*, not as zero.
+  </Accordion>
+
+  <Accordion title="Scores decay slowly upward and move fast downward" icon="arrow-trend-down">
+    Smoothing damps routine movement in both directions, but severe events and every override bypass it entirely. A company recovering from distress climbs gradually as the evidence accumulates; a company entering distress drops immediately.
+  </Accordion>
+</AccordionGroup>
+
+## Peer comparison
+
+A ratio in isolation is not a judgement. 4x debt/EBITDA is unremarkable at a utility and alarming at a software company, so every Tier A ratio is scored as a percentile inside a cohort rather than against an absolute threshold.
+
+**The cohort is real, and it is large.** It's built from the population of filers that reported the same concept in the same period — typically thousands of companies per ratio, not a hand-picked comparison set.
+
+**Industry narrows it.** Ranking a software vendor against every filer — banks, REITs, miners — produces a percentile that is arithmetically correct and analytically meaningless, so cohorts are scoped to the vendor's own industry classification.
+
+**When the cohort is too small, the card says so.** The score falls back to a wider population and discloses that it did. A disclosed wide cohort is honest; an undisclosed one is misleading.
+
+<Note>
+  Tier B and C signal features — funding, headcount — are scored against documented absolute curves rather than peer percentiles, because no equivalent free population exists for them. Any input scored that way is flagged as not peer-ranked, both on the card and in the API.
+</Note>
+
+## Caps and floors
+
+Some facts should not be averaged. A bankruptcy filing is not a modest deduction to be offset by a healthy current ratio, so these rules apply after the weighted score and override it outright:
+
+| When | Effect |
+| ---- | ------ |
+| Registration dissolved or in liquidation, or a bankruptcy filing | Score pinned at 5 |
+| Going-concern doubt in an audit opinion | Capped at 30 |
+| Operating status reported as closed | Capped at 15, pending review |
+| Debt maturing within 12 months **and** either negative free cash flow or more than 30 months since the last raise | Capped at 45 |
+
+Every override that fires is recorded with its reason and shown on the card, so a pinned score explains itself rather than looking like an unusually harsh weighted result.
+
+## Adverse events
+
+Events that bear on financial health — bankruptcy filings, going-concern doubt, mass layoffs, auditor changes, delistings, CFO departures, down rounds, material impairments, regulatory actions, late filings — are weighted by severity and decay over time.
+
+Events awaiting human confirmation are labelled **Needs review**, and they count against the score until someone confirms or dismisses them. Dismissed events stay on the record for audit but stop affecting the number.
+
+## What the card shows
+
+- **Score, risk band, and confidence tier**, with 3-month and 12-month movement
+- **Pillar breakdown**, each with the weight it carried and the inputs behind it
+- **Financial vitals**: revenue and growth, operating margin, current ratio, debt/EBITDA, interest coverage, free cash flow margin, estimated runway, total raised, headcount, last funding round
+- **Registered entity standing**: status, jurisdiction, and filing compliance
+- **Peer context**: the cohort the vendor was ranked inside and its percentile within it, with any fallback disclosed
+- **Score history**, plotted as discrete restatements rather than a smooth line, because each point is a separate computation
+- **Adverse events** with date, review status, and a link to the source that reported each one
+- **Caps and floors** applied, with the reason
+- **Sources**, each with the date its data was true, plus the sources that were asked for and unavailable
+
+### Why this score?
+
+Open the rationale on any pillar and the card shows the inputs that produced it — each with the measured value, what it scored, and how heavily it counted. Inputs are ordered by how much they cost the pillar, so the reason for a low score is at the top.
+
+A capital position of 50 might resolve to a current ratio of 1.8x scoring 62 at half the weight, and a registration status Coverbase could not determine. That second one matters more than it looks: an undeterminable input is labelled as such rather than shown as a bare number, because "50" reads as measured mediocrity when it actually means nobody knows.
+
+Two things travel with every input:
+
+- **Whether it was peer-ranked.** An input scored against the vendor's own cohort is a much stronger claim than one scored against an absolute curve.
+- **The date the value was true.** Filed figures lag. An input from a filing two quarters old carries its own as-of date, not the date of the refresh.
+
+## Where it appears
+
+<CardGroup cols={2}>
+  <Card title="Vendor fact sheet" icon="file-lines">
+    The **Coverbase Financial Health Score** card, refreshed on the regular fact-sheet cadence.
+  </Card>
+
+  <Card title="Assessments" icon="clipboard-check">
+    Financial facts are supplied to control evaluations as authoritative evidence, ranked ahead of web results.
+  </Card>
+
+  <Card title="Intake and inherent risk" icon="inbox">
+    A new vendor request is scored against its registered identity and financial standing before the web is consulted.
+  </Card>
+
+  <Card title="API and MCP" icon="code" href="/api-reference/vendors#vendor-intelligence-sections">
+    Available on the fact-sheet endpoint as `financials.financial_health`, and conversationally through MCP: "what's the financial health score for Acme?"
+  </Card>
+</CardGroup>
+
+## Coverage and limits
+
+Coverage is honest about its edges, and these are the ones worth knowing before you build a process on the score.
+
+- **SEC EDGAR covers roughly 7,000 US filers** — often 15-25% of a typical vendor portfolio — on a quarterly cadence with a 40-90 day filing lag. Many private vendors will sit at Tier C, and that is the system working as designed rather than failing.
+- **Tier B and C scores are inferred.** They rank vendors sensibly against each other. They do not carry statement-level precision, and the confidence tier is how you tell.
+- **The score is a ranking, not yet a probability.** The current weights are heuristic — chosen to order vendors sensibly, not fitted against observed failures. Treat the score as "who needs attention first", not as an estimated probability of default. Calibration against a failure label set is the next step, and until it lands, no probability language belongs on a slide.
+- **Headcount and funding data lag** and skew toward venture-backed technology companies. A bootstrapped logistics vendor may barely register in them.
+- **Trend features need history.** Where a source publishes only current values, trend inputs are omitted until Coverbase has two snapshots of its own. They are never assumed flat.
+- **The score describes the entity that was matched.** If a vendor is a subsidiary and the filings belong to the parent, the score describes the parent's balance sheet. The Corporate Registration card shows which legal entity was bound — see [Vendor Intelligence](/products/vendor-intelligence).
+
+<Note>
+  Two expansions are in progress: **UK Companies House**, which extends Tier A past US SEC registrants and is the single highest-value coverage improvement available; and a **news and event feed**, which will widen the adverse-events pillar beyond what regulatory filings disclose. Until the latter lands, events are limited to what filings reveal.
+</Note>
+
+## Availability
+
+The Financial Health Score is an optional feature in beta, enabled per organization. **Contact your Coverbase representative to have it turned on.** Nothing is computed or stored for an organization that doesn't have it enabled.
+
+<Note>
+  It pairs with [Vendor Intelligence](/products/vendor-intelligence), which validates the corporate identity the score is computed against, and [Security Intelligence](/products/security-intelligence), which rates a vendor's external security posture. For reading the card day to day, see the [financial health and security intelligence guide](/user-guides/vendor-fact-sheet).
+</Note>
