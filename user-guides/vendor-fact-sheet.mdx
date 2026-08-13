@@ -1,19 +1,19 @@
 ---
 title: "Financial health and security intelligence guide"
-description: "How to read the Financial Health Score and Security Posture cards on a vendor fact sheet, what each number is actually claiming, and what to do about what you find."
+description: "How to read the Financial Health Score and Security Posture cards in a vendor's Vendor Intelligence section, what each number is actually claiming, and what to do about what you find."
 icon: "gauge-high"
 hidden: true
 ---
 
 <Info>
-  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the two scored cards on a vendor's fact sheet. For the product-level explanation of where the data comes from, see [Financial Health Score](/products/financial-health-score) and [Security Intelligence](/products/security-intelligence); for the corporate identity both are computed against, [Vendor Intelligence](/products/vendor-intelligence).
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the two scored cards in a vendor's Vendor Intelligence section. For the product-level explanation of where the data comes from, see [Financial Health Score](/products/financial-health-score) and [Security Intelligence](/products/security-intelligence); for the corporate identity both are computed against, [Vendor Intelligence](/products/vendor-intelligence).
 </Info>
 
 <Note>
   These are optional features currently in beta. If you don't see the cards described here, let your Coverbase representative know you'd like them turned on.
 </Note>
 
-Two cards on the fact sheet carry a score rather than a description: **Coverbase Financial Health Score** and **Security Posture**. Both are assembled without contacting the vendor: one from regulatory filings and registries, the other from the vendor's own public infrastructure.
+Two cards in Vendor Intelligence carry a score rather than a description: **Coverbase Financial Health Score** and **Security Posture**. Both are assembled without contacting the vendor: one from regulatory filings and registries, the other from the vendor's own public infrastructure.
 
 This guide is about reading them correctly. Both cards are designed to be checkable, and the most common mistake with either is treating a number as more certain than the card says it is.
 
@@ -100,11 +100,33 @@ Every score on these cards ships with something that tells you how much weight i
 
 The same applies to financial health in a different direction: the score describes the corporate entity Coverbase bound to the vendor. If a vendor is a subsidiary and the filings belong to the parent, the score describes the parent's balance sheet, not the entity on your contract. Check the Corporate Registration card to see which legal entity was matched.
 
+## Opening the full page
+
+Each card summarises. Behind it sits a full page with the same data and far more of it, reached from **View full analysis** on the card or from the two entries nested under **Vendor Intelligence** in the vendor's left-hand navigation.
+
+<CardGroup cols={2}>
+  <Card title="Security posture" icon="shield-halved">
+    The rating as a headline figure with its grade and band, plotted against the rating bands over time. Every scored factor is grouped and expandable down to the individual findings that cost it points, each with the record it read and how long it has been open.
+
+    Then a section per class of evidence: known vulnerabilities ordered by whether attackers are actually exploiting them rather than by severity alone; the internet-facing attack surface; email authentication; web and transport hardening; credential exposure from third-party breaches; lookalike domains; web reputation; and which sources the scan used or skipped.
+  </Card>
+
+  <Card title="Financial health" icon="chart-line">
+    The score with its confidence tier and peer standing, plotted against the risk bands over time with tier changes called out.
+
+    All five pillars expand to the measured inputs behind them, alongside a chart ranking where the points are actually going, because a weak pillar carrying 5% of the weight matters far less than a middling one carrying 40%. Below that: the full vitals set grouped as a credit reviewer reads it, the debt maturity schedule, the peer benchmark, the event timeline, and every source with any cap or floor that was applied.
+  </Card>
+</CardGroup>
+
+<Tip>
+  The full pages have their own URLs, so a specific vendor's security posture or financial health can be linked directly into a ticket or an email.
+</Tip>
+
 ## Common questions
 
 <AccordionGroup>
   <Accordion title="The vendor is public but shows Tier C. Why?" icon="circle-question">
-    Tier C means no financial statements resolved. Open the Corporate Registration card and look at the sources: if SEC EDGAR is listed as unavailable, no CIK was matched. That usually means the vendor's name on file differs from its registered legal name. Correcting the vendor's name and refreshing the fact sheet normally resolves it.
+    Tier C means no financial statements resolved. Open the Corporate Registration card and look at the sources: if SEC EDGAR is listed as unavailable, no CIK was matched. That usually means the vendor's name on file differs from its registered legal name. Correcting the vendor's name and refreshing Vendor Intelligence normally resolves it.
   </Accordion>
 
   <Accordion title="A security factor is missing from the breakdown." icon="circle-minus">
@@ -116,11 +138,11 @@ The same applies to financial health in a different direction: the score describ
   </Accordion>
 
   <Accordion title="Can I dispute a finding?" icon="flag">
-    Every finding names the record it read, so start by checking it yourself; a DNS record or a response header takes a moment to verify. If the record has changed since the last refresh, trigger a fact-sheet refresh and the finding will clear on its own. If you believe the reading itself is wrong, raise it with your Coverbase representative with the vendor domain and the finding.
+    Every finding names the record it read, so start by checking it yourself; a DNS record or a response header takes a moment to verify. If the record has changed since the last refresh, trigger a Vendor Intelligence refresh and the finding will clear on its own. If you believe the reading itself is wrong, raise it with your Coverbase representative with the vendor domain and the finding.
   </Accordion>
 
   <Accordion title="How often do these refresh?" icon="rotate">
-    Both refresh on the regular fact-sheet cadence, and on any manual refresh you trigger from the vendor. Score history is kept as discrete points (one per day at most), so the trend line reflects separate computations rather than a smoothed curve.
+    Both refresh on the regular Vendor Intelligence cadence, and on any manual refresh you trigger from the vendor. Score history is kept as discrete points (one per day at most), so the trend line reflects separate computations rather than a smoothed curve.
   </Accordion>
 </AccordionGroup>
 
@@ -131,4 +153,4 @@ Neither card is an island. Once enabled, both feed the rest of the platform:
 - **Assessments** consult measured posture and registry facts as authoritative evidence, ranked ahead of any web result. A control asking about email authentication gets answered from the vendor's actual DNS records rather than from a marketing page.
 - **Intake and inherent risk** score a new vendor request against its registered identity and measured posture before the web is consulted.
 - **MCP** exposes both conversationally: "what's the financial health score for Acme?", "which of my vendors have DMARC set to none?"
-- **The API** returns both on the vendor fact sheet endpoint. See the [API reference](/api-reference/vendors#vendor-intelligence-sections).
+- **The API** returns both on the vendor fact-sheet endpoint (the route name predates the Vendor Intelligence label). See the [API reference](/api-reference/vendors#vendor-intelligence-sections).
