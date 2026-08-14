@@ -1,0 +1,175 @@
+# xnord.md
+
+House guide for the Coverbase documentation site: what each section is for, where new content goes, and how it should sound. Read this before adding or editing a page. It applies to humans and to AI assistants equally.
+
+`AGENTS.md` covers the Mintlify mechanics (MDX, `docs.json`, `mint dev`). This file covers editorial judgement.
+
+## The sections, and who each one is for
+
+The site serves several different readers. Most bad pages are pages written for the wrong one.
+
+### `user-guides/`: the person doing the work
+
+Screen-by-screen walkthroughs for analysts, reviewers, admins, and business requesters. Written for someone with the product open in another tab who wants to get a specific job done today.
+
+Contains: `admin-setup`, `analyst-reviewer`, `running-an-assessment`, `assessment-quick-reference`, `requesting-a-vendor`, `evidence-quality`, `contract-guardian`, `document-insights`, `baseline-contract-extraction`, `clause-set-spreadsheet-import`, `contract-dates-and-reminders`, `email-notifications`, `vendor-fact-sheet`, and `overview` as the hub.
+
+Traits that belong here and nowhere else:
+- Numbered `<Steps>` that follow the actual click path.
+- Real screenshots with numbered callouts in the `<Frame>` caption.
+- Troubleshooting tables of the form "symptom, fix".
+- Opinions. "Start with your own control sets and add breadth only where you need it" is useful here and out of place in the API reference.
+
+**These pages are deliberately absent from `docs.json`.** They are unlisted so the whole set can be shared as a link with a customer without exposing it in the main navigation. `user-guides/overview.mdx` carries `hidden: true` and links to the rest. If you add a guide, link it from `overview.mdx`, and do not add it to `docs.json`.
+
+### `api-reference/`: the engineer writing an integration
+
+One page per resource, plus `openapi.json`. Written for someone who already decided to call the API and needs the exact shape of a request.
+
+Contains: `api-keys`, `vendors`, `documents`, `bill-of-materials`, `users`, `intake`, `assessments`, `findings`, `obligations`, `radar`, `reassessments`, `custom-fields`, `workflows`, `webhooks`.
+
+Rules specific to this section:
+- Shared behavior lives once in `conventions.mdx` (auth, base URLs, IDs, timestamps, idempotency, pagination, the error envelope). Per-resource pages assume it and link to it rather than repeating it.
+- Show a real request and a real response. Field tables without an example are hard to use.
+- No workflow advice. "When you should reassess a vendor" is a user guide; "what `POST /v1/reassessments` accepts" is here.
+
+### `mcp/`: someone connecting an AI client
+
+How Claude, Cursor, and other MCP clients talk to Coverbase, and what they are allowed to do once connected.
+
+Contains: `overview`, `connecting`, `connector-directory`, `tool-reference`, `vendor-intake`, `prompts`, `example-prompts`, `permissions`, `security`, `troubleshooting`.
+
+Rules specific to this section:
+- `permissions` and `security` are the load-bearing pages. Anything that widens what an agent can do belongs in both the tool page and the permissions page.
+- `tool-reference` describes tools, `example-prompts` shows what to actually type. Keep the two apart.
+- Be explicit about what an agent cannot do. Readers are evaluating risk, not just capability.
+
+### `products/`: the buyer or evaluator
+
+What a capability is, what it does, and where its edges are. Read by someone deciding whether to turn something on, or explaining it to a colleague who asked a hard question.
+
+Contains one page per product area, plus two catalogs: `source-library` (every data feed, by tier) and `detector-library` (built-in detectors). `document-library` explains where curated vendor documents come from.
+
+Rules specific to this section:
+- State limits honestly. `financial-health-score` documenting what "unmeasured" means is the model to follow.
+- A product page explains the mechanism. The how-to for the same feature belongs in `user-guides/` and should be linked from a `<Card>` at the bottom.
+
+### `security/`: the reviewer assessing Coverbase
+
+`overview`, `compliance`, `governance`, `data-protection`, `secure-development`, `ai-governance`, `audit-trails`. Read by a risk team doing to us what our customers do to their vendors.
+
+Claims here get quoted back in questionnaires, so every sentence must be one we would defend in an audit. Prefer a specific, checkable statement over a reassuring one.
+
+### The rest
+
+- `integrations/` covers connecting external systems, the workflow engine, webhooks, and delivery debugging.
+- `reporting/` holds report templates and the placeholder reference.
+- `export.mdx`, `export-api-concepts.mdx`, `import.mdx`, and `import-api.mdx` cover bulk data movement.
+- `control-library.mdx` is the packaged control set catalog.
+- `index.mdx`, `quickstart.mdx`, `conventions.mdx`, and `changelog.mdx` are the entry path.
+
+### Deciding where a page goes
+
+Ask what the reader is trying to do:
+
+| The reader wants to... | Section |
+| --- | --- |
+| Finish a task in the product today | `user-guides/` |
+| Understand what a capability is and where it stops | `products/` |
+| Call an endpoint | `api-reference/` |
+| Let an AI client act on their program | `mcp/` |
+| Assess whether Coverbase is safe to use | `security/` |
+| Connect another system | `integrations/` |
+
+Put a fact in exactly one place and link to it from the others. Duplicated facts drift.
+
+## Tone
+
+The voice is a competent colleague explaining something they know well, to someone smart who hasn't seen it yet. Direct, specific, unhurried, occasionally opinionated. Never salesy, never padded.
+
+### Hard rules
+
+**No em dashes. None.** Not in prose, not in captions, not in table cells, not in frontmatter descriptions. `user-guides/`, `products/`, and `security/` are already clean and must stay that way. About a dozen remain in `api-reference/`, `mcp/`, and `reporting/`, and they should be removed whenever you next edit those pages. When you reach for one, you want one of these instead:
+
+- A full stop. Two clear sentences almost always beat one spliced sentence.
+- A comma, when the aside is genuinely minor.
+- Parentheses, for a true aside.
+- A colon, when what follows explains what came before.
+
+Before: `The grade measures who is accountable — not whether the page is useful.`
+After: `The grade measures who is accountable, not whether the page is useful.`
+
+Other hard rules:
+
+- **Second person, active voice, present tense.** "You set the minimum grade", not "the minimum grade is set by the user".
+- **Sentence case headings.** "Where the documents come from", not "Where The Documents Come From".
+- **Bold for UI labels** (`Click **Settings**`), backticks for files, paths, commands, and field names.
+- **Root-relative links** (`/user-guides/evidence-quality`), never relative paths or bare URLs to our own site.
+- **One idea per sentence.** If you need two commas to hold a sentence together, split it.
+
+### Sounding like a person, not a model
+
+These are the patterns that make documentation read as machine-written. Avoid all of them.
+
+**Vocabulary to cut on sight:** leverage, robust, seamless, streamline, comprehensive, empower, unlock, elevate, delve, navigate (figuratively), landscape, realm, journey, ensure that, it's worth noting, it's important to note, in today's world, at the end of the day, best-in-class, cutting-edge, game-changing.
+
+**Constructions to avoid:**
+
+- *"Not just X, but Y."* Also its variants: "isn't merely", "goes beyond simply". Say Y.
+- *Rule-of-three padding.* "Fast, reliable, and secure" where only one of the three is true or measured. Three items should mean three real items.
+- *Restating the heading in the first sentence.* If the heading is "Where the documents come from", do not open with "This section explains where the documents come from."
+- *The summary paragraph that repeats the section.* If the reader just read it, they don't need it again. Stop when you're done.
+- *Hedging stacks.* "This may potentially help in some cases." Either it does something or it doesn't. Say which.
+- *Uniform sentence length.* Real writing varies. Some sentences run long because the idea needs the room. Some are four words.
+- *Every bullet formatted `**Bold term.** Explanation.`* Fine for a genuine glossary, tiring when every list on the page does it.
+- *Symmetric bullets of identical length.* A list where every item is exactly one line reads as generated. Let items be as long as they need to be.
+
+**Positive habits:**
+
+- Name the concrete thing. "20 to 30 minutes on a heavy document set" beats "may take some time".
+- Answer the question the reader actually has, including the uncomfortable one. If people keep asking whether their uploads are shared, the page should say plainly that they are not, and then say why that is structurally true.
+- Say what something does *not* do. Limits build more trust than capabilities.
+- Keep a light touch where it earns its place. "Two companies called Acme is the normal case" teaches faster than a paragraph of caution.
+- Read it aloud before committing. If you would not say it to a colleague, rewrite it.
+
+### The check before you commit
+
+1. Search the diff for `—`. There should be no hits.
+2. Search for the banned vocabulary above.
+3. Read the first sentence of each section. Does any of them restate its heading?
+4. Read the last paragraph of each section. Is it a summary of what you just wrote? Delete it.
+5. Does every claim name something specific, or are you hedging?
+
+## Page mechanics
+
+Every page starts with frontmatter and the agent directive:
+
+```mdx
+---
+title: "Document library"
+description: "One sentence a search result can stand on."
+icon: "folder-open"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+```
+
+- `icon` is a Font Awesome name. Reuse one already in the repo when a page is related to an existing one.
+- `description` is the search and social preview. Write it as a sentence, not a keyword list.
+- Add the page to `docs.json` under the right group, in reading order, **unless** it lives in `user-guides/`.
+- End substantial pages with a `## Related` `<CardGroup>` pointing at the two to four pages a reader would want next.
+- Run `mint broken-links` before opening a PR.
+
+## Screenshots
+
+Screenshots do more work than any paragraph, so take them whenever the page describes something visible.
+
+- Store in `images/user-guides/`, PNG, named by area and subject: `assessment-documents-collection.png`, `analyst-review-results.png`.
+- Wrap in `<Frame>` with a caption that maps numbered callouts to what they are: `caption="1 Existing vendor docs. 2 Request from vendor. 3 Switch to automatic."`
+- Always write a real `alt`. Not "screenshot".
+- Reuse an existing image when it already shows the thing. Two names for one screenshot is how they fall out of sync.
+- Capture at a normal window width in light theme, with realistic data. Empty states and lorem ipsum make a product look unfinished.
+- Never ship a screenshot containing a real customer name, a real person's details, or anything from a live tenant.
+- Re-shoot when the UI changes. A stale screenshot is a support ticket.
