@@ -17,8 +17,9 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | Method | Path |
 | ------ | ---- |
 | `GET` | `/v1/custom-fields` |
+| `POST` | `/v1/custom-fields/values` |
 
-Reading and writing **values** happens through the record's own endpoint — see [Where values appear](#where-values-appear). This API is read-only; setting a value over the public API is not yet supported.
+Definitions themselves are managed in the Coverbase dashboard — this API reads them and reads or writes the **values** set against your records.
 
 ## List custom field definitions
 
@@ -170,6 +171,91 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors?include_custom_fields=
 | `user` | string array of user IDs (`cbuser_...`) | `["cbuser_3e6f..."]` |
 
 Resolve `user` IDs to names and emails through the [Users API](/api-reference/users).
+
+## Set custom field values
+
+<ParamField path="method" type="POST">
+  `POST /v1/custom-fields/values`
+</ParamField>
+
+Sets one or more values on a single record. Only the fields you name change; anything already set and not listed is left alone.
+
+Writes are supported on the same records that return values: `vendor`, `service`, and `assessment`. A value can never be written somewhere it cannot be read back.
+
+### Body
+
+<ParamField body="target" type="string" required>
+  `vendor`, `service`, or `assessment`.
+</ParamField>
+
+<ParamField body="object_id" type="string" required>
+  The record to set values on. Must exist and belong to your organization, or the call returns `404`.
+</ParamField>
+
+<ParamField body="values" type="object[]" required>
+  One or more `{ "config_id": "cbcfc_...", "value": ... }` entries. At least one is required, and a `config_id` may appear only once per request.
+</ParamField>
+
+Note that you do **not** send `field_type`. The field's own definition is authoritative, which is what stops a value being written into the wrong typed column.
+
+### Example request
+
+```bash cURL
+curl -X POST "https://sandbox.api.coverbase.app/v1/custom-fields/values" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target": "vendor",
+    "object_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "values": [
+      { "config_id": "cbcfc_8b1e4a7d0c3f6a9b2e5d8c1f4a7b0e3d", "value": "Closed" },
+      { "config_id": "cbcfc_4f2a9c1b7d3e0a6b8c5d2e9f1a4b7c0d", "value": ["cbuser_3e6f9a2b5c8d1e4f7a0b3c6d9e2f5a8b"] }
+    ]
+  }'
+```
+
+### Example response
+
+The record's full `custom_fields` array after the write:
+
+```json
+{
+  "target": "vendor",
+  "object_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "custom_fields": [
+    {
+      "config_id": "cbcfc_8b1e4a7d0c3f6a9b2e5d8c1f4a7b0e3d",
+      "field_name": "Exception Status",
+      "field_type": "select",
+      "value": "Closed"
+    }
+  ]
+}
+```
+
+### Clearing a value
+
+Send `null` to empty a field. The field then drops out of `custom_fields` entirely, since only set values are returned.
+
+```json
+{ "config_id": "cbcfc_8b1e4a7d0c3f6a9b2e5d8c1f4a7b0e3d", "value": null }
+```
+
+### Validation
+
+Every assignment in the request is checked before any of them is written, so a request naming one bad field changes nothing at all.
+
+| Status | When |
+| ------ | ---- |
+| 400 | A value's type doesn't match the field (`number` into a `string` field, and so on) |
+| 400 | A `select` or `multiselect` value isn't one of the field's configured option labels |
+| 400 | The field doesn't apply to the given `target`, or has been disabled or archived |
+| 400 | The same `config_id` appears twice in one request |
+| 404 | The `object_id` or a `config_id` doesn't exist in your organization |
+
+<Note>
+  A write through this API behaves like a person editing the record in the dashboard: it takes precedence over values previously filled in by Coverbase's automated extraction.
+</Note>
 
 ## Behavior worth knowing
 
