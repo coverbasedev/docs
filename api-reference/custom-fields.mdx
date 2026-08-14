@@ -1,0 +1,182 @@
+---
+title: "Custom Fields API"
+description: "Discover your organization's custom field definitions and read their values on vendors, services, and assessments."
+icon: "table-columns"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A **custom field** (`cbcfc_...`) is a field your organization defines on top of Coverbase's built-in ones — a risk exception owner, an internal tier, a review date. This API lets an integration discover which fields exist and read the values set on your records.
+
+Values are returned on vendors, services, and assessments. Use `GET /v1/custom-fields` first to learn the `config_id`, type, and allowed options behind each value.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path |
+| ------ | ---- |
+| `GET` | `/v1/custom-fields` |
+
+Reading and writing **values** happens through the record's own endpoint — see [Where values appear](#where-values-appear). This API is read-only; setting a value over the public API is not yet supported.
+
+## List custom field definitions
+
+<ParamField path="method" type="GET">
+  `GET /v1/custom-fields`
+</ParamField>
+
+### Query parameters
+
+<ParamField query="target" type="string">
+  Only return fields that apply to this object type. One of `vendor`, `service`, `assessment`, `control`, `eval`, `contract`, `task`, `review`, `engagement`. An unrecognized value returns `422`.
+</ParamField>
+
+<ParamField query="include_disabled" type="boolean">
+  Include fields your organization has disabled. Default `false`.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/custom-fields?target=vendor" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+```json
+{
+  "items": [
+    {
+      "id": "cbcfc_4f2a9c1b7d3e0a6b8c5d2e9f1a4b7c0d",
+      "field_name": "Risk Exception Owner",
+      "field_type": "user",
+      "enabled": true,
+      "applies_to": ["vendor"],
+      "options": [],
+      "created_at": 1749168000,
+      "updated_at": 1749168000
+    },
+    {
+      "id": "cbcfc_8b1e4a7d0c3f6a9b2e5d8c1f4a7b0e3d",
+      "field_name": "Exception Status",
+      "field_type": "select",
+      "enabled": true,
+      "applies_to": ["vendor", "engagement"],
+      "options": [
+        { "label": "Open", "color": "amber" },
+        { "label": "Closed", "color": "green" }
+      ],
+      "created_at": 1749168000,
+      "updated_at": 1752019200
+    }
+  ],
+  "total": 2
+}
+```
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The field's `config_id` (`cbcfc_...`). This is the value that appears as `config_id` on each custom field value.
+</ResponseField>
+
+<ResponseField name="field_name" type="string">
+  The display name your organization gave the field. Names can be renamed at any time — match on `id`, not `field_name`.
+</ResponseField>
+
+<ResponseField name="field_type" type="string">
+  One of `string`, `number`, `boolean`, `date`, `user`, `select`, `multiselect`. Determines the shape of `value` wherever this field appears.
+</ResponseField>
+
+<ResponseField name="enabled" type="boolean">
+  Whether the field is currently in use. Disabled fields are excluded unless you pass `include_disabled=true`, and their values never appear on records.
+</ResponseField>
+
+<ResponseField name="applies_to" type="string[]">
+  The object types this field can be set on.
+</ResponseField>
+
+<ResponseField name="options" type="object[]">
+  For `select` and `multiselect`, the allowed `label` values (each with an optional `color`). Empty for every other type.
+</ResponseField>
+
+## Where values appear
+
+Set values are returned as a `custom_fields` array on these endpoints:
+
+| Endpoint | Values included |
+| -------- | --------------- |
+| `GET /v1/vendors/{vendor_id}` | Always — for the vendor and each nested service |
+| `PATCH /v1/vendors/{vendor_id}` | Always |
+| `GET /v1/vendors` | Only when `include_custom_fields=true` |
+| `PATCH /v1/vendors/{vendor_id}/services/{service_id}` | Always |
+| `GET /v1/assessments/{assessment_id}` | Always |
+
+Listing vendors leaves values out by default so paging stays cheap; pass `include_custom_fields=true` when you need them.
+
+<Note>
+  Create responses return an empty `custom_fields` array — a record has no values at the moment it is created.
+</Note>
+
+### Example
+
+```bash cURL
+curl -X GET "https://sandbox.api.coverbase.app/v1/vendors?include_custom_fields=true&limit=50" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+```json
+{
+  "items": [
+    {
+      "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "name": "Acme Supplier",
+      "custom_fields": [
+        {
+          "config_id": "cbcfc_8b1e4a7d0c3f6a9b2e5d8c1f4a7b0e3d",
+          "field_name": "Exception Status",
+          "field_type": "select",
+          "value": "Open"
+        },
+        {
+          "config_id": "cbcfc_4f2a9c1b7d3e0a6b8c5d2e9f1a4b7c0d",
+          "field_name": "Risk Exception Owner",
+          "field_type": "user",
+          "value": ["cbuser_3e6f9a2b5c8d1e4f7a0b3c6d9e2f5a8b"]
+        }
+      ]
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### Value types
+
+`value` is typed by `field_type`:
+
+| `field_type` | `value` shape | Example |
+| ------------ | ------------- | ------- |
+| `string` | string | `"Renewal pending"` |
+| `date` | string | `"2026-03-01"` |
+| `select` | string — one of the field's option labels | `"Open"` |
+| `number` | number | `4` |
+| `boolean` | boolean | `true` |
+| `multiselect` | string array of option labels | `["PII", "PCI"]` |
+| `user` | string array of user IDs (`cbuser_...`) | `["cbuser_3e6f..."]` |
+
+Resolve `user` IDs to names and emails through the [Users API](/api-reference/users).
+
+## Behavior worth knowing
+
+- **Only set values are returned.** A record with nothing filled in returns an empty `custom_fields` array, and a field left blank on a record is omitted rather than returned with a `null` value.
+- **Disabled and archived fields are hidden.** Their values stay in Coverbase but never appear on API responses, so retiring a field cleanly removes it from your integration.
+- **Match on `config_id`, not `field_name`.** Display names are editable in the dashboard and change with no deploy.
+
+## Reading custom fields from an AI assistant
+
+The [Coverbase MCP server](/mcp/overview) exposes the same data to AI assistants. Custom field values are already included in vendor, service, assessment, control, and engagement reads, and `query_platform(kind="custom_fields")` lists the definitions.
