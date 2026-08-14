@@ -17,6 +17,15 @@ import AgentDirective from "/snippets/agent-directive.mdx";
     Also confirm the client supports OAuth 2.0 for MCP, not just API-key configurations. Older MCP clients sometimes only support stdio transport, which won't work with the Coverbase server.
   </Accordion>
 
+  <Accordion title="The server asks for an OAuth token, but I'm using an API key" icon="key">
+    The key is almost certainly not reaching the server. A request with no `Authorization` header is answered with `401` and a `WWW-Authenticate` challenge, which every MCP client reads as "start the OAuth flow" — so a missing header looks identical to having no key at all.
+
+    Check two things:
+
+    - Your client config includes `"headers": { "Authorization": "Bearer cb_mcp_..." }`, or `--header` on the command line. A URL on its own is not enough. See [Choosing an authentication method](/mcp/connecting#choosing-an-authentication-method).
+    - The key starts with `cb_mcp_`. An `ak_` key from **Configuration → API Keys** belongs to the [REST API](/api-reference/api-keys) and is not accepted here; MCP keys come from **Configuration → MCP Server**.
+  </Accordion>
+
   <Accordion title="OAuth flow fails or times out" icon="clock">
     Check that your browser allows pop-ups from the AI client's domain and that you're signed into the correct Coverbase account in the browser session handling the OAuth callback.
 
