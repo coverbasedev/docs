@@ -1,6 +1,6 @@
 ---
 title: "Tool reference"
-description: "Every tool the Coverbase MCP server exposes: the eight read dispatchers and their kinds, the report catalog, the write matrix, and the self-describing capabilities call."
+description: "Every tool the Coverbase MCP server exposes: the nine read dispatchers and their kinds, the report catalog, the write matrix, and the self-describing capabilities call."
 icon: "screwdriver-wrench"
 ---
 
@@ -8,9 +8,9 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The server exposes **11 tools**. Eight of them are read dispatchers, one per domain, each covering many operations through a `kind` parameter. One returns reports, one performs every write, and one describes the rest.
+The server exposes **12 tools**. Nine of them are read dispatchers, one per domain, each covering many operations through a `kind` parameter. One returns reports, one performs every write, and one describes the rest.
 
-This shape is deliberate. An assistant handed sixty-five narrowly-named tools spends its context deciding between them and still picks wrong; eleven tools with explicit routes leave more room for your actual data.
+This shape is deliberate. An assistant handed sixty-five narrowly-named tools spends its context deciding between them and still picks wrong; a dozen tools with explicit routes leave more room for your actual data.
 
 <Tip>
   You rarely need this page to *use* the server. Ask for what you want in plain language and the assistant picks the route. This is here for when you want to know exactly what it can reach, audit what an assistant did, or write a prompt that names a specific call.
@@ -111,6 +111,22 @@ Accepted parameters: `kind`, `questionnaire_id`, `questionnaire_type`, `vendor_i
   How these fit together into a complete intake request, and why `intake_steps` is read before anything else runs.
 </Card>
 
+### `query_rfps`
+
+Accepted parameters: `kind`, `rfp_id`, `submission_id`, `query`, `limit`.
+
+| `kind` | Returns |
+| ------ | ------- |
+| `list` | RFPs in the org, newest first. |
+| `detail` | One RFP: timeline, rubric, vendors and submissions. |
+| `submission_answers` | One submission's answers, each labelled with where it came from. |
+| `comparison` | The stored cross-vendor comparison, with its timestamp. |
+| `activity` | The RFP's event history, including which AI steps ran. |
+
+<Card title="How to run an RFP" icon="clipboard-list" href="/user-guides/running-an-rfp">
+  The full lifecycle, and what a researched response is and is not.
+</Card>
+
 ### `query_radar`
 
 Accepted parameters: `kind`, `vendor_id`, `query`, `llm_query_terms`, `include_common_related_terms`, `limit`.
@@ -188,6 +204,7 @@ Every write goes through one tool: `mutate(entity, action, data)`. The per-actio
 | `review` | `create`, `update` |
 | `contract` | `create`, `update` |
 | `engagement` | `create`, `update`, `archive` |
+| `rfp` | `draft_brief`, `research_vendors`, `suggest_requirements`, `generate_questions`, `create`, `invite_vendor`, `publish`, `simulate_submissions`, `compare`, `award` |
 
 A few of these carry behaviour worth knowing:
 
@@ -208,6 +225,14 @@ A few of these carry behaviour worth knowing:
 
   <Accordion title="engagement / archive is terminal" icon="box-archive">
     There is no unarchive.
+  </Accordion>
+
+  <Accordion title="rfp authoring writes nothing until create" icon="wand-magic-sparkles">
+    `draft_brief`, `research_vendors`, `suggest_requirements` and `generate_questions` return proposals and change nothing. `create` is the one write, and it builds the RFP, its rubric, its questionnaire, the vendor records and the invitations in a single transaction. The RFP lands as a draft; no vendor is contacted until `publish`.
+  </Accordion>
+
+  <Accordion title="rfp / simulate_submissions produces research, not responses" icon="user-secret">
+    A silent RFP researches how each invited vendor would most plausibly answer, from public information. Nobody is contacted, no vendor has agreed to any of it, and every rendering says so. Vendors who already sent a real response are skipped, and a re-run never deletes a real answer.
   </Accordion>
 
   <Accordion title="custom_field / set_value needs a config ID first" icon="table-columns">
