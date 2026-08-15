@@ -200,6 +200,40 @@ The full intake request runs in conversation. You don't need to say "intake" for
   </Accordion>
 </AccordionGroup>
 
+## Sourcing and RFPs
+
+<AccordionGroup>
+  <Accordion title="Draft an RFP from a sentence" defaultOpen icon="wand-magic-sparkles">
+    > Draft an RFP to replace our applicant tracking system for about 12 recruiters. It has to integrate with our HRIS and Microsoft 365, and we will not grant tenant-wide mailbox access.
+
+    The assistant calls `mutate(entity="rfp", action="draft_brief")`, which writes nothing and returns a proposed name, description, narrative and timeline for you to correct.
+  </Accordion>
+
+  <Accordion title="Research the market" icon="magnifying-glass">
+    > Who should we invite? Show me what each is known for and what to watch out for.
+
+    `mutate(entity="rfp", action="research_vendors")` returns five to ten candidates with the reasoning behind each. Still no write.
+  </Accordion>
+
+  <Accordion title="Create the whole RFP at once" icon="layer-group">
+    > Suggest requirements and questions for it, then create the RFP with those and the four vendors I picked.
+
+    `suggest_requirements` and `generate_questions` propose the rubric and questionnaire; `create` — with `confirm: true` — builds the RFP, rubric, questionnaire, vendor records and invitations in one transaction, as a draft.
+  </Accordion>
+
+  <Accordion title="Compare the field without contacting anyone" icon="user-secret">
+    > Run it silently and tell me how they stack up.
+
+    `simulate_submissions` researches how each invited vendor would most plausibly answer, then `compare` reads the whole set together. Every rendering states that these are researched estimates, not vendor responses — a vendor who already sent a real response is skipped.
+  </Accordion>
+
+  <Accordion title="Check what a specific bidder said" icon="quote-left">
+    > What did Greenhouse say about mailbox scopes?
+
+    `query_rfps(kind="submission_answers")` returns that submission's answers, each labelled with whether it came from the vendor or from research.
+  </Accordion>
+</AccordionGroup>
+
 ## Bill of materials
 
 <AccordionGroup>
