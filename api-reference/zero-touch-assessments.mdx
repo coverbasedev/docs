@@ -86,7 +86,7 @@ Returns the single-page result: the composite, the components behind it, control
 </ResponseField>
 
 <ResponseField name="result.components" type="object[]">
-  One entry per component (`controls`, `financial_health`, `security`), each with `status` (`scored` / `unavailable` / `disabled`), its own `score`, the `configured_weight` set for your org, and the `weight` it actually carried.
+  One entry per component (`controls`, `financial_health`, `security`, `registration`, `people`), each with `status` (`scored` / `unavailable` / `disabled`), its own `score`, the `configured_weight` set for your org, and the `weight` it actually carried.
 </ResponseField>
 
 <ResponseField name="result.sources" type="object[]">
@@ -150,6 +150,26 @@ Sets what counts toward the score and where the score goes.
 <ParamField body="security_weight" type="integer">
   Relative weight of the security component.
 </ParamField>
+
+<ParamField body="include_registration" type="boolean">
+  Whether corporate-registration standing is a component.
+</ParamField>
+
+<ParamField body="registration_weight" type="integer">
+  Relative weight of the registration component.
+</ParamField>
+
+<ParamField body="include_people" type="boolean">
+  Whether the leadership dossier is a component.
+</ParamField>
+
+<ParamField body="people_weight" type="integer">
+  Relative weight of the people component.
+</ParamField>
+
+<Warning>
+  The `people` component deducts for adverse-media findings **only when screening actually ran**. When it did not, the component scores leadership visibility alone and says so in its `qualifier` — do not read its score as evidence of a clean record. See [People Intelligence](/products/people-intelligence).
+</Warning>
 
 <ParamField body="score_target" type="string">
   Where a completed run writes its score: `none`, `vendor_inherent`, `vendor_residual`, `service_inherent`, or `service_residual`.

@@ -6,7 +6,7 @@ hidden: true
 ---
 
 <Info>
-  This guide is part of the [User Guides](/user-guides/overview) collection. For the corporate identity a run is scored against, see [Vendor Intelligence](/products/vendor-intelligence); for the two sub-scores it can fold in, see [Financial Health Score](/products/financial-health-score) and [Security Intelligence](/products/security-intelligence).
+  This guide is part of the [User Guides](/user-guides/overview) collection. For the corporate identity a run is scored against, see [Vendor Intelligence](/products/vendor-intelligence); for the sub-scores it can fold in, see [Financial Health Score](/products/financial-health-score), [Security Intelligence](/products/security-intelligence), [Corporate Registrations](/products/corporate-registrations) and [People Intelligence](/products/people-intelligence).
 </Info>
 
 <Note>
@@ -60,7 +60,7 @@ Open any run to get a single-page fact sheet. Read it in this order:
 
 <Steps>
   <Step title="The composite, then what it's made of">
-    The headline number combines up to three independently-sourced components: the control evaluation, the vendor's Financial Health Score, and its outside-in security rating. Each is scored 0–100 on its own before anything is combined.
+    The headline number combines up to five independently-sourced components: the control evaluation, the vendor's Financial Health Score, its outside-in security rating, its corporate registration standing, and its leadership dossier. Each is scored 0–100 on its own before anything is combined.
   </Step>
   <Step title="Check which components actually resolved">
     **A component with no data is left out, never counted as zero.** A vendor with no filed financials has not failed the financial component — it has no financial component, and the remaining weights are redistributed across what did resolve. The card tells you both the weight it was configured with and the share it actually carried.
@@ -113,8 +113,21 @@ Only the axis you choose is written, so a Zero Touch run can never overwrite an 
 
 Also under **Scoring**: which signals count, and how heavily.
 
-- Toggle the financial health and security components on or off for your organization.
+- Toggle the financial health, security, corporate registration and people components on or off for your organization.
 - Set relative weights. They are not percentages — they're renormalised over whichever components resolve for a given vendor, which is why a vendor missing one component still scores out of a full 100.
+
+Two of the components are derived rather than read from an existing score, and behave in ways worth knowing:
+
+<AccordionGroup>
+  <Accordion title="Corporate registration">
+    Scores the registry standing of an identity that was actually matched to this vendor. A vendor no register matched is **unavailable**, not zero — plenty of legitimate private companies appear in none of the free registers. A plausible-but-unconfirmed match is capped well below a confirmed one, and a dissolved company scores above an unfound one, because being on record and wound up is better evidenced than never being found.
+  </Accordion>
+  <Accordion title="People">
+    Starts from how much of the leadership is on record and deducts for adverse-media findings, capped so a long tail cannot dominate a triage number. Informational items — a departure, a disputed report — are shown but carry no weight.
+
+    **If adverse-media screening never ran, nothing is deducted at all.** A screening that did not happen cannot establish the clean record a zero deduction would imply, so the component scores leadership visibility alone and labels itself *Adverse media not screened*.
+  </Accordion>
+</AccordionGroup>
 
 Control scope is set by Coverbase rather than per-organization, so a free run always evaluates a known, fixed set of controls.
 

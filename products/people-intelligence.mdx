@@ -1,0 +1,76 @@
+---
+title: "People Intelligence"
+description: "A cited dossier on the people who run a vendor — executives, board, reporting lines, and what screening found against them."
+icon: "users"
+---
+
+Corporate Registrations tells you the company is real. **People Intelligence** tells you who runs it.
+
+It answers the questions diligence asks about a counterparty's leadership — who is accountable, how deep the bench is, whether anyone named is carrying a sanctions or enforcement problem — and it answers them from public sources, without contacting the vendor.
+
+It appears as a subtab of a vendor's **Vendor Intelligence** section, alongside Corporate Registrations, Financial Health and Security Intelligence.
+
+## Confirmed and unconfirmed are not the same thing
+
+This is the distinction the whole page is built around, so it is worth understanding before anything else on it.
+
+Researching people is dominated by one failure mode: **namesakes**. Search for the leadership of a mid-sized company and you will reliably surface a well-known executive at a similarly-named firm. Presenting that person as the vendor's CFO is worse than returning nothing, because it looks like a finding.
+
+So every name is placed in one of two groups:
+
+<CardGroup cols={2}>
+  <Card title="Confirmed" icon="circle-check">
+    Tied to this vendor by a source that resolved through the vendor's own domain, or by a matched professional profile. These are the only names that are counted, charted, or scored.
+  </Card>
+  <Card title="Unconfirmed" icon="circle-question">
+    Surfaced in research but not tied to this vendor with confidence. Shown so you can judge them yourself — and deliberately excluded from every count on the page.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Do not quote an unconfirmed name as the vendor's staff. It is a research lead, not a finding. The section is there so you can see what was considered and rejected, which is more useful than silently dropping it.
+</Warning>
+
+## What the page shows
+
+**Coverage.** Four figures at the top: confirmed people, executives and board currently serving, how many of those are corroborated by a registry filing, and adverse findings. A person named as an officer in a public filing is a materially stronger claim than one scraped from a leadership page, which is why the two are counted separately.
+
+**Adverse media and screening.** Negative news, sanctions matches and enforcement matters tied to the people above, each with a severity, a category and a link to the source.
+
+**Reporting lines.** Where published reporting relationships could be established, they are drawn as a tree. This is partial by nature — it reflects what is public, not the vendor's real org chart.
+
+**People.** A card per person: title, role, tenure, prior roles, and links to the profiles that back them. Former staff are labelled as such rather than dropped, because a recent executive departure is often the thing you actually wanted to know.
+
+## "No findings" and "not screened" are different
+
+If adverse-media screening could not run — a source was unreachable, or the vendor has not been screened yet — the page says **Not screened**. It does not show a zero.
+
+<Warning>
+  A zero would read as a clean record, and the two mean opposite things. Anywhere this data appears — the page, the Zero Touch score, the API, an agent answering through MCP — an unscreened vendor is reported as unknown, never as clear.
+</Warning>
+
+This also governs scoring: when screening has not run, the People component of a [Zero Touch Score](/user-guides/zero-touch-assessments) deducts nothing at all, and labels itself so nobody reads the resulting number as a clean bill of health.
+
+## Where the data comes from
+
+| Source | What it contributes |
+| --- | --- |
+| **Org chart data** | Serving staff resolved through the vendor's own domain, with titles, reporting lines and profile links |
+| **Web research** | Leadership named on the vendor's own site and in public profiles |
+| **Public registers** | Officers and directors named in corporate filings |
+| **Sanctions lists** | OFAC SDN and consolidated list screening against the confirmed names |
+
+A sanctions match is reported as a **high** severity finding, and always with the caveat that name similarity is not identity. Confirm against the listing itself before acting on one.
+
+## Using it
+
+- **Before an assessment**, to see whether there is an accountable leadership team at all. A vendor with no one on record is not disqualified, but it is a different conversation.
+- **As a Zero Touch component**, so leadership visibility and adverse media feed the triage score directly. See [Zero Touch Assessments](/user-guides/zero-touch-assessments).
+- **Through an agent**, via the Coverbase MCP server: `query_vendors(kind="leadership", vendor_id="cbvndr_...")`. Note this is distinct from `kind="people"`, which returns *your own team's* owners and watchers on that vendor.
+
+## Limits worth knowing
+
+- Coverage reflects what a company publishes. A private company that names nobody publicly will show little here, and that is a fact about its disclosure, not about its governance.
+- Reporting lines are reconstructed from published relationships and are usually incomplete.
+- People with the same name are kept as separate records rather than merged. A nickname and a legal first name will appear as two people — a visible duplicate is a better failure than a wrongly merged pair.
+- Nothing here is a background check. It is open-source research, and it is a starting point for a conversation, not a conclusion about an individual.
