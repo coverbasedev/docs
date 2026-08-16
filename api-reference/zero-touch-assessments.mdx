@@ -1,0 +1,179 @@
+---
+title: "Zero Touch Assessments API"
+description: "Launch lightweight, no-outreach triage runs, rank a portfolio by the resulting score, and read a single run's composite and evidence."
+icon: "bolt"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A Zero Touch Assessment is a lightweight triage run assembled entirely from open-source research — no document request, no questionnaire, no vendor contact. It produces a single 0–100 **Zero Touch Score** so a portfolio can be ranked before real review effort is spent, and it does not draw down your assessment quota.
+
+For the concepts behind the score, see [Zero Touch Assessments](/user-guides/zero-touch-assessments).
+
+<Note>
+  Every endpoint below is behind the `zero-touch-assessments` module. If it is not enabled for your organization, these routes return `404`. Contact your Coverbase representative to have it turned on.
+</Note>
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, idempotency, and the error envelope.
+
+## Launch a run
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero_touch_assessment`
+</ParamField>
+
+Starts a Zero Touch Assessment for one vendor.
+
+### Request body
+
+<ParamField body="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`) to assess.
+</ParamField>
+
+<ParamField body="service_ids" type="string[]">
+  Restrict the run to specific services. Omit to run against the vendor as a whole.
+</ParamField>
+
+### Responses
+
+| Status | Meaning |
+| --- | --- |
+| `200` | The run was created. The body is the run summary. |
+| `400` | The vendor ID is unknown or belongs to another organization. |
+| `409` | No Zero Touch control sets are designated for your organization yet. |
+| `404` | The module is not enabled. |
+
+<Note>
+  Control scope is set by Coverbase rather than per-organization, so a free run always evaluates a known, fixed set of controls. A `409` means that set has not been designated for you yet — it is not a problem with your request.
+</Note>
+
+## Launch in bulk
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero_touch_assessment/bulk`
+</ParamField>
+
+Starts a run for many vendors in one call. Vendor IDs are deduplicated.
+
+<ParamField body="vendor_ids" type="string[]" required>
+  Vendor IDs to assess.
+</ParamField>
+
+**Partial success is the normal outcome and returns `200`.** The response separates the two:
+
+<ResponseField name="created" type="object[]">
+  Run summaries for the vendors that launched.
+</ResponseField>
+
+<ResponseField name="failed" type="object[]">
+  One entry per vendor that could not launch, each with `vendor_id` and `error`.
+</ResponseField>
+
+One archived or unknown vendor in a selection of forty does not cost you the other thirty-nine. Always read `failed` — a `200` does not mean every vendor launched.
+
+## Read a run
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero_touch_assessment/{assessment_id}`
+</ParamField>
+
+Returns the single-page result: the composite, the components behind it, control-set coverage, open issues with their evidence, and every source cited.
+
+<ResponseField name="result.composite_score" type="number | null">
+  The Zero Touch Score, 0–100, higher is healthier. `null` when nothing has resolved yet.
+</ResponseField>
+
+<ResponseField name="result.components" type="object[]">
+  One entry per component (`controls`, `financial_health`, `security`), each with `status` (`scored` / `unavailable` / `disabled`), its own `score`, the `configured_weight` set for your org, and the `weight` it actually carried.
+</ResponseField>
+
+<ResponseField name="result.sources" type="object[]">
+  Every place the run drew evidence from, grouped by `kind`: `web`, `registry`, `infrastructure`, `document`.
+</ResponseField>
+
+<Warning>
+  **A component with no data is excluded from the composite, never counted as zero.** Weights renormalise over whatever resolved, which is why `weight` and `configured_weight` differ. A vendor scored on one component is not comparable to a vendor scored on three — read `components` before ranking on `composite_score`.
+</Warning>
+
+A run that has not finished is scored on the fly, so this endpoint is useful before completion. Only completion and an explicit rescore persist the snapshot.
+
+## Rank a portfolio
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero_touch_assessment/leaderboard`
+</ParamField>
+
+Returns one row per vendor — its most recent run — ranked by composite score. Supports `limit`, `offset` and `search`.
+
+Ranking is computed across the whole organization before the page is sliced, so paging through the leaderboard gives a true global ranking. Unscored runs sort last rather than as zero.
+
+## Re-score a run
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero_touch_assessment/{assessment_id}/rescore`
+</ParamField>
+
+Recomputes the composite against today's inputs and re-applies the configured score push, without re-running the controls. Use this when the financial or security inputs have refreshed, or after changing your scoring configuration.
+
+## Read and set scoring configuration
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero_touch_assessment/config`
+</ParamField>
+
+Returns whether the module can run (`is_ready`), the control sets in scope, and the current scoring configuration.
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero_touch_assessment/config`
+</ParamField>
+
+Sets what counts toward the score and where the score goes.
+
+<ParamField body="include_financial_health" type="boolean">
+  Whether the Financial Health Score is a component.
+</ParamField>
+
+<ParamField body="include_security_score" type="boolean">
+  Whether the outside-in security rating is a component.
+</ParamField>
+
+<ParamField body="control_weight" type="integer">
+  Relative weight of the control evaluation. Weights are relative, not percentages — they renormalise over whichever components resolve.
+</ParamField>
+
+<ParamField body="financial_health_weight" type="integer">
+  Relative weight of the financial health component.
+</ParamField>
+
+<ParamField body="security_weight" type="integer">
+  Relative weight of the security component.
+</ParamField>
+
+<ParamField body="score_target" type="string">
+  Where a completed run writes its score: `none`, `vendor_inherent`, `vendor_residual`, `service_inherent`, or `service_residual`.
+</ParamField>
+
+Only the axis you choose is written, so a Zero Touch run can never overwrite an inherent score your team set deliberately from an intake questionnaire. A vendor-scoped run configured for a service target writes nothing and reports why in `result.push_skipped_reason`.
+
+## Listing runs
+
+There is no separate list endpoint, deliberately — a Zero Touch run *is* an assessment. Use the existing assessment endpoints with the `is_zero_touch` filter:
+
+- `is_zero_touch: true` — triage runs only
+- `is_zero_touch: false` — full assessments only
+- omitted — both
+
+A second read path would be free to drift from the first.
+
+## Via MCP
+
+The same data is available to agents through the Coverbase MCP server:
+
+```
+query_assessments(kind="zero_touch", assessment_id="cbqsrw_...")
+query_assessments(kind="zero_touch_leaderboard", limit=25)
+```
+
+Both are read-only and org-scoped to the authenticated user. See the [MCP overview](/mcp/overview).
