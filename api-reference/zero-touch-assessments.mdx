@@ -117,6 +117,68 @@ Ranking is computed across the whole organization before the page is sliced, so 
 
 Recomputes the composite against today's inputs and re-applies the configured score push, without re-running the controls. Use this when the financial or security inputs have refreshed, or after changing your scoring configuration.
 
+## Review a run
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero_touch_assessment/{assessment_id}/review`
+</ParamField>
+
+Records a decision against a run without changing what it was built on.
+
+<ParamField body="action" type="string" required>
+  `approved`, `escalated`, or `note`.
+</ParamField>
+
+<ParamField body="note" type="string">
+  Free text, up to 4000 characters.
+</ParamField>
+
+Escalating records the judgement; it does not launch a full assessment.
+
+## Correct a run's inputs
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero_touch_assessment/{assessment_id}/correct`
+</ParamField>
+
+<ParamField body="instruction" type="string" required>
+  The correction in plain language, up to 2000 characters.
+</ParamField>
+
+The instruction is read into a fixed set of correctable fields — the vendor's website and name — applied, and the run re-scored against them. Returns the re-scored run.
+
+<Note>
+  An instruction that yields no concrete change still returns `200` and still writes an audit entry with an empty `changes` array. Read `changes` to see what actually moved.
+</Note>
+
+## Read the audit trail
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero_touch_assessment/{assessment_id}/audit`
+</ParamField>
+
+Every review action on a run, in the order taken.
+
+<ResponseField name="data[].action" type="string">
+  `approved`, `escalated`, `corrected`, `rescored`, or `note`.
+</ResponseField>
+
+<ResponseField name="data[].instruction" type="string | null">
+  The reviewer's own words, stored verbatim, for `corrected` entries.
+</ResponseField>
+
+<ResponseField name="data[].changes" type="object[]">
+  One entry per field the action changed, each with `field`, `before` and `after`. Empty for approvals, notes, and corrections that resolved to nothing.
+</ResponseField>
+
+<ResponseField name="data[].composite_before / composite_after" type="number | null">
+  The Zero Touch Score either side of the action.
+</ResponseField>
+
+<Warning>
+  The trail is append-only. There is no update or delete endpoint, by design — a Zero Touch Score can be pushed onto a vendor's risk score, so the record of who changed the inputs behind it must be one nobody can rewrite.
+</Warning>
+
 ## Read and set scoring configuration
 
 <ParamField path="method" type="GET">
@@ -194,6 +256,7 @@ The same data is available to agents through the Coverbase MCP server:
 ```
 query_assessments(kind="zero_touch", assessment_id="cbqsrw_...")
 query_assessments(kind="zero_touch_leaderboard", limit=25)
+query_assessments(kind="zero_touch_audit", assessment_id="cbqsrw_...")
 ```
 
 Both are read-only and org-scoped to the authenticated user. See the [MCP overview](/mcp/overview).
