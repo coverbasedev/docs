@@ -1,76 +1,121 @@
 ---
-title: "People Intelligence"
-description: "A cited dossier on the people who run a vendor — executives, board, reporting lines, and what screening found against them."
+title: "People intelligence"
+description: "A cited dossier on the people who run a vendor: executives, board, reporting lines, and what adverse-media screening found against them."
 icon: "users"
 ---
 
-Corporate Registrations tells you the company is real. **People Intelligence** tells you who runs it.
+import AgentDirective from "/snippets/agent-directive.mdx";
 
-It answers the questions diligence asks about a counterparty's leadership — who is accountable, how deep the bench is, whether anyone named is carrying a sanctions or enforcement problem — and it answers them from public sources, without contacting the vendor.
+<AgentDirective />
 
-It appears as a subtab of a vendor's **Vendor Intelligence** section, alongside Corporate Registrations, Financial Health and Security Intelligence.
+Corporate Registrations tells you the company is real. People intelligence tells you who runs it.
+
+It answers the questions diligence asks about a counterparty's leadership. Who is accountable. How deep the bench is. Whether anyone named is carrying a sanctions listing, an enforcement action, or a live investigation. It answers them from public sources, without contacting the vendor.
+
+The page sits under **Vendor Intelligence**, in the same row as Corporate Registrations, Financial Health and Security Intelligence.
 
 ## Confirmed and unconfirmed are not the same thing
 
-This is the distinction the whole page is built around, so it is worth understanding before anything else on it.
+This distinction shapes the whole page, so it is worth understanding first.
 
-Researching people is dominated by one failure mode: **namesakes**. Search for the leadership of a mid-sized company and you will reliably surface a well-known executive at a similarly-named firm. Presenting that person as the vendor's CFO is worse than returning nothing, because it looks like a finding.
+People research is dominated by one failure mode: namesakes. Search the leadership of a mid-sized company and you will reliably surface a better-known executive with the same name at a different firm. Presenting that person as the vendor's CFO is worse than returning nothing, because it looks like a finding.
 
-So every name is placed in one of two groups:
+Every name therefore lands in one of two groups.
 
 <CardGroup cols={2}>
   <Card title="Confirmed" icon="circle-check">
     Tied to this vendor by a source that resolved through the vendor's own domain, or by a matched professional profile. These are the only names that are counted, charted, or scored.
   </Card>
   <Card title="Unconfirmed" icon="circle-question">
-    Surfaced in research but not tied to this vendor with confidence. Shown so you can judge them yourself — and deliberately excluded from every count on the page.
+    Surfaced in research but not tied to this vendor with confidence. Shown so you can judge them, and excluded from every count on the page.
   </Card>
 </CardGroup>
 
 <Warning>
-  Do not quote an unconfirmed name as the vendor's staff. It is a research lead, not a finding. The section is there so you can see what was considered and rejected, which is more useful than silently dropping it.
+  Do not quote an unconfirmed name as the vendor's staff. It is a research lead, not a finding. The section exists so you can see what was considered and set aside, which is more useful than dropping it silently.
 </Warning>
 
 ## What the page shows
 
-**Coverage.** Four figures at the top: confirmed people, executives and board currently serving, how many of those are corroborated by a registry filing, and adverse findings. A person named as an officer in a public filing is a materially stronger claim than one scraped from a leadership page, which is why the two are counted separately.
+**Coverage.** Confirmed people, executives and board currently serving, how many of those are corroborated by a registry filing, and how many were screened for news. A person named as an officer in a public filing is a stronger claim than one scraped from a leadership page, so the two are counted separately.
 
-**Adverse media and screening.** Negative news, sanctions matches and enforcement matters tied to the people above, each with a severity, a category and a link to the source.
+**Adverse media and screening.** Negative news, sanctions matches and enforcement matters tied to the people above. Each finding carries a category, a severity, an outcome, and a link to the source.
 
-**Reporting lines.** Where published reporting relationships could be established, they are drawn as a tree. This is partial by nature — it reflects what is public, not the vendor's real org chart.
+**Reporting lines.** Where published reporting relationships could be established, they are drawn as a tree. This is partial by nature. It reflects what is public, not the vendor's internal org chart.
 
-**People.** A card per person: title, role, tenure, prior roles, and links to the profiles that back them. Former staff are labelled as such rather than dropped, because a recent executive departure is often the thing you actually wanted to know.
+**People.** A card per person: title, role, tenure, prior roles, other board seats, and links to the profiles that back them. Former staff are labelled rather than dropped, because a recent executive departure is often the thing you wanted to know.
 
-## "No findings" and "not screened" are different
+## How the research runs
 
-If adverse-media screening could not run — a source was unreachable, or the vendor has not been screened yet — the page says **Not screened**. It does not show a zero.
+Screening is not a single "bad news" search. For each person, four separate queries run against news sources, covering litigation, regulatory and enforcement action, financial crime, and abrupt departures. The overlap between those corpora is small: a regulator's action rarely appears in the same results as a bankruptcy filing.
+
+The results are then read into structured findings, with one instruction that matters more than the rest: discard anything that cannot be tied to this person at this company. Returning nothing is the correct answer for a person with no adverse coverage.
+
+Screening is bounded and works top down. Founders and executives are screened first, then the board, then other leadership. The page records how many people were screened, and each person's card says whether they were among them.
+
+<Note>
+  A person who was not screened has not been cleared. Their card says so. This matters most on a large leadership team, where the tail of the list is exactly where an unscreened name could hide.
+</Note>
+
+## Severity and outcome are separate
+
+A dismissed fraud claim and a fraud conviction sit in the same category and are nowhere near the same fact.
+
+Every finding carries both a severity (how serious the matter is) and an outcome (where it got to: alleged, under investigation, settled, concluded, dismissed, or unclear).
 
 <Warning>
-  A zero would read as a clean record, and the two mean opposite things. Anywhere this data appears — the page, the Zero Touch score, the API, an agent answering through MCP — an unscreened vendor is reported as unknown, never as clear.
+  A finding marked **Dismissed** deducts nothing from the score. Scoring a claim the subject was cleared of would let anyone impose a lasting cost on a vendor by filing something that fails.
 </Warning>
 
-This also governs scoring: when screening has not run, the People component of a [Zero Touch Score](/user-guides/zero-touch-assessments) deducts nothing at all, and labels itself so nobody reads the resulting number as a clean bill of health.
+Findings the subject publicly contests are marked as disputed and shown with that label, so you are never handed one side of a contested matter as settled fact.
+
+## No findings and not screened are different
+
+If screening could not run, because a source was unreachable or the vendor has not been researched yet, the page says **Not screened**. It does not show a zero.
+
+A zero reads as a clean record. The two mean opposite things. Everywhere this data appears, on the page, in the Zero Touch score, through the API, or to an agent over MCP, an unscreened vendor is reported as unknown.
+
+This also governs scoring. When screening has not run, the People component of a [Zero Touch Score](/user-guides/zero-touch-assessments) deducts nothing at all, and labels itself so nobody reads the number as a clean bill of health.
 
 ## Where the data comes from
 
 | Source | What it contributes |
 | --- | --- |
-| **Org chart data** | Serving staff resolved through the vendor's own domain, with titles, reporting lines and profile links |
-| **Web research** | Leadership named on the vendor's own site and in public profiles |
-| **Public registers** | Officers and directors named in corporate filings |
-| **Sanctions lists** | OFAC SDN and consolidated list screening against the confirmed names |
+| Org chart data | Serving staff resolved through the vendor's own domain, with titles, reporting lines and profile links |
+| Web research | Leadership named on the vendor's own site and in public profiles |
+| Public registers | Officers and directors named in corporate filings |
+| News search | Litigation, regulatory action, financial crime and departure coverage, per person |
+| Sanctions lists | OFAC SDN and consolidated screening against the confirmed names |
 
-A sanctions match is reported as a **high** severity finding, and always with the caveat that name similarity is not identity. Confirm against the listing itself before acting on one.
+A sanctions match is reported at high severity, always with the caveat that name similarity is not identity. Confirm against the listing itself before acting on one.
 
 ## Using it
 
-- **Before an assessment**, to see whether there is an accountable leadership team at all. A vendor with no one on record is not disqualified, but it is a different conversation.
-- **As a Zero Touch component**, so leadership visibility and adverse media feed the triage score directly. See [Zero Touch Assessments](/user-guides/zero-touch-assessments).
-- **Through an agent**, via the Coverbase MCP server: `query_vendors(kind="leadership", vendor_id="cbvndr_...")`. Note this is distinct from `kind="people"`, which returns *your own team's* owners and watchers on that vendor.
+Reach for the page before an assessment, to see whether there is an accountable leadership team at all. A vendor with nobody on record is not disqualified, but it is a different conversation.
+
+Turn on the People component in Zero Touch scoring when you want leadership visibility and adverse media to feed triage directly. See [Zero Touch Assessments](/user-guides/zero-touch-assessments).
+
+Agents reach the same dossier over MCP with `query_vendors(kind="leadership", vendor_id="cbvndr_...")`. That is distinct from `kind="people"`, which returns your own team's owners and watchers on the vendor.
 
 ## Limits worth knowing
 
-- Coverage reflects what a company publishes. A private company that names nobody publicly will show little here, and that is a fact about its disclosure, not about its governance.
-- Reporting lines are reconstructed from published relationships and are usually incomplete.
-- People with the same name are kept as separate records rather than merged. A nickname and a legal first name will appear as two people — a visible duplicate is a better failure than a wrongly merged pair.
-- Nothing here is a background check. It is open-source research, and it is a starting point for a conversation, not a conclusion about an individual.
+Coverage reflects what a company publishes. A private company that names nobody publicly will show little here, and that is a fact about its disclosure rather than its governance.
+
+Reporting lines are reconstructed from published relationships and are usually incomplete.
+
+People sharing a name are kept as separate records rather than merged. A nickname and a legal first name appear as two people. A visible duplicate is a better failure than a wrongly merged pair.
+
+Politically exposed status is recorded as a fact calling for enhanced diligence. It is not a finding against the person.
+
+None of this is a background check. It is open-source research, and it is where a conversation starts rather than where a judgement about an individual ends.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="People intelligence guide" icon="book-open" href="/user-guides/people-intelligence">
+    The screen-by-screen walkthrough.
+  </Card>
+  <Card title="Corporate registrations" icon="building-columns" href="/products/corporate-registrations">
+    The legal entity behind the vendor.
+  </Card>
+</CardGroup>

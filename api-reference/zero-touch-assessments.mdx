@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-A Zero Touch Assessment is a lightweight triage run assembled entirely from open-source research — no document request, no questionnaire, no vendor contact. It produces a single 0–100 **Zero Touch Score** so a portfolio can be ranked before real review effort is spent, and it does not draw down your assessment quota.
+A Zero Touch Assessment is a lightweight triage run assembled entirely from open-source research, with no document request, no questionnaire and no vendor contact. It produces a single 0–100 **Zero Touch Score** so a portfolio can be ranked before real review effort is spent, and it does not draw down your assessment quota.
 
 For the concepts behind the score, see [Zero Touch Assessments](/user-guides/zero-touch-assessments).
 
@@ -46,7 +46,7 @@ Starts a Zero Touch Assessment for one vendor.
 | `404` | The module is not enabled. |
 
 <Note>
-  Control scope is set by Coverbase rather than per-organization, so a free run always evaluates a known, fixed set of controls. A `409` means that set has not been designated for you yet — it is not a problem with your request.
+  Control scope is set by Coverbase rather than per-organization, so a free run always evaluates a known, fixed set of controls. A `409` means that set has not been designated for you yet. It is not a problem with your request.
 </Note>
 
 ## Launch in bulk
@@ -71,7 +71,7 @@ Starts a run for many vendors in one call. Vendor IDs are deduplicated.
   One entry per vendor that could not launch, each with `vendor_id` and `error`.
 </ResponseField>
 
-One archived or unknown vendor in a selection of forty does not cost you the other thirty-nine. Always read `failed` — a `200` does not mean every vendor launched.
+One archived or unknown vendor in a selection of forty does not cost you the other thirty-nine. Always read `failed`. A `200` does not mean every vendor launched.
 
 ## Read a run
 
@@ -94,7 +94,7 @@ Returns the single-page result: the composite, the components behind it, control
 </ResponseField>
 
 <Warning>
-  **A component with no data is excluded from the composite, never counted as zero.** Weights renormalise over whatever resolved, which is why `weight` and `configured_weight` differ. A vendor scored on one component is not comparable to a vendor scored on three — read `components` before ranking on `composite_score`.
+  **A component with no data is excluded from the composite, never counted as zero.** Weights renormalise over whatever resolved, which is why `weight` and `configured_weight` differ. A vendor scored on one component is not comparable to a vendor scored on three, so read `components` before ranking on `composite_score`.
 </Warning>
 
 A run that has not finished is scored on the fly, so this endpoint is useful before completion. Only completion and an explicit rescore persist the snapshot.
@@ -105,7 +105,7 @@ A run that has not finished is scored on the fly, so this endpoint is useful bef
   `GET /v1/zero_touch_assessment/leaderboard`
 </ParamField>
 
-Returns one row per vendor — its most recent run — ranked by composite score. Supports `limit`, `offset` and `search`.
+Returns one row per vendor, its most recent run, ranked by composite score. Supports `limit`, `offset` and `search`.
 
 Ranking is computed across the whole organization before the page is sliced, so paging through the leaderboard gives a true global ranking. Unscored runs sort last rather than as zero.
 
@@ -145,7 +145,7 @@ Escalating records the judgement; it does not launch a full assessment.
   The correction in plain language, up to 2000 characters.
 </ParamField>
 
-The instruction is read into a fixed set of correctable fields — the vendor's website and name — applied, and the run re-scored against them. Returns the re-scored run.
+The instruction is read into a fixed set of correctable fields (the vendor's website and name), applied, and the run re-scored against them. Returns the re-scored run.
 
 <Note>
   An instruction that yields no concrete change still returns `200` and still writes an audit entry with an empty `changes` array. Read `changes` to see what actually moved.
@@ -176,7 +176,7 @@ Every review action on a run, in the order taken.
 </ResponseField>
 
 <Warning>
-  The trail is append-only. There is no update or delete endpoint, by design — a Zero Touch Score can be pushed onto a vendor's risk score, so the record of who changed the inputs behind it must be one nobody can rewrite.
+  The trail is append-only. There is no update or delete endpoint, by design. A Zero Touch Score can be pushed onto a vendor's risk score, so the record of who changed the inputs behind it must be one nobody can rewrite.
 </Warning>
 
 ## Read and set scoring configuration
@@ -202,7 +202,7 @@ Sets what counts toward the score and where the score goes.
 </ParamField>
 
 <ParamField body="control_weight" type="integer">
-  Relative weight of the control evaluation. Weights are relative, not percentages — they renormalise over whichever components resolve.
+  Relative weight of the control evaluation. Weights are relative, not percentages. They renormalise over whichever components resolve.
 </ParamField>
 
 <ParamField body="financial_health_weight" type="integer">
@@ -230,7 +230,7 @@ Sets what counts toward the score and where the score goes.
 </ParamField>
 
 <Warning>
-  The `people` component deducts for adverse-media findings **only when screening actually ran**. When it did not, the component scores leadership visibility alone and says so in its `qualifier` — do not read its score as evidence of a clean record. See [People Intelligence](/products/people-intelligence).
+  The `people` component deducts for adverse-media findings **only when screening actually ran**. When it did not, the component scores leadership visibility alone and says so in its `qualifier`. Do not read its score as evidence of a clean record. See [People Intelligence](/products/people-intelligence).
 </Warning>
 
 <ParamField body="score_target" type="string">
@@ -241,11 +241,11 @@ Only the axis you choose is written, so a Zero Touch run can never overwrite an 
 
 ## Listing runs
 
-There is no separate list endpoint, deliberately — a Zero Touch run *is* an assessment. Use the existing assessment endpoints with the `is_zero_touch` filter:
+There is no separate list endpoint, deliberately. A Zero Touch run is an assessment. Use the existing assessment endpoints with the `is_zero_touch` filter:
 
-- `is_zero_touch: true` — triage runs only
-- `is_zero_touch: false` — full assessments only
-- omitted — both
+- `is_zero_touch: true` returns triage runs only
+- `is_zero_touch: false` returns full assessments only
+- omitted returns both
 
 A second read path would be free to drift from the first.
 

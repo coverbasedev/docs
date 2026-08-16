@@ -1,0 +1,72 @@
+---
+title: "Security intelligence guide"
+description: "How to read a vendor's outside-in security rating, what each factor measures, and what a not-measured factor does and does not tell you."
+icon: "shield-halved"
+hidden: true
+---
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. For what the capability is and where it stops, see [Security intelligence](/products/security-intelligence).
+</Info>
+
+This page rates a vendor's internet-facing security from the outside, by querying their own infrastructure. Nobody at the vendor is contacted, and nothing here depends on their cooperation.
+
+## Finding it
+
+Open a vendor, go to **Vendor Intelligence**, and pick the **Security** tab.
+
+<Frame caption="1 Overall rating and grade. 2 Rating over time. 3 Per-factor breakdown, with the findings behind each score.">
+  <img src="/images/user-guides/vendor-intelligence-security.png" alt="The Security tab for a vendor, showing an overall rating of 78, a rating history chart, and a factor breakdown covering patching, network exposure, TLS, email authentication and reputation." />
+</Frame>
+
+## The rating is a floor, not a verdict
+
+Everything measured here is visible from the public internet. That is its strength and its limit in one.
+
+A strong rating means the things an attacker can see from outside are in order. It says nothing about what happens inside the vendor's network, how they manage access, or whether they have a working incident process. Those questions need an assessment.
+
+A weak rating is more actionable in the other direction. A monitor-only DMARC policy or an expired certificate is a fact, not an inference, and you can raise it with the vendor immediately.
+
+## Read the factors, then the number
+
+The overall rating is a weighted roll-up. The factor breakdown underneath it is where the decisions live.
+
+Each factor expands to show the specific observations behind its score, so a low number always resolves to something concrete: a hostname, a header, a certificate, a CVE.
+
+<Warning>
+  A factor marked **not measured** was excluded from the rating. It is not evidence that the control is in place, and it is not evidence that it is missing. It means we could not observe it.
+</Warning>
+
+That distinction matters when you are writing up an assessment. "Not measured" belongs in the questions you ask the vendor, not in the findings you record against them.
+
+## Known vulnerabilities
+
+Vulnerabilities are matched against software observed on the vendor's estate, and ordered by how likely they are to be exploited rather than by severity alone.
+
+A vulnerability on CISA's Known Exploited Vulnerabilities list is called out separately. Those are being used against real targets now, and they are worth a same-week conversation rather than a note in a report.
+
+## Lookalike domains
+
+The page lists domains built to resemble the vendor's own, and marks which of them resolve and which can receive mail.
+
+A mail-capable lookalike is the one to care about. It can host a page and receive replies, which is the shape of a supplier-invoice fraud attempt against you rather than against them.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| The page says not yet scanned | The vendor has no website on file, or the first scan has not run. Add a website if it is missing. |
+| The rating moved and nothing looks different | Open the rating history. Certificates expire and DMARC records change without anyone announcing it. |
+| A factor shows no findings but a low score | Expand it. Some factors score on configuration rather than on discrete findings. |
+| A vulnerability looks wrong | Version detection is remote and imperfect. Check the flagged component with the vendor before recording it. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Financial health guide" icon="chart-line" href="/user-guides/financial-health-score">
+    The other outside-in score on the same vendor.
+  </Card>
+  <Card title="Zero Touch Assessments" icon="bolt" href="/user-guides/zero-touch-assessments">
+    Security posture as a scored component.
+  </Card>
+</CardGroup>
