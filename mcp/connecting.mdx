@@ -28,7 +28,7 @@ The server accepts two kinds of credential, and which one you want depends on wh
 | Best for | Desktop and IDE clients you use yourself | Headless pipelines, CI, containers |
 | Identity | The signed-in user | The user who generated the key |
 
-OAuth (PKCE, no client secret) is the default and the right choice for interactive clients — the rest of this page assumes it.
+OAuth (PKCE, no client secret) is the default and the right choice for interactive clients. The rest of this page assumes it.
 
 If a browser step is impossible, generate a long-lived key instead and send it as a bearer token. **This is the part that is easy to miss: a client configured with only a URL and no `Authorization` header will be answered with a `401` and pushed into the OAuth flow**, which is exactly what an API key exists to avoid.
 
@@ -37,7 +37,7 @@ If a browser step is impossible, generate a long-lived key instead and send it a
     In Coverbase, go to **Configuration → MCP Server** and generate a key under **API key**. It starts with `cb_mcp_` and is shown only once.
 
     <Note>
-      This is a different page from **Configuration → API Keys**, which issues `ak_` keys for the [Coverbase REST API](/api-reference/api-keys). The two key types are not interchangeable — an `ak_` key will not authenticate against the MCP server.
+      This is a different page from **Configuration → API Keys**, which issues `ak_` keys for the [Coverbase REST API](/api-reference/api-keys). The two key types are not interchangeable: an `ak_` key will not authenticate against the MCP server.
     </Note>
   </Step>
   <Step title="Send it as a bearer token">
@@ -67,7 +67,7 @@ Two limits worth knowing before you build on this:
 - **Key generation is restricted to organization admins.** If the button isn't there, ask an admin in your organization to generate one for you.
 - **A key is not a service account.** It carries the permissions of the user who created it, re-checked against their live membership on every request. If that person's role changes or they leave the organization, the key stops working. For an unattended pipeline, generate it from an account that will outlast any individual.
 
-If your integration only needs to read and write Coverbase records — rather than drive an AI assistant — the [REST API](/api-reference/api-keys) is usually the better fit. It is built for non-interactive use, and its `ak_` keys can belong to a true service account.
+If your integration only needs to read and write Coverbase records, rather than drive an AI assistant, the [REST API](/api-reference/api-keys) is usually the better fit. It is built for non-interactive use, and its `ak_` keys can belong to a true service account.
 
 ## Claude Code
 
