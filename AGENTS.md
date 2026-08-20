@@ -27,6 +27,20 @@
 - Bold for UI elements: Click **Settings**
 - Code formatting for file names, commands, paths, and code references
 
+## Generated pages
+
+`fields/overview.mdx` and `fields/catalog.mdx` are generated. Do not edit them by
+hand — the next regeneration overwrites the change. They are produced from the
+IRM repo's filterable field registries and dashboard label tables by
+`common/scripts/generate_field_reference.py`:
+
+```bash
+uv run common/scripts/generate_field_reference.py --out-dir <path-to-docs>/fields
+```
+
+Prose changes belong in the `OVERVIEW` and `CATALOG_HEADER` constants in that
+script; field rows follow the registries and cannot be edited here at all.
+
 ## Content boundaries
 
 {/* Define what should and shouldn't be documented */}
