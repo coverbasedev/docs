@@ -33,7 +33,7 @@ None of these honor `Idempotency-Key`.
   `POST /v1/radar/events`
 </ParamField>
 
-Returns `201 Created`. Use this to seed an event into Radar without waiting for a source feed to pick up the underlying article; useful for recording out-of-band incidents and for exercising your detectors against a known event. Supplied vendors are linked to the event as **primary-impacted**. Set `create_alert` to run the detectors against it — see [detector evaluation](#detector-evaluation).
+Returns `201 Created`. Use this to seed an event into Radar without waiting for a source feed to pick up the underlying article; useful for recording out-of-band incidents and for exercising your detectors against a known event. Supplied vendors are linked to the event as **primary-impacted**, and the event is evaluated against your detectors unless you opt out — see [detector evaluation](#detector-evaluation).
 
 ### Request body
 
@@ -50,7 +50,9 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 </ParamField>
 
 <ParamField body="secondary_impact_types" type="string[]">
-  Additional impact categories.
+  Additional impact categories, from the same list as `primary_impact_type`. A
+  value outside it is rejected with `422` — these categories decide which
+  category-filtered detectors can match the event.
 </ParamField>
 
 <ParamField body="vendor_ids" type="string[]">
@@ -58,7 +60,9 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 </ParamField>
 
 <ParamField body="risk_domain_ids" type="string[]">
-  Risk domains to associate with the event.
+  Risk domains to record on the event (`cbrskdmn_...`), returned on the [radar
+  event object](#radar-event-object). An id your org does not have is rejected
+  with `400 risk_domain_not_found`.
 </ParamField>
 
 <ParamField body="source_url" type="string">
@@ -75,28 +79,33 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 
 <ParamField body="create_alert" type="boolean">
   Evaluate the event against the detectors that target each linked vendor, raising
-  [radar alerts](#list-radar-alerts) for the ones that fire. Default `false`.
+  [radar alerts](#list-radar-alerts) for the ones that fire. Default `true`. Pass
+  `false` to record an event without spending a model call per (detector, vendor).
 </ParamField>
 
 ### Detector evaluation
 
 The scheduled Radar pipeline is source-driven: it evaluates what its configured
-sources pull in, and never sees an event created through this endpoint. An event
-posted here is therefore inert unless you set `create_alert`, which runs the
-detectors out of band.
+sources pull in, and never sees an event created through this endpoint. Events
+posted here are therefore evaluated out of band, which happens by default — pass
+`create_alert: false` to store one without evaluating it.
 
 Evaluation is asynchronous — the response returns as soon as the event is stored,
 and alerts appear on [`GET /v1/radar/alerts`](#list-radar-alerts) once the detectors
 finish, each carrying this event's `event_id`. What runs against the event:
 
-- **Vendors.** Only the vendors in `vendor_ids` that resolve within your org. An
-  event with none is stored but never evaluated.
+- **Vendors.** The vendors in `vendor_ids` that resolve within your org, plus the
+  vendors that depend on them — a breach at a supplier is evaluated against the
+  customers exposed to it, the same expansion the scheduled pipeline performs, and
+  through the same caps. An event with no resolvable vendor is stored but never
+  evaluated.
 - **Detectors.** Only the ones that already target each of those vendors, including
   the detector's source scoping — a detector limited to specific sources sees this
   event only if it includes the org's **Manually-created events** source. Detectors
   with an impact-category filter are matched against the event's own
   `primary_impact_type` and `secondary_impact_types`.
-- **Cost.** One model call per (detector, vendor) pair, which is why this is opt-in.
+- **Cost.** One model call per (detector, vendor) pair, counting the vendors
+  reached by expansion. Pass `create_alert: false` on events you only want recorded.
 
 Re-posting the same event is safe: each (event, vendor, detector) combination is
 evaluated once, so retries do not duplicate alerts or re-notify reviewers.
@@ -127,6 +136,7 @@ Returns the [radar event object](#radar-event-object).
 <ResponseField name="summary" type="string">Event summary.</ResponseField>
 <ResponseField name="primary_impact_type" type="string">Primary impact category.</ResponseField>
 <ResponseField name="secondary_impact_types" type="string[]">Additional impact categories.</ResponseField>
+<ResponseField name="risk_domain_ids" type="string[]">Risk domains recorded on the event.</ResponseField>
 <ResponseField name="occurred_at" type="integer | null">When the event occurred (Unix seconds).</ResponseField>
 <ResponseField name="is_archived" type="boolean">`true` if archived.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
