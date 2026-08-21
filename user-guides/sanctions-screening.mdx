@@ -1,0 +1,128 @@
+---
+title: "Sanctions screening guide"
+description: "How continuous sanctions and watchlist screening works, how to read an identity confidence score, and how to clear a match without guessing."
+icon: "scale-balanced"
+hidden: true
+---
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. Screening is a tab in every vendor's [Vendor Intelligence](/products/vendor-intelligence) section, plus a queue of its own.
+</Info>
+
+Corporate registrations tell you the company is real. People intelligence tells you who runs it. This page tells you whether the company or those people appear on a sanctions, watchlist, criminal or legal source — not once at onboarding, but on a schedule, for as long as you keep the vendor.
+
+Two things make it different from the rest of Vendor Intelligence, and both are worth reading before you use it.
+
+**Every screen is recorded, including the clear ones.** "We screened this vendor on this date, against these sources, and found nothing" is the artifact an examiner asks for. A missing record proves nothing, so the vendor page shows the run history whether or not there is anything to review.
+
+**The score is about identity, not severity.** This is the single most misread number on the page, so it has its own section below.
+
+## Where it lives
+
+Screening appears in two places, and they are for two different jobs.
+
+**On a vendor** — open a vendor, go to **Vendor Intelligence**, and pick the **Screening** tab. This is the view when you already care about one supplier.
+
+<Frame caption="1 Open matches, worst source first. 2 Identity confidence. 3 The run history, including clear screens.">
+  <img src="/images/user-guides/vendor-intelligence-screening.png" alt="The Screening tab for a vendor, showing an open sanctions match, its identity confidence, and the history of scheduled screens." />
+</Frame>
+
+**In the review queue** — **Screening** in the left navigation. Every open match across every vendor, oldest first. This is the view when your job is to clear the queue rather than to look at one vendor.
+
+<Frame caption="The org-wide queue. Matches from different vendors in one list, oldest first.">
+  <img src="/images/user-guides/screening-queue.png" alt="The screening review queue showing open matches across several vendors, with counts for matches needing review and the age of the oldest one." />
+</Frame>
+
+The queue is deliberately separate from Findings. A screening match is triaged on a different question from the rest of your work — *is this listed record actually this vendor?* — and mixing it into a general work queue buries the one kind of alert that carries a regulatory deadline.
+
+## Identity confidence is not severity
+
+Every match carries a score. It answers one question: **how confident are we that this listed record is this vendor?**
+
+It does not tell you how serious the listing is. A match at 0.95 against an adverse-media article means we are confident the article is about this subject, not that the article is damning. A confirmed sanctions listing at 0.72 is far more urgent than a high-confidence mention in a news story.
+
+<Warning>
+  Read the source, not the score. The score decides whether it is them. The listing decides what it means.
+</Warning>
+
+Screening runs on thin identity data — a name, usually a country, sometimes a registration number, almost never a date of birth. That is genuinely not much to match on, so **false positives are expected and are not a defect**. A common surname or a generic trading name will produce candidates that are not your vendor. Clearing those is the job, which is why the queue exists.
+
+## Reading a match
+
+Open any match to get the full record.
+
+<Frame caption="The review drawer: what matched, field by field, with the sources behind it.">
+  <img src="/images/user-guides/screening-match-review.png" alt="The match review drawer showing the screened subject, the flagged source, country, registration number, aliases, programmes, a field-level match breakdown, and the source listing." />
+</Frame>
+
+Work down it in this order:
+
+1. **Screened subject vs matched name.** The two names side by side. This is usually enough to rule out an obvious mismatch.
+2. **Country and registration number.** The strongest discriminators available. A registration number that matches is close to conclusive; a country that does not match is a strong signal it is a different entity.
+3. **Also known as.** Transliterations and former names. A vendor that looks unrelated in English can match exactly in its own script.
+4. **Field-level match.** Which attributes actually agreed, and how strongly. A high overall score built only on the name is weaker than a lower score built on name *and* registration.
+5. **Sources.** The listing itself. Follow it before you decide.
+
+The **automated read** is advisory. It is there for context and Coverbase never closes a match on it — a person decides, always.
+
+## Deciding
+
+Three outcomes, and a written reason is required for all of them. The reason becomes part of the audit trail, so write it for someone reading it in a year with none of your context.
+
+| Decision | Use it when | What happens |
+| --- | --- | --- |
+| **Confirm match** | It is your vendor, and the listing is real | The match stays open and escalated. It is now a compliance matter, not a screening question. |
+| **Not a match** | The listed record is a different party | The match closes as a false positive. |
+| **Allowlist** | It is a known, accepted match you do not want raised every cycle | Suppressed for a set period, then re-raised for a fresh look. |
+
+<Note>
+  An allowlist expires on purpose. Circumstances change, and a permanent suppression is how a real listing goes unnoticed for years.
+</Note>
+
+Confirming a match opens a finding, so it picks up an owner, a due date, SLA reminders and the rest of the findings workflow. Screening raises the alert; it does not decide what you do about it, and it never blocks a payment or an onboarding on its own.
+
+## What "clear" looks like
+
+A vendor with nothing to review still shows its run history.
+
+<Frame caption="No open matches. The screens still show, with their dates and sources.">
+  <img src="/images/user-guides/vendor-intelligence-screening-clear.png" alt="The Screening tab for a vendor with no open matches, showing the history of completed screens with dates and the sources covered." />
+</Frame>
+
+<Warning>
+  An empty match list and a vendor that was never screened look similar and mean opposite things. Check the run history before you write "no sanctions exposure" into an assessment.
+</Warning>
+
+## Settings
+
+An administrator configures screening once, under **Configuration → External integrations → Screening**. It needs the `integration` permission, not the screening one.
+
+<Frame caption="The policy: which sources, who gets screened, and how often per vendor tier.">
+  <img src="/images/user-guides/screening-settings.png" alt="The screening settings page showing the connection status, source toggles, adverse media categories, subject selection, and the cadence matrix by vendor tier." />
+</Frame>
+
+Four things to decide:
+
+**Which sources.** Sanctions, PEP, criminal and legal are on by default. Adverse media is off, and should stay off until the rest is running cleanly — it is the highest-volume and lowest-precision source, and it will dominate your queue. When you do turn it on, keep the category list narrow.
+
+**Who gets screened.** The vendor's legal entity is screened by default. Directors, officers and beneficial owners are opt-in, because screening a person means storing watchlist assertions about a named individual. Turn them on deliberately.
+
+**How often, per tier.** Cadence is set per vendor tier per source, because each source is charged per screen. Tier 1 can run sanctions daily without running adverse media at all. Tier 4 and untiered vendors are off by default so that switching screening on does not silently enrol your entire long tail.
+
+**The match threshold.** The default is 0.80. Lower it and you will see more true matches and many more false ones; raise it and you risk missing a real listing on thin data. Change it only with a reason you would defend to an auditor.
+
+<Note>
+  A source switched off at the top level never runs, whatever the cadence matrix says. One switch turns a source off everywhere, rather than making you clear a row per tier.
+</Note>
+
+## Who can do what
+
+Screening has its own permission, separate from the vendor record, so the person who reviews matches need not be the person who administers vendors.
+
+| Permission | Allows |
+| --- | --- |
+| `screening_match:read` | See the queue, the vendor tab, and match detail |
+| `screening_match:update` | Confirm, dismiss or allowlist a match; re-screen a vendor now |
+| `integration:read` / `integration:update` | See and change the screening configuration |
+
+There is no create or delete. Matches come from the provider and are closed by decision, never removed.
