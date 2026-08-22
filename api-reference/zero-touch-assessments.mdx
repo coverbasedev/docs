@@ -55,7 +55,7 @@ Starts a Zero Touch Assessment for one vendor.
 | `400` | The vendor ID is unknown, or `template_key` is not a shipped template. |
 
 <Note>
-  Organizations are provisioned the shipped templates on first use, so a `409` is unusual. It means every template has since been un-designated or archived — a deliberate act that provisioning will not undo.
+  Organizations are provisioned the shipped templates on first use, so a `409` is unusual. It means every template has since been un-designated or archived, which is a deliberate act that provisioning will not undo.
 </Note>
 
 ## Launch in bulk
@@ -91,7 +91,7 @@ One archived or unknown vendor in a selection of forty does not cost you the oth
 Returns the single-page result: who the vendor is, the composite, the components behind it, control-set coverage, open issues with their evidence, and every source cited.
 
 <ResponseField name="result.profile" type="object | null">
-  The researched company profile: `company_name`, `url`, `description`, `industry`, `use_case`, `services`, `hq_location`, and `confidence` — how sure the run is it profiled the right company. `null` until the research completes, which happens shortly after launch and independently of the controls.
+  The researched company profile: `company_name`, `url`, `description`, `industry`, `use_case`, `services`, `hq_location`, and `confidence`, which is how sure the run is it profiled the right company. `null` until the research completes, which happens shortly after launch and independently of the controls.
 </ResponseField>
 
 <ResponseField name="result.profile.risk_tier" type="string | null">
@@ -140,7 +140,7 @@ Ranking is computed across the whole organization before the page is sliced, so 
   `POST /v1/zero_touch_assessment/template`
 </ParamField>
 
-The `GET` returns the shipped templates with their control counts and domains, plus `active_template_key` — the one your runs currently evaluate. It is `null` when your organization runs a control set of its own, or when more than one shipped template is designated; both are states to show rather than resolve arbitrarily.
+The `GET` returns the shipped templates with their control counts and domains, plus `active_template_key`, the one your runs currently evaluate. It is `null` when your organization runs a control set of its own, or when more than one shipped template is designated; both are states to show rather than resolve arbitrarily.
 
 The `POST` takes `{"template_key": "..."}` and points future runs at that template. It only ever re-designates control sets this module provisioned, so a set designated for you by Coverbase is never disturbed.
 
@@ -288,7 +288,7 @@ Only the axis you choose is written, so a Zero Touch run can never overwrite an 
   Whether a completed run writes its **risk tier** onto vendor inherent risk. Off by default.
 </ParamField>
 
-The tier is a triage read from public evidence, so an organization that has not asked for it never finds a vendor's inherent risk moved by one. Even when enabled, the push stands down if `score_target` is already `vendor_inherent` — two writers on one field would let run order decide the vendor's risk — and reports why in `result.risk_tier_push_skipped_reason`.
+The tier is a triage read from public evidence, so an organization that has not asked for it never finds a vendor's inherent risk moved by one. Even when enabled, the push stands down if `score_target` is already `vendor_inherent`, because two writers on one field would let run order decide the vendor's risk, and reports why in `result.risk_tier_push_skipped_reason`.
 
 ## Listing runs
 

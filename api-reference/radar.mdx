@@ -33,7 +33,7 @@ None of these honor `Idempotency-Key`.
   `POST /v1/radar/events`
 </ParamField>
 
-Returns `201 Created`. Use this to seed an event into Radar without waiting for a source feed to pick up the underlying article; useful for recording out-of-band incidents and for exercising your detectors against a known event. Supplied vendors are linked to the event as **primary-impacted**.
+Returns `201 Created`. Use this to seed an event into Radar without waiting for a source feed to pick up the underlying article; useful for recording out-of-band incidents and for exercising your detectors against a known event. Supplied vendors are linked to the event as **primary-impacted**, and the event is evaluated against your detectors unless you opt out — see [detector evaluation](#detector-evaluation).
 
 ### Request body
 
@@ -50,7 +50,9 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 </ParamField>
 
 <ParamField body="secondary_impact_types" type="string[]">
-  Additional impact categories.
+  Additional impact categories, from the same list as `primary_impact_type`. A
+  value outside it is rejected with `422` — these categories decide which
+  category-filtered detectors can match the event.
 </ParamField>
 
 <ParamField body="vendor_ids" type="string[]">
@@ -58,7 +60,9 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 </ParamField>
 
 <ParamField body="risk_domain_ids" type="string[]">
-  Risk domains to associate with the event.
+  Risk domains to record on the event (`cbrskdmn_...`), returned on the [radar
+  event object](#radar-event-object). An id your org does not have is rejected
+  with `400 risk_domain_not_found`.
 </ParamField>
 
 <ParamField body="source_url" type="string">
@@ -73,6 +77,39 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
   When the event occurred (Unix seconds). Defaults to now when omitted.
 </ParamField>
 
+<ParamField body="create_alert" type="boolean">
+  Evaluate the event against the detectors that target each linked vendor, raising
+  [radar alerts](#list-radar-alerts) for the ones that fire. Default `true`. Pass
+  `false` to record an event without spending a model call per (detector, vendor).
+</ParamField>
+
+### Detector evaluation
+
+The scheduled Radar pipeline is source-driven: it evaluates what its configured
+sources pull in, and never sees an event created through this endpoint. Events
+posted here are therefore evaluated out of band, which happens by default — pass
+`create_alert: false` to store one without evaluating it.
+
+Evaluation is asynchronous — the response returns as soon as the event is stored,
+and alerts appear on [`GET /v1/radar/alerts`](#list-radar-alerts) once the detectors
+finish, each carrying this event's `event_id`. What runs against the event:
+
+- **Vendors.** The vendors in `vendor_ids` that resolve within your org, plus the
+  vendors that depend on them — a breach at a supplier is evaluated against the
+  customers exposed to it, the same expansion the scheduled pipeline performs, and
+  through the same caps. An event with no resolvable vendor is stored but never
+  evaluated.
+- **Detectors.** Only the ones that already target each of those vendors, including
+  the detector's source scoping — a detector limited to specific sources sees this
+  event only if it includes the org's **Manually-created events** source. Detectors
+  with an impact-category filter are matched against the event's own
+  `primary_impact_type` and `secondary_impact_types`.
+- **Cost.** One model call per (detector, vendor) pair, counting the vendors
+  reached by expansion. Pass `create_alert: false` on events you only want recorded.
+
+Re-posting the same event is safe: each (event, vendor, detector) combination is
+evaluated once, so retries do not duplicate alerts or re-notify reviewers.
+
 ### Example request
 
 ```bash cURL
@@ -85,7 +122,8 @@ curl -X POST "https://api.coverbase.app/v1/radar/events" \
     "primary_impact_type": "Infosec",
     "vendor_ids": ["cbvndr_e448ba62882143f3ba0c140bb2e30162"],
     "source_url": "https://news.example.com/acme-breach",
-    "source_name": "Example News"
+    "source_name": "Example News",
+    "create_alert": true
   }'
 ```
 
@@ -98,6 +136,7 @@ Returns the [radar event object](#radar-event-object).
 <ResponseField name="summary" type="string">Event summary.</ResponseField>
 <ResponseField name="primary_impact_type" type="string">Primary impact category.</ResponseField>
 <ResponseField name="secondary_impact_types" type="string[]">Additional impact categories.</ResponseField>
+<ResponseField name="risk_domain_ids" type="string[]">Risk domains recorded on the event.</ResponseField>
 <ResponseField name="occurred_at" type="integer | null">When the event occurred (Unix seconds).</ResponseField>
 <ResponseField name="is_archived" type="boolean">`true` if archived.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
@@ -150,7 +189,8 @@ Returns the [radar event object](#radar-event-object), or `404 radar_event_not_f
 </ParamField>
 
 <ParamField query="severity" type="string[]">
-  Filter by severity. Repeat the param for multiple values: `severity=high&severity=critical`.
+  Filter by severity, one of `informational`, `low`, `medium`, `high`. Repeat the
+  param for multiple values: `severity=high&severity=medium`.
 </ParamField>
 
 <ParamField query="is_dismissed" type="boolean">
@@ -177,9 +217,9 @@ Returns the [radar event object](#radar-event-object), or `404 radar_event_not_f
     {
       "id": "cbrdrres_9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
       "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-      "detector_id": "cbrdet_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
-      "source_id": "cbrsrc_1111111111111111111111111111aaaa",
-      "data_id": "cbrdata_2222222222222222222222222222bbbb",
+      "detector_id": "cbrdrdet_2d5e8f1a4b7c0d3e6f9a2b5c8d1e4f7a",
+      "source_id": "cbradarsrc_1111111111111111111111111111aaaa",
+      "data_id": "cbradardata_2222222222222222222222222222bbbb",
       "event_id": "cbrevent_3333333333333333333333333333cccc",
       "summary": "Acme disclosed a data breach affecting customer records.",
       "severity": "high",
@@ -203,9 +243,9 @@ Returns the [radar event object](#radar-event-object), or `404 radar_event_not_f
 
 <ResponseField name="id" type="string">Radar alert ID (`cbrdrres_...`).</ResponseField>
 <ResponseField name="vendor_id" type="string">Vendor the alert is on (`cbvndr_...`).</ResponseField>
-<ResponseField name="detector_id" type="string">Detector that produced the alert (`cbrdet_...`).</ResponseField>
-<ResponseField name="source_id" type="string">Radar source (`cbrsrc_...`).</ResponseField>
-<ResponseField name="data_id" type="string">Underlying source data item (`cbrdata_...`).</ResponseField>
+<ResponseField name="detector_id" type="string">Detector that produced the alert (`cbrdrdet_...`).</ResponseField>
+<ResponseField name="source_id" type="string">Radar source (`cbradarsrc_...`).</ResponseField>
+<ResponseField name="data_id" type="string">Underlying source data item (`cbradardata_...`).</ResponseField>
 <ResponseField name="event_id" type="string | null">Radar event the alert's data belongs to (`cbrevent_...`), if any.</ResponseField>
 <ResponseField name="summary" type="string">Alert summary.</ResponseField>
 <ResponseField name="severity" type="string">Severity (`informational`, `low`, `medium`, `high`).</ResponseField>
@@ -255,7 +295,10 @@ curl -X POST "https://api.coverbase.app/v1/radar/alerts/cbrdrres_9a8b7c6d5e4f3a2
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 404 | `{"detail": {"code": "alert_not_found", "message": "Radar alert not found."}}` | Not found, not in the API key's org, or already dismissed. |
+| 404 | `{"detail": {"code": "alert_not_found", "message": "Radar alert not found."}}` | Not found, or not in the API key's org. |
+
+Dismissing an already-dismissed alert is a no-op that returns `200` with the alert; a
+`reason` supplied on the repeat call replaces the stored one.
 
 ## Restore a dismissed alert
 

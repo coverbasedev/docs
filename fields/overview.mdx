@@ -1,0 +1,135 @@
+---
+title: "Field reference"
+description: "How Coverbase fields work across filters, saved views, sorting, workflow conditions, and the query API."
+---
+
+Every core module in Coverbase is backed by one published set of fields. That
+same set drives the dashboard and the API, so a field you can filter on in a
+list is a field you can sort by, save into a view, branch a workflow on, and
+query programmatically — under the same name.
+
+<CardGroup cols={2}>
+  <Card title="Filters and saved views" icon="filter">
+    The **Add filter** menu on every list page is built from this field set. A
+    saved view stores the filter tree, the sort, and the visible columns.
+  </Card>
+  <Card title="Sorting" icon="arrow-down-a-z">
+    Fields marked sortable can order any list page or query response.
+  </Card>
+  <Card title="Workflow conditions" icon="diagram-project">
+    Automations evaluate the same fields against a target record. See
+    [Workflow engine](/integrations/workflow-engine).
+  </Card>
+  <Card title="Query API" icon="code">
+    `POST /v1/<resource>/query` accepts the same field paths as a JSON rule tree.
+  </Card>
+</CardGroup>
+
+## Reading the catalog
+
+The [field catalog](/fields/catalog) lists every field by module. Each row gives
+you:
+
+| Column | What it means |
+| --- | --- |
+| **Field** | The label shown in the dashboard. |
+| **Group** | The submenu the field sits under in the **Add filter** menu, or `—` for a top-level field. |
+| **Filter path** | The identifier used by the query API, saved views, and workflow conditions. |
+| **Type** | The kind of value the field holds, which decides the available operators. |
+| **Values** | For choice fields, the accepted values. For reference fields, the workspace list the picker reads from. |
+| **Operators** | The comparisons the field supports. |
+| **Sortable** | Whether lists and query responses can be ordered by the field. |
+
+### Field types
+
+| Type | Description |
+| --- | --- |
+| Text | Free text. Supports substring matching. |
+| Number | Numeric value, including counts of related records. |
+| Date | A point in time. The dashboard picker also offers relative windows such as "1 month ago". |
+| Yes/No | A boolean flag. |
+| Choice | A fixed set of values defined by Coverbase. |
+| Reference | A pointer to one other record, such as a user or a status. |
+| Multi-reference | A set of related records, such as tags or owners. |
+| Structured | A nested object, filtered by key. |
+
+### Operators
+
+| Operator | Applies to | Meaning |
+| --- | --- | --- |
+| is / is not | Most types | Exact match against a single value. |
+| any of / none of | Choice, Reference | Match against a list of values. |
+| contains / does not contain | Text | Substring match. |
+| after / on or after / before / on or before | Date | Compare against a point in time. |
+| greater than / at least / less than / at most | Number | Numeric comparison. |
+| between | Date, Number | Inclusive range, given as `{"from": …, "to": …}`. |
+| any of / none of | Multi-reference | The record is related to at least one, or none, of the selected values. |
+| all of / not all of | Multi-reference | The record is related to every selected value. Extra values still match. |
+| all are | Multi-reference | Every related record equals the selected value. |
+| empty / not empty | Most types | The field has no value, or has any value. |
+
+## Fields this catalog does not list
+
+<AccordionGroup>
+  <Accordion title="Custom fields">
+    Custom fields are defined per workspace, so they cannot be listed here. They
+    appear in the same filter menus alongside the built-in fields once
+    configured. Custom fields can be attached to vendors, services, engagements,
+    contracts, assessments, assessment responses, controls, findings, and
+    reviews. See [Custom fields](/api-reference/custom-fields).
+  </Accordion>
+  <Accordion title="Renamed terms">
+    Your workspace can rename core terms — vendor, service, action, task,
+    finding, follow-up, issue, assessment, and control. Labels in this catalog
+    use the Coverbase defaults, so a field labelled **Vendor** reads as
+    **Supplier** if that is your workspace's term. Filter paths never change, so
+    integrations and saved views are unaffected by a rename.
+  </Accordion>
+  <Accordion title="Detail-page-only content">
+    Some record content is displayed but not filterable — free-text notes,
+    activity timelines, document previews, and AI-generated narrative summaries.
+    Those are documented with their module under
+    [Products](/products/vendor-intelligence).
+  </Accordion>
+  <Accordion title="Export columns">
+    Data exports carry their own column set, which overlaps with but is not
+    identical to this catalog. See [Export](/export).
+  </Accordion>
+</AccordionGroup>
+
+## Using a field path
+
+A filter path is stable and safe to hard-code. Send it to
+`POST /v1/vendor/query` as a rule tree — `path` is the filter path split on its
+dots, `op` is one of the field's operators, and `combiner` is `all` (AND) or
+`any` (OR). This returns high-risk vendors whose next assessment is already due,
+soonest first:
+
+```json
+{
+  "filter": {
+    "combiner": "all",
+    "children": [
+      {
+        "rule_type": "field",
+        "path": ["inherent_risk_level_id"],
+        "op": "in",
+        "value": ["cbsclvl_2Nk8xQ", "cbsclvl_7Pd1zR"]
+      },
+      {
+        "rule_type": "field",
+        "path": ["next_assessment_date"],
+        "op": "lte",
+        "value": "2026-06-30T00:00:00Z"
+      }
+    ]
+  },
+  "sort": [{ "path": ["next_assessment_date"], "direction": "asc" }],
+  "limit": 50,
+  "offset": 0
+}
+```
+
+Groups nest, so a `children` entry can itself be a `combiner` group when you need
+mixed AND/OR logic. See [Conventions](/conventions) for authentication, the
+response envelope, and pagination.

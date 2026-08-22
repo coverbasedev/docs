@@ -1,0 +1,241 @@
+---
+title: "Supplier information guide"
+description: "How supplier bank details, addresses, tax registrations and diversity records are collected, checked against the rules for the supplier's country, reviewed, and handed to your finance system."
+icon: "building-columns"
+hidden: true
+---
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. For what each country asks for, field by field, see [Supplier countries](/user-guides/supplier-countries/overview).
+</Info>
+
+Onboarding a supplier eventually comes down to a handful of facts you have to get exactly right: where to send the money, where the supplier actually is, what it is registered as for tax, and whether it qualifies under any diversity program you run. Get a digit wrong in a bank account and the payment fails or, worse, lands somewhere else. Ask for the wrong fields and the supplier gives up halfway through the form.
+
+This part of Coverbase is built around one idea: the country decides the questions. A supplier banking in the United Kingdom is asked for a sort code and an eight digit account number. A supplier banking in Japan is asked for a bank code, a branch code and a deposit type. Nobody is asked for a field their country does not use, and nothing is accepted that the country's own format rules reject.
+
+<Note>
+  This is a gated feature. If you do not see a **Know Your Supplier** tab on your vendors, it has not been switched on for your organization yet. Ask your Coverbase contact.
+</Note>
+
+## The short version
+
+<Steps>
+  <Step title="You ask">
+    Add a bank details, site, tax registration or diversity question to a questionnaire, and send it as you would any other. There is no separate portal for a supplier to learn.
+  </Step>
+  <Step title="The supplier answers">
+    They pick their country, and the form changes to that country's fields. Each field is checked as they type, so a mistyped check digit is caught while they are still looking at it.
+  </Step>
+  <Step title="Coverbase checks it">
+    On submission, everything is validated again on the server. Errors block the submission and say why. Warnings are recorded and let it through.
+  </Step>
+  <Step title="A reviewer decides (for bank changes)">
+    A new or changed bank account waits in a queue. The supplier's live account is untouched until someone approves the change.
+  </Step>
+  <Step title="Your finance system hears about it">
+    Approval fires a webhook and the record shows up in the API feed your integration polls. Rejection does not, because from your finance system's point of view the change never happened.
+  </Step>
+</Steps>
+
+## Where this lives
+
+Three places, depending on who you are.
+
+<CardGroup cols={3}>
+  <Card title="On the vendor" icon="building">
+    A **Know Your Supplier** tab on every vendor. Bank accounts, sites, tax registrations, diversity records, legal entity assignments, pending changes, and the full change history.
+  </Card>
+  <Card title="In a questionnaire" icon="clipboard-list">
+    Four question types you can drop into any Know Your Supplier or onboarding questionnaire. This is how suppliers actually fill things in.
+  </Card>
+  <Card title="In configuration" icon="sliders">
+    **Configuration → Know Your Supplier** for the policy, and **Configuration → Legal entities** for the entities suppliers get assigned to.
+  </Card>
+</CardGroup>
+
+<Frame caption="The Know Your Supplier tab on a vendor. Bank accounts are masked to the last four digits until someone with the reveal permission asks to see one.">
+  <img src="/images/user-guides/supplier-know-your-supplier-tab.png" alt="The Know Your Supplier tab on a vendor, showing masked bank accounts with validation badges, sites, tax registrations and the change history." />
+</Frame>
+
+## Asking a supplier: the four question types
+
+Supplier information is collected through the questionnaire engine rather than through a separate flow. That is a deliberate choice and it buys you a lot: assignment, reminders, progress tracking, autofill and review all work exactly as they already do, and a supplier who has filled in one Coverbase questionnaire already knows how to fill in this one.
+
+When you author a questionnaire of type **Know Your Supplier** or **Vendor onboarding**, four extra response types appear alongside the usual free text and multiple choice:
+
+| Question type | What the supplier fills in |
+| --- | --- |
+| Bank account details | Country, then that country's bank fields, plus IBAN and SWIFT where they apply |
+| Supplier site | An address, with the postal code checked against the national format |
+| Tax registration | The tax and company identifiers that country uses, such as a VAT number or a company number |
+| Diversity record | A classification, the certifying body, and the certificate's validity dates |
+
+They do not appear on assessments or RFPs, because there is no supplier profile behind those to write into.
+
+<Frame caption="A bank details question as the supplier sees it. Changing the country changes the fields below it.">
+  <img src="/images/user-guides/supplier-bank-question.png" alt="A bank account details question in a questionnaire, showing the country selector and the United Kingdom fields: sort code, account number and IBAN." />
+</Frame>
+
+<Frame caption="The other three types are the same form with a different field set. A country with more than one tax identifier asks which one is being given.">
+  <img src="/images/user-guides/supplier-tax-question.png" alt="A tax registration question showing the country selector, a registration type selector, and the identifier field." />
+</Frame>
+
+### What the answer actually stores
+
+This matters if you export questionnaire responses, or if you have ever wondered where the account number goes.
+
+The answer to one of these questions is a **reference, not a payload**. When the supplier submits, the real values go into their own table, encrypted. What lands in the questionnaire response is a row id plus a masked summary: the last four digits, the country, and the validation outcome. Every reader of questionnaire responses, including the CSV export, the follow up spreadsheet round trip and autofill, therefore sees the summary and never the identifier.
+
+<Warning>
+  A consequence worth knowing: these answers cannot be edited through the follow up spreadsheet. A spreadsheet is a text file that anyone in the chain can edit, and accepting one would let a pasted row point an answer at a record it has no business referencing. The spreadsheet skips these questions and says so.
+</Warning>
+
+### Offering a live bank connection
+
+A bank details question has one setting: **Offer a live bank connection**. It is off by default.
+
+Turn it on and the supplier gets the option to link their bank directly instead of typing account details. Leave it off and they only see the country form, and none of the connection logic runs. It is a per question choice rather than an organization wide one, because the ask is heavier than typing and you may want it on your main onboarding questionnaire but not on a quick refresh.
+
+<Frame caption="With the setting on, the supplier is offered the connection first and can still type the details instead.">
+  <img src="/images/user-guides/supplier-bank-question-connection.png" alt="A bank account details question offering a live bank connection above the manual country fields." />
+</Frame>
+
+## What happens when a supplier submits
+
+### Normalizing first
+
+Before anything is judged, values are cleaned up in the way that country expects. Spaces come out of an IBAN. A United Kingdom sort code shorter than six digits is padded with leading zeros rather than rejected, because a five digit sort code is a real thing people type and the leading zero is genuinely implied.
+
+### Then errors and warnings, which are not the same thing
+
+<CardGroup cols={2}>
+  <Card title="An error blocks" icon="circle-xmark">
+    The field is required and empty, the length is wrong, the pattern does not match, or a checksum failed. The submission is refused and the message names the field and the reason.
+  </Card>
+  <Card title="A warning informs" icon="triangle-exclamation">
+    Something looks unusual but we are not certain enough about that country's rules to reject a real supplier over it. The record saves, the warning is recorded against it, and a reviewer sees it.
+  </Card>
+</CardGroup>
+
+The split is not cosmetic. Each country page carries a **rule confidence** rating, and it is a statement about our evidence, not about the supplier. Where a rule is confirmed against a primary source such as a tax authority or a central bank, it is enforced strictly. Where it comes from secondary documentation, it warns instead. Promoting a rule without evidence would mean rejecting suppliers who are doing nothing wrong, which is the exact failure this is built to avoid.
+
+### Checksums
+
+A checksum is a self checking digit built into an identifier: an IBAN, a US routing number, a Spanish NIF, a Mexican CLABE. It catches the most common human errors, a mistyped digit and a transposed pair, before the details ever reach your finance system. Coverbase implements the published algorithm for each identifier that has one, and only those. Where an identifier's check digit rule is not publicly documented, the format is checked and the checksum is not invented.
+
+The per country pages say exactly which checks apply. See [Supplier countries](/user-guides/supplier-countries/overview).
+
+### Registry confirmation, afterwards
+
+Where a public register exists, a tax or company registration is looked up in the background after it is saved. Companies House and HMRC for the United Kingdom, the VIES service for European VAT numbers, and so on.
+
+This is never part of validation. It runs afterwards, it annotates the record with what the register said, and a reviewer can retry it. A register being slow or down has no effect on a supplier's ability to submit their details, which is the whole reason it sits outside the validation path.
+
+## Review: the part that stops fraud
+
+Invoice redirection fraud, where an attacker persuades someone to change a supplier's bank details, is one of the most common and most expensive attacks in accounts payable. The review queue exists for it.
+
+By default, **a bank change never touches the live account**. It goes into a queue and waits. The supplier sees that their submission is recorded and awaiting review. The account your finance system knows about is unchanged, and no webhook fires. When a reviewer approves, the change lands and the webhook goes out. When a reviewer rejects, nothing is restored, because nothing had been replaced.
+
+<Frame caption="The supplier changes queue. Each pending change shows what is being changed, who submitted it, and through which surface.">
+  <img src="/images/user-guides/supplier-changes-queue.png" alt="The supplier changes page listing pending bank account changes awaiting review, with approve and reject actions." />
+</Frame>
+
+Two things make the control real:
+
+- **Submitting and approving are different permissions.** Someone who can enter a change cannot necessarily approve it. That includes your own staff entering details on a supplier's behalf from the vendor tab.
+- **The change history is append only.** Every supplier visible change writes an event, and nothing updates or deletes one. That history is the same source the API delta feed and the webhook payloads read from, so what a reviewer sees and what your finance system received cannot drift apart.
+
+## Who can see and do what
+
+Two permission resources, each split three ways, so a reviewer does not have to also be an editor.
+
+| Permission | What it allows |
+| --- | --- |
+| Supplier banking: read | Reveal a full bank identifier. Without it, everyone sees the last four digits only. |
+| Supplier banking: update | Enter or edit bank details on a supplier's behalf. Does not approve anything. |
+| Supplier banking: approve | Decide a queued bank change. |
+| Supplier profile: read | Reveal a full tax identifier. |
+| Supplier profile: update | Edit sites, tax registrations, diversity records and legal entity assignments. |
+| Supplier profile: approve | Decide a queued legal entity assignment. |
+
+<Frame caption="Staff entry on the vendor tab. The same country rules the supplier would have seen, and entering a change here still does not approve it.">
+  <img src="/images/user-guides/supplier-staff-entry.png" alt="The staff dialog for adding a supplier address, showing the country-driven address fields and a notice that the record is being entered on the supplier's behalf." />
+</Frame>
+
+<Note>
+  These are organization wide permissions rather than per vendor ones. There is no assignment model on a bank account, so "owns the vendor" is not a route to approving its bank changes. That is on purpose.
+</Note>
+
+Every reveal of a full identifier is recorded. Everywhere else, and that means change events, webhook payloads, delivery logs and API responses that are not explicitly a reveal, only the last four digits exist.
+
+## Configuring it for your organization
+
+**Configuration → Know Your Supplier** holds the policy. Everything on it is per organization.
+
+<Frame caption="Know Your Supplier settings. Bank review is on by default; turning it off is a deliberate decision.">
+  <img src="/images/user-guides/supplier-kys-settings.png" alt="The Know Your Supplier configuration page, showing review and approval settings, collection options, limits and update request defaults." />
+</Frame>
+
+<AccordionGroup>
+  <Accordion title="Review and approval" icon="user-check" defaultOpen>
+    **Bank changes need a reviewer** is on by default and is the fraud control described above. **Legal entity assignments need approval** is off by default, because an assignment is an administrative fact rather than a payment instruction. **Notify these people** decides who hears about a queued change; leave it empty and the vendor's relationship owners are told instead, so a half configured organization still reaches a human.
+  </Accordion>
+  <Accordion title="What suppliers are asked for" icon="list-check">
+    **Collect IBAN** and **Collect country specific extras** apply across every country. Turning an extra off skips fields such as a building society roll number or a branch code that only some countries use. **Diversity certifications** narrows certificate collection to named countries; leave it empty to collect everywhere.
+  </Accordion>
+  <Accordion title="Limits" icon="gauge">
+    How many bank accounts and sites one supplier may hold, and how many profile writes a supplier portal may make per hour. The rate limit is deliberately low. Profile edits are rare, so a burst is far more likely to be an attack than a real supplier.
+  </Accordion>
+  <Accordion title="Update requests" icon="rotate">
+    When you ask an existing supplier to refresh their profile, these are the defaults: which sections the request covers, and how long the supplier's link stays usable. The person sending a request can narrow the sections for that request.
+  </Accordion>
+</AccordionGroup>
+
+### Legal entities
+
+**Configuration → Legal entities** is the list of your own contracting entities that suppliers get assigned to. The **entity code** is the field that matters: it is what your finance system matches on, so it has to be exactly what that system expects. Entities can be imported from CSV, which upserts on the entity code and reports the outcome per row.
+
+Deactivating an entity blocks new assignments and leaves existing ones alone.
+
+### Country rules
+
+The 39 countries ship with rules already configured, and those are documented per country in [Supplier countries](/user-guides/supplier-countries/overview). Your organization can override any country's rules for its own suppliers, which is how a late correction from your finance team becomes a configuration change rather than a release.
+
+## Getting it into your finance system
+
+Two ways, and most integrations use both.
+
+<CardGroup cols={2}>
+  <Card title="Webhooks" icon="broadcast-tower">
+    Fired when a record is created, changed, approved or rejected. Payloads carry masked identifiers and an idempotency key drawn from the change event, so a redelivery cannot double apply.
+  </Card>
+  <Card title="The changes feed" icon="arrows-rotate">
+    A polling endpoint that returns everything that changed since a cursor you hold. Use it to reconcile after an outage, or as your primary path if you would rather poll than receive.
+  </Card>
+</CardGroup>
+
+A bank change's webhook fires on approval, not on submission. If you are testing the integration and a submitted change is not showing up, that is almost always why: check the review queue.
+
+## When something goes wrong
+
+| What you see | What it usually means |
+| --- | --- |
+| The supplier says a valid account number is rejected | Check the country on the form. The fields follow the country of the bank account, not the country of the supplier. |
+| A check digit error the supplier insists is wrong | Have them re-read the identifier from the bank's own document rather than from an invoice template. Transposed digits are the single most common cause. |
+| A warning on an otherwise fine record | The rule is a suggested one for that country. The record saved. The country page says which rules are suggested and why. |
+| A supplier's new bank details are not in the finance system | The change is waiting in the review queue. Nothing is sent until it is approved. |
+| Nothing was sent after approval | Check webhook delivery, then reconcile with the changes feed. |
+| "This supplier already has N bank accounts" | The organization's bank account limit. Raise it in configuration, or retire an account that is no longer used. |
+| Registry confirmation stuck as pending | The register was unreachable. It retries on a schedule, and a reviewer can retry it by hand. It never blocks anything. |
+
+## Where to next
+
+<CardGroup cols={2}>
+  <Card title="Supplier countries" icon="globe" href="/user-guides/supplier-countries/overview">
+    All 39 countries, with the exact fields, formats, checksums and registers for each one.
+  </Card>
+  <Card title="Requesting a vendor" icon="cart-shopping" href="/user-guides/requesting-a-vendor">
+    What happens before any of this: how a supplier gets into Coverbase in the first place.
+  </Card>
+</CardGroup>
