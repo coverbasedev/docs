@@ -23,13 +23,17 @@ You need:
 
 - A Black Kite **client ID and client secret** with API access. Your Black Kite administrator generates these.
 - Permission to manage integrations in Coverbase (**Integrations: update**).
-- Vendors in Coverbase whose website matches the domain Black Kite monitors. That match is how a Black Kite company becomes one of your vendors.
+- Vendors in Coverbase whose website matches the domain Black Kite monitors. That match is how a Black Kite company becomes one of your vendors, and it is exact, so it is worth reading [how matching works](#how-black-kite-companies-become-your-vendors) before you start.
 
 ## Step 1. Connect your credentials
 
 Go to **API** in the left navigation, open the **Integrations** tab, and choose **Black Kite**.
 
 Paste your client ID and client secret and click **Save**. Then click **Test connection**, which makes one harmless call to Black Kite and confirms the credentials work. It is worth doing now rather than finding out later from a week of failed overnight runs.
+
+<Frame caption="The Black Kite configuration page. Credentials at the top; once they are saved, the Radar monitoring section below them unlocks.">
+  <img src="/images/user-guides/black-kite-configuration-panel.png" alt="Black Kite configuration page showing API credentials and Radar monitoring settings" />
+</Frame>
 
 <Warning>
   Your client secret is stored encrypted and is never shown again. If you lose it, generate a new one in Black Kite rather than trying to recover it here.
@@ -48,6 +52,10 @@ Coverbase can collect two kinds of signal from Black Kite. Turn on either or bot
 <Tip>
   Leave the focus tag list empty to collect every tag. If you name specific tags, Black Kite's newly published ones are ignored until you come back and add them, and the newest tags are usually the ones about a campaign that is currently running.
 </Tip>
+
+<Frame caption="Monitoring settings. Each signal has its own switch, and the thresholds below them decide which vendors are worth a detailed look.">
+  <img src="/images/user-guides/black-kite-monitoring-configured.png" alt="Black Kite monitoring settings with signal toggles and thresholds" />
+</Frame>
 
 ## Step 3. Decide which vendors are watched
 
@@ -72,11 +80,56 @@ This is where you encode your policy. A common shape is *inherent risk is signif
 
 Click **Save monitoring settings**.
 
+## How Black Kite companies become your vendors
+
+This is worth understanding before you troubleshoot anything, because almost every "why is nothing happening" question turns out to be here.
+
+Coverbase matches on **domain, never on company name**. Black Kite reports a domain for each company it monitors. Coverbase compares that against two things on your side: the **vendor's own website**, and the website on the **company record** the vendor is linked to. Either one matching is enough, which helps when you have recorded the product domain and Black Kite monitors the corporate one.
+
+Before comparing, both sides are tidied up the same way. Capitals are lowered, `https://` and any path are dropped, and a leading `www.` is removed. What is left has to be identical.
+
+| Black Kite monitors | Your vendor's website | Match |
+| --- | --- | --- |
+| `benefitfocus.com` | `benefitfocus.com` | Yes |
+| `benefitfocus.com` | `https://www.benefitfocus.com/careers` | Yes |
+| `benefitfocus.com` | `app.benefitfocus.com` | **No.** A subdomain is a different host. |
+| `bhmpc.com` | `bhmpc.co.uk` | **No.** Different domain. |
+| `betsol.com` | (no website recorded) | **No.** Nothing to compare. |
+
+<Warning>
+  A vendor with no website recorded can never match, no matter how it is scoped or which detector is watching. If you are testing this and seeing nothing, check the website field first.
+</Warning>
+
+Two more things follow from matching this way:
+
+- **Subdomains and parent domains are deliberately kept apart.** `aws.amazon.com` and `amazon.com` are not the same supplier, and neither are Opsgenie and Atlassian. Coverbase would rather miss a match than quietly file one supplier's exploited vulnerability under another.
+- **If two vendors share a domain, only one of them gets the findings.** Which one is stable between runs, but it is arbitrary. That is a sign of a duplicate vendor record worth merging rather than something to configure around.
+
+For alerts to attribute correctly, a vendor should also be linked to a company record, which happens on its own when you create the vendor by picking it from the directory rather than typing a bare name. Exploited vulnerabilities are recorded against the CVE, so one CVE can affect several of your vendors at once. The company link is how Coverbase keeps each vendor's alert to that vendor's own findings.
+
 ## Step 4. Create a detector
 
 Saving the settings above starts collection. It does not raise any alerts on its own. A **detector** decides which collected findings are worth someone's attention.
 
 The monitoring section shows a **Detectors** panel with a **Create detector** button. Click it and Coverbase creates a detector wired to your Black Kite source, then opens it for editing.
+
+You can also start from the detector library under **Radar → Detectors → Add detector**. Search for *Black Kite* and you will find five ready-made policies, each marked with a Black Kite badge. They are already wired to your source.
+
+<Frame caption="The five shipped Black Kite policies in the detector library. The badge marks a detector that reads your Black Kite portfolio directly.">
+  <img src="/images/user-guides/black-kite-detector-library.png" alt="Detector library filtered to the five Black Kite templates, each showing a Black Kite badge" />
+</Frame>
+
+| Template | Use it when |
+| --- | --- |
+| **Exploited Vulnerabilities** | You want broad coverage. KEV only, with no susceptibility threshold, because an exploited flaw on a supplier's own infrastructure is urgent regardless of their ransomware score. |
+| **Critical Exploitable CVEs** | The broad one is too noisy. CVSS 9.0 and above, with at least a 50% predicted chance of exploitation. |
+| **Vulnerability Campaign Exposure** | You want early warning. Focus tags only, which usually arrive before a supplier confirms anything. |
+| **Ransomware-Susceptible Vendor Exposure** | The usual starting policy. Both signals, limited to vendors scoring above 0.5. |
+| **Highest Susceptibility Watch** | You want a short list. Both signals above 0.8. |
+
+<Note>
+  A detector keeps the name it was created with. If you adopted these templates before the names were shortened, your existing detectors still read "(Black Kite)" at the end. Nothing is wrong, and they keep working. Rename them if it bothers you.
+</Note>
 
 The detector has its own criteria, and every one of them is a requirement rather than a preference. A finding raises an alert only when its signal is switched on **and** it clears every threshold you have enabled:
 
@@ -119,7 +172,20 @@ The monitoring section shows **Last successful run**. If that says *Not yet run*
 | Fewer vendors than expected | Vendor websites do not match the domains Black Kite monitors, or your vendor scope is narrower than you intended. |
 | Alerts stopped suddenly | Black Kite credentials may have been rotated or revoked. **Test connection** will say so. |
 
-Matching is by domain. If Black Kite monitors `acme-corp.com` and your vendor record says `acme.io`, they will not connect. Correct the vendor's website and it will match on the next run.
+<Frame caption="Collection is running but nothing is watching it. A source with no detector fills up quietly and never alerts.">
+  <img src="/images/user-guides/black-kite-monitoring-no-detector.png" alt="Black Kite monitoring panel warning that no detector is watching the source" />
+</Frame>
+
+Most shortfalls come back to matching. If Black Kite monitors `acme-corp.com` and your vendor record says `acme.io`, they will not connect. Correct the vendor's website and it will match on the next run, with no need to re-save anything here.
+
+A few timing details that save some guessing:
+
+- **The first run does not wait a day.** A newly connected source is due immediately and gets picked up on the next scheduled pass, not 24 hours later.
+- **Vendors past the per-run ceiling are deferred, not dropped.** The most ransomware-susceptible are examined first, and the rest are picked up by the following run. A run that looks short is usually this rather than a failure.
+- **A vendor Black Kite has not scored will not clear a susceptibility threshold.** That is a suppressed alert, not a missing finding.
+- **KEV is also one of Black Kite's focus tags.** When you have exploited vulnerabilities switched on, Coverbase does not also collect the KEV tag as a write-up, so the same exposure is not filed twice in two shapes.
+
+If credentials fail partway through a pass, **Last successful run** deliberately does not advance. It reflects the last pass that genuinely completed, so a stale date is a signal rather than a display bug.
 
 ## Turning it off
 
