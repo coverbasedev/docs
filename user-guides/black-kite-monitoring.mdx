@@ -1,0 +1,128 @@
+---
+title: "Black Kite monitoring guide"
+description: "How to connect your Black Kite portfolio to Radar, choose which vendors are watched, and turn known exploited vulnerabilities and focus tags into alerts."
+icon: "shield-halved"
+hidden: true
+---
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It assumes your organization already has a Black Kite subscription. For what Radar does generally, see [Supplier Radar](/products/supplier-radar).
+</Info>
+
+If you already pay Black Kite to rate your suppliers, this connects that rating work to the rest of your risk program. Coverbase sweeps your Black Kite portfolio on a schedule, matches each company back to the vendor record you already hold, and raises a Radar alert when a vendor you care about picks up an exploited vulnerability or an incident write-up.
+
+Two things are worth knowing before you start, because they shape every choice on the page.
+
+**Black Kite limits how fast anyone can read it.** Your Black Kite tenant is capped at 60 API requests a minute, and there is no single call that returns every finding in your portfolio — findings are fetched one company at a time. So the settings below are not only a filter on what you see; they decide how far Coverbase can get through your portfolio in a day. Narrowing the scope is what makes monitoring keep up.
+
+**A source collects; a detector alerts.** These are two separate steps, and doing only the first is the most common way to end up wondering why nothing is happening. The configuration page walks you through both.
+
+## Before you start
+
+You need:
+
+- A Black Kite **client ID and client secret** with API access. Your Black Kite administrator generates these.
+- Permission to manage integrations in Coverbase (**Integrations: update**).
+- Vendors in Coverbase whose website matches the domain Black Kite monitors. That match is how a Black Kite company becomes one of your vendors.
+
+## Step 1 — Connect your credentials
+
+Go to **API** in the left navigation, open the **Integrations** tab, and choose **Black Kite**.
+
+Paste your client ID and client secret and click **Save**. Then click **Test connection** — this makes one harmless call to Black Kite and tells you whether the credentials work. Do this now rather than discovering the problem in a week of silent overnight runs.
+
+<Warning>
+  Your client secret is stored encrypted and never shown again. If you lose it, generate a new one in Black Kite rather than trying to recover it here.
+</Warning>
+
+## Step 2 — Choose what gets collected
+
+Once credentials are saved, the **Radar monitoring** section appears on the same page.
+
+Coverbase can collect two kinds of signal from Black Kite. Turn on either or both.
+
+**Known exploited vulnerabilities.** CVEs from the CISA Known Exploited Vulnerabilities catalog that Black Kite found on a vendor's internet-facing infrastructure. "Known exploited" means attackers are using it right now, not that it is theoretically severe. These merge with the vulnerability intelligence Coverbase already collects from NVD and CISA, so you get one view of a CVE rather than two.
+
+**Focus tags.** The incident write-ups Black Kite's research team attaches to a company — a reported ransomware attack, a data breach, a supply-chain compromise. You get their headline and evidence, not just a label.
+
+<Tip>
+  Leave the focus tag list empty to collect every tag. If you name specific tags, Black Kite's newly published ones are ignored until you come back and add them — and the newest tags are usually the ones about the campaign currently running.
+</Tip>
+
+## Step 3 — Decide which vendors are watched
+
+This is the setting that matters most, and the one most worth spending a minute on.
+
+**Ransomware Susceptibility Index threshold.** Black Kite scores every company from 0 to 1 on how likely it is to suffer a ransomware attack. Set a threshold and Coverbase only looks closely at vendors above it. The default is 0.5. Turning this off means examining every vendor in scope, which uses considerably more of your daily request budget.
+
+**Technical grades.** Optionally also examine vendors carrying particular Black Kite letter grades, regardless of their susceptibility score. Leave it empty to apply no grade rule.
+
+**Vendor scope.** A filter over your own vendor records. Only vendors matching it are monitored at all.
+
+This is where you encode your policy. A common shape is *inherent risk is significant or high*, **and** *the vendor handles regulated data*. Both are ordinary vendor filters:
+
+- **Risk ranking** uses your own **Inherent risk level**, whatever you have named your levels.
+- **Regulated data access** — PHI, PCI, SSN — uses a vendor field you control. If you do not already track this, create a multi-select custom field on vendors (for example *Regulated data* with options *PHI*, *PCI*, *SSN*) and populate it, or use vendor tags. Either becomes filterable here immediately.
+
+<Note>
+  Coverbase does not infer PHI or PCI access for you here. The data types recorded on a vendor's risk profile are extracted from assessment text as free-form wording, so "PHI", "Protected Health Information" and "PHI (HIPAA)" all appear as different values — precise enough to read, not precise enough to decide who gets monitored. A field with a fixed option list is.
+</Note>
+
+**Vendors examined per run.** A ceiling on how many vendors get a detailed look in a single pass. The most ransomware-susceptible go first, and anything past the ceiling is picked up on the next run rather than dropped. Raise it if your portfolio is large and you would rather trade run time for coverage.
+
+Click **Save monitoring settings**.
+
+## Step 4 — Create a detector
+
+Saving the settings above starts collection. It does not raise a single alert. A **detector** is what decides which collected findings are worth someone's attention.
+
+The monitoring section shows a **Detectors** panel with a **Create detector** button. Click it and Coverbase creates one wired to your Black Kite source, then opens it for editing.
+
+The detector has its own criteria, and every one of them is a **requirement**, not a suggestion. A finding raises an alert only when its signal is switched on **and** it clears every threshold you have enabled:
+
+| Setting | What it does |
+| --- | --- |
+| **Alert on known exploited vulnerabilities** | Whether KEV findings can alert at all |
+| **Alert on focus tags** | Whether focus tags can alert at all, optionally narrowed to named tags |
+| **Require a Ransomware Susceptibility Index above** | Suppresses alerts for vendors at or below the score |
+| **Require a CVSS score of at least** | Suppresses lower-severity vulnerabilities |
+| **Require an EPSS probability of at least** | Suppresses vulnerabilities unlikely to be exploited |
+
+Each threshold has its own switch. Switching one off means **no constraint on that criterion** — which is a different thing from setting it to zero, and the reason the switches exist.
+
+<Warning>
+  A vendor Black Kite has not scored does **not** clear a susceptibility threshold. "Above 0.5" cannot be satisfied by a blank. If you want unscored vendors to alert, turn that requirement off rather than setting it to 0.
+</Warning>
+
+You also choose which vendors the detector applies to and who reviews its alerts, exactly as with any other Radar detector. Set **Enabled** when you are ready, and save.
+
+<Tip>
+  Start narrow. Turn on KEV only, keep the susceptibility threshold at 0.5, and watch a week of alerts before widening. It is much easier to add a signal than to win back attention after a noisy first week.
+</Tip>
+
+## What an alert looks like
+
+Alerts land in **Radar → Alerts** like any other. A Black Kite alert names the vendor, the finding, and — usefully — the criteria it met, so you can see the rule that fired rather than guessing.
+
+A known-exploited vulnerability is always **High**: it is being exploited in the wild and it was found on that vendor's own infrastructure. A focus tag is **High** when the vendor is also ransomware-susceptible and **Medium** otherwise.
+
+Vulnerability alerts carry the CVE, the CVSS and EPSS scores, the affected asset Black Kite saw it on, and whether the vulnerability is known to be used in ransomware campaigns. Because the CVE is recorded properly, the alert joins up with everything else Coverbase knows about that vulnerability instead of sitting on its own.
+
+## Checking it is working
+
+The monitoring section shows **Last successful run**. If that says *Not yet run* more than a day after you saved, or the date stops advancing:
+
+| What you see | Usually means |
+| --- | --- |
+| **Not yet run** after a day | The first scheduled pass has not happened yet, or credentials were saved after the source. Re-run **Test connection**. |
+| Runs succeed, no alerts | Collection is on but no detector is enabled, or every finding is being suppressed by a threshold. Check the **Detectors** panel first. |
+| Fewer vendors than expected | Vendor websites do not match the domains Black Kite monitors, or your vendor scope is narrower than you intended. |
+| Alerts stopped suddenly | Black Kite credentials may have been rotated or revoked. **Test connection** will say so. |
+
+Matching is by domain. If Black Kite monitors `acme-corp.com` and your vendor record says `acme.io`, they will not connect — correct the vendor's website and it will match on the next run.
+
+## Turning it off
+
+Removing the credentials on this page stops everything: no further runs, and no further alerts. Existing alerts and their history are kept.
+
+To pause alerting while keeping collection, disable the detector instead. To stop collecting while keeping your settings, archive the Black Kite source under **Radar → Sources**.
