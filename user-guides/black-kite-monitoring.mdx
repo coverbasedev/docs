@@ -84,17 +84,28 @@ Click **Save monitoring settings**.
 
 This is worth understanding before you troubleshoot anything, because almost every "why is nothing happening" question turns out to be here.
 
-Coverbase matches on **domain, never on company name**. Black Kite reports a domain for each company it monitors. Coverbase compares that against two things on your side: the **vendor's own website**, and the website on the **company record** the vendor is linked to. Either one matching is enough, which helps when you have recorded the product domain and Black Kite monitors the corporate one.
+The nightly run matches on **domain**. Black Kite reports a domain for each company it monitors, and Coverbase compares it against the **vendor's own website**, the website on the **company record** the vendor is linked to, and any **domains you have added by hand** (see below). Any one of them matching is enough, which helps when you have recorded the product domain and Black Kite monitors the corporate one.
 
-Before comparing, both sides are tidied up the same way. Capitals are lowered, `https://` and any path are dropped, and a leading `www.` is removed. What is left has to be identical.
+Before comparing, both sides are tidied up the same way. Capitals are lowered, `https://` and any path are dropped, and a leading `www.` is removed.
+
+Coverbase then tries three things in order, stopping at the first that works:
+
+1. A **company already pinned** to the vendor by an on-demand check. This is the most reliable, because it is Black Kite's own company id rather than a string comparison.
+2. An **exact host match**.
+3. The Black Kite host's **parent domain**, walked one label at a time.
 
 | Black Kite monitors | Your vendor's website | Match |
 | --- | --- | --- |
 | `benefitfocus.com` | `benefitfocus.com` | Yes |
 | `benefitfocus.com` | `https://www.benefitfocus.com/careers` | Yes |
-| `benefitfocus.com` | `app.benefitfocus.com` | **No.** A subdomain is a different host. |
+| `mail.benefitfocus.com` | `benefitfocus.com` | Yes. The parent is tried after the exact host. |
+| `benefitfocus.com` | `app.benefitfocus.com` | **No.** Step 3 only ever climbs, never descends. |
 | `bhmpc.com` | `bhmpc.co.uk` | **No.** Different domain. |
 | `betsol.com` | (no website recorded) | **No.** Nothing to compare. |
+
+<Note>
+  Step 3 climbs but stops before the registrable domain, so `aws.amazon.com` never reaches a vendor recorded as `amazon.com`. Those are different suppliers, as are Opsgenie and Atlassian.
+</Note>
 
 <Warning>
   A vendor with no website recorded can never match, no matter how it is scoped or which detector is watching. If you are testing this and seeing nothing, check the website field first.
@@ -102,10 +113,44 @@ Before comparing, both sides are tidied up the same way. Capitals are lowered, `
 
 Two more things follow from matching this way:
 
-- **Subdomains and parent domains are deliberately kept apart.** `aws.amazon.com` and `amazon.com` are not the same supplier, and neither are Opsgenie and Atlassian. Coverbase would rather miss a match than quietly file one supplier's exploited vulnerability under another.
+- **Matching only ever climbs.** Coverbase would rather miss a match than quietly file one supplier's exploited vulnerability under another.
 - **If two vendors share a domain, only one of them gets the findings.** Which one is stable between runs, but it is arbitrary. That is a sign of a duplicate vendor record worth merging rather than something to configure around.
 
 For alerts to attribute correctly, a vendor should also be linked to a company record, which happens on its own when you create the vendor by picking it from the directory rather than typing a bare name. Exploited vulnerabilities are recorded against the CVE, so one CVE can affect several of your vendors at once. The company link is how Coverbase keeps each vendor's alert to that vendor's own findings.
+
+## Fixing a vendor that will not match
+
+Every vendor page carries a **Black Kite** card in its Radar section, in both the current and the previous vendor layout. It shows which portfolio company the vendor is pinned to and gives you the two ways to correct it.
+
+<Frame caption="A matched vendor. The ransomware index and technical grade are Black Kite's, and each carries its own scale so the number means something without looking it up.">
+  <img src="/images/user-guides/vendor-black-kite-panel.png" alt="Vendor Black Kite card showing the matched company, its ransomware index and technical grade" />
+</Frame>
+
+**Check Black Kite now** searches your portfolio for this one vendor, by its recorded domains first and then by name. Name search is what makes it useful precisely when the domain never matched. Finding a company **pins it by id**, so every later run matches on that id instead of guessing, and any findings it collects are ingested immediately.
+
+<Frame caption="No company matched. Add a domain Black Kite knows the vendor by, then check again.">
+  <img src="/images/user-guides/vendor-black-kite-panel-unmatched.png" alt="Vendor Black Kite card reporting that no portfolio company matched" />
+</Frame>
+
+**Domain matching** holds the domains Black Kite records for the company, and below them the domains your team has added. A scan never overwrites what you added by hand. Use it when Black Kite monitors a domain you do not have recorded anywhere.
+
+Two states worth recognising, because both look like a broken integration and neither is:
+
+<Frame caption="Matched, but outside the vendor scope. An on-demand check finds results here and the nightly run never will.">
+  <img src="/images/user-guides/vendor-black-kite-panel-out-of-scope.png" alt="Vendor Black Kite card warning the vendor is outside the monitoring scope" />
+</Frame>
+
+<Frame caption="Matched to a company Black Kite has not rated. An unrated company fails a ransomware index requirement rather than passing it, so a detector with that requirement stays quiet.">
+  <img src="/images/user-guides/vendor-black-kite-panel-not-scored.png" alt="Vendor Black Kite card showing no ransomware index or grade for an unrated company" />
+</Frame>
+
+<Note>
+  The card only appears once Black Kite credentials are saved. Editing domains needs permission to update vendors; the check button needs permission to run integrations.
+</Note>
+
+## Seeing what did not match
+
+A nightly run records the portfolio companies it could not attribute to any vendor, as `black_kite_companies_unmatched` with a sample list on the run. These are usually companies you monitor in Black Kite but have not created as vendors in Coverbase, or vendors whose recorded website never lined up. It is the half of a run worth reviewing.
 
 ## Step 4. Create a detector
 
