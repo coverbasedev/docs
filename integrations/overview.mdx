@@ -28,15 +28,34 @@ The integration model is built around three layers: inbound API calls that bring
   </Card>
 </CardGroup>
 
+```mermaid
+flowchart LR
+  subgraph inbound["Your systems (inbound)"]
+    proc["Procurement (Ariba, Workday Strategic Sourcing)"]
+    grc_in["GRC platforms (ProcessUnity, Aravo)"]
+    cmdb["CMDB / intake forms"]
+  end
+  subgraph coverbase["Coverbase"]
+    api["Inbound API"]
+    engine["Workflow engine"]
+    objects["Vendors · Services · Assessments · Findings"]
+    out["Connectors & webhooks"]
+  end
+  subgraph outbound["Your systems (outbound)"]
+    sor["Systems of record (ProcessUnity, ServiceNow VRM, OneTrust)"]
+    itsm["Jira · Slack · Icertis"]
+    dw["Data warehouse"]
+  end
+  proc --> api
+  grc_in --> api
+  cmdb --> api
+  api --> engine --> objects --> out
+  out --> sor
+  out --> itsm
+  out --> dw
 ```
-External Systems          Coverbase              External Systems
-─────────────────         ─────────────          ─────────────────
-Ariba             ──▶     Inbound API     ──▶    ServiceNow
-Jira                      Workflow Engine        Jira
-CMDB                      Object Store           Slack
-GRC tooling                                      Icertis
-                                                 Data warehouse
-```
+
+For the platforms Coverbase integrates with natively — including bidirectional GRC deployments running in production today — see the [platform-specific guides](/integrations/guides/processunity), and [integration patterns](/integrations/patterns) for the four shapes those integrations compose.
 
 <Info>
   The orchestration layer is configured once during onboarding. After that, both the configuration and every running workflow instance are reachable through the API. You can interrupt, modify, or replace any step at any time, through either the dashboard or the API.
@@ -66,6 +85,14 @@ Bulk vendor/assessment loading is also available through the separate [Import AP
 ## Where to go next
 
 <CardGroup cols={2}>
+  <Card title="Integration patterns" icon="shapes" href="/integrations/patterns">
+    The four shapes every integration composes: inbound push, outbound sync, webhooks, file-based import.
+  </Card>
+
+  <Card title="Platform-specific guides" icon="plug" href="/integrations/guides/processunity">
+    How the ProcessUnity, ServiceNow, OneTrust, Workday Strategic Sourcing, and Aravo integrations work, with architecture diagrams.
+  </Card>
+
   <Card title="Workflow engine" icon="gears" href="/integrations/workflow-engine">
     Triggers, conditions, and actions. How orchestration logic is composed.
   </Card>

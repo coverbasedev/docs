@@ -1,0 +1,86 @@
+---
+title: "ServiceNow"
+description: "Native integration with ServiceNow Vendor Risk Management: completed assessments, issues, and vendor documents land as VRM records your ServiceNow workflows already understand."
+icon: "server"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase integrates with ServiceNow's **Vendor Risk Management (VRM)** application natively and runs it in production today. Coverbase does the assessment work; results land in the same VRM tables your ServiceNow reporting, SLAs, and downstream workflows already consume — not in a side table or a file drop.
+
+```mermaid
+flowchart LR
+  subgraph sn["ServiceNow"]
+    vrm_a["VRM assessments (sn_vdr_risk_asmt_assessment)"]
+    vrm_i["VRM issues (sn_vdr_risk_asmt_issue)"]
+    att["Attachments"]
+  end
+  subgraph cb["Coverbase"]
+    imp["Import API"]
+    work["AI assessment · scoring · review"]
+    exp["ServiceNow connector"]
+  end
+  sn -->|assessment context, vendor records| imp
+  imp --> work --> exp
+  exp -->|risk rating · state · recommendation| vrm_a
+  exp -->|one issue per finding| vrm_i
+  exp -->|vendor documents| att
+```
+
+## What flows
+
+**Into ServiceNow, on assessment completion:**
+
+| Coverbase | ServiceNow VRM destination |
+| --- | --- |
+| Assessment outcome and risk rating | VRM assessment record (rating, state) |
+| Assessment summary and recommendation | VRM assessment record fields |
+| Assessor and business owner | VRM assessment record references (by `sys_id`) |
+| Document types received during the assessment | VRM assessment record |
+| Each finding | A VRM issue record — level, rating, type, assignee, business owner, linked to the assessment, vendor, and engagement |
+| Vendor-provided documents | Native attachments on the VRM assessment record |
+
+**Out of ServiceNow:** assessment context — the VRM assessment, company, and engagement identifiers, assessor and business-owner references — arrives with the inbound push and is held on the Coverbase assessment, so every outbound write addresses the exact ServiceNow records it belongs to.
+
+## Trigger model
+
+```mermaid
+sequenceDiagram
+  participant SN as ServiceNow VRM
+  participant CB as Coverbase
+  SN->>CB: Push assessment context (assessment, company, engagement sys_ids)
+  CB->>CB: Run assessment: evidence, AI analysis, scoring, review
+  Note over CB: Assessment completed
+  CB->>SN: Update VRM assessment (rating, state, recommendation, documents received)
+  CB->>SN: Create one VRM issue per finding
+  CB->>SN: Upload vendor documents as attachments
+```
+
+## Reliability
+
+- **Addressed by `sys_id`, never by name.** Every write targets ServiceNow records by their `sys_id` references captured at import time, so renames in either system never mis-route an update.
+- **Validated identifiers.** Table names and `sys_id` values are validated against strict patterns before any request is constructed — no injection surface, no malformed writes.
+- **Attachment limits respected.** ServiceNow's instance attachment size limit is enforced client-side before upload; oversized documents are reported rather than failed mid-transfer.
+- **Best-effort completion sync.** A ServiceNow outage never blocks an analyst from completing an assessment; failed pushes are logged with the exact record identifiers for replay.
+
+## Authentication and provisioning
+
+The connector authenticates with a dedicated ServiceNow integration user (Basic Auth over HTTPS), stored per-organization in Coverbase's secrets manager. The integration user needs write access to the VRM assessment and issue tables and the attachment API — a scoped role your ServiceNow admin controls.
+
+## In production
+
+<Card title="Major identity provider" icon="fingerprint">
+  Runs its third-party risk program in Coverbase with ServiceNow VRM as the downstream system of record: completed assessments update the VRM assessment record, every finding lands as a VRM issue routed to the right business owner, and vendor evidence documents attach directly to the ServiceNow record — no swivel-chair re-entry between the two systems.
+</Card>
+
+## Onboarding checklist
+
+1. A ServiceNow integration user with write access to the VRM assessment and issue tables and the attachment API, for your sub-production instance first.
+2. The VRM field choices your process uses (issue types, ratings, states), so Coverbase maps outcomes onto your configured values.
+3. The inbound push from ServiceNow (or an initial bulk load through the [Import API](/import-api)) carrying the assessment and vendor `sys_id` references.
+
+<Info>
+  ServiceNow can also receive Coverbase [webhooks](/integrations/webhooks) for real-time eventing outside VRM — for example, driving ITSM tickets from assessment lifecycle events. See [end-to-end workflows](/integrations/end-to-end-workflows).
+</Info>

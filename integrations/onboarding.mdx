@@ -38,12 +38,28 @@ For integration architecture review, security teams typically request the follow
 
 ## Reference architectures
 
+Several platforms have full deep-dive guides — architecture diagrams, data mapping, trigger model, and what onboarding needs from your team:
+
+- [ProcessUnity](/integrations/guides/processunity) — bidirectional, in production
+- [ServiceNow VRM](/integrations/guides/servicenow) — in production
+- [OneTrust](/integrations/guides/onetrust) — in production
+- [Workday Strategic Sourcing](/integrations/guides/workday-strategic-sourcing) — in production
+- [Aravo](/integrations/guides/aravo) — triage-layer architecture
+
 Pre-built reference architectures are available on request for:
 
 - Ariba
-- ServiceNow
-- Jira
+- [Jira](/integrations/guides/jira)
 - The major CLM platforms (Icertis, Ironclad, DocuSign CLM, Conga)
+
+## What an integration delivery looks like
+
+Platform integrations are stood up **sandbox-first**: the connector is configured and verified end to end against your platform's sandbox or sub-production tenant — including live read-back of what actually persisted — before production credentials are exchanged. A typical delivery runs:
+
+1. **Credentials and scoping** — you provision a scoped integration identity (OAuth client, integration user, or API token) for the sandbox tenant; secrets are held in Coverbase's secrets manager, never in configuration.
+2. **Mapping workshop** — your field vocabulary (assessment types, ratings, statuses, custom attributes) is mapped once onto Coverbase's model, with tenant-specific identifiers recorded in configuration.
+3. **Sandbox verification** — full lifecycle runs against the sandbox, verified by reading the results back from your platform.
+4. **Production cutover** — production credentials swap in; the mapping carries over unchanged.
 
 ## Next steps
 
