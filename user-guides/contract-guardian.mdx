@@ -1,6 +1,6 @@
 ---
 title: "Contract Guardian guide"
-description: "Set up and run Contract Guardian: build a clause set from the library or your own paper, write risk-tier variants, run clause reviews, and triage the results."
+description: "Set up and run Contract Guardian: build a clause set from the library or your own paper, write risk-tier variants, run clause reviews, decide each flagged clause, and export a redlined Word file for the vendor."
 icon: "file-contract"
 hidden: true
 ---
@@ -14,7 +14,7 @@ Contract Guardian answers a question your legal and risk teams ask on every agre
 You answer that question once, by writing down your standard. Coverbase then reads each contract, finds the vendor's language for each of your standards, decides which tier of acceptability it lands in, and hands your reviewer a short list of deviations with the source text quoted and highlighted. Reviewers triage that list instead of reading agreements end to end.
 
 <Note>
-  This is **materiality analysis, not redlining**. Guardian tells you which clauses deviate and how badly. The actual redline still happens in Word.
+  Guardian decides **which clauses deviate and how badly**, then writes the asks up for you. It does not negotiate. You still review the marked-up file and decide what to send.
 </Note>
 
 ## The two halves of contract intelligence
@@ -265,28 +265,69 @@ Scope drives what a *missing* clause means, and that distinction is the differen
 
 ## Step 6: Run a review
 
-<Steps>
-  <Step title="Activate the clause set">
-    An inactive clause set can't be run. Flip it active on the Clause Sets page once the tiers are written.
-  </Step>
-  <Step title="Open the contract and go to Review">
-    On the contract record, the **Review** tab is where clause reviews live.
-  </Step>
-  <Step title="Start the review">
-    Choose **Start review**, pick the clause set to check against, and optionally assign a **reviewer**, which adds the review to their work queue. One review runs per contract at a time.
-  </Step>
-  <Step title="Wait for the analysis">
-    Guardian extracts the text, detects components, matches every reference clause across every linked document, and then, if the vendor has a completed assessment, layers assessment evidence onto each flagged clause. A progress indicator runs while it works; you can navigate away.
-  </Step>
-</Steps>
+A review runs in five steps, shown in the rail at the top of the page. You move through them in order, and the rail says where you are.
+
+<Frame caption="The five steps of a review. The rail marks the steps behind you as done.">
+  <img src="/images/user-guides/contracts-review-steps.png" alt="Review step rail: select documents, analyze, review results, decide, communicate" />
+</Frame>
+
+| Step | What happens |
+| --- | --- |
+| **1. Select documents** | You choose the standards to check against and the documents to read. |
+| **2. Analyze the contract** | Coverbase reads the documents and matches every reference clause. |
+| **3. Review results** | You see the counts and pick what to work. |
+| **4. Decide** | You record a verdict on each flagged clause. |
+| **5. Communicate** | You draft the follow-up and export the redlined Word file. |
+
+Activate the clause set before you start. An inactive set cannot be run. Then open the contract, go to the **Review** tab, and choose **Start review**.
+
+### Select documents
+
+<Frame caption="Step 1. Pick the standards to check against and the documents to read.">
+  <img src="/images/user-guides/contracts-review-select-documents.png" alt="Select documents step showing suggested standards, other standards, documents to analyze, reviewer, and job estimate" />
+</Frame>
+
+Four things sit on this step.
+
+**Suggested for this contract** lists the clause sets that cover components this contract actually has. **Other standards** lists the rest, and tells you their clauses will mostly come back as not applicable. Pick at least one.
+
+**Documents to analyze** lists every live document on the contract. All of them are selected. Clear the checkbox on any document you want left out, and the review skips it.
+
+Each document shows its type, when it was uploaded, and who uploaded it, so you can tell two similar files apart before you commit to reading both.
+
+<Note>
+  Start from everything selected and take documents out, rather than adding them one at a time. A review that quietly reads a subset is a review that misses a clause which was in the file.
+</Note>
+
+**Reviewer** puts the review in someone's work queue. You can leave it unassigned.
+
+**Job estimate** tells you how many clauses, standards, and documents the run covers once you have picked a standard. Only in-force language is checked, so superseded clauses are excluded.
+
+If the contract has no documents yet, this step says so and links you to the Documents tab. The start button stays disabled until there is something to read.
+
+### Analyze the contract
+
+Coverbase extracts the text, detects components, and matches every reference clause across the documents you selected. If the vendor has a completed assessment, it then layers that evidence onto each flagged clause.
+
+A progress indicator runs while it works. You can navigate away and come back.
 
 <Note>
   Each run takes a **snapshot** of the clause set at the moment it starts. Editing a reference clause mid-run won't change the verdicts of a review already in flight, and old runs stay readable against the standard they were actually judged by.
 </Note>
 
+### Start another review
+
+One review runs at a time, but a finished review does not lock the contract. **Start a new review** sits in the header on every step after the analysis. Use it when a run read the wrong documents, when you picked the wrong standard, or when new paper has landed since the last run.
+
+Starting a new review takes you back to step 1 with the pickers open. Previous runs stay readable.
+
 ---
 
 ## Step 7: Work the results
+
+The last three steps of the rail are yours: read the results, decide each clause, then send what you decided.
+
+### Review results
 
 <Frame caption="A clause review. Vendor language scored against your acceptable, fallback, and unacceptable tiers, by severity.">
   <img src="/images/user-guides/analyst-clause-review.png" alt="Clause review showing deltas from preferred language" />
@@ -294,7 +335,7 @@ Scope drives what a *missing* clause means, and that distinction is the differen
 
 The results list opens on **Flags**: the clauses that came back Non-conforming or Needs review and haven't been triaged yet. Switch to **All** to see everything, including what conformed.
 
-### What each row tells you
+#### What each row tells you
 
 | Element | What it means |
 | --- | --- |
@@ -307,13 +348,13 @@ The results list opens on **Flags**: the clauses that came back Non-conforming o
 
 Group by **status**, **severity**, or **confidence**, sort by severity, and search by clause name. On a 40-clause set against a heavily negotiated MSA, grouping by severity and working top-down is the fastest path.
 
-### Assessment insights
+#### Assessment insights
 
 When the vendor has a completed assessment, Guardian cross-references the clause against that evidence and suggests a disposition: **No action**, **Revise language**, **Add clause**, or **Escalate**, with citations back into the assessment.
 
 This is where contract risk meets security risk. A weak audit-rights clause matters more when the vendor's assessment already shows control gaps, and less when they hold a clean SOC 2. The suggestion is input for your judgment rather than a verdict, and it sits separately from the clause state for exactly that reason.
 
-### Triage every flag
+#### Triage every flag
 
 Triaging **is** the review. Marking a clause removes it from the flagged list while leaving the system's verdict visible, so the record shows both what the AI concluded and what you decided.
 
@@ -334,15 +375,69 @@ Triaging **is** the review. Marking a clause removes it from the flagged list wh
 
 Select several clauses at once to triage or create a single finding covering all of them, which is the usual move when one negotiation thread touches liability, indemnity, and insurance together.
 
-### Draft the follow-up
+### Decide
 
-Select the clauses you want to push back on and choose **Generate follow-up draft**. Guardian writes an outbound message built from those specific deviations, quoting your standard and the vendor's language.
+The **Decide** step gives you one clause at a time in a three-pane console.
 
-Nothing sends. Copy the draft into your own email or escalate it to a finding. It exists to save you the twenty minutes of writing "as discussed, our standard position on limitation of liability is…" for the fourth time this month.
-
-<Frame caption="A generated follow-up draft built from the selected clause deviations. Nothing is sent; copy it or escalate to a finding.">
-  <img src="/images/user-guides/analyst-draft-followup.png" alt="Generated follow-up draft from clause deviations" />
+<Frame caption="The decide console. Playbook positions on the left, the redline and your decision in the middle, the source document and clause facts on the right.">
+  <img src="/images/user-guides/contracts-review-decide.png" alt="Three-pane decide console showing playbook positions, suggested redline, decision options, and the source document" />
 </Frame>
+
+| Pane | What it holds |
+| --- | --- |
+| **Left** | Your playbook positions for this clause, with the guidance you wrote. Select a position to redraft the redline against it. |
+| **Middle** | The suggested redline, with your decision underneath. |
+| **Right** | The source document, and the clause card with state, severity, confidence, and the AI analysis. |
+
+Drag the dividers to resize the panes. Your widths are remembered for the next clause and the next review.
+
+Four decisions sit under the redline. Press **1** to **4** to pick one, or click it.
+
+| Key | Decision | Effect |
+| --- | --- | --- |
+| **1** | Accept as-is | Closes the clause. |
+| **2** | Flag for the vendor | Adds it to the follow-up you send at the end. |
+| **3** | Accept the risk | Records the exception with an owner and an expiry date. |
+| **4** | Not applicable | Marks the standard as not relevant to this contract. |
+
+Press **Enter** to record the decision and move to the next clause. **Previous clause** and **Next clause** sit in the header with your position in the queue between them.
+
+**Show every clause** switches the queue between the clauses that need you and all of them, including what conformed.
+
+### Communicate
+
+<Frame caption="The Communicate step. A follow-up draft built from the flagged clauses, with the Word export beside it.">
+  <img src="/images/user-guides/contracts-review-communicate.png" alt="Communicate step showing the generated follow-up draft and the redlined Word file button" />
+</Frame>
+
+The follow-up draft is built from the clauses you flagged, quoting your standard and the vendor's language. Nothing sends. Copy it into your own email or escalate it to a finding.
+
+#### Download the redlined Word file
+
+If the review read a Word document, choose **Download redlined Word file** next to the draft. You get the contract's own `.docx` back with:
+
+- The contract's wording struck through and your playbook's wording inserted, as tracked changes
+- One comment per clause carrying the clause name, the reasoning, and the language you are asking for
+
+Open it in Word and the changes appear in the Review ribbon your vendor already uses. Send it as an attachment, or accept and reject changes yourself first.
+
+<Note>
+  Every clause goes into the file except the ones you marked **Not applicable**. Accepting the risk still sends the ask: accepting a deviation internally is not the same as withdrawing it from the vendor.
+</Note>
+
+A clause whose wording already matches your standard produces no tracked change. A clause the export cannot locate in the document is named in a comment rather than dropped silently.
+
+<Note>
+  The export needs a Word document. A contract that only ever arrived as a PDF has nothing to mark up, and the button tells you so when you click it.
+</Note>
+
+#### When nothing was flagged
+
+<Frame caption="A run that flagged nothing offers a new review instead of an empty draft.">
+  <img src="/images/user-guides/contracts-review-nothing-flagged.png" alt="Communicate step with no flagged clauses, offering to start a new review" />
+</Frame>
+
+If no clause was flagged, there is nothing to draft. The step says so and offers **Start a new review** instead. That is usually the right move when a run read the wrong documents.
 
 ---
 
@@ -361,7 +456,7 @@ Your first review is a draft of your playbook, not a verdict on the vendor.
     Usually a text-quality problem. Scanned or image-only PDFs give the matcher little to work with. Re-upload text-based versions where you can.
   </Accordion>
   <Accordion title="Rerun after you change something" icon="arrows-rotate">
-    Reviews don't re-run themselves when you edit a clause set or add a document. Use **Rerun** from the run actions menu on the Review tab. The rerun snapshots your current clause set.
+    Reviews don't re-run themselves when you edit a clause set or add a document. Use **Start a new review** from the flow header, or **Rerun** from the run actions menu on the Review tab. Either one snapshots your current clause set, and starting a new review lets you change the documents as well as the standard.
   </Accordion>
   <Accordion title="Reference clauses are versioned" icon="clock-rotate-left">
     Editing a reference clause creates a new version and marks it current. Older reviews still show the version they ran against, and you can open a clause's version history at any time. Edit freely; you're not destroying the record.
