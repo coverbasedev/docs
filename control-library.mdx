@@ -1,15 +1,34 @@
 ---
 title: "Control Set library"
-description: "Every built-in control set template Coverbase ships: the standards and frameworks they map to, their coverage, and links to the official sources."
+description: "Every built-in control set template Coverbase ships across both libraries: the vendor frameworks they map to, the internal application controls Inspect evaluates, their coverage, and links to the official sources."
 ---
 
-Coverbase ships a curated **Control Set library**: ready-to-use control set templates built from the industry frameworks, regulations, and questionnaires our customers assess vendors against. Each template is a starting point: fork it into your organization, tailor the controls, wording, and evaluation guidance, then apply it to vendors, services, or assessments. Templates are versioned and maintained by Coverbase, and administrators can promote additional private templates from an uploaded spreadsheet.
+Coverbase ships a curated **Control Set library**: ready-to-use control set templates you fork into your organization, tailor, and apply. Templates are versioned and maintained by Coverbase, and administrators can promote additional private templates from an uploaded spreadsheet.
 
-The library currently includes **47 templates** spanning **3,975 curated controls**. This page documents each one in more depth than the in-app picker: its full description, the risk types and domains it addresses, typical use cases, its control count, and a link to the authoritative source it is derived from.
+The library has **two halves**, reached from different tabs on the **Controls** page:
+
+<CardGroup cols={2}>
+  <Card title="Vendor Controls Library" icon="building-shield">
+    **47 templates · 3,975 controls.** Frameworks, regulations and questionnaires you assess a *third party* against — ISO 27001, SIG, HECVAT, NIST CSF, HIPAA, PCI DSS and the rest. Opens from the **Vendor Controls** tab.
+  </Card>
+  <Card title="Internal Controls Library" icon="laptop-code">
+    **21 templates · 362 controls.** Controls [Coverbase Inspect](/products/agentic-inspect) evaluates against *your own* applications by signing in and reading the live admin console. Opens from the **Internal Controls** tab.
+  </Card>
+</CardGroup>
+
+That is **68 templates** spanning **4,337 curated controls** in total. This page documents each one in more depth than the in-app picker: its full description, the risk types and domains it addresses, typical use cases, its control count, and, for vendor templates, a link to the authoritative source it is derived from.
+
+<Note>
+  Which library a template appears in follows from the kind of control set it creates, so a template is only ever listed in one of them. Forking either one produces an ordinary control set you own and can edit; nothing syncs back.
+</Note>
 
 <Note>
   Control counts and wording are Coverbase's structured interpretation of each source framework, intended to accelerate assessment. They are not a substitute for the official standard. Always consult the linked primary source for authoritative, legally binding text.
 </Note>
+
+# Vendor Controls Library
+
+The 47 templates below assess a third party. Fork one, tailor it, then apply it to vendors, services, or assessments.
 
 ## Cybersecurity & vendor security
 
@@ -565,5 +584,254 @@ The library currently includes **47 templates** spanning **3,975 curated control
     - **Risk domains:** AI Governance, Data Protection
     - **Typical use cases:** LLM application security assessment; Generative AI vendor security review; AI red-team scoping; Secure AI development gap analysis
     - **Coverage:** 10 controls across 1 section
+  </Accordion>
+</AccordionGroup>
+
+# Internal Controls Library
+
+The 21 templates below are evaluated against **your own** applications, not a vendor's. [Coverbase Inspect](/products/agentic-inspect) signs in to the application with read-only credentials, drives its admin console, and decides each control from what it can actually see.
+
+<Note>
+  These controls are written for an agent rather than a person. Each one states an expectation carrying its own threshold, names the admin surface to look at plus the alternate labels other vendors use for it, and defines what counts as **incomplete**. Incomplete is a real outcome, not a failure: an application that does not sell a capability cannot fail a control about it. Every control also forbids destructive or outbound actions, so a run reads state and never changes it.
+</Note>
+
+<Tip>
+  Start with **Security Configuration Baseline** on a newly onboarded application, then layer a domain set on top. It is deliberately vendor-neutral and short enough to run against the long tail of niche tools that will never justify a bespoke control set.
+</Tip>
+
+## Identity and access
+
+| Template | Controls | Focus |
+| --- | ---: | --- |
+| Identity & Authentication Baseline | 22 | Information Security, Operational Risk |
+| Privileged & Administrative Access | 18 | Information Security, Operational Risk |
+| Application Access Lifecycle | 15 | Information Security, Operational Risk |
+
+<AccordionGroup>
+  <Accordion title="Identity & Authentication Baseline · 22 controls">
+    How workforce users actually sign in to an application, read from the live admin console rather than from an attestation. Covers MFA enforcement and its exceptions, SSO federation and whether the local login form survives beside it, password and session policy, and the authentication events the tenant keeps. Written for continuous Inspect runs: every expectation carries its own threshold so a run can decide it without asking anyone.
+
+    - **Risk types:** Information Security, Operational Risk
+    - **Risk domains:** Identity & Access Management
+    - **Typical use cases:** Continuous verification that MFA is enforced, not merely available; Detecting authentication policy drift between assessments; Evidence that SSO enforcement survived a tenant migration; Pre-contract validation of a SaaS application's login controls
+    - **Coverage:** 22 controls across 4 sections
+  </Accordion>
+  <Accordion title="Privileged & Administrative Access · 18 controls">
+    Who holds administrative power inside an application right now, and what bounds it. Counts and names administrators from the live member list, checks whether privilege is standing or requested, and looks for the break-glass, service, and API principals that ordinary access reviews miss. Sized so an Inspect run can complete it against most admin consoles in one session.
+
+    - **Risk types:** Information Security, Operational Risk, Audit Readiness
+    - **Risk domains:** Identity & Access Management, Risk Governance
+    - **Typical use cases:** Continuous administrator-count monitoring between access reviews; Detecting privilege creep in a high-risk SaaS application; Evidence for a SOX or SOC 2 access-review control; Finding service and break-glass accounts nobody owns
+    - **Coverage:** 18 controls across 4 sections
+  </Accordion>
+  <Accordion title="Application Access Lifecycle · 15 controls">
+    Joiner, mover and leaver evidence read from inside the application rather than from the HR system that is supposed to drive it. Finds the accounts that outlived their owner, the invitations nobody accepted, the external collaborators still holding a seat, and the offboarding steps that stop at the identity provider and never reach the app.
+
+    - **Risk types:** Information Security, Operational Risk, Audit Readiness
+    - **Risk domains:** Identity & Access Management, Risk Governance
+    - **Typical use cases:** Continuous leaver-account detection between HR and SaaS; Evidence that offboarding reached every in-scope application; Finding dormant seats before a renewal negotiation; Access-review support for an audited application
+    - **Coverage:** 15 controls across 4 sections
+  </Accordion>
+</AccordionGroup>
+
+## Application scope and integrations
+
+| Template | Controls | Focus |
+| --- | ---: | --- |
+| Application Scope & Feature Drift | 13 | Third-Party Risk, Operational Risk |
+| Integrations, OAuth & Connected Apps | 18 | Information Security, Third-Party Risk |
+| Security Configuration Baseline | 16 | Information Security, Operational Risk |
+| Usage, Seats & Licensing | 12 | Financial Controls, Operational Risk |
+
+<AccordionGroup>
+  <Accordion title="Application Scope & Feature Drift · 13 controls">
+    What an application is being used for today, checked against what it was approved for. An assessment scopes a vendor once; the vendor then ships features, an admin turns one on, and the application quietly starts touching data or performing functions nobody vetted. These controls read the live feature and module state so a re-inspection surfaces the drift as a diff.
+
+    - **Risk types:** Third-Party Risk, Operational Risk, Regulatory Compliance
+    - **Risk domains:** Vendor Due Diligence, Risk Governance
+    - **Typical use cases:** Detecting features enabled after the vendor was assessed; Confirming an application stayed inside its approved use case; Re-scoping trigger for an annual vendor review; Shadow-module discovery inside an approved application
+    - **Coverage:** 13 controls across 3 sections
+  </Accordion>
+  <Accordion title="Integrations, OAuth & Connected Apps · 18 controls">
+    The fourth-party surface an application accumulates. Every OAuth grant, installed app, webhook and inbound connection is a path for data to leave the tenant, and most of them were authorised by an individual user rather than through a review. These controls enumerate the connections, read their scopes, and check whether an administrator ever has to approve one.
+
+    - **Risk types:** Information Security, Third-Party Risk, Data Privacy
+    - **Risk domains:** Supply Chain, Data Protection, Identity & Access Management
+    - **Typical use cases:** Fourth-party discovery inside an approved application; OAuth scope review for a data-bearing SaaS tenant; Detecting user-authorised integrations that bypassed review; Shadow-integration monitoring between assessments
+    - **Coverage:** 18 controls across 4 sections
+  </Accordion>
+  <Accordion title="Security Configuration Baseline · 16 controls">
+    The settings any business application should hold regardless of what it does. Deliberately vendor-neutral and short enough to run against every application in an estate, including the long tail of niche tools that will never justify a bespoke control set of their own. Use it as the default set for a newly onboarded application and layer a domain set on top.
+
+    - **Risk types:** Information Security, Operational Risk
+    - **Risk domains:** Identity & Access Management, Data Protection
+    - **Typical use cases:** Default control set for every newly onboarded application; Baseline coverage across the long tail of niche SaaS tools; Configuration drift detection between assessments; Fast first Inspect run on an unfamiliar application
+    - **Coverage:** 16 controls across 3 sections
+  </Accordion>
+  <Accordion title="Usage, Seats & Licensing · 12 controls">
+    What the organisation is paying for against what it is using. Seat waste, unassigned licences, dormant accounts and shadow expansion are financial findings that happen to be readable from the same admin surfaces as the security ones - so a run that is already logged in should collect them.
+
+    - **Risk types:** Financial Controls, Operational Risk, Third-Party Risk
+    - **Risk domains:** Vendor Due Diligence, Risk Governance
+    - **Typical use cases:** Seat utilisation evidence ahead of a renewal negotiation; Detecting licence expansion between contract reviews; Finding dormant paid seats across an estate; Reconciling contracted entitlement against deployed configuration
+    - **Coverage:** 12 controls across 2 sections
+  </Accordion>
+</AccordionGroup>
+
+## Data handling and privacy
+
+| Template | Controls | Focus |
+| --- | ---: | --- |
+| Data Services & Storage Surface | 13 | Information Security, Operational Risk |
+| PII Data Scope & Handling | 16 | Data Privacy, Regulatory Compliance |
+| Retention, Residency & Deletion | 15 | Data Privacy, Regulatory Compliance |
+| Export, Sharing & External Collaboration | 16 | Information Security, Data Privacy |
+| PHI & HIPAA Application Safeguards | 21 | Regulatory Compliance, Data Privacy |
+| GDPR & Cross-Border Privacy | 22 | Data Privacy, Regulatory Compliance |
+
+<AccordionGroup>
+  <Accordion title="Data Services & Storage Surface · 13 controls">
+    The storage, encryption, backup and key-management state an application exposes to its tenant. Most of this is the vendor's to configure, but the parts a tenant owns - customer-managed keys, backup schedules, storage region, attachment handling - drift silently and are exactly what a SOC 2 report will not tell you about this tenant on this day.
+
+    - **Risk types:** Information Security, Operational Risk
+    - **Risk domains:** Data Protection, Cloud Security
+    - **Typical use cases:** Verifying customer-managed encryption keys are still bound to the tenant; Confirming backup configuration between assessments; Storage region validation for a data-residency commitment; Evidence for an encryption-at-rest control
+    - **Coverage:** 13 controls across 3 sections
+  </Accordion>
+  <Accordion title="PII Data Scope & Handling · 16 controls">
+    Which categories of personal data an application actually holds, established from field names, object schemas and data-classification surfaces rather than from a questionnaire. Includes the masking, minimisation and subject-rights machinery a privacy programme depends on. Every instruction reads metadata: Inspect establishes that a field exists, never what any individual's value is.
+
+    - **Risk types:** Data Privacy, Regulatory Compliance, Information Security
+    - **Risk domains:** Data Protection, Privacy Rights
+    - **Typical use cases:** Continuous PII inventory for a records-of-processing obligation; Detecting personal data appearing in an application never scoped for it; Evidence that masking is applied to identifiers in a support tool; Privacy review of a newly onboarded SaaS application
+    - **Coverage:** 16 controls across 4 sections
+  </Accordion>
+  <Accordion title="Retention, Residency & Deletion · 15 controls">
+    Where data sits, how long it stays, and what actually happens when somebody deletes it. These are contractual and regulatory commitments that live as tenant settings, which means they can be changed by an administrator without anyone renegotiating the contract - and a point-in-time assessment would never notice.
+
+    - **Risk types:** Data Privacy, Regulatory Compliance, Operational Risk
+    - **Risk domains:** Data Protection, Privacy Rights
+    - **Typical use cases:** Verifying a contractual data-residency commitment still holds; Retention-policy drift detection between audits; Evidence for a records-management control; Confirming deletion reaches backups and logs
+    - **Coverage:** 15 controls across 3 sections
+  </Accordion>
+  <Accordion title="Export, Sharing & External Collaboration · 16 controls">
+    Every way data leaves an application through a route the application itself provides: public links, external sharing, downloads, bulk exports, printing and email forwarding. These settings are changed by administrators for good operational reasons and are almost never revisited, which is what makes them worth reading on every run rather than once a year.
+
+    - **Risk types:** Information Security, Data Privacy, Operational Risk
+    - **Risk domains:** Data Protection
+    - **Typical use cases:** Continuous monitoring of external sharing defaults; Finding public links created before a policy tightened; Evidence for a data-loss-prevention control; Egress review of a collaboration application
+    - **Coverage:** 16 controls across 4 sections
+  </Accordion>
+  <Accordion title="PHI & HIPAA Application Safeguards · 21 controls">
+    The HIPAA Security Rule technical safeguards, expressed as things an agent can read from a live application rather than as policy language. Covers unique user identification, emergency access, automatic logoff, audit controls, transmission security and the minimum-necessary access standard. Written for covered entities and business associates running clinical, claims or patient- facing SaaS.
+
+    - **Risk types:** Regulatory Compliance, Data Privacy, Healthcare
+    - **Risk domains:** Healthcare Compliance, Data Protection, Identity & Access Management
+    - **Typical use cases:** Continuous HIPAA Security Rule evidence for an in-scope application; Detecting PHI appearing in an application with no BAA; Minimum-necessary access verification between audits; Business associate application monitoring
+    - **Coverage:** 21 controls across 4 sections
+  </Accordion>
+  <Accordion title="GDPR & Cross-Border Privacy · 22 controls">
+    GDPR obligations that are configuration rather than paperwork: where personal data sits, who processes it, what the tenant can produce for a subject request, how long records live, and which transfers leave the EEA. Read from the live application so the record of processing reflects the tenant as configured today rather than as described at onboarding.
+
+    - **Risk types:** Data Privacy, Regulatory Compliance
+    - **Risk domains:** Privacy Rights, Data Protection
+    - **Typical use cases:** Keeping an Article 30 record of processing accurate between reviews; Verifying an international transfer commitment still holds; Establishing that subject-rights requests can actually be served; Privacy review of an EEA-facing SaaS application
+    - **Coverage:** 22 controls across 4 sections
+  </Accordion>
+</AccordionGroup>
+
+## AI usage
+
+| Template | Controls | Focus |
+| --- | ---: | --- |
+| AI Features & Model Usage | 23 | AI Risk, Data Privacy |
+| AI Agents, Copilots & Autonomous Actions | 17 | AI Risk, Information Security |
+
+<AccordionGroup>
+  <Accordion title="AI Features & Model Usage · 23 controls">
+    The AI surface a vendor has switched on inside an application. This is the fastest-drifting scope in any SaaS estate: features arrive enabled by default in a release the tenant did not choose, they read whatever the application holds, and they route it to a model the assessment never named. These controls enumerate what is on, what it reads, where it sends, and whether tenant data trains anything.
+
+    - **Risk types:** AI Risk, Data Privacy, Third-Party Risk, Information Security
+    - **Risk domains:** AI Governance, Data Protection, Supply Chain
+    - **Typical use cases:** Detecting AI features enabled by a vendor release nobody reviewed; Establishing whether tenant data trains a vendor model; AI inventory for an EU AI Act or ISO 42001 obligation; Continuous monitoring of an application's AI scope
+    - **Coverage:** 23 controls across 4 sections
+  </Accordion>
+  <Accordion title="AI Agents, Copilots & Autonomous Actions · 17 controls">
+    AI that acts rather than answers. An agent configured inside an application holds a standing identity, a set of tools, and permission to write - which makes it a privileged principal that no access review lists and no joiner process created. These controls enumerate the agents, read what they may do, and check whether their actions are attributable and reversible.
+
+    - **Risk types:** AI Risk, Information Security, Operational Risk
+    - **Risk domains:** AI Governance, Identity & Access Management
+    - **Typical use cases:** Inventorying autonomous agents operating inside a business application; Establishing what an agent is permitted to write and to whom it can send; Attribution evidence for actions taken by an AI agent; Continuous monitoring of agent scope expansion
+    - **Coverage:** 17 controls across 3 sections
+  </Accordion>
+</AccordionGroup>
+
+## Resilience, performance and audit
+
+| Template | Controls | Focus |
+| --- | ---: | --- |
+| Operational Resilience & Failover | 21 | Operational Risk, Third-Party Risk |
+| Performance & SLA Conformance | 14 | Operational Risk, Third-Party Risk |
+| Audit Logging & Monitoring | 13 | Information Security, Audit Readiness |
+
+<AccordionGroup>
+  <Accordion title="Operational Resilience & Failover · 21 controls">
+    Resilience evidence gathered from inside a live application on an ordinary working day, rather than from a scheduled Saturday failover test the vendor agreed to in advance. Reads the tenant's own status, incident, maintenance and capacity surfaces, and records the observations that only mean something as a series: which instance served the run, what the response looked like, whether the data present today matches yesterday.
+
+    - **Risk types:** Operational Risk, Third-Party Risk, Regulatory Compliance
+    - **Risk domains:** Operational Continuity, Resilience
+    - **Typical use cases:** Continuous third-party resilience testing without vendor coordination; Regulatory evidence for an operational resilience programme; Detecting an unannounced failover or instance migration; Building an uptime record independent of the vendor's own status page
+    - **Coverage:** 21 controls across 4 sections
+  </Accordion>
+  <Accordion title="Performance & SLA Conformance · 14 controls">
+    Whether the service the tenant is receiving matches the service that was contracted. Reads the uptime figures, support response commitments, credit mechanisms and observed responsiveness that together answer 'did they actually meet the SLA' - a question most organisations can only ask retrospectively, from the vendor's own numbers.
+
+    - **Risk types:** Operational Risk, Third-Party Risk, Financial Controls
+    - **Risk domains:** Operational Continuity, Vendor Due Diligence
+    - **Typical use cases:** Independent SLA conformance evidence for a renewal negotiation; Continuous uptime measurement not sourced from the vendor; Service credit eligibility detection; Support responsiveness monitoring for a critical application
+    - **Coverage:** 14 controls across 3 sections
+  </Accordion>
+  <Accordion title="Audit Logging & Monitoring · 13 controls">
+    Whether an application can tell you what happened in it. Covers event coverage, attribution, retention, export and alerting - the properties that decide whether an investigation is possible at all. Kept deliberately small so it can run alongside a domain-specific set rather than competing with it for session time.
+
+    - **Risk types:** Information Security, Audit Readiness, Operational Risk
+    - **Risk domains:** Incident Response, Risk Governance
+    - **Typical use cases:** Establishing whether an application supports a forensic investigation; Log retention and export verification for an in-scope application; Evidence for a monitoring control in an audited environment; Pre-incident readiness check on a critical SaaS tenant
+    - **Coverage:** 13 controls across 3 sections
+  </Accordion>
+</AccordionGroup>
+
+## Application classes
+
+| Template | Controls | Focus |
+| --- | ---: | --- |
+| CRM Application Controls | 22 | Information Security, Data Privacy |
+| HRIS & Payroll Application Controls | 18 | Data Privacy, Information Security |
+| Financial Services Application Controls | 17 | Financial Controls, Regulatory Compliance |
+
+<AccordionGroup>
+  <Accordion title="CRM Application Controls · 22 controls">
+    A CRM holds the customer relationship: contacts, pipeline, contract terms, support history and whatever a salesperson attached to a record. It is usually the widest-reach application an organisation runs and the one with the most integrations hanging off it. Written against the surfaces a Salesforce, HubSpot, Dynamics or Zoho admin console actually exposes.
+
+    - **Risk types:** Information Security, Data Privacy, Operational Risk
+    - **Risk domains:** Data Protection, Identity & Access Management
+    - **Typical use cases:** Continuous monitoring of the organisation's primary CRM; Detecting customer data leaving through a CRM integration; Sharing-model verification after a CRM administrator change; Pipeline and contract data exposure review
+    - **Coverage:** 22 controls across 4 sections
+  </Accordion>
+  <Accordion title="HRIS & Payroll Application Controls · 18 controls">
+    An HRIS holds the most sensitive employee data an organisation has - compensation, bank details, national identifiers, performance and health-related absence - and it is the system that drives access everywhere else. These controls read the access model, the identifier fields, the payroll change trail and the downstream provisioning that depends on it.
+
+    - **Risk types:** Data Privacy, Information Security, Financial Controls
+    - **Risk domains:** Data Protection, Identity & Access Management, Financial Reporting
+    - **Typical use cases:** Continuous monitoring of the system of record for employee data; Payroll change control evidence; Verifying HR-driven provisioning still reaches downstream applications; Employee personal-data exposure review
+    - **Coverage:** 18 controls across 4 sections
+  </Accordion>
+  <Accordion title="Financial Services Application Controls · 17 controls">
+    Controls for applications operating inside a regulated financial institution, where the supervisory expectation is continuous rather than annual. Covers segregation of duties, records retention under books-and-records rules, communications capture, change control and the operational resilience evidence supervisors increasingly ask to see for a critical third party.
+
+    - **Risk types:** Financial Controls, Regulatory Compliance, Operational Risk
+    - **Risk domains:** Banking & Finance, Financial Reporting, Operational Continuity
+    - **Typical use cases:** Continuous control evidence for a regulated financial institution; Books-and-records retention verification on a communications tool; Segregation-of-duties monitoring in a financial application; Critical third-party resilience evidence for a supervisor
+    - **Coverage:** 17 controls across 4 sections
   </Accordion>
 </AccordionGroup>
