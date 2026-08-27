@@ -148,6 +148,18 @@ These are the patterns that make documentation read as machine-written. Avoid al
 4. Read the last paragraph of each section. Is it a summary of what you just wrote? Delete it.
 5. Does every claim name something specific, or are you hedging?
 
+## Example data
+
+Nothing in the docs may be traceable to a customer. That covers the obvious cases and one that keeps slipping through: a vivid example lifted from a real tenant while writing the page. A contract value, a monitored domain, an assessment name, an API response body. These read as the most authentic thing on the page, which is exactly the problem.
+
+- **Never name a customer, and never describe a document as theirs.** "In this customer's pile" is a tell that the sentence around it needs rewriting, not softening.
+- **Never name a real company in example data.** Not as a vendor being assessed, not in a match table, not in a sample payload, not in a chat prompt a user might type. A reader cannot tell whether a named company is your customer, your customer's supplier, or an illustration, so they assume the first.
+- **Never quote real commercial terms.** Prices, liability caps, insurance limits and renewal dates from an actual agreement are confidential even with the company name removed, because the pair together identifies the deal.
+- **Use the house placeholders.** `Acme` for a vendor, `Northwind` and `Halden` when you need a second and third, and `.example` domains (`northwind.example`), which RFC 2606 reserves and nobody can register. Keep figures round enough to read as illustrations.
+- **Real companies may still appear as facts, not examples.** An integration Coverbase supports, a register it queries, a standards body, a source it cites. The test is whether the sentence would still be true if no customer existed.
+
+Concrete beats generic, and this is the one place that trades against it. A fictional example that carries the same mechanic is worth more than a real one that cannot be published.
+
 ## Page mechanics
 
 Every page starts with frontmatter and the agent directive:
@@ -179,5 +191,5 @@ Screenshots do more work than any paragraph, so take them whenever the page desc
 - Always write a real `alt`. Not "screenshot".
 - Reuse an existing image when it already shows the thing. Two names for one screenshot is how they fall out of sync.
 - Capture at a normal window width in light theme, with realistic data. Empty states and lorem ipsum make a product look unfinished.
-- Never ship a screenshot containing a real customer name, a real person's details, or anything from a live tenant.
+- Never ship a screenshot containing a real customer name, a real person's details, or anything from a live tenant. The same rule applies to prose: see **Example data** below.
 - Re-shoot when the UI changes. A stale screenshot is a support ticket.
