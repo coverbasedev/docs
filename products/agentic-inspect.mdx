@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Inspect performs structured discovery against a vendor's public and authenticated surface area using a headless browser. It validates attestations, extracts evidence from trust centers, and captures screenshots and artifacts with full chain-of-custody metadata.
+Inspect performs structured discovery using a headless browser. It works against two surfaces: a **vendor's** public and authenticated surface area, where it validates attestations and extracts evidence from trust centers; and **your own application tenants**, where it signs in and reads the live admin console to collect evidence for a chosen set of controls. Either way it captures screenshots and artifacts with full chain-of-custody metadata.
 
 ## What it does
 
@@ -29,6 +29,34 @@ Inspect performs structured discovery against a vendor's public and authenticate
     Accept auth context (cookies, credentials, SSO tokens) where required so Inspect can reach evidence behind login walls.
   </Card>
 </CardGroup>
+
+## Inspecting your own applications
+
+The other half of Inspect points at the applications *you* run. Rather than asking a vendor whether MFA is enforced, Inspect signs in to the tenant and reads the answer off the admin console.
+
+An **inspection** is one request against one target, with one control set and one purpose. Inside it, each control gets its own **control run**, so one control failing to collect evidence never stops the rest.
+
+<CardGroup cols={3}>
+  <Card title="Explore" icon="compass">
+    Establish whether the evidence a control needs can be collected from this application at all. Run this first against an unfamiliar tenant.
+  </Card>
+  <Card title="Evaluate" icon="scale-balanced">
+    Adjudicate the evidence against the control expectation and your scale. This is the run that produces a judgment.
+  </Card>
+  <Card title="Drift" icon="arrows-left-right">
+    Compare against a compatible earlier inspection, so a setting an administrator changed since the last run surfaces as a difference.
+  </Card>
+</CardGroup>
+
+Control sets come from the [Internal Controls Library](/control-library#internal-controls-library) - 21 templates spanning 362 controls, covering identity, privileged access, integrations and OAuth, data handling, PII, PHI, GDPR, AI features and agents, resilience, SLA conformance, audit logging, and licensing.
+
+<Note>
+  **Absent evidence is reported, never omitted.** An observation that could not be obtained still exists and still says why - unsupported, authentication required, forbidden, inconclusive, or failed. An application that does not sell a capability is not marked down for lacking it.
+</Note>
+
+<Warning>
+  Progress and outcome are separate facts. "5 of 5 controls finished" says nothing about whether any of them passed, so read the status rather than the count.
+</Warning>
 
 ## How to integrate
 

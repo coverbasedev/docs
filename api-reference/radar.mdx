@@ -33,7 +33,7 @@ None of these honor `Idempotency-Key`.
   `POST /v1/radar/events`
 </ParamField>
 
-Returns `201 Created`. Use this to seed an event into Radar without waiting for a source feed to pick up the underlying article; useful for recording out-of-band incidents and for exercising your detectors against a known event. Supplied vendors are linked to the event as **primary-impacted**, and the event is evaluated against your detectors unless you opt out — see [detector evaluation](#detector-evaluation).
+Returns `201 Created`. Use this to seed an event into Radar without waiting for a source feed to pick up the underlying article; useful for recording out-of-band incidents and for exercising your detectors against a known event. Supplied vendors are linked to the event as **primary-impacted**, and the event is evaluated against your detectors unless you opt out - see [detector evaluation](#detector-evaluation).
 
 ### Request body
 
@@ -51,7 +51,7 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 
 <ParamField body="secondary_impact_types" type="string[]">
   Additional impact categories, from the same list as `primary_impact_type`. A
-  value outside it is rejected with `422` — these categories decide which
+  value outside it is rejected with `422` - these categories decide which
   category-filtered detectors can match the event.
 </ParamField>
 
@@ -87,20 +87,20 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 
 The scheduled Radar pipeline is source-driven: it evaluates what its configured
 sources pull in, and never sees an event created through this endpoint. Events
-posted here are therefore evaluated out of band, which happens by default — pass
+posted here are therefore evaluated out of band, which happens by default - pass
 `create_alert: false` to store one without evaluating it.
 
-Evaluation is asynchronous — the response returns as soon as the event is stored,
+Evaluation is asynchronous - the response returns as soon as the event is stored,
 and alerts appear on [`GET /v1/radar/alerts`](#list-radar-alerts) once the detectors
 finish, each carrying this event's `event_id`. What runs against the event:
 
 - **Vendors.** The vendors in `vendor_ids` that resolve within your org, plus the
-  vendors that depend on them — a breach at a supplier is evaluated against the
+  vendors that depend on them - a breach at a supplier is evaluated against the
   customers exposed to it, the same expansion the scheduled pipeline performs, and
   through the same caps. An event with no resolvable vendor is stored but never
   evaluated.
 - **Detectors.** Only the ones that already target each of those vendors, including
-  the detector's source scoping — a detector limited to specific sources sees this
+  the detector's source scoping - a detector limited to specific sources sees this
   event only if it includes the org's **Manually-created events** source. Detectors
   with an impact-category filter are matched against the event's own
   `primary_impact_type` and `secondary_impact_types`.
@@ -159,7 +159,7 @@ Returns the [radar event object](#radar-event-object).
 </ParamField>
 
 <ParamField query="limit" type="integer">
-  Page size. Default `50`, range `1`–`200`.
+  Page size. Default `50`, range `1`-`200`.
 </ParamField>
 
 <ParamField query="offset" type="integer">
@@ -202,7 +202,7 @@ Returns the [radar event object](#radar-event-object), or `404 radar_event_not_f
 </ParamField>
 
 <ParamField query="limit" type="integer">
-  Page size. Default `50`, range `1`–`200`.
+  Page size. Default `50`, range `1`-`200`.
 </ParamField>
 
 <ParamField query="offset" type="integer">

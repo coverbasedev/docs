@@ -104,7 +104,7 @@ The voice is a competent colleague explaining something they know well, to someo
 - Parentheses, for a true aside.
 - A colon, when what follows explains what came before.
 
-Before: `The grade measures who is accountable — not whether the page is useful.`
+Before: `The grade measures who is accountable - not whether the page is useful.`
 After: `The grade measures who is accountable, not whether the page is useful.`
 
 Other hard rules:
@@ -142,7 +142,7 @@ These are the patterns that make documentation read as machine-written. Avoid al
 
 ### The check before you commit
 
-1. Search the diff for `—`. There should be no hits.
+1. Search the diff for `-`. There should be no hits.
 2. Search for the banned vocabulary above.
 3. Read the first sentence of each section. Does any of them restate its heading?
 4. Read the last paragraph of each section. Is it a summary of what you just wrote? Delete it.
