@@ -240,7 +240,7 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Latest SBOM and its components" defaultOpen icon="cubes">
     > Show me the latest software bill of materials for vendor Acme and list its components.
 
-    The assistant calls `query_vendors(kind="search")` to resolve the name, then `query_vendors(kind="bill_of_materials", vendor_id=…)` to pull the current applied BOM and its components in one call.
+    The assistant calls `query_vendors(kind="search")` to resolve the name, then `query_vendors(kind="bill_of_materials", vendor_id=...)` to pull the current applied BOM and its components in one call.
   </Accordion>
 
   <Accordion title="License screening" icon="scale-balanced">
@@ -258,24 +258,24 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Hardware BOM components" icon="microchip">
     > Pull the components from Acme's latest hardware BOM.
 
-    The assistant calls `query_vendors(kind="bill_of_materials", vendor_id=…)` and lists the hardware components.
+    The assistant calls `query_vendors(kind="bill_of_materials", vendor_id=...)` and lists the hardware components.
   </Accordion>
 
   <Accordion title="History and what's applied" icon="clock-rotate-left">
     > List every bill of materials we've received from Acme over time - which one is currently applied?
 
-    The assistant calls `query_vendors(kind="bill_of_materials_history", vendor_id=…)`. The list comes back newest first; the first entry is the applied one.
+    The assistant calls `query_vendors(kind="bill_of_materials_history", vendor_id=...)`. The list comes back newest first; the first entry is the applied one.
   </Accordion>
 
   <Accordion title="Trace a component through history" icon="magnifying-glass-chart">
     > Has Acme ever shipped a BOM that contained `openssl`? Show the history.
 
-    The assistant calls `query_vendors(kind="bill_of_materials_history", vendor_id=…)` and checks each BOM's components for the match, tracing every hit back to its source document.
+    The assistant calls `query_vendors(kind="bill_of_materials_history", vendor_id=...)` and checks each BOM's components for the match, tracing every hit back to its source document.
   </Accordion>
 </AccordionGroup>
 
 <Tip>
-  **What these call:** `query_vendors(kind="bill_of_materials", vendor_id=…)` or `query_vendors(kind="bill_of_materials_history", vendor_id=…)`, both read-only and user/org-scoped. See the [Bill of Materials API](/api-reference/bill-of-materials#mcp-assistant-access) for the full argument list.
+  **What these call:** `query_vendors(kind="bill_of_materials", vendor_id=...)` or `query_vendors(kind="bill_of_materials_history", vendor_id=...)`, both read-only and user/org-scoped. See the [Bill of Materials API](/api-reference/bill-of-materials#mcp-assistant-access) for the full argument list.
 </Tip>
 
 ## Write actions, with confirmation
@@ -288,19 +288,19 @@ The full intake request runs in conversation. You don't need to say "intake" for
   <Accordion title="Add a note to a vendor" icon="note-sticky">
     > Add a note to vendor Acme Corp: following up with their security team next week.
 
-    The assistant proposes: _"I am about to add a note to Acme Corp with the text 'following up with their security team next week.' Confirm?"_ After your approval, it calls `mutate(entity="note", action="add", data={…, "confirm": true})`.
+    The assistant proposes: _"I am about to add a note to Acme Corp with the text 'following up with their security team next week.' Confirm?"_ After your approval, it calls `mutate(entity="note", action="add", data={..., "confirm": true})`.
   </Accordion>
 
   <Accordion title="Create a finding on an assessment" icon="flag">
     > Create a finding on assessment cbassmt\_abc123 titled "Missing encryption at rest evidence" and assign it to me.
 
-    The assistant proposes the finding (title, body, assessment ID, assignee), waits for confirmation, then calls `mutate(entity="finding", action="create", data={…, "confirm": true})`.
+    The assistant proposes the finding (title, body, assessment ID, assignee), waits for confirmation, then calls `mutate(entity="finding", action="create", data={..., "confirm": true})`.
   </Accordion>
 
   <Accordion title="Update a vendor's risk tier" icon="arrow-up-right-dots">
     > Update the risk tier of vendor Globex to Tier 1.
 
-    The assistant proposes the change to the vendor status, confirms, then calls `mutate(entity="vendor", action="update", data={…, "confirm": true})` with the relevant status ID.
+    The assistant proposes the change to the vendor status, confirms, then calls `mutate(entity="vendor", action="update", data={..., "confirm": true})` with the relevant status ID.
   </Accordion>
 
   <Accordion title="Log a radar event for a vendor" icon="satellite-dish">
