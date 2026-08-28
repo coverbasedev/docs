@@ -42,7 +42,7 @@ What makes it usable in practice is how it's acquired: no supplier outreach, no 
 
 | Tier | Backing data | What you get |
 | ---- | ------------ | ------------ |
-| **A: Filed financials** | Financial statements the company filed with a regulator (SEC EDGAR XBRL) | The full ratio battery, ranked against peers. Statement-grade. |
+| **A: Filed financials** | Financial statements the company filed with a regulator (SEC EDGAR XBRL), or statements you submitted yourself | The full ratio battery, ranked against peers. Statement-grade. |
 | **B: Estimated financials** | Estimated revenue and EBITDA plus capital structure, where your organization has an estimates provider enabled | Partial ratios computed on estimates, full capital position and momentum |
 | **C: Signals only** | Funding, headcount, corporate standing, and adverse events | Capital position, momentum, standing, and events. No financial statements were available. |
 
@@ -218,6 +218,56 @@ Two things travel with every input:
 
 - **Whether it was peer-ranked.** An input scored against the vendor's own cohort is a much stronger claim than one scored against an absolute curve.
 - **The date the value was true.** Filed figures lag. An input from a filing two quarters old carries its own as-of date, not the date of the refresh.
+
+## Submitting a vendor's own financial statements
+
+Most vendors are private companies, so most score Tier C however sound they are: there is nothing filed to read. If you already hold that vendor's financials -- and in a diligence relationship you usually do -- you can give them to Coverbase and the score is rebuilt on them.
+
+<Steps>
+  <Step title="Open the vendor's Financial health tab">
+    **Vendor Intelligence > Financial health**. The overflow menu at the top right carries **Upload financial statements** and **Upload supporting information**; both open the same dialog, and there is an **Upload financial statements** button beside the export for the same thing.
+  </Step>
+  <Step title="Drop the documents in">
+    Audited financials, tax returns, SEC filings, management accounts. Supporting evidence belongs here too -- a Dun & Bradstreet report, a Better Business Bureau profile, a consumer report. Coverbase reads those for the entity's identity and for concerns, and will not invent fiscal periods from them.
+  </Step>
+  <Step title="Generate">
+    **Generate analysis** runs it. Uploading and generating are separate on purpose -- you can add files across several sessions and run the analysis when the set is complete. One pass reads every document together, because a statement set only makes sense as a set. It takes a few minutes; the tab shows progress and says plainly if a document could not be read.
+  </Step>
+</Steps>
+
+### Exporting the analytics workbook
+
+Once an analysis exists, **Export analytics workbook** in the tab's overflow menu downloads the full credit spreadsheet: the memo and review summaries, every metric beside the two figures it was computed from, the raw line items with the page each was read from, and the reference sheets that define what Low, Medium and High mean.
+
+It is offered only where an analysis exists -- the workbook is a rendering of one, and there is no such thing as an empty one. Nothing in it is inferred: the credit agency and reputational rows say **Not established** rather than deriving an agency rating from a statement set.
+
+### Changing what the analysis reads
+
+Both the upload dialog and the **Documents used in this analysis** list on the tab let you take a document out of consideration. The file stays on the vendor's Documents tab -- excluding it from a financial analysis is not a reason to delete it.
+
+Removing or adding a document does not blank the figures already on screen. They are still true of the documents they were computed from, so Coverbase keeps them and marks the analysis stale: the tab says the document set has changed and offers **Regenerate**. Nothing is recomputed, and nothing is charged, until you ask for it.
+
+### What you get back
+
+The classification and audit opinion, the periods covered, the issuing legal entity and its auditor, and the full metric battery per fiscal year with the change between years:
+
+- **Balance sheet** -- working capital, current ratio, quick ratio, cash ratio, total funded debt, debt to equity, debt to capitalization, net worth, asset turnover, return on assets, equity multiplier, return on equity
+- **Income statement** -- revenue, EBIT, EBITDA, degree of financial leverage, debt to EBITDA, gross and operating margins, net income, net income margin, earnings per share, inventory turnover, AR turnover
+- **Cash flow** -- free cash flow, change in cash
+
+Plus a credit-policy risk rating on the four metrics policy rates a partner on -- EBITDA, debt to EBITDA, free cash flow and net worth -- and an overall rating that takes the worst of them, because a partner is only as strong as the metric policy is most worried about.
+
+The tab shows the headline of this. The full tables are available to [assessment report templates](/reporting/template-placeholders#submitted-financial-statements), which is where a credit memo has room to print them.
+
+### How the figures are produced
+
+The model reads the statements and reports **line items** -- figures that appear on a balance sheet, an income statement or a cash flow statement, each with the page it came from. Every ratio, every year-over-year change and every risk rating is then computed by Coverbase, not by the model. A credit memo's arithmetic has to be reproducible from its inputs, and a model asked to divide two numbers is occasionally wrong and always sounds certain.
+
+A figure the statements do not report comes back as **not reported**, never as zero. A zero is a measured result and reads as one.
+
+<Warning>
+  **Submitted statements are private to your organization.** They never reach the shared company record, so no other Coverbase customer sees them or the score built on them. The vendor's published score -- the one every other organization sees -- is unchanged. Withdrawing the analysis restores your view to that published score and leaves the documents on the vendor's Documents tab.
+</Warning>
 
 ## Where it appears
 

@@ -81,6 +81,94 @@ Formatting follows the same rule as services: a single review renders bare, seve
   Use `{{reviews::summary}}` when there is more than one reviewer. The individual field placeholders each produce their own bulleted list, so reading a reviewer's outcome next to their notes means cross-referencing two lists. `summary` keeps each reviewer's label, outcome, and notes on one line.
 </Tip>
 
+## Vendor Intelligence
+
+`{{intelligence::<field>}}` resolves against Coverbase's outside-in research on the vendor -- the data behind the Vendor Intelligence tabs -- plus any financial statements your organization has submitted for that vendor.
+
+These are stored values, so they resolve exactly, without a model call. Prefer them over `{{agent::...}}` for any figure that is a fact rather than a judgement: a placeholder cannot get a market capitalization wrong.
+
+Placeholders whose value comes from a Vendor Intelligence surface your organization is not entitled to render empty.
+
+### Company and market
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{intelligence::industry}}` | Industry on the vendor's company profile |
+| `{{intelligence::headquarters}}` | Headquarters location |
+| `{{intelligence::founded}}` | Founding year |
+| `{{intelligence::employees}}` | Employee count |
+| `{{intelligence::revenue}}` | Most recent fiscal year revenue |
+| `{{intelligence::public or private}}` | Whether the company is publicly traded |
+| `{{intelligence::market capitalization}}` | Market capitalization, abbreviated (e.g. `$12.2B`) |
+| `{{intelligence::ticker}}` | Stock ticker symbol |
+| `{{intelligence::exchange}}` | Exchange the company is listed on |
+| `{{intelligence::total funding}}` | Total disclosed funding raised |
+
+### Financial health
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{intelligence::financial health score}}` | Coverbase Financial Health Score out of 100 |
+| `{{intelligence::financial health band}}` | Risk band the score falls in |
+| `{{intelligence::financial health confidence}}` | Confidence tier behind the score (`A`, `B` or `C`) |
+| `{{intelligence::financial health as of}}` | Date the score was computed as of |
+
+### Security posture
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{intelligence::security rating}}` | Grade and score together, e.g. `B (78/100)` |
+| `{{intelligence::security grade}}` | Letter grade alone |
+| `{{intelligence::security score}}` | Score out of 100 |
+| `{{intelligence::trust center}}` | URL of the vendor's trust center |
+
+### Corporate registration
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{intelligence::legal name}}` | Official registered name from the corporate registry |
+| `{{intelligence::registration status}}` | Registration standing |
+| `{{intelligence::jurisdiction}}` | Jurisdiction the company is registered in |
+| `{{intelligence::incorporation date}}` | Date of incorporation |
+| `{{intelligence::lei}}` | Legal Entity Identifier |
+| `{{intelligence::duns}}` | Dun & Bradstreet DUNS number |
+| `{{intelligence::company number}}` | Local business register company number |
+| `{{intelligence::cik}}` | SEC EDGAR Central Index Key |
+
+### People, reputation and screening
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{intelligence::leadership}}` | Confirmed executives and board members, comma-separated |
+| `{{intelligence::adverse media}}` | `None found`, `Not searched`, or a count. Never reports an unsearched vendor as clear |
+| `{{intelligence::bbb rating}}` | Better Business Bureau rating |
+| `{{intelligence::trustpilot rating}}` | Trustpilot rating |
+| `{{intelligence::screening status}}` | Sanctions and adverse-media screening result for the vendor |
+
+### Submitted financial statements
+
+These resolve only when your organization has [uploaded financial statements](/products/vendor-intelligence) for the vendor. The metric blocks each render one line per metric, with both fiscal years and the change between them.
+
+| Placeholder | Value |
+| ----------- | ----- |
+| `{{intelligence::financial statements}}` | Classification of the submitted statements, e.g. `Audited - Unqualified Opinion` |
+| `{{intelligence::financial risk rating}}` | Credit policy risk rating derived from the statements |
+| `{{intelligence::statement legal entity}}` | Legal name of the entity that issued the statements |
+| `{{intelligence::auditor}}` | Audit firm that signed the opinion |
+| `{{intelligence::period covered}}` | Fiscal periods the statements cover |
+| `{{intelligence::net worth}}` | Net worth for the most recent submitted fiscal year |
+| `{{intelligence::ebitda}}` | EBITDA for the most recent submitted fiscal year |
+| `{{intelligence::free cash flow}}` | Free cash flow for the most recent submitted fiscal year |
+| `{{intelligence::policy metrics}}` | The four credit policy metrics with their ratings and figures |
+| `{{intelligence::balance sheet metrics}}` | Working capital, current, quick and cash ratios, debt, debt to equity, net worth, asset turnover, return on assets, return on equity |
+| `{{intelligence::income statement metrics}}` | Revenue, EBIT, EBITDA, debt to EBITDA, margins, net income, EPS, inventory and AR turnover |
+| `{{intelligence::cash flow metrics}}` | Free cash flow and change in cash |
+| `{{intelligence::leverage ratios}}` | Debt to capitalization, equity multiplier, degree of financial leverage |
+
+<Note>
+  A figure the statements do not report renders as `Not reported`, never as `0`. A zero would read as a measured result, which is a different claim about the vendor.
+</Note>
+
 ## Findings
 
 `{{findings::<set>::<column>}}` only works **inside a table row**. The row is cloned once per finding in the set. See [repeating findings tables](/reporting/assessment-report-templates#repeating-findings-tables) for how to lay the table out, and [one table per risk domain](/reporting/assessment-report-templates#one-table-per-risk-domain) to split findings by risk domain.
@@ -130,6 +218,10 @@ The domain is the name as configured in **Configuration → Risk domains**, matc
 
 `{{agent::<your prompt>}}` generates prose from the assessment. The whole text after `::` is the prompt.
 
+The agent reads the assessment, its findings, evals, reviews and questionnaire responses, and the headline of every Vendor Intelligence section -- company profile, financial health, security posture, corporate registration, people, reputation, compliance and legal, products, and sanctions screening. It can pull any of those sections in full when a prompt needs the evidence behind a headline.
+
+Use a placeholder rather than the agent for anything that is a stored value. The agent is for judgement: a conclusion, an overview, a paragraph weighing several facts together.
+
 ```text
 {{agent::Write a short executive summary of this assessment for a board audience.}}
 ```
@@ -175,6 +267,14 @@ Custom fields render according to their configured type.
 
   <Accordion title="I need the approver and their decision" icon="user-check">
     `{{reviews::summary}}` for everything on one line per reviewer, or `{{assessment::approval option}}` for the approval decision recorded on the assessment itself.
+  </Accordion>
+
+  <Accordion title="I need the vendor's financial or security ratings" icon="chart-line">
+    `{{intelligence::financial health score}}`, `{{intelligence::financial health band}}` and `{{intelligence::security rating}}`. For a credit memo built on submitted statements, `{{intelligence::financial risk rating}}` and the metric blocks.
+  </Accordion>
+
+  <Accordion title="I need the vendor's registered legal name" icon="building-columns">
+    `{{intelligence::legal name}}`, with `{{intelligence::jurisdiction}}` and `{{intelligence::incorporation date}}` beside it.
   </Accordion>
 
   <Accordion title="I need a narrative paragraph that is not a field" icon="wand-magic-sparkles">
