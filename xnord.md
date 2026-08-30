@@ -20,13 +20,13 @@ Traits that belong here and nowhere else:
 - Troubleshooting tables of the form "symptom, fix".
 - Opinions. "Start with your own control sets and add breadth only where you need it" is useful here and out of place in the API reference.
 
-**These pages are deliberately absent from `docs.json`.** They are unlisted so the whole set can be shared as a link with a customer without exposing it in the main navigation. Every page in `user-guides/` carries `hidden: true`.
+These pages are in the sidebar, under the **User guides** tab. They were unlisted and carried `hidden: true` until we opened them up; neither is true now, and no page in this section should carry `hidden`.
 
-Because the site navigation cannot help a reader here, `overview.mdx` has to do that job on its own. Three rules keep it working:
+`overview.mdx` stays the authoritative index even though navigation now helps too. Three rules keep it working:
 
-- **Every page in `user-guides/` is linked from `overview.mdx`.** A page nothing links to is a page nobody finds. When you add a guide, add it to the directory table, to the section that matches the job it belongs to, and, if it answers a question people arrive with, to the lookup table at the bottom.
-- **Every guide links back to `overview.mdx`,** through the `<Info>` banner it opens with. Readers arrive on deep pages from search results and from links on other sites, so each page needs its own way back up.
-- **Do not add these pages to `docs.json`.**
+- **Every page in `user-guides/` is linked from `overview.mdx`.** When you add a guide, add it to the directory table, to the section that matches the job it belongs to, and, if it answers a question people arrive with, to the lookup table at the bottom.
+- **Every guide links back to `overview.mdx`,** through the `<Info>` banner it opens with. Readers arrive on deep pages from search and from links on other sites, so each page needs its own way back up.
+- **Add the page to `docs.json` as well**, in the group that matches its job. A guide that is in the directory but not the sidebar is half-published.
 
 `overview.mdx` also deep-links into the longer guides. Anchors follow the heading text, so renaming an `## Step 4: ...` heading breaks the link that points at it. Search the repo for the old anchor before you rename one.
 
@@ -97,7 +97,7 @@ The voice is a competent colleague explaining something they know well, to someo
 
 ### Hard rules
 
-**No em dashes. None.** Not in prose, not in captions, not in table cells, not in frontmatter descriptions. `products/` and `security/` are clean and must stay that way. About a dozen remain in `api-reference/`, `mcp/`, and `reporting/`, and roughly twenty in `user-guides/sanctions-screening`, `user-guides/contract-components`, and `user-guides/zero-touch-assessments`. Remove them whenever you next edit those pages. When you reach for one, you want one of these instead:
+**No em dashes. None.** Not in prose, not in captions, not in table cells, not in frontmatter descriptions. The site is currently clean: `grep -r '—' --include='*.mdx' .` returns nothing. Keep it that way. When you reach for one, you want one of these instead:
 
 - A full stop. Two clear sentences almost always beat one spliced sentence.
 - A comma, when the aside is genuinely minor.
