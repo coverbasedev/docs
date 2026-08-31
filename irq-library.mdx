@@ -1,0 +1,96 @@
+---
+title: "IRQ library"
+description: "The inherent risk questionnaire templates Coverbase ships: what each one covers, how it scores, and when to pick it."
+---
+
+Coverbase ships an **IRQ library**: ready-to-use inherent risk questionnaires you fork into your organization, tailor, and send. Open it from the **IRQ Library** button at the top right of **Configuration → Questionnaires → Inherent Risk**.
+
+An inherent risk questionnaire (IRQ) rates a third party *before* any of their controls are taken into account. Its score decides how much due diligence the relationship earns and how often it is reassessed, so it is deliberately short — the longest template here is fifteen questions.
+
+<Note>
+  Forking a template produces an ordinary questionnaire you own and can edit. Nothing syncs back: later changes to the Coverbase template do not reach your copy.
+</Note>
+
+## The templates
+
+| Template | Category | Questions | Best for |
+| --- | --- | ---: | --- |
+| Standard Inherent Risk Questionnaire | General | 15 | Any third party, any industry |
+| Inherent Risk Quick Triage | General | 6 | Self-service intake and fast-track approvals |
+| Financial Services Inherent Risk | Financial | 13 | Banks, credit unions, insurers, fintechs |
+| Healthcare & Life Sciences Inherent Risk | Healthcare | 13 | Providers, payers, digital health, life sciences |
+| AI & Emerging Tech Inherent Risk | AI & Emerging Tech | 12 | Any vendor whose product embeds AI |
+| Data Privacy Inherent Risk | Compliance | 10 | Processors and controllers handling personal data |
+
+<AccordionGroup>
+  <Accordion title="Standard Inherent Risk Questionnaire · 15 questions">
+    A general-purpose questionnaire covering data sensitivity and volume, network access, business criticality, customer contact, contract spend, regulatory exposure, offshoring, subcontracting and replaceability.
+
+    Modelled on the [Third Party Risk Association](https://www.tpra.org/) inherent risk calculator, whose weights are widely used across mature third-party risk programs.
+
+    - **Sections:** Engagement Overview, Data Access and Sensitivity, Business Impact, Regulatory and Geographic Exposure
+    - **Typical use:** New vendor intake triage; determining due diligence depth; setting reassessment cadence; annual re-tiering
+  </Accordion>
+  <Accordion title="Inherent Risk Quick Triage · 6 questions">
+    Six questions covering the most sensitive data involved, system and network access, outage impact, spend, regulatory exposure and customer reach.
+
+    Written for a requester who is not a risk professional, so a software purchase request can be routed in under a minute.
+
+    - **Typical use:** Self-service vendor intake; fast-track approval for low-risk vendors; pre-screening before a full questionnaire
+  </Accordion>
+  <Accordion title="Financial Services Inherent Risk · 13 questions">
+    Built around the pivotal question in the [2023 Interagency Guidance on Third-Party Relationships](https://www.federalregister.gov/d/2023-12340): whether the relationship supports a *critical activity*. Also covers GLBA nonpublic personal information, authority over customer funds, UDAAP-relevant consumer contact, BSA/AML and sanctions obligations, core system access, recovery tolerances and fourth-party concentration.
+
+    Answering "yes" to the critical-activity question floors the inherent risk score, so a critical relationship cannot be diluted into a low rating by benign answers elsewhere.
+
+    - **Sections:** Criticality and Regulatory Designation, Consumer Data and Funds, Resilience and Concentration
+    - **Typical use:** Bank and credit union vendor onboarding; critical activity designation; examiner-ready tiering; fintech partner due diligence
+  </Accordion>
+  <Accordion title="Healthcare & Life Sciences Inherent Risk · 13 questions">
+    Leads with business associate status under [HIPAA](https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164), which floors the score when it applies, then covers PHI volume, special categories such as 42 CFR Part 2 and genetic data, proximity to clinical care, regulated device software, EHR access, cross-border processing and subcontracting.
+
+    - **Sections:** Protected Health Information, Clinical and Patient Safety Impact, Regulatory and Supply Chain
+    - **Typical use:** Business associate triage; digital health vendor onboarding; clinical system procurement; life sciences supplier qualification
+  </Accordion>
+  <Accordion title="AI & Emerging Tech Inherent Risk · 12 questions">
+    For any vendor whose product embeds AI. Covers whether your data trains the vendor's models, what data reaches the model, model and subprocessor transparency, degree of autonomy, agentic access to your systems, whether the system makes decisions about people, likely [EU AI Act](https://artificialintelligenceact.eu/) classification, and the vendor's own AI governance.
+
+    A system that makes or materially informs decisions about people floors the score.
+
+    - **Sections:** AI Footprint, Autonomy and Consequence, Governance and Regulatory Exposure
+    - **Typical use:** AI vendor onboarding; shadow AI discovery triage; EU AI Act readiness screening; agentic tooling review
+    - **Aligned with:** [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)
+  </Accordion>
+  <Accordion title="Data Privacy Inherent Risk · 10 questions">
+    Covers processing role, categories of personal data including special categories and children's data, data subject volume, applicable regimes, international transfers and their safeguards, automated decision-making, secondary use, sub-processors, retention and tracking.
+
+    Enough to decide whether a DPIA and a transfer mechanism are needed before the engagement proceeds.
+
+    - **Sections:** Processing Role and Data, Transfers and Secondary Use
+    - **Typical use:** DPIA screening; sub-processor approval; international transfer review; marketing and adtech vendor triage
+    - **Aligned with:** [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj)
+  </Accordion>
+</AccordionGroup>
+
+## How the score works
+
+Each answer option carries a weight. The inherent risk score is the total of the weights you selected, divided by the highest total those same questions could have produced, expressed as a percentage from 0 to 100. That score then maps to an inherent risk level through the scale configured under **Configuration → Scales → Risk**.
+
+Two things follow from the normalization:
+
+- **Weights are relative.** They only have to be right against each other, so you can add, remove or reword questions without rebalancing the whole questionnaire.
+- **Context questions are free.** Free-text, contact, country and currency questions never affect the score, so ask for the business owner or a service description without skewing the rating.
+
+Some answers set a **score floor** instead of adding to the total — business associate status, a critical-activity designation, an AI system making decisions about people. When picked, the questionnaire cannot score below that floor no matter how the other questions are answered.
+
+Sections are mapped to risk domains, so a forked template also produces per-domain inherent risk scores alongside the overall one.
+
+## Tailoring a fork
+
+Everything is editable after forking. Common adjustments:
+
+- **Reword the spend bands** to match your own thresholds and currency.
+- **Adjust weights** in the Value column on each option to reflect your risk appetite.
+- **Add a score floor** on any option that should guarantee a minimum rating.
+- **Wire it into intake** from **Actions → Intake Configuration** so new vendor requests are rated automatically.
+- **Set risk levels** from **Actions → Configure Risk Levels** to control where the score lands.
