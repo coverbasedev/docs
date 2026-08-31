@@ -1,0 +1,198 @@
+---
+title: "Permissions and roles"
+description: "How access works in Coverbase: the six default roles, how a permission is built from a resource, an action and a scope, and how to build and assign a custom role."
+icon: "lock-keyhole"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User guides](/user-guides/overview) collection. It is for admins who decide who can see and change what. If you are setting up a new environment, do this after [Admin and setup](/user-guides/admin-setup) step 1, once your team is invited.
+</Info>
+
+A role answers two questions for every person in your organization: what they can see, and what they can change. Coverbase ships six roles that cover most teams. When none of them fits, you build a custom role by turning individual permissions on and off.
+
+This guide covers the default roles, how permissions are put together, and how to build and assign your own.
+
+<Info>
+  Custom roles are a gated feature. If you do not see **Roles** under **Settings**, it has not been switched on for your organization yet. Ask your Coverbase contact. The six default roles work either way.
+</Info>
+
+## The six default roles
+
+Every member holds exactly one role. These six ship with the product and cannot be edited, but you can clone any of them as a starting point.
+
+| Role | Who it is for | What they can do |
+| --- | --- | --- |
+| **Admin** | Program owners | Everything, including members, roles, integrations, API keys, and organization settings |
+| **Member** | Your core risk and procurement team | Create and edit vendors, assessments, findings, follow-ups, intake requests, RFPs, tags and comments across the organization. Read controls and monitoring. No access to members, roles, integrations, custom fields, monitoring rules, or settings |
+| **Siloed Member** | Analysts who should only see their own book of work | The same as a Member, except vendors, assessments, findings, commitments and follow-ups are limited to records they own, watch, or analyze. Intake, tags, questionnaires and comments stay organization-wide |
+| **Auxiliary Member** | Collaborators outside the core team | Answer inherent-risk questionnaires, complete tasks assigned to them, and comment on records they are assigned to |
+| **Guest** | External collaborators | The same access as an Auxiliary Member |
+| **Service Account** | Integrations, not people | Everything the public API exposes: vendors, assessments, findings, contracts, questionnaires, obligations, monitoring, custom fields, webhooks, workflows and supplier records. Cannot approve anything, and cannot reach roles, API keys, billing, organization settings, or the audit trail |
+
+Start with **Member** for anyone on the risk team and **Admin** for the one or two people who own the program. Reach for a custom role only when a real job does not fit.
+
+<Note>
+  **Service Account is the role your API keys use.** Every key your organization issues authenticates as it, so editing that role changes what your integrations can do. One rule is deliberate and worth knowing: a service account can *request* a change to supplier bank details but cannot approve one. Approving stays with a person.
+</Note>
+
+<Tip>
+  **Siloed Member** is the one worth understanding before you assign it. It does not hide a smaller list of features. It shows the same features against a smaller set of records: the vendors and assessments that person owns, watches, or analyzes. If someone says a vendor "disappeared", check whether they are a Siloed Member who was removed as an owner.
+</Tip>
+
+## How a permission is built
+
+Every permission in Coverbase is three things joined together.
+
+<CardGroup cols={3}>
+  <Card title="Resource" icon="cube">
+    The thing being acted on. Vendors, assessments, findings, contracts, controls, API keys, and 27 others.
+  </Card>
+  <Card title="Action" icon="bolt">
+    What you are doing to it: read, create, update, export, assign, approve, comment, archive, or run.
+  </Card>
+  <Card title="Scope" icon="crosshairs">
+    How much it covers: every record in the organization, or only the records that person is assigned to.
+  </Card>
+</CardGroup>
+
+"A Member can update any vendor in the organization" is the resource `vendor`, the action `update`, and the scope `all records`. "A Siloed Member can update the vendors they own" is the same resource and action at a narrower scope.
+
+Not every combination exists. Some resources have no per-record assignment, so scope does not apply to them: there is no such thing as being assigned to an API key or to organization settings. Those are always organization-wide, and the editor shows them that way.
+
+## Finding the role editor
+
+Go to **Settings**, then **Roles**. The left side lists every role in your organization, with a **Default role** badge on the six that ship with the product. Selecting one opens its permission matrix.
+
+Default roles are read-only. To base a new role on one, open it and choose **Clone**.
+
+## Reading the permission matrix
+
+The matrix has one row per resource and one column per action. Each cell holds one of four values.
+
+| Cell | Means |
+| --- | --- |
+| **O** | All records. Every record of that type in the organization |
+| **A** | Assigned only. Just the records that person is assigned to |
+| **·** | No access. The action is hidden for that resource |
+| **Not applicable** | That resource does not support that action |
+
+Click a cell to cycle it through no access, assigned only, and all records. Right-click to pick a value directly. Use **Filter by resource or action** to narrow a large matrix while you work.
+
+Assigned scope is not available everywhere. A resource with no assignment model only offers all records or no access, and the cell says so when you hover it.
+
+## The rules the editor enforces
+
+Some combinations describe a role the product cannot deliver. The editor catches those before you save, shows them in a banner at the top, and offers **Fix all**.
+
+<AccordionGroup>
+  <Accordion title="An action needs the matching read" icon="eye">
+    You cannot give someone update, approve, assign, archive, export, comment or run on a resource without also giving them read at the same scope. Editing a record you cannot open is not a narrower permission, it is a broken screen.
+
+    The fix is to raise read to the scope the other action needs.
+  </Accordion>
+
+  <Accordion title="Vendor-backed resources need vendor read" icon="link">
+    Assessments, findings, commitments, services and Radar alerts are all reached through a vendor. Granting one of them without vendor read produces a page the person cannot open. The editor requires vendor read alongside any of these.
+  </Accordion>
+
+  <Accordion title="Create without read is a warning, not an error" icon="triangle-exclamation">
+    A role that can create records but not read them is unusual, and the banner says so, but it saves. It is a real pattern for an intake submitter or a write-only integration that files records it never lists.
+  </Accordion>
+
+  <Accordion title="You cannot grant what you do not hold" icon="shield-halved">
+    If your own role does not include a permission, you cannot give it to another role. Admins hold everything, so this never limits them. It matters when you delegate role management to someone who is not an Admin: they can build roles up to their own level of access, and no further.
+
+    To create a role broader than your own, ask an Admin to do it.
+  </Accordion>
+
+  <Accordion title="You cannot lock yourself out" icon="key">
+    Editing the role you yourself hold, you cannot remove its ability to read and manage roles. Doing so would leave you unable to reopen the editor and undo it. Another Admin can still change your role for you.
+  </Accordion>
+</AccordionGroup>
+
+## Building a custom role
+
+<Steps>
+  <Step title="Start from the closest default">
+    Open the default role nearest to what you want and choose **Clone**, or choose **New role** to start from nothing. Cloning is usually faster, and it starts you from a set that already passes the rules above.
+  </Step>
+  <Step title="Name it for the job, not the person">
+    "Contract reviewer" outlasts "Priya's role". Names show up in the member list and in the audit trail.
+  </Step>
+  <Step title="Set the matrix">
+    Work resource by resource. For each one, decide read scope first, then the actions on top of it. Filtering by resource keeps you out of the rest of the matrix while you do it.
+  </Step>
+  <Step title="Clear the banner">
+    Fix anything the validation banner reports. **Fix all** applies the minimum change that resolves each issue, which is usually adding the read the other permission depends on.
+  </Step>
+  <Step title="Save, then add members">
+    Members can only be added to a saved role. Save first, then use the members panel.
+  </Step>
+</Steps>
+
+## Assigning people to a role
+
+The members panel on a role shows everyone who holds it. Add someone with **Add to role**, and remove them with **Remove from role**.
+
+Two things are deliberately blocked:
+
+- **The last Admin cannot be demoted or removed.** Make someone else an Admin first. This applies whether you are removing them from the Admin role or assigning them a different one.
+- **Changing your own role asks for confirmation.** If the change removes your own administrative access, you lose it immediately, and only another Admin can give it back.
+
+Members always hold a role. To move someone out of a role, add them to a different one rather than removing them from their current one.
+
+## What custom roles do not restrict
+
+A few areas are visible and actionable for every member regardless of role. They are listed in the editor under **Not restricted by custom roles** so you are not left looking for a toggle that does not exist.
+
+| Area | Behavior |
+| --- | --- |
+| Inspect | Visible to all users |
+| Risk | Visible to all users |
+| RFP | Visible to all users |
+| Procurement | Visible to all users |
+| Vendor performance management | Visible to all users |
+| Reports and dashboards | Data visible to all users. Editing is Admin-only |
+
+Some surfaces have no toggles of their own because they follow the records they act on. Email, engagements, Coverbase AI and Radar signals inherit the permissions of whatever they are acting on.
+
+Configuration pages follow the permission for the thing they configure. Clause sets follow contract permissions. The risk scale and Document Insights settings follow organization settings.
+
+## Seeing what changed
+
+Every role carries its own activity log, on the role itself. It records who changed the role and what they changed, so a permission that appeared or disappeared can be traced to a person and a time. A newly created role has no activity until it is saved.
+
+Role changes also appear in the organization-wide audit trail alongside everything else. See [Audit trails](/security/audit-trails).
+
+## Troubleshooting
+
+| What you are seeing | What is happening |
+| --- | --- |
+| Someone cannot see a vendor they expect to | They are probably a Siloed Member and are not an owner, watcher, or analyst on it. Add them to the vendor, or move them to Member |
+| A permission will not turn on | Check the banner. It is likely missing the read it depends on, or vendor read for a vendor-backed resource |
+| You cannot grant a permission you can see | Your own role does not hold it. An Admin can grant it |
+| A cell says **Not applicable** | That resource does not support that action. Nothing is wrong |
+| A cell will not go to **Assigned only** | That resource has no per-record assignment, so it is all records or nothing |
+| **Roles** is missing from Settings | Custom roles are not switched on for your organization. Ask your Coverbase contact |
+| You cannot remove the last Admin | Intended. Promote someone else first |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Admin and setup" icon="sliders" href="/user-guides/admin-setup">
+    The full setup sequence. Roles come after inviting your team.
+  </Card>
+  <Card title="Audit trails" icon="clipboard-list" href="/security/audit-trails">
+    Every recorded event, including role and membership changes.
+  </Card>
+  <Card title="API keys" icon="key" href="/api-reference/api-keys">
+    Service accounts and scoped keys for integrations.
+  </Card>
+  <Card title="MCP permissions" icon="robot" href="/mcp/permissions">
+    How the same permissions apply when an AI assistant acts on your data.
+  </Card>
+</CardGroup>
