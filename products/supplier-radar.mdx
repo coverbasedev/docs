@@ -10,6 +10,22 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Supplier Radar watches threat intelligence feeds, public disclosures, sanctions and watchlists, breach databases, regulatory actions, and other external sources for events that touch your vendors. Every event your organization is exposed to becomes a **signal**, with a status, a severity, and a summary written for your portfolio, which you triage into a case, a finding, or a reassessment.
 
+## What it does
+
+<CardGroup cols={3}>
+  <Card title="Multi-source ingestion" icon="rss" href="/products/source-library">
+    Combine threat intel, breach databases, sanctions and watchlists, regulatory actions, and public disclosures into one event stream. See the [source library](/products/source-library) for every built-in source.
+  </Card>
+
+  <Card title="Vendor context enrichment" icon="circle-info">
+    Normalize raw events and enrich them with the vendor's risk tier, services in scope, contract status, and owner so triage decisions have context.
+  </Card>
+
+  <Card title="Workflow orchestration" icon="bolt">
+    Route signals into downstream actions: notify a vendor owner, open a finding, trigger a reassessment, or escalate to incident response.
+  </Card>
+</CardGroup>
+
 ## Key concepts
 
 Four terms, in the order you meet them.
@@ -23,14 +39,14 @@ Four terms, in the order you meet them.
 
 ### Signal statuses
 
-Signals move through statuses as you work them. Dismiss one, or open a case, a finding, or a reassessment from it, and the status follows.
+Signals move through statuses as you work them. Dismiss one, acknowledge it, or open a case, a finding, or a reassessment from it, and the status follows.
 
 | Status | Meaning |
 | --- | --- |
 | **Tracked** | A vendor you depend on is linked to the event, but no detector has alerted. The signal exists so you can see the exposure before anyone has decided it matters. |
 | **Open** | No detector is alerting, but someone in your organization has handled the signal by hand: created it, edited it, or restored it after a dismissal. |
 | **In alert** | At least one detector has fired on the event and stands by its verdict. This is the queue. |
-| **Triaged** | A case or finding has been created from the signal. |
+| **Triaged** | You acknowledged the signal, or created a case or finding from it. |
 | **Dismissed** | You dismissed the signal. Dismissing can also teach the detectors that fired to stay quiet on events like it. |
 
 The **Needs attention** view shows signals that are in alert. **Triaged** shows what has already been acted on or dismissed.
@@ -49,33 +65,13 @@ An event names the vendors it is about. Radar also links the vendors that depend
 
 A signal arriving changes nothing on a vendor. Radar moves residual risk only when you act on the signal, and only for detectors you have told to.
 
-**What moves it.** Three actions: creating a finding from the signal, starting a reassessment from it, and closing a case as **Resolved** or **Won't fix**. Dismissing a signal, or closing a case as **False positive**, leaves risk where it was.
+**What moves it.** Four actions: acknowledging the signal, creating a finding from it, starting a reassessment from it, and closing a case as **Resolved** or **Won't fix**. Acknowledging is for the exposure that needs no case or finding but should still count against the vendor. Dismissing a signal, or closing a case as **False positive**, leaves risk where it was.
 
 **How far it moves.** Each detector carries a risk impact setting, off by default, with a minimum and maximum number of points out of 100 (1 to 10 unless you change them). When you act on one of its verdicts, Radar judges how severe the event is for that particular vendor and picks a value inside the range. The points land on the vendor's overall residual risk and on each risk domain the detector maps to. Inherent risk never moves. A verdict counts once, however many actions follow it.
 
 **You see it before you are done.** After the action, **Review vendor risk profile updates** shows each affected vendor's residual risk, overall and per domain, as it now stands. Adjust any score or level and add a note, then **Save and continue**, or **Continue** to accept. Vendors on a case whose detectors do not update risk are called out and left unchanged. Organizations that do not track residual risk skip this step.
 
 **Where you see it.** The vendor's risk profile shows the new residual score, and its risk history records the change and the detector behind it. Vendors reached through a fourth-party relationship are treated the same way: act on their part of the signal and their residual risk moves too.
-
-## What it does
-
-<CardGroup cols={2}>
-  <Card title="Multi-source ingestion" icon="rss" href="/products/source-library">
-    Combine threat intel, breach databases, sanctions and watchlists, regulatory actions, and public disclosures into one event stream. See the [source library](/products/source-library) for every built-in source.
-  </Card>
-
-  <Card title="Vendor context enrichment" icon="circle-info">
-    Normalize raw events and enrich them with the vendor's risk tier, services in scope, contract status, and owner so triage decisions have context.
-  </Card>
-
-  <Card title="Configurable detectors" icon="filter">
-    Each detector reads a plain-language goal, a severity threshold, category filters, and the sources it watches, and learns from the signals you dismiss. See the [detector library](/products/detector-library) for what ships out of the box.
-  </Card>
-
-  <Card title="Workflow orchestration" icon="bolt">
-    Route signals into downstream actions: notify a vendor owner, open a finding, trigger a reassessment, or escalate to incident response.
-  </Card>
-</CardGroup>
 
 ## How to integrate
 
