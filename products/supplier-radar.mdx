@@ -18,10 +18,10 @@ Four terms, from the outside in.
 | --- | --- | --- |
 | **Event** | Something that happened in the world: a breach disclosure, an advisory, an outage, an enforcement action. Coverbase records it once and links the vendors it names. | You don't work with events directly. Each one you are exposed to reaches you as a signal. The [Radar API](/api-reference/radar) works at this level. |
 | **Signal** | How Radar tracks an event's impact on your organization. When a new event arrives, Radar runs your detectors against it to judge the nature and severity of the impact and which of your vendors are exposed, then opens one signal with a title and summary written for your portfolio. A signal's severity is the highest severity any detector assigned to the underlying event. | The **Signals** tab, and the signal page. |
-| **Alert** | One detector's verdict on one vendor for that event, with its own severity, confidence, and reasoning. Many alerts roll up into one signal. | The **Detectors** tab on a signal page. The [Radar API](/api-reference/radar) lists and dismisses these. |
+| **Detector** | What decides whether an event matters to you. Each detector reads plain-language guidance, a severity threshold, category filters, and the sources it watches. When one fires, it records a verdict on each exposed vendor: severity, confidence, and reasoning. | The **Detectors** tab on a signal page shows which fired and why. Configured under **Configuration → Radar**. |
 | **Case** | An investigation you open from a signal when it needs vendor outreach or a decision trail. | The **Cases** tab. |
 
-**A signal is the unit of triage. An alert is the unit of evidence.** Ten detectors firing on four vendors over one breach is one signal with ten alerts, not ten things to triage.
+**A signal is the unit of triage.** Ten detectors firing on four vendors over one breach is one signal, not ten things to triage. Open it and the **Detectors** tab shows each verdict.
 
 ### Signal statuses
 
@@ -31,17 +31,17 @@ Signals move through statuses as you work them. Dismiss one, or open a case, a f
 | --- | --- |
 | **Tracked** | A vendor you depend on is linked to the event, but no detector has alerted. The signal exists so you can see the exposure before anyone has decided it matters. |
 | **Open** | No detector is alerting, but someone in your organization has handled the signal by hand: created it, edited it, or restored it after a dismissal. |
-| **In alert** | At least one detector has an active alert on the event. This is the queue. |
+| **In alert** | At least one detector has fired on the event and stands by its verdict. This is the queue. |
 | **Triaged** | A case or finding has been created from the signal. |
-| **Dismissed** | Every alert on the signal has been dismissed. Dismissing can also teach the detector to suppress similar alerts. |
+| **Dismissed** | You dismissed the signal. Dismissing can also teach the detectors that fired to stay quiet on events like it. |
 
 The **Needs attention** view shows signals that are in alert. **Triaged** shows what has already been acted on or dismissed.
 
 ### Titles and summaries
 
-Radar writes each signal's title and summary specifically for your organization, based on the event. The summary says what happened, when it occurred and when you were alerted, and which of your vendors are affected and how. It is regenerated when the set of alerts changes.
+Radar writes each signal's title and summary specifically for your organization, based on the event. The summary says what happened, when it occurred and when you were alerted, and which of your vendors are affected and how. It is regenerated when the detectors that fired change.
 
-You can edit either by hand. **Regenerate summary** rewrites both from the current alerts and replaces any hand edit. **Custom AI instructions** on the summary card apply to every generated summary in your organization: lead with regulatory exposure, name the contract owner, keep to two sentences.
+You can edit either by hand. **Regenerate summary** rewrites both from what the detectors currently report and replaces any hand edit. **Custom AI instructions** on the summary card apply to every generated summary in your organization: lead with regulatory exposure, name the contract owner, keep to two sentences.
 
 ### Exposure beyond the vendors named
 
@@ -59,7 +59,7 @@ An event names the vendors it is about. Radar also links the vendors that depend
   </Card>
 
   <Card title="Configurable detectors" icon="filter">
-    Each detector reads a plain-language goal, a severity threshold, category filters, and the sources it watches, and learns from the alerts you dismiss. See the [detector library](/products/detector-library) for what ships out of the box.
+    Each detector reads a plain-language goal, a severity threshold, category filters, and the sources it watches, and learns from the signals you dismiss. See the [detector library](/products/detector-library) for what ships out of the box.
   </Card>
 
   <Card title="Workflow orchestration" icon="bolt">
