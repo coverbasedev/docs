@@ -8,12 +8,59 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Supplier Radar ingests signals from threat intelligence feeds, public disclosures, sanctions and watchlists, breach databases, regulatory actions, and other external sources. Detected events are normalized, enriched with vendor context, and routed through configurable triage logic into downstream workflows.
+Supplier Radar watches threat intelligence feeds, public disclosures, sanctions and watchlists, breach databases, regulatory actions, and other external sources for events that touch your vendors. Every event your organization is exposed to becomes a **signal**, with a status, a severity, and a summary written for your portfolio, which you triage into a case, a finding, or a reassessment.
+
+## Key concepts
+
+Four terms, in the order you meet them.
+
+| Term | What it is | Where you see it |
+| --- | --- | --- |
+| **Signal** | How Radar tracks an event's impact on your organization. When a new event arrives, Radar runs your detectors against it to judge the nature and severity of the impact and which of your vendors are exposed, then opens one signal with a title and summary written for your portfolio. A signal's severity is the highest severity any detector assigned to the underlying event. | The **Signals** tab, where you see newly arriving signals and the ones you have already triaged. |
+| **Detector** | What decides whether an event matters to you. Each detector reads plain-language guidance, a severity threshold, category filters, and the sources it watches. When one fires, it records a verdict on each exposed vendor: severity, confidence, and reasoning. | The **Detectors** tab on a signal page shows which fired and why. Configured under **Configuration → Radar**. |
+| **Case** | An investigation you open from a signal when it needs vendor outreach or a decision trail. | The **Cases** tab. |
+| **Finding** | A confirmed problem on a vendor, with an owner and a due date. Create one from a signal once you know the vendor is affected, or one per exposed vendor in bulk. Creating a finding moves the signal to Triaged. | The **Findings** page, and on the vendor. Findings have their own product: see [Findings Manager](/products/findings-manager). |
+
+### Signal statuses
+
+Signals move through statuses as you work them. Dismiss one, or open a case, a finding, or a reassessment from it, and the status follows.
+
+| Status | Meaning |
+| --- | --- |
+| **Tracked** | A vendor you depend on is linked to the event, but no detector has alerted. The signal exists so you can see the exposure before anyone has decided it matters. |
+| **Open** | No detector is alerting, but someone in your organization has handled the signal by hand: created it, edited it, or restored it after a dismissal. |
+| **In alert** | At least one detector has fired on the event and stands by its verdict. This is the queue. |
+| **Triaged** | A case or finding has been created from the signal. |
+| **Dismissed** | You dismissed the signal. Dismissing can also teach the detectors that fired to stay quiet on events like it. |
+
+The **Needs attention** view shows signals that are in alert. **Triaged** shows what has already been acted on or dismissed.
+
+### Titles and summaries
+
+Radar writes each signal's title and summary specifically for your organization, based on the event. The summary says what happened, when it occurred and when you were alerted, and which of your vendors are affected and how. It is regenerated when the detectors that fired change.
+
+You can edit either by hand. **Regenerate summary** rewrites both from what the detectors currently report and replaces any hand edit. **Custom AI instructions** on the summary card apply to every generated summary in your organization: lead with regulatory exposure, name the contract owner, keep to two sentences.
+
+### Exposure beyond the vendors named
+
+An event names the vendors it is about. Radar also links the vendors that depend on them, through fourth-party relationships extracted from SOC 2 reports, subprocessor lists, and bills of materials. A breach at an identity provider becomes a Tracked signal for every vendor of yours that runs on it, before any detector has fired. The **Vendors** card on a signal page lists the vendors of yours linked to it.
+
+## Risk propagation
+
+A signal arriving changes nothing on a vendor. Radar moves residual risk only when you act on the signal, and only for detectors you have told to.
+
+**What moves it.** Three actions: creating a finding from the signal, starting a reassessment from it, and closing a case as **Resolved** or **Won't fix**. Dismissing a signal, or closing a case as **False positive**, leaves risk where it was.
+
+**How far it moves.** Each detector carries a risk impact setting, off by default, with a minimum and maximum number of points out of 100 (1 to 10 unless you change them). When you act on one of its verdicts, Radar judges how severe the event is for that particular vendor and picks a value inside the range. The points land on the vendor's overall residual risk and on each risk domain the detector maps to. Inherent risk never moves. A verdict counts once, however many actions follow it.
+
+**You see it before you are done.** After the action, **Review vendor risk profile updates** shows each affected vendor's residual risk, overall and per domain, as it now stands. Adjust any score or level and add a note, then **Save and continue**, or **Continue** to accept. Vendors on a case whose detectors do not update risk are called out and left unchanged. Organizations that do not track residual risk skip this step.
+
+**Where you see it.** The vendor's risk profile shows the new residual score, and its risk history records the change and the detector behind it. Vendors reached through a fourth-party relationship are treated the same way: act on their part of the signal and their residual risk moves too.
 
 ## What it does
 
 <CardGroup cols={2}>
-  <Card title="Multi-source signal ingestion" icon="rss" href="/products/source-library">
+  <Card title="Multi-source ingestion" icon="rss" href="/products/source-library">
     Combine threat intel, breach databases, sanctions and watchlists, regulatory actions, and public disclosures into one event stream. See the [source library](/products/source-library) for every built-in source.
   </Card>
 
@@ -21,12 +68,12 @@ Supplier Radar ingests signals from threat intelligence feeds, public disclosure
     Normalize raw events and enrich them with the vendor's risk tier, services in scope, contract status, and owner so triage decisions have context.
   </Card>
 
-  <Card title="Configurable triage rules" icon="filter">
-    Sequence rules for severity scoring, deduplication, and assignment so the right risk owner sees the right event at the right time.
+  <Card title="Configurable detectors" icon="filter">
+    Each detector reads a plain-language goal, a severity threshold, category filters, and the sources it watches, and learns from the signals you dismiss. See the [detector library](/products/detector-library) for what ships out of the box.
   </Card>
 
   <Card title="Workflow orchestration" icon="bolt">
-    Route triaged events into downstream actions: notify a vendor owner, open a finding, trigger a reassessment, or escalate to incident response.
+    Route signals into downstream actions: notify a vendor owner, open a finding, trigger a reassessment, or escalate to incident response.
   </Card>
 </CardGroup>
 
@@ -34,7 +81,7 @@ Supplier Radar ingests signals from threat intelligence feeds, public disclosure
 
 <CardGroup cols={2}>
   <Card title="Radar API" icon="satellite-dish" href="/api-reference/radar">
-    Create radar events, and list, retrieve, and dismiss radar alerts programmatically.
+    Create radar events, and list, retrieve, and dismiss radar alerts programmatically. Signals are not addressable through the API yet.
   </Card>
 
   <Card title="Reassessments API" icon="rotate" href="/api-reference/reassessments">
@@ -71,5 +118,25 @@ Supplier Radar ingests signals from threat intelligence feeds, public disclosure
 </AccordionGroup>
 
 <Note>
-  Radar configuration (detectors, sources, default reviewers) is managed through the dashboard. Browse the built-in [source library](/products/source-library) and [detector library](/products/detector-library) to see what ships out of the box. Programmatic access to events and detectors is available via the MCP server today; a dedicated REST event stream is on the roadmap.
+  Detectors, sources, and default reviewers are configured in the dashboard under **Configuration → Radar**. Browse the built-in [source library](/products/source-library) and [detector library](/products/detector-library) to see what ships out of the box.
 </Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Work Radar signals" icon="list-check" href="/user-guides/analyst-reviewer#step-8-work-radar-signals">
+    The analyst walkthrough: the Needs attention view, reading a signal, and turning it into a case, finding, or reassessment.
+  </Card>
+
+  <Card title="Configure Radar" icon="sliders" href="/user-guides/admin-setup#step-9-configure-radar-continuous-monitoring">
+    The admin walkthrough: sources, detectors, and the tuning that keeps the queue quiet.
+  </Card>
+
+  <Card title="Detector library" icon="radar" href="/products/detector-library">
+    Every out-of-the-box detector template, by segment, with its default severity.
+  </Card>
+
+  <Card title="Radar API" icon="code" href="/api-reference/radar">
+    Events and alerts over REST, and how they map to what the dashboard shows.
+  </Card>
+</CardGroup>

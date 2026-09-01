@@ -458,31 +458,41 @@ Default sort: `created_at` desc.
 | Number of Asks | - | `asks.count` | Number | - | at least, at most, is, is not | No |
 | Number of Documents | - | `vendor_documents.count` | Number | - | at least, at most, is, is not | No |
 
-## Radar events
+## Radar signals
 
-The **Radar** event feed in Supplier Radar.
+The **Signals** tab in Supplier Radar. One row per event your organization is exposed to.
 
-**15 fields**, queryable at `POST /v1/radar_event/query`, available in saved views.
+**9 fields**, queryable at `POST /v1/radar_event/query`, available in saved views.
 
-Default sort: `updated_at` desc.
+Default sort: `last_alerted_at` desc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Impact type | - | `primary_impact_type` | Choice | `Infosec`, `Financial`, `Operational`, `Legal`, `Compliance`, `Reputational`, `Contractual`, `ESG`, `Corporate`, `Geopolitical & External`, `Inapplicable`, `Other` | is, is not, any of, none of | No |
 | Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Detector | - | `detector_id` | Reference | Radar detectors in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Exposure | - | `exposure_type` | Choice | `primary`, `direct`, `indirect` | is, is not, any of, none of | No |
-| Vendor exposure | - | `radar_event_entity_relationships.vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Vendor exposure | - | `radar_event_entity_relationships.exposure_type` | Choice | `primary`, `direct`, `indirect` | is, is not, any of, none of | No |
-| Status | - | `status` | Choice | `new`, `alerting`, `escalating`, `resolving`, `dismissed`, `case_opened`, `finding_created` | is, is not, any of, none of | No |
-| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Status | - | `status` | Choice | `tracked`, `open`, `alerting`, `triaged`, `dismissed`, `confirmed` | is, is not, any of, none of | No |
+| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
 | Risk domain | - | `risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Summary | - | `summary` | Text | - | is, is not, any of, none of, contains, does not contain | No |
-| Created date | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
-| Updated date | Dates | `updated_at` | Date | - | after, before, on or after, on or before, between | Yes |
-| Event date | Dates | `temporal_start` | Date | - | after, before, on or after, on or before, between | Yes |
-| Severity | - | `severity` | Choice | `high`, `medium`, `low`, `informational` | is, is not, any of, none of | Yes |
-| Alert activity | - | `alert_activity_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Summary | - | `summary` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
+| Last alerted | Dates | `last_alerted_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
+| First seen | Dates | `first_seen_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
+| Severity | - | `severity` | Choice | `high`, `medium`, `low`, `informational` | is, is not, any of, none of, empty, not empty | Yes |
+
+### Radar signals in workflow conditions
+
+The `radar_signal` target in workflow conditions filters the same rows through a smaller field set, and its paths differ from the Signals tab: severity is `max_severity`, and detector and vendor are matched through the signal's alerts.
+
+**5 fields**, usable as the `radar_signal` target in workflow conditions.
+
+Default sort: `created_at` desc.
+
+| Field | Group | Filter path | Type | Values | Operators | Sortable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Status | - | `status` | Choice | `tracked`, `open`, `alerting`, `triaged`, `dismissed`, `confirmed` | is, is not, any of, none of | No |
+| Severity | - | `max_severity` | Choice | `high`, `medium`, `low`, `informational` | is, is not, any of, none of | No |
+| Detector | - | `members.detector_id` | Reference | Radar detectors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor | - | `members.vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Created date | - | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
 
 ## Radar cases
 
