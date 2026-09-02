@@ -24,7 +24,7 @@ Your vendor data, assessment evidence, contracts and supplier identifiers are pr
 
 ### Field-level encryption
 
-Some data is worth stealing on its own and does not get to sit in a column in the clear, even inside an already-encrypted database. Supplier **bank account identifiers** and **tax registration numbers** are sealed individually with **AES-256-GCM**, under a dedicated key held separately from the database.
+Some data is worth stealing on its own, so it is not stored in a readable column even inside an already-encrypted database. Supplier **bank account identifiers** and **tax registration numbers** are sealed individually with **AES-256-GCM**, under a dedicated key held separately from the database.
 
 - **Authenticated encryption.** Each value set is sealed as a single envelope carrying its own nonce, so a ciphertext cannot be tampered with undetected or replayed onto another record.
 - **Versioned keys, rotatable without a migration.** Every envelope records the key version it was sealed under, so the key can be rotated while previously sealed rows keep opening under the version that wrote them.
@@ -33,7 +33,7 @@ Some data is worth stealing on its own and does not get to sit in a column in th
 
 ### Role-based masking
 
-Encryption protects the store. Masking protects the screen, the export and the webhook.
+Encryption protects the stored value. Masking is what governs whether anyone sees it, on screen, in an export, or in a webhook payload.
 
 A sensitive identifier is represented by its **last four characters and nothing else** everywhere except an explicitly scoped read. That rule is enforced in one place that every consumer passes through, so adding a new report, integration or event cannot quietly add a new leak.
 
