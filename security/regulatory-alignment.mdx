@@ -1,0 +1,114 @@
+---
+title: "Regulatory alignment for banks and credit unions"
+description: "How Coverbase maps to the 2023 Interagency Guidance on Third-Party Relationships, the Interagency Guidelines Establishing Information Security Standards (Appendix D-2 to Regulation H), FFIEC outsourcing guidance, GLBA, DORA and NCUA expectations."
+icon: "landmark"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase is built for regulated third-party risk programs, and a large share of its customers are banks, credit unions, and fintechs supervised by the federal banking agencies. This page maps the platform to the guidance those examiners actually cite, stage by stage.
+
+<Note>
+  This is an alignment map, not a legal opinion or a certification. Coverbase is a tool your program runs on; the program remains yours, and so does the responsibility. Nothing here transfers a supervisory obligation from your institution to Coverbase.
+</Note>
+
+## Interagency Guidance on Third-Party Relationships (2023)
+
+The Board of Governors of the Federal Reserve System, the OCC and the FDIC issued the [Interagency Guidance on Third-Party Relationships: Risk Management](https://www.federalregister.gov/documents/2023/06/09/2023-12340/interagency-guidance-on-third-party-relationships-risk-management) in June 2023, replacing the agencies' separate guidance (including FRB SR 13-19 / 13-21, OCC Bulletin 2013-29, and FDIC FIL-44-2008) with one framework built around the third-party relationship life cycle.
+
+Coverbase ships the guidance as a control set as well as implementing it as a workflow. The [Control Set library](/control-library) carries **Interagency Guidance on Risk Management (Full)** at 156 controls across 12 sections, and a **(Lite)** variant at 44 controls for lower-criticality relationships. Both can be forked into a control set of your own and edited freely.
+
+### The life cycle, stage by stage
+
+<AccordionGroup>
+  <Accordion title="Planning" icon="clipboard-list" defaultOpen>
+    Coverbase's [intake](/products/autonomous-intake) captures the business case, the data the third party will touch, the business line, the activity, and whether it supports a critical activity, before any diligence starts. An **inherent risk questionnaire** scores the relationship and drives what depth of diligence follows, so the level of effort is risk-based rather than uniform. Concentration and fourth-party exposure are recorded as relationships and visible at planning time.
+  </Accordion>
+
+  <Accordion title="Due diligence and third-party selection" icon="magnifying-glass">
+    Assessments run against the control sets you select, with evidence collected from the third party, from its own published attestations, and from independent sources.
+
+    The guidance's named diligence areas each have a home in the platform: **strategies and goals**, **legal and regulatory compliance**, **financial condition** ([Financial Health Score](/products/financial-health-score) with a confidence tier that says what the number rests on), **business experience**, **qualifications and backgrounds of principals** ([People Intelligence](/products/people-intelligence), [corporate registrations](/products/corporate-registrations), and [sanctions and PEP screening](/user-guides/sanctions-screening) of the entity, its officers and its beneficial owners), **risk management**, **information security** ([Security Intelligence](/products/security-intelligence) and evidence-backed control evaluation), **management of information systems**, **operational resilience**, **incident reporting and management**, **physical security**, **human resource management**, **reliance on subcontractors** (nth-party relationships), **insurance coverage**, and **contractual arrangements** ([Contract Guardian](/products/contract-guardian)).
+  </Accordion>
+
+  <Accordion title="Contract negotiation" icon="file-signature">
+    Contract Guardian holds your standard as a clause playbook with tiered acceptable language, then reads the third party's paper against it. The guidance's contract provisions map directly onto reference clauses: nature and scope, performance measures and benchmarks, responsibilities for providing and receiving information, the right to audit and to require remediation, responsibility for compliance with applicable law, cost and compensation, ownership and licensing, confidentiality and integrity, operational resilience and business continuity, **indemnification**, insurance, dispute resolution, limits on liability, **default and termination**, **customer complaints**, **subcontracting**, foreign-based third parties, and **regulatory supervision**. Missing provisions are reported as missing, not silently passed.
+  </Accordion>
+
+  <Accordion title="Ongoing monitoring" icon="satellite-dish">
+    [Supplier Radar](/products/supplier-radar) monitors third parties continuously against breach, sanctions, enforcement, financial-distress, ownership-change and adverse-media signals, and raises a signal against the vendors your organization is actually exposed to. Scheduled reassessment runs on a cadence you set by tier. Contract dates and notice periods drive their own reminders. Findings and remediation commitments are tracked to closure with evidence, and evidence that goes stale is re-requested rather than assumed to still hold.
+  </Accordion>
+
+  <Accordion title="Termination" icon="door-open">
+    Offboarding is a lifecycle stage with its own workflow: a termination assessment scoped to data return, access revocation and exit obligations extracted from the contract; a structured offboarding questionnaire covering destruction certification and access termination; document archival with retention metadata; and events fired to your IAM, procurement and finance systems so the internal cleanup happens too. See [End-to-end workflows](/integrations/end-to-end-workflows#workflow-c-vendor-offboarding).
+  </Accordion>
+</AccordionGroup>
+
+### Governance, oversight and accountability
+
+The guidance devotes as much attention to how the board and senior management oversee the program as to the life cycle itself. Coverbase supports that side directly.
+
+| Expectation | Where it lives |
+| --- | --- |
+| Independent reviews of the third-party risk management process | Everything is evidenced: the [audit trail](/security/audit-trails) records every action by every actor, and assessments, findings and decisions export in full |
+| Documentation and reporting throughout the life cycle | [Evidence packages and due-diligence files](/reporting/due-diligence-file), custom board-ready Word reports, and the [Export API](/export-api-concepts) |
+| Board and senior management reporting | [Dashboards and charts](/user-guides/dashboard-library), including criticality, tier, domain-level risk, open findings, overdue commitments and reassessment status |
+| Accountability for approvals | [Reviews, approvals and gates](/user-guides/reviews-and-approvals): who decided, what outcome, why, on which round |
+| Risk-based level of effort | Conditional workflow routing on inherent risk, criticality, data classification, jurisdiction and contract value |
+| Critical activities identified and treated differently | Vendor tier and criticality drive assessment depth, monitoring cadence, approval quorum and reassessment frequency |
+
+## Interagency Guidelines Establishing Information Security Standards
+
+The information security standards issued under sections 501(b) and 505(b) of the Gramm-Leach-Bliley Act appear as **Appendix D-2 to Regulation H** for state member banks (12 CFR part 208), and in the equivalent appendices for the other agencies (12 CFR part 30 appendix B for national banks, 12 CFR part 364 appendix B for state non-member banks). Section III.D of the Guidelines places specific obligations on an institution that uses a service provider.
+
+| Guidelines requirement (§ III.D) | How Coverbase supports it |
+| --- | --- |
+| **Exercise appropriate due diligence in selecting service providers** | Risk-based assessment against the control set you choose, with evidence, citations, and a recorded approval decision per third party and per service |
+| **Require service providers by contract to implement appropriate measures designed to meet the objectives of the Guidelines** | Contract Guardian clause playbooks, with information-security, confidentiality, breach-notification and audit-rights clauses as reference clauses, and missing-clause detection where they are absent |
+| **Where indicated by the risk assessment, monitor service providers to confirm they have satisfied their obligations** | Continuous monitoring, scheduled reassessment, obligation tracking against extracted contract obligations, and evidence-refresh workflows |
+| **Review audits, summaries of test results, or other equivalent evaluations** | Automated intake and analysis of SOC 1 / SOC 2 reports, bridge letters, ISO certificates and penetration-test reports, with exceptions and CUECs surfaced rather than buried |
+| **Adjust the program in light of relevant changes** | Radar signals, drift detection on re-inspection, and re-evaluation of contracts on amendment |
+| **Report to the board** | Program-level dashboards and exportable reporting |
+
+The **GLBA Safeguards Rule (16 CFR part 313)** control set is in the library at 20 controls, alongside the banking-agency framing above.
+
+## Other frameworks in the library
+
+| Framework | Controls | Use |
+| --- | ---: | --- |
+| [FFIEC Contract Requirements](/control-library) | 30 | FFIEC IT Handbook outsourcing expectations for service provider contracts |
+| BSA/AML Standard Requirements | 35 | Customer due diligence, SAR, and transaction-monitoring expectations for third parties in scope |
+| DORA Standard Requirements | 25 | EU Digital Operational Resilience Act ICT third-party risk, for institutions with an EU footprint |
+| NCUA ISE (2023) | 30 | NCUA Information Security Examination, for credit unions |
+| SOX COSO | 56 | Internal control over financial reporting and IT general controls |
+| GLBA 16 CFR Part 313 | 20 | Safeguards Rule |
+
+The full library is 68 templates spanning 4,337 curated controls, including SOC 2, ISO 27001, NIST CSF and 800-53, PCI DSS, HIPAA, and the AI-governance frameworks. See the [Control Set library](/control-library).
+
+## Incident notification
+
+Institutions supervised by the federal banking agencies are subject to a **36-hour** notification requirement for notification incidents (12 CFR 53 for national banks and federal savings associations, 12 CFR 225 subpart N for Board-supervised institutions, and 12 CFR 304 subpart C for FDIC-supervised institutions), and the same rules require a **bank service provider** to notify each affected banking-organization customer as soon as possible when a computer-security incident has materially disrupted or degraded, or is reasonably likely to materially disrupt or degrade, covered services for four or more hours.
+
+Coverbase supports both sides of that:
+
+- **As your service provider**, Coverbase's incident-response process and customer-notification commitments are set out in [Contract terms and exit](/security/contract-terms), and the specific notification window applicable to your institution is agreed in your contract.
+- **As your tooling**, Coverbase records each third party's own contractual notification window as a tracked obligation, so an incident at a fourth party lands against the clause that governs it, and a third party whose contract lacks a notification clause is flagged as missing it rather than assumed compliant.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Control Set library" icon="shield-check" href="/control-library">
+    Every packaged framework, its control count, and its official source.
+  </Card>
+  <Card title="Contract terms and exit" icon="file-contract" href="/security/contract-terms">
+    Incident notification, data return and destruction, renewal and notice.
+  </Card>
+  <Card title="Evidence packaging" icon="box-archive" href="/reporting/due-diligence-file">
+    Producing the complete due-diligence file for one third party.
+  </Card>
+  <Card title="Audit trails" icon="list-timeline" href="/security/audit-trails">
+    The defensible record behind every decision.
+  </Card>
+</CardGroup>

@@ -1,0 +1,117 @@
+---
+title: "Assignment, delegation and out of office"
+description: "How work reaches a person in Coverbase: user groups, round-robin and assign-to-all routing, out-of-office windows that skip a member automatically, reassignment, and the assignment log that attributes every hand-off."
+icon: "user-clock"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User guides](/user-guides/overview) collection. It is for admins who own routing. For what the work itself is, see [Reviews, approvals and gates](/user-guides/reviews-and-approvals). For what a person is allowed to do once it reaches them, see [Permissions and roles](/user-guides/permissions-and-roles).
+</Info>
+
+A gate assigned to one person stops when that person is on leave. Coverbase routes work to a **user group** rather than to a named individual wherever you want it to survive someone's holiday, and records both the group that was asked and the individual who ended up accountable.
+
+## User groups
+
+A user group is an org-scoped set of people with shared routing rules, managed under **Settings → User groups**. Anywhere Coverbase accepts an assignee, it accepts a group: review gates, work queue items, questionnaire submission reviewers, risk domain reviewers, findings, follow-ups, watchers, and `@`-mentions in notes.
+
+Each group carries:
+
+| Setting | What it does |
+| --- | --- |
+| **Assignment strategy** | `Assign to all` or `Round robin`. See below. |
+| **Group lead** | The named point of contact, badged in the member list. |
+| **Members** | Each with an `Active` / `Inactive` status, a place in the rotation, and an optional out-of-office window. |
+
+### Two strategies
+
+<CardGroup cols={2}>
+  <Card title="Assign to all" icon="users">
+    The item is added to **every** eligible member's work queue and everyone is notified. The group is collectively accountable and there is no single individual assignee. Use it for a committee, or for a queue where whoever is free picks it up.
+  </Card>
+  <Card title="Round robin" icon="rotate">
+    **One** member is picked from the rotation at assignment time. Both the group and that person are recorded, so the work has an individual owner while the record still shows it was handed to the team. Use it for balanced case load across a review desk.
+  </Card>
+</CardGroup>
+
+The rotation is deterministic and ordered, so the next assignee is predictable rather than random, and the interface can show who is up next before an assignment is made.
+
+## Out of office
+
+Each member of a group has an **Out of office** window: a **From** date and a **To** date, set from the member row. Coverbase enforces it at routing time.
+
+<Steps>
+  <Step title="Set the window">
+    On the group's member list, choose **Set out of office** and pick the dates. Members can also be marked `Inactive` indefinitely, which is the same thing without an end date, for a leave of absence or a secondment.
+  </Step>
+  <Step title="Routing skips them automatically">
+    Anyone inside their window is excluded from the eligible set before the strategy runs. A round-robin rotation steps over them to the next available member rather than parking work in an empty inbox; an assign-to-all group notifies everyone except them.
+  </Step>
+  <Step title="They return without an admin touching anything">
+    The window expires on its own. Nobody has to remember to re-enable a colleague on the Monday they get back.
+  </Step>
+  <Step title="Nothing is silently dropped">
+    If every member of a group is out or inactive, the routing outcome is recorded as `no eligible members` rather than passing quietly. That is a visible state you can alert on, not an assignment that never happened.
+  </Step>
+</Steps>
+
+<Warning>
+  Out of office governs **new** assignments. Work already sitting on someone's queue when their window opens stays there. Move it with the reassignment step below, or route the queue to a group so the next round lands on someone present.
+</Warning>
+
+## Delegation and reassignment
+
+Coverbase treats delegation as an explicit, attributed hand-off rather than an impersonation.
+
+- **Reassign in place.** Every group carries an **Assignments** tab listing the open work across its members, with filters for member, item type and status, and a **Reassign to** action. Reassigning cancels the previous holder's pending item rather than completing it, because they never did the work, and mints a fresh one for the new holder. The completed / canceled distinction is what keeps throughput reporting honest.
+- **Reassign a single gate.** A review's or a submission's reviewer picker takes an individual, a group, or nothing. A group assignment is re-resolved against **current** membership at the moment work actually arrives, not against the roster as it stood when the item was first sent, so a personnel change between send and response routes to the person who is there now.
+- **Escalate to the lead.** The group lead is a named, queryable field, which gives a workflow somewhere to send an item that has aged past its target.
+- **Nobody inherits authority.** Delegation moves the item, never the permission. A delegate acts under their own role, and the decision is recorded under their own name. See [Permissions and roles](/user-guides/permissions-and-roles).
+
+## The assignment log
+
+Every group-driven routing decision writes its own log row, independent of the object it acted on. Each row records:
+
+| Field | Example |
+| --- | --- |
+| Group | Financial Crime Review |
+| Trigger | Assignee, watcher, or mention |
+| Strategy applied | Round robin, as configured at that moment |
+| Outcome | Assigned round robin / assigned all / no eligible members |
+| Assigned to | The individual picked, for round robin |
+| Notified | Every member notified, for assign to all |
+| Triggered by | The person or workflow that caused it |
+| Target | The object it happened on, and when |
+
+This is the answer to "who was supposed to approve this, and why did it land on them", asked months later. It survives a member leaving the group, and it records the strategy that was in force at the time rather than the one configured today.
+
+Group routing decisions also surface in the [organization audit trail](/security/audit-trails) alongside the object changes they caused.
+
+## A worked pattern
+
+A common financial-services arrangement:
+
+1. **Second-line reviews** route to a `Risk Committee` group on **Assign to all**, because the whole committee is meant to see the item.
+2. **Domain SME reviews** route to per-domain groups (`InfoSec Review`, `Financial Crime`, `Legal`, `Privacy`) on **Round robin**, so each domain has one accountable person per assessment and the load spreads across the desk.
+3. **Every SME sets their own out-of-office window** at the start of leave. The rotation steps over them for the duration; no admin ticket, no shared mailbox, no gate waiting on an empty desk.
+4. **The `no eligible members` outcome is alerted on**, so a domain that is entirely out during a holiday period surfaces as an operational problem rather than as a quiet backlog.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Reviews, approvals and gates" icon="gavel" href="/user-guides/reviews-and-approvals">
+    Gate outcomes, parallel domain reviews, multi-approver logic and rework loops.
+  </Card>
+  <Card title="Permissions and roles" icon="lock-keyhole" href="/user-guides/permissions-and-roles">
+    What a delegate is allowed to do once the work reaches them.
+  </Card>
+  <Card title="Email notifications" icon="envelope" href="/user-guides/email-notifications">
+    What each assignment and reminder sends, and how to tune it.
+  </Card>
+  <Card title="Audit trails" icon="list-timeline" href="/security/audit-trails">
+    Where routing decisions land in the organization-wide record.
+  </Card>
+</CardGroup>

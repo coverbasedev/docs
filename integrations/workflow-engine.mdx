@@ -43,8 +43,22 @@ Common patterns include:
 - Vendor tier or criticality
 - Whether prior assessment evidence exists
 - Whether a specific document type is present
+- Any built-in or [custom field](/api-reference/custom-fields), through the same filter paths the dashboard uses
 
 Conditions can be composed with `AND` or `OR` logic and nested arbitrarily.
+
+### Gate conditions
+
+Four conditions exist specifically to express approval logic.
+
+| Condition | What it evaluates | Typical use |
+| --- | --- | --- |
+| **Contract value** | Total value of the contracts on a procurement against a threshold, with `greater than` and `less than or equal` operators | Delegation-of-authority routing: above the limit picks up the extra approver. Structured amounts are summed; two currencies are refused rather than converted at a guessed rate |
+| **Work queue item complete** | Whether the review work raised by this workflow run is finished, scoped to `self`, the vendor, or the whole run, with a **require all** toggle | Unanimous gates (`require all` on) and first-past-the-post gates (off). Vary the set of reviews you raise per tier to express a quorum |
+| **Assessment recommendation** | The approval option selected on the assessment, matched against a set you choose | Route `Approve with policy exception` down a different path from `Approve` |
+| **Reviewer present** | Whether a given reviewer already holds a review on the record | Avoid raising a duplicate gate on a re-triggered run |
+
+See [Reviews, approvals and gates](/user-guides/reviews-and-approvals) for how these compose into all-of, any-of, threshold-based and sequential approval patterns.
 
 ## Actions
 
@@ -60,8 +74,24 @@ Actions execute work. The available actions:
   <Card title="Transition a vendor or assessment lifecycle state" icon="arrow-right-arrow-left" />
   <Card title="Assign a task to an internal owner" icon="user-check" />
   <Card title="Wait for human review" icon="user-clock" />
+  <Card title="Raise a review gate, generic or scoped to a risk domain" icon="gavel" />
+  <Card title="Update a review's status, outcome or notes" icon="pen-to-square" />
+  <Card title="Create or update a work queue item" icon="list-check" />
+  <Card title="Create or update a finding, obligation, contract or engagement" icon="triangle-exclamation" />
+  <Card title="Send an email, or a portal to a vendor" icon="envelope" />
+  <Card title="Create a Jira issue or a ServiceNow record" icon="ticket" />
   <Card title="Fire a webhook to an external endpoint" icon="arrow-right-from-bracket" />
 </CardGroup>
+
+### Review gates and approvals
+
+The **raise a review gate** action is how approval logic is expressed.
+
+- **Scope.** A review attaches to an assessment, a contract or a procurement. Adding a risk domain makes it domain-scoped, and there is exactly one review per `(assessment, risk domain)` pair, so a domain cannot be gated twice by accident.
+- **Parallel by default.** Raise several in one branch and they run at the same time, each with its own assignee, status, notes and outcome. Nothing serializes them.
+- **Routing.** The assignee can be an individual or a user group. A group resolves through its own strategy at assignment time: every eligible member for an assign-to-all group, or the next person in the rotation for a round robin, skipping anyone inside an out-of-office window. Both the group and the resolved individual are stored. See [Assignment, delegation and out of office](/user-guides/assignment-and-delegation).
+- **Work lands somewhere.** Each raised review mints a work queue item and notifies its assignee, so the gate appears on a person's Overview page rather than only on the record.
+- **Idempotent on re-trigger.** A workflow legitimately revisits the same component many times across a reject, rework and resubmit cycle, so gate actions are keyed per run and can upsert onto an existing review instead of stacking duplicates.
 
 ### `send_webhook` action
 

@@ -36,12 +36,18 @@ Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [AP
 
 ### API key scopes
 
-Most `ak_*` keys carry **no scopes**: they authenticate ordinary `/v1/*` calls but cannot reach the admin surfaces. An admin can mint a long-lived key with one or both elevated scopes for headless or middleware use:
+Most `ak_*` keys carry **no scopes**: they authenticate ordinary `/v1/*` calls but cannot reach the admin surfaces. An admin can mint a long-lived key carrying one or more elevated scopes for headless or middleware use:
 
 | Scope | Grants |
 | ----- | ------ |
 | `keys:manage` | List, create, rotate, and revoke `ak_*` keys via the [API Keys API](/api-reference/api-keys). |
 | `audit:read` | Read the org system audit log (`GET /v1/system_audit_log` and `GET /v1/system_audit_log/metadata`). |
+| `banking:read` | Read **full** supplier bank account and tax identifiers. Without it, every response returns the masked last four characters (`****4567`) and nothing more. |
+| `review:sensitive_changes` | Approve or reject a queued sensitive supplier change, and write bank details straight to active without passing through the review queue. |
+
+<Warning>
+  `banking:read` and `review:sensitive_changes` are the two scopes worth pausing on. The first lets a key read account numbers in full; the second lets a key bypass the human review that a bank-detail change would otherwise wait for. Both are deliberate, admin-minted and revocable, and neither is granted by default. Leave them off unless a specific integration genuinely needs them, and see [Data protection](/security/data-protection#role-based-masking) for what is masked without them.
+</Warning>
 
 These admin endpoints accept **either** an admin dashboard JWT **or** an `ak_*` key carrying the required scope, so you can run them headlessly without a short-lived session token. The JWT path is unchanged: key management requires the org `admin` role; audit-log reads accept the same dashboard roles as before (member, siloed-member, admin, guest).
 

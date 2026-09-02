@@ -1,6 +1,6 @@
 ---
 title: "Data protection"
-description: "Encryption, tenant isolation, key management, retention, and deletion."
+description: "Encryption in transit and at rest, field-level encryption and role-based masking of sensitive identifiers, tenant isolation, key management and rotation, data residency, retention and deletion."
 icon: "lock"
 ---
 
@@ -8,19 +8,59 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-Your vendor data, assessment evidence, and contracts are protected in transit and at rest, isolated to your organization, and held only as long as you need it.
+Your vendor data, assessment evidence, contracts and supplier identifiers are protected in transit and at rest, isolated to your organization, masked from anyone who does not need to see them in full, and held only as long as you need them.
 
 ## Encryption
 
 <CardGroup cols={2}>
   <Card title="In transit" icon="lock">
-    All connections use TLS 1.2 or higher, with certificates from recognized authorities. There is no unencrypted surface: the API, the dashboard, and the MCP server are HTTPS only.
+    All connections use TLS 1.2 or higher, with certificates from recognized authorities. There is no unencrypted surface: the API, the dashboard, the vendor portal and the MCP server are HTTPS only.
   </Card>
 
   <Card title="At rest" icon="database">
-    Customer data is encrypted at rest in our managed data stores and object storage using industry-standard algorithms.
+    Customer data is encrypted at rest with AES-256 across every store: the transactional database, object storage, search indexes, block storage and backups. Encryption is enforced at the infrastructure level rather than left to the application.
   </Card>
 </CardGroup>
+
+### Field-level encryption
+
+Some data is worth stealing on its own, so it is not stored in a readable column even inside an already-encrypted database. Supplier **bank account identifiers** and **tax registration numbers** are sealed individually with **AES-256-GCM**, under a dedicated key held separately from the database.
+
+- **Authenticated encryption.** Each value set is sealed as a single envelope carrying its own nonce, so a ciphertext cannot be tampered with undetected or replayed onto another record.
+- **Versioned keys, rotatable without a migration.** Every envelope records the key version it was sealed under, so the key can be rotated while previously sealed rows keep opening under the version that wrote them.
+- **One decryption path.** Exactly one module can open an envelope, and it is reached only by a caller holding the elevated banking scope or by a validation path that genuinely needs the raw value. Nothing else in the platform can decrypt.
+- **Blind matching.** "Is this the same account we already hold?" and "did this account change?" are answered with a one-way HMAC fingerprint over the normalized identifiers, so change detection never decrypts anything and a fingerprint reveals nothing about the value behind it.
+
+### Role-based masking
+
+Encryption protects the stored value. Masking is what governs whether anyone sees it, on screen, in an export, or in a webhook payload.
+
+A sensitive identifier is represented by its **last four characters and nothing else** everywhere except an explicitly scoped read. That rule is enforced in one place that every consumer passes through, so adding a new report, integration or event cannot quietly add a new leak.
+
+| Surface | What it shows |
+| --- | --- |
+| Dashboard, without the banking scope | Masked to last four |
+| API response, without the banking scope | Masked to last four |
+| Change-event diffs and webhook payloads | Masked to last four, on both the old and new value |
+| Notifications and emails | Masked to last four |
+| Logs | Never carry the value at all |
+| API read carrying the elevated banking scope | Full value, and the read is recorded |
+
+Institution-identifying fields that a reviewer actually needs to sanity-check a change, such as the bank name, SWIFT/BIC, bank code and branch code, stay readable. The account identifier does not. A reviewer can therefore approve or reject a bank-detail change on the evidence that matters without ever being shown the account number.
+
+<Note>
+  Separation of duties is enforced on the same data. A service account, which is what every API key authenticates as, can **request** a change to supplier bank details, and by default cannot **approve** one: approval stays with a person. Bypassing that queue requires a separate, admin-minted, revocable scope that no key carries unless an admin deliberately grants it. See [API key scopes](/conventions#api-key-scopes).
+</Note>
+
+### Beneficial-owner and officer data
+
+Personal data about a third party's officers and ultimate beneficial owners is handled as a distinct, higher-sensitivity class rather than as ordinary vendor data.
+
+- **Off by default.** Officer and beneficial-owner screening is not enabled unless your organization deliberately turns it on, because screening a person means holding watchlist assertions about a named private individual.
+- **Sourced, not guessed.** Only people named in a corporate registry filing are eligible as subjects, and only where their link to the vendor was accepted rather than merely plausible.
+- **Its own permission.** Screening results are a separate access-control resource with its own read, update and export permissions, so a compliance reviewer can be given the screening queue without vendor edit rights, and a vendor owner can hold the vendor without the ability to close a sanctions match. There is no human create or delete; matches are written by the pipeline.
+- **Classified and cascading.** Identity attributes sent to a screening provider are classified as personal data, and every artifact cascades on subject deletion, so retiring a subject is a delete rather than an orphaned row.
+- **Erasure reaches the provider.** A monitored profile is personal data held at a provider on Coverbase's instruction. Deleting a vendor, merging one away, or dropping it out of monitoring queues the profile's retirement at the provider too, and an unreachable provider delays that rather than dropping it.
 
 ## Tenant isolation
 
@@ -37,7 +77,19 @@ Coverbase is multi-tenant, and isolation between tenants is enforced in depth ra
 
 ## Key and secret management
 
-Application secrets and credentials are stored in a managed secrets service (AWS Secrets Manager), not in source code or configuration files. Secrets are never committed to source control, and access to them is restricted and logged.
+<CardGroup cols={2}>
+  <Card title="Managed keys with automatic rotation" icon="key">
+    Encryption keys are AWS KMS customer master keys held in Coverbase's account, with **automatic key rotation enabled**. Keys are separated by purpose rather than shared: distinct keys for the database, object storage, search, block storage, the secrets store, and individual integration credential stores.
+  </Card>
+
+  <Card title="Secrets never live in the database" icon="vault">
+    Application secrets and per-organization integration credentials are stored in a managed secrets service (AWS Secrets Manager), one secret per credential rather than one shared document, under a key prefix scoped to the owning organization. The database holds a pointer and metadata; the value is never in a column, in source control, or in a config file. No route ever returns a stored credential.
+  </Card>
+</CardGroup>
+
+<Info>
+  **Customer-managed keys.** Coverbase does not currently offer bring-your-own-key against a KMS key in your own AWS account. Encryption keys are Coverbase-managed KMS CMKs, separated by purpose and rotated automatically, as described above. If a customer-managed key is a control requirement for your program, raise it with your Coverbase team at [security@coverbase.ai](mailto:security@coverbase.ai) so it is scoped rather than assumed.
+</Info>
 
 ## Network controls
 
@@ -49,13 +101,18 @@ Organizations can lock down where API access is allowed to originate from.
 
 ## Data residency
 
-Customer data is hosted on managed cloud infrastructure. For specific data-residency requirements, contact [security@coverbase.ai](mailto:security@coverbase.ai) to discuss your needs.
+The multi-tenant Coverbase production environment runs on AWS in the **United States** (`us-east-1`), across multiple availability zones. Customer data, backups and search indexes stay within that region.
+
+The entire platform is defined as infrastructure-as-code and parameterized by region, so a deployment in another AWS region, including the EU, is a configuration of the same stack rather than a rebuild. Programs with a specific residency obligation should raise it during evaluation: contact [security@coverbase.ai](mailto:security@coverbase.ai) and we will tell you what is available on what timeline rather than leaving it open.
+
+Subprocessors that process customer data are assessed before onboarding and reviewed on a recurring basis, and the current list is available on request. See [Security governance](/security/governance#vendor-and-subprocessor-management).
 
 ## Retention and deletion
 
 - **Retention.** We retain customer data for the life of your subscription and the period defined in your agreement and our privacy policy.
-- **Deletion.** On contract termination, customer data is deleted in line with the agreed terms. You can also delete or archive records yourself through the dashboard and API throughout the engagement.
+- **Deletion.** On contract termination, customer data is deleted in line with the agreed terms. You can also delete or archive records yourself through the dashboard and API throughout the engagement, and deletion cascades to the dependent artifacts rather than orphaning them.
 - **Backups.** Deleted data ages out of backups according to the backup-retention schedule.
+- **Export before exit.** Everything is retrievable before you leave, through the [Export API](/export-api-concepts), bulk document download, and per-assessment [evidence packages](/reporting/due-diligence-file). See [Contract terms and exit](/security/contract-terms).
 
 <Card title="Privacy policy" icon="user-shield" href="https://www.coverbase.com/privacy-policy">
   See the Coverbase Privacy Policy for how we handle personal data, including data-subject requests.

@@ -1,0 +1,105 @@
+---
+title: "Support, service levels and escalation"
+description: "Coverbase support channels, the P0 to P3 severity ladder with response and update commitments, the on-call escalation path, the 99.9% uptime SLO and how it is measured, and the public status page."
+icon: "headset"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase's support commitments are contractual. This page states them in plain terms so you can diligence them before you sign, and hold us to them afterwards.
+
+<Note>
+  The commitments below describe the standard Coverbase SLA. Your executed agreement governs, and enterprise terms can differ. Ask your account team for the SLA exhibit if you want the exact language.
+</Note>
+
+## Channels
+
+<CardGroup cols={3}>
+  <Card title="Product support" icon="envelope" href="mailto:support@coverbase.ai">
+    [support@coverbase.ai](mailto:support@coverbase.ai) for anything about using the product, and for incident reports.
+  </Card>
+  <Card title="Security" icon="shield-halved" href="mailto:security@coverbase.ai">
+    [security@coverbase.ai](mailto:security@coverbase.ai) for vulnerability reports, security questionnaires and documentation requests. Reports are acknowledged within one business day.
+  </Card>
+  <Card title="Your account team" icon="user-tie">
+    Every customer has a named account contact. Enterprise customers also have a shared channel with the Coverbase team for day-to-day questions.
+  </Card>
+</CardGroup>
+
+Coverbase's own status is published at [status.coverbase.com](https://status.coverbase.com), with per-component state and an incident history you can subscribe to. A person publishes every status-page incident: monitoring detects and pages, and a responder decides what customers are told.
+
+## Severity ladder
+
+Every issue is classified on a four-level ladder. Severity drives the response clock, the update cadence, and whether a human is woken up.
+
+| Severity | Definition | Response | Updates | Pages on-call |
+| --- | --- | --- | --- | --- |
+| **P0** | Sustained loss of service where critical features are unavailable for 15 minutes or more, with no reasonable workaround | **30 minutes** | Every **12 hours** until resolved, plus a root-cause analysis afterwards | **Yes**, to a phone |
+| **P1** | Severe degradation short of an outage, such as sustained load times beyond 30 seconds | 12 hours | Every 24 hours | No |
+| **P2** | Partial or moderate impact | 24 hours | Every 48 hours | No |
+| **P3** | Minor or cosmetic | 48 hours | Every 96 hours | No |
+
+The P0 definition names specific capabilities rather than leaving "critical" to argument. Sustained loss of any of these is a P0:
+
+1. Access to the Coverbase dashboard
+2. Modifying and saving controls
+3. Creating vendor records
+4. Initiating assessments
+5. Uploading or requesting vendor documents
+6. Reviewing issues and initiating email follow-ups
+7. Receiving monitoring alerts from your monitoring rules
+8. Adding or removing organization member access
+
+## Escalation path
+
+Escalation is automated, timed, and reached over its own path rather than through Slack, so a chat outage cannot stop a page from going out.
+
+<Steps>
+  <Step title="Detection">
+    Synthetic checks perform each of the eight capabilities above end to end, from outside the production region, on a continuous schedule, exactly the way a customer would. Server-side alarms run alongside them to pinpoint the failing layer. A customer report is equally valid detection and follows the same path.
+  </Step>
+  <Step title="Page, immediately">
+    A P0 alarm rings the primary on-call engineer and the CTO at once, over a paging service reached on its own path rather than through Slack.
+  </Step>
+  <Step title="Escalate if unacknowledged">
+    At **10 minutes** unacknowledged, the secondary on-call is added. At **20 minutes**, the CTO alone is paged again. The ladder is deliberately built to finish inside the 30-minute response commitment rather than to land its last page on the deadline.
+  </Step>
+  <Step title="Communicate">
+    Customer impact goes on the status page once confirmed, without waiting to establish whether it will formally qualify as a P0. Updates follow at the cadence the severity requires.
+  </Step>
+  <Step title="Close the loop">
+    Every material incident is followed by a post-incident review, and a P0 carries a root-cause analysis to customers.
+  </Step>
+</Steps>
+
+If an issue is not progressing at the pace its severity implies, escalate to your account contact, and to Coverbase leadership through them. Every level of that ladder is a named person, not a queue.
+
+## Uptime
+
+Coverbase commits to **99.9% monthly uptime at a P0 level**, measured per calendar month. In an average month that is an error budget of roughly 44 minutes.
+
+How the number is produced matters as much as the number:
+
+- **Measured as a customer experiences it.** The primary measure for every committed capability is its synthetic check, run from outside the production region over the public internet. Server-side metrics alone cannot see frontend breakage or a sign-in lockout, because neither reaches our servers.
+- **Counted conservatively.** Downtime is counted from the minute after the last passing check, so a recorded outage is never shorter than the real one. Recovery is minute-accurate.
+- **No silent exclusions.** Nothing is excluded automatically, scheduled maintenance included. Where a correction is warranted it is made by hand and documented.
+- **Declared incidents count.** Downtime a person observed enters the monthly number exactly as check-detected downtime does, whether or not an alarm fired.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Contract terms and exit" icon="file-contract" href="/security/contract-terms">
+    Incident notification, data return and destruction, renewal and notice periods.
+  </Card>
+  <Card title="Security governance" icon="sitemap" href="/security/governance">
+    The incident-response and business-continuity program behind these commitments.
+  </Card>
+  <Card title="Compliance and assurance" icon="certificate" href="/security/compliance">
+    SOC 2 Type II, penetration testing, and how to request reports.
+  </Card>
+  <Card title="Working with Coverbase" icon="handshake" href="/security/working-with-coverbase">
+    Roadmap transparency, release cadence, and how customers influence what gets built.
+  </Card>
+</CardGroup>
