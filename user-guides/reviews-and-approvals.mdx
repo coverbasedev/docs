@@ -1,0 +1,182 @@
+---
+title: "Reviews, approvals and gates"
+description: "How review gates work in Coverbase: configurable outcomes including approve with finding, policy exception and return for rework; parallel domain-scoped SME reviews; multi-approver logic; and rework loops with reasons, comments and round counts."
+icon: "gavel"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User guides](/user-guides/overview) collection. It is for admins and program owners designing the decision points in a third-party lifecycle. For who is allowed to press the button, see [Permissions and roles](/user-guides/permissions-and-roles). For who the button lands on, see [Assignment, delegation and out of office](/user-guides/assignment-and-delegation).
+</Info>
+
+A **review** is Coverbase's gate object. It is one accountable decision by one named party on one thing, and it carries the decision, the reason, the comment thread, and the round it happened on. Everything else in this guide is a way of arranging reviews: several in parallel, several in sequence, some conditional on an amount or a risk tier, and any of them able to send the work back.
+
+## What every gate records
+
+<CardGroup cols={3}>
+  <Card title="Who" icon="user-check">
+    The assigned reviewer, and the user group they were drawn from when the gate was routed to a team rather than a person. Both are stored, so group intent and individual accountability survive together.
+  </Card>
+  <Card title="What" icon="circle-check">
+    The outcome your organization defined, plus the review's status. Outcome and status are separate: a review can be `In review` and still carry no outcome, and a completed review always carries one.
+  </Card>
+  <Card title="Why" icon="comment-dots">
+    The reviewer's own decision notes, the admin-authored instructions the gate was raised with, and, on a return for rework, the revision message that goes back to whoever owes the work.
+  </Card>
+</CardGroup>
+
+Reviews are first-class records. They appear in the audit trail, they raise `Review.StatusChanged`, `WorkQueueItem.Created` and `WorkQueueItem.Completed` events you can subscribe to over [webhooks](/integrations/webhooks), they accept [custom fields](/api-reference/custom-fields), and they can be created and updated by a workflow as well as by a person.
+
+## Gate outcomes are yours to define
+
+Coverbase does not hard-code an approval vocabulary. **Configuration → Assessment settings → Approval options** holds a list your organization owns, each option carrying a label, a color, and an icon. A new organization starts with three, and most regulated programs extend them.
+
+| Shipped default | What regulated teams commonly add alongside it |
+| --- | --- |
+| **Approve** | Nothing; a clean approval is a clean approval |
+| **Conditionally approve** | **Approve with finding**: approved, with a tracked finding and an owner. **Approve with policy exception**: approved against standard, with the exception recorded, time-boxed and reportable. |
+| **Reject** | **Return for rework**: not a rejection. The work goes back to the previous party with a reason and a comment, and the round count increments. |
+
+<Tip>
+  Name outcomes the way your policy names them, not the way the software does. The outcome label is what appears on the vendor record, in exports, in board reporting, and in the filter menu, so "Approved with policy exception" reads correctly to an examiner in a way that "Conditionally approve" does not.
+</Tip>
+
+Options are archived rather than deleted, so an assessment closed two years ago under an outcome you have since retired still reports the outcome it was actually closed under.
+
+### Outcomes drive what happens next
+
+An outcome is not just a label on a record. The workflow engine can branch on it:
+
+- **Assessment recommendation condition** matches the selected approval option against a set you choose, so `Approve with policy exception` can route to a different downstream path than `Approve` - raising an exception record, notifying the second line, and scheduling an earlier reassessment.
+- **Review outcome** (`approved`, `conditionally approved`, `rejected`) is stored on the review itself and is what gating conditions read when several reviews have to agree.
+
+See [Workflow engine](/integrations/workflow-engine#review-gates-and-approvals).
+
+## Parallel domain-scoped reviews
+
+A third party is rarely one risk. Coverbase models the split with **risk domains**, and a review can be scoped to exactly one of them.
+
+An organization defines its own domains. A common financial-services set is Data Security, Operational Resilience, Regulatory & Compliance, Financial Stability, Privacy & Data Protection, Concentration & Fourth-Party Risk, AI & Emerging Technology, and Reputational & ESG. Rename them InfoSec, Finance, AML, Legal and Privacy if that is what your committees are called.
+
+<Steps>
+  <Step title="Assign standing reviewers per domain">
+    Each risk domain carries its own reviewer list: individual users, user groups, or both. Assigning the AML group to the Financial Crime domain once means every AML review from then on routes there without anyone picking a name.
+  </Step>
+  <Step title="Issue the domain reviews together">
+    One assessment carries one review per domain, created at the same time. Each is a separate record with its own assignee, its own status, its own outcome, and its own notes. There is exactly one review per `(assessment, risk domain)` pair, so a domain cannot be reviewed twice by accident.
+  </Step>
+  <Step title="Each SME decides independently">
+    Every domain review mints its own work queue item for its own reviewer. InfoSec approving does not move Finance, and Legal returning its scope for rework does not reopen AML's decision. The reviews complete in whatever order the SMEs complete them.
+  </Step>
+  <Step title="Roll the domain outcomes up">
+    Domain scores and domain outcomes roll up to the assessment, the service, the engagement, and the vendor. Reporting can show the assessment-level answer and the per-domain answers that produced it.
+  </Step>
+</Steps>
+
+<Note>
+  Domain scoping runs the whole way down. Control sets can be sectioned by domain, the inherent-risk questionnaire can be sectioned by domain, findings can be assigned per domain, and Radar detectors can be tagged with the domains they inform. An SME who only owns Financial Crime sees the Financial Crime slice of the evidence, not the whole assessment.
+</Note>
+
+## Multi-approver logic
+
+Any object that carries reviews can carry several at once. How they combine is a workflow decision, not a fixed rule.
+
+<AccordionGroup>
+  <Accordion title="All of them must approve (unanimous)" icon="users-line" defaultOpen>
+    Raise one review per approver, then gate the next step on a **work queue item complete** condition scoped to the workflow run with **require all** set. The gate stays shut until every review raised by that run is complete, whichever order they finish in.
+  </Accordion>
+
+  <Accordion title="Any one of them is enough (1 of M)" icon="user-check">
+    The same condition with **require all** turned off. The first completion opens the gate. Use it for a duty-officer rotation where anyone on the roster can clear a low-risk item.
+  </Accordion>
+
+  <Accordion title="N of M, and quorum by tier" icon="layer-group">
+    Express the quorum as the set of reviews you raise. A branch that raises three reviews and requires all three is a 3 of 3; a branch that raises only the two domains the intake actually implicated is a 2 of 8 against the full domain list. Because the conditions that decide which reviews get raised are evaluated per record, the quorum for a tier 1 vendor and a tier 4 vendor can differ without a second workflow.
+  </Accordion>
+
+  <Accordion title="Threshold and amount-based routing" icon="scale-balanced">
+    A **contract value** condition compares the total value of the contracts on a procurement against a threshold you set, with `greater than` and `less than or equal` operators, so a request above your delegation-of-authority limit picks up the extra approver and one below it does not. Structured contract amounts are summed when present. Two currencies are never silently converted; the comparison refuses rather than guessing a rate.
+
+    Amount is one axis. Conditions can equally branch on inherent-risk score, vendor tier, data classification, hosting model, jurisdiction, questionnaire answers, tags, whether prior evidence exists, and any custom field, composed with `AND` / `OR` and nested.
+  </Accordion>
+
+  <Accordion title="Sequential approval chains" icon="arrow-right-arrow-left">
+    Chain gates by making each stage's trigger the previous stage's completion. Line one reviews, then the second line, then the committee. Each stage is a review in its own right with its own outcome, so a chain that stops at stage two shows exactly where it stopped and why.
+  </Accordion>
+</AccordionGroup>
+
+## Return for rework
+
+Every review gate can send work back instead of ending it. A return for rework is a first-class transition, not a rejection with a different comment.
+
+### What a return records
+
+| Recorded | Where it lives |
+| --- | --- |
+| **Reason** | The outcome your organization selected, such as `Return for rework` or a narrower reason code like `Insufficient evidence` or `Missing DPA`. Because outcomes are your own list, the reason vocabulary is your own reason-code set. |
+| **Comment** | A free-text revision message, written in the **Request revision** dialog. It is the text the counterparty actually reads, and it is stored on the round it was raised against. |
+| **Who and when** | The reviewer who returned it and the timestamp, stamped automatically on the transition. |
+| **Round** | The round number. Rounds auto-increment: the first submission is round 1, the response to the first return is round 2, and so on. |
+
+### Rounds are the cycle count
+
+Coverbase keeps every round rather than overwriting the last one. A returned item does not edit the previous submission; it opens a new round beside it.
+
+```text
+Round 1  submitted 12 Mar    reviewed 14 Mar   Revision requested
+         "SOC 2 is for the parent entity, not the contracting entity.
+          Please provide the report covering Acme UK Ltd."
+Round 2  submitted 21 Mar    reviewed 22 Mar   Revision requested
+         "Report received. Section 4 exceptions have no management response."
+Round 3  submitted 28 Mar    reviewed 28 Mar   Accepted
+```
+
+Because the rounds are rows rather than edits, the cycle count is a number you can read, filter, sort and report on: how many rounds this assessment took, which control areas generate the most rework, which vendors take three rounds where their peers take one, and how long each round sat with each side. The counterparty-facing surfaces read the same rounds, so what the vendor sees and what your examiner sees are the same history.
+
+### Where rework loops apply
+
+<CardGroup cols={2}>
+  <Card title="Questionnaire and evidence rounds" icon="clipboard-question">
+    A submitted questionnaire or evidence request can be returned to the vendor portal with a revision message. The portal reopens on the returned items only, and the vendor's completeness gate treats a returned round as outstanding work.
+  </Card>
+  <Card title="Remediation commitments" icon="handshake">
+    A vendor's completion evidence for a commitment can be pushed back with a message, returning the commitment to its prior state and reopening the portal. Coverbase can pre-draft that message from the evidence it read, but nothing goes back to the vendor until a person sends it.
+  </Card>
+  <Card title="Internal reviews" icon="user-clock">
+    A domain, contract, procurement, or assessment review can be set to a returned status with reviewer notes, which reopens the upstream work queue item rather than closing the gate.
+  </Card>
+  <Card title="Intake requests" icon="inbox">
+    An intake request that arrives incomplete goes back to the requester with what is missing, instead of being rejected and re-filed as a new request that loses its history.
+  </Card>
+</CardGroup>
+
+## Attribution and audit
+
+Every transition above is attributable.
+
+- The review stores its assignee, the group it was routed through, its creator, and the reviewer who decided it.
+- Each round stores who submitted it, under which email address, who reviewed it, and when. A round that was amended after submission keeps the original submit time and records the edit separately.
+- Group routing writes its own log row for each assignment: which group, which strategy, who was notified, who was assigned, and what triggered it.
+- Role and permission changes that affect who could approve are logged on the role itself and in the organization audit trail.
+
+All of it is readable through the [audit API](/security/audit-trails) and exportable.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Assignment, delegation and out of office" icon="user-clock" href="/user-guides/assignment-and-delegation">
+    How a gate reaches a person, what happens when they are away, and how delegation is attributed.
+  </Card>
+  <Card title="Workflow engine" icon="gears" href="/integrations/workflow-engine">
+    The triggers, conditions and actions that raise gates and read their outcomes.
+  </Card>
+  <Card title="End-to-end workflows" icon="route" href="/integrations/end-to-end-workflows">
+    A worked parallel-review-and-approval lifecycle, with every API and webhook touchpoint.
+  </Card>
+  <Card title="Configuring your data model" icon="sliders" href="/user-guides/data-model-configuration">
+    Approval options, statuses, risk domains, custom fields and the rest, all self-serve.
+  </Card>
+</CardGroup>

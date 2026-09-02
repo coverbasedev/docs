@@ -20,7 +20,7 @@ The integration model is built around three layers: inbound API calls that bring
   </Card>
 
   <Card title="Orchestration" icon="diagram-project">
-    Once data lands, the workflow engine takes over. Triggers fire on object events, schedules, or external invocation. Conditions branch the flow. Actions execute the work: send a questionnaire, request evidence, run Copilot, wait for human review.
+    Once data lands, the workflow engine takes over. Triggers fire on object events, schedules, or external invocation. Conditions branch the flow on risk score, tier, data class, jurisdiction, or contract value. Actions execute the work: send a questionnaire, request evidence, run Copilot, raise review gates in parallel, and wait for their outcomes.
   </Card>
 
   <Card title="Outbound" icon="arrow-right-from-bracket">
@@ -58,7 +58,7 @@ flowchart LR
 For the platforms Coverbase integrates with natively - including bidirectional GRC deployments running in production today - see the [platform-specific guides](/integrations/guides/processunity), and [integration patterns](/integrations/patterns) for the four shapes those integrations compose.
 
 <Info>
-  The orchestration layer is configured once during onboarding. After that, both the configuration and every running workflow instance are reachable through the API. You can interrupt, modify, or replace any step at any time, through either the dashboard or the API.
+  **Orchestration is yours to configure and to change.** Workflows are built in a no-code designer in the **Workflows** section of the dashboard: pick a trigger, add conditions, add actions, activate. Coverbase will build the first set with you during onboarding, and they are handed over as ordinary editable definitions rather than as locked configuration. After that, both the definitions and every running instance are reachable through the dashboard and the API, so you can interrupt, modify, or replace any step at any time. See [Configuring your data model](/user-guides/data-model-configuration).
 </Info>
 
 ## Public API surface
@@ -74,6 +74,7 @@ The public resource API covers these operations:
 | Finding | List, create, get, status-sync (`/v1/findings`) |
 | Obligation | List, create, get, status-sync (`/v1/obligations`) |
 | Workflow | Run, get run with steps (`POST /v1/workflows/{name}/run`, `GET /v1/workflows/runs/{id}`) |
+| Custom field | Discover definitions, read and write values (`/v1/custom-fields`) |
 | Webhook | Create, list, update, delete, test (`/v1/webhooks`) |
 
 Bulk vendor/assessment loading is also available through the separate [Import API](/import-api). Control sets, statuses, tags, and scale levels are referenced **by ID** in these requests/responses; configure them in the dashboard.
@@ -106,6 +107,10 @@ Bulk vendor/assessment loading is also available through the separate [Import AP
   </Card>
 
   <Card title="End-to-end workflows" icon="route" href="/integrations/end-to-end-workflows">
-    Full lifecycle walkthroughs for onboarding, monitoring, and offboarding.
+    Full lifecycle walkthroughs for onboarding, parallel review, monitoring, and offboarding.
+  </Card>
+
+  <Card title="Reviews, approvals and gates" icon="gavel" href="/user-guides/reviews-and-approvals">
+    Gate outcomes, parallel domain-scoped SME reviews, multi-approver logic, and rework loops.
   </Card>
 </CardGroup>

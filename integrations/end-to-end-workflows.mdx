@@ -8,11 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The walkthroughs below trace three full lifecycle workflows. These are illustrative templates configured per customer during onboarding; the step narration uses conceptual event names for readability. For the authoritative, case-sensitive list of subscribable events and the exact API request/response schemas, always defer to the [event catalog](/integrations/webhooks#event-catalog) and the [API reference](/api-reference/assessments).
-
-<Warning>
-  Automatic delivery of domain events to subscribed webhook endpoints is not currently wired up in the platform; see the [Webhooks](/integrations/webhooks) page. The "Webhook fired" annotations below describe the intended orchestration, not a guaranteed delivery you can rely on today.
-</Warning>
+The walkthroughs below trace three full lifecycle workflows. Each is built from the same no-code triggers, conditions and actions any admin composes in the **Workflows** section of the dashboard, so treat them as worked examples to copy and edit rather than as fixed templates; the step narration uses conceptual event names for readability. For the authoritative, case-sensitive list of subscribable events and the exact API request/response schemas, always defer to the [event catalog](/integrations/webhooks#event-catalog) and the [API reference](/api-reference/assessments).
 
 ## Workflow A: Vendor onboarding
 
@@ -49,6 +45,8 @@ A new third-party request enters Coverbase from procurement, gets risk-classifie
     - If `customer_pii` is present and the vendor has SaaS hosting, route to the full security and privacy assessment path.
     - If the engagement is a commodity, with no data access and no system integration, route to a lightweight financial and compliance check and skip directly to procurement approval.
 
+    Amount is a branch too: a contract-value condition compares the total value of the contracts on the procurement against your delegation-of-authority threshold, so a request above the limit picks up the extra approver and one below it does not.
+
     This is a configured branch. The configuration itself is API-readable and API-modifiable.
   </Step>
 
@@ -76,10 +74,26 @@ A new third-party request enters Coverbase from procurement, gets risk-classifie
     **Webhook fired:** `evaluation.flagged`, one per finding. Your Jira instance receives webhooks and creates tickets.
   </Step>
 
-  <Step title="Reviewer approves or rejects">
-    A human reviewer in Coverbase approves the assessment, optionally with mitigations recorded. The vendor transitions from `intake` to `active`.
+  <Step title="Domain reviews are issued in parallel">
+    **Action:** create one review per implicated risk domain, each scoped to that domain and routed to its standing reviewers, individually or as a user group. InfoSec, Financial Crime, Legal, Privacy and Finance receive their own work queue item and see the slice of the evidence they own.
 
-    **Webhook fired:** `assessment.approved` and `vendor.status_changed`. The Ariba integration receives `vendor.status_changed` and unblocks the procurement record. Contract management receives the same event and starts contract drafting with risk context attached.
+    Each review carries its own assignee, status, notes and outcome, and they complete in whatever order the SMEs complete them. One domain returning its scope for rework does not reopen another domain's decision.
+
+    **Webhook fired:** `WorkQueueItem.Created`, one per domain review, so your ITSM or GRC platform can mirror the queue.
+  </Step>
+
+  <Step title="The gate resolves">
+    **Condition:** a work-queue-item-complete condition scoped to the workflow run, with `require all` set, holds the next step until every domain review is decided. Set `require all` off for a first-past-the-post gate, and raise a different set of reviews per tier to express a quorum.
+
+    Each reviewer selects an outcome from your organization's own list: **Approve**, **Approve with finding**, **Approve with policy exception**, **Reject**, or **Return for rework**. The selected outcome is a branch point: an assessment-recommendation condition routes a policy exception down a different path from a clean approval, raising the exception record and scheduling an earlier reassessment.
+
+    **Webhook fired:** `Review.StatusChanged` and `WorkQueueItem.Completed` per decision, then `assessment.approved` and `vendor.status_changed` once the gate clears. The Ariba integration receives `vendor.status_changed` and unblocks the procurement record. Contract management receives the same event and starts contract drafting with risk context attached.
+  </Step>
+
+  <Step title="Or the work goes back">
+    Where a reviewer selects **Return for rework**, the round is returned with a revision message rather than closed. The round number increments, the previous round is preserved rather than overwritten, and the item reappears as outstanding work for whoever owes it: the vendor in their portal, or the requester in intake.
+
+    Every loop is countable. Rounds are rows, so "how many cycles did this assessment take", "which control areas generate the most rework" and "how long did each side hold each round" are queries rather than reconstructions. See [Reviews, approvals and gates](/user-guides/reviews-and-approvals#return-for-rework).
   </Step>
 
   <Step title="Contract Guardian runs on the agreement">
@@ -194,12 +208,15 @@ POST /v1/webhooks             Register outbound endpoints
 
 Workflow Engine
 ─────────────────────────────────────────────────────────────────
-Triggers       ▶  Conditions    ▶  Actions
-Object events     IRQ score        Create assessment
-Schedules         Data class       Send questionnaire
-External calls    Tier             Run Copilot, Inspect, Guardian
-                  Geography        Transition state
-                  Custom logic     Fire webhook
+Triggers       ▶  Conditions          ▶  Actions
+Object events     IRQ score              Create assessment
+Schedules         Data class             Send questionnaire
+External calls    Tier                   Run Copilot, Inspect, Guardian
+                  Geography              Raise review gate (per domain)
+                  Contract value         Assign task / work queue item
+                  Approval outcome       Transition state
+                  Reviews complete       Fire webhook
+                  Custom logic           Return for rework
 
          ▼
 
@@ -207,6 +224,7 @@ Primary Object Store
 ─────────────────────────────────────────────────────────────────
 vendor · service · engagement · assessment · evaluation
 document · contract · entity · control · control_set
+review · risk_domain · finding · obligation · work_queue_item
 
 All accessible via full CRUD API
 ```

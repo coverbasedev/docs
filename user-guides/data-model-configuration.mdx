@@ -1,0 +1,113 @@
+---
+title: "Configuring your data model"
+description: "What an admin can change in Coverbase without a professional-services engagement: custom fields on nine object types, statuses, approval options, risk scales, risk domains, tags, terminology, relationships, control sets, and automations."
+icon: "sliders"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User guides](/user-guides/overview) collection. It is the reference for what your admins can change themselves. For the order to do it in on a new environment, see [Admin and setup](/user-guides/admin-setup).
+</Info>
+
+Coverbase is configured by your team, in the product, under **Settings** and **Configuration**. Everything on this page is a screen an admin opens, not a ticket they file. Coverbase's team will happily sit with you during onboarding, and connecting a system of record such as SAP, ProcessUnity or ServiceNow is genuine integration work, but the data model itself is yours to shape and reshape.
+
+## Custom fields
+
+Add fields of your own to capture what your program tracks and Coverbase does not ship as standard: an internal tier, a regulatory scope flag, a risk-exception owner, a business-line code, a review date.
+
+<CardGroup cols={2}>
+  <Card title="Nine object types" icon="cube">
+    Fields can be defined on **vendors, services, assessments, controls, evaluations, contracts, tasks, reviews and engagements**. Each object holds one value per field definition.
+  </Card>
+  <Card title="Seven value types" icon="shapes">
+    Text, number, date, yes/no, single select, multi select, and user reference. Select fields carry the option list you define.
+  </Card>
+  <Card title="Grouped into sections" icon="layer-group">
+    Fields are organized into named, ordered sections, and a section is applied to the object types it belongs on, so a vendor form and a contract form show different things.
+  </Card>
+  <Card title="Filterable and reportable" icon="filter">
+    A custom field is a first-class field. It appears in the **Add filter** menu, in saved views, in sorting, in workflow conditions, and in the query and export APIs, under the same path everywhere. See the [field reference](/fields/overview).
+  </Card>
+</CardGroup>
+
+Custom field values can be populated by hand, by import, over the [Custom Fields API](/api-reference/custom-fields), or automatically by [Document Insights](/products/document-insights), which extracts a value from a document and carries a page citation back to the source. Automated writers never overwrite a value a person typed.
+
+<Tip>
+  A field you can name is a field you can report on. If your committee pack has a column, make it a custom field rather than a convention in a notes box, and the column fills itself.
+</Tip>
+
+## Record types and lifecycle states
+
+Coverbase's own objects are the record types, and their vocabulary is configurable.
+
+| What you configure | Where | Applies to |
+| --- | --- | --- |
+| **Statuses** | Configuration → Statuses | Vendors, services, assessments, procurements, engagements, reviews, findings, contracts, RFPs, and Radar events. Each status carries a name, a color, and a group (`unstarted`, `started`, `completed`, `canceled`) so reporting knows what an in-flight record is without hard-coding your labels. |
+| **Approval options** | Configuration → Assessment settings → Approval options | The outcome vocabulary on every gate. See [Reviews, approvals and gates](/user-guides/reviews-and-approvals). |
+| **Risk scales** | Settings → Scales | The levels your evaluations, findings and vendor tiers are scored on, with your own labels, ordering and colors. |
+| **Risk domains** | Configuration → Risk domains | The domains an assessment is split into, with standing reviewers per domain. |
+| **Tags** | Configuration → Tags | Free-form labels for cross-cutting grouping, filterable everywhere. |
+| **Terminology** | Configuration → Terminology | Rename core domain terms. If your organization says "supplier" and "issue" rather than "vendor" and "finding", the product says it too, everywhere, with no deploy. |
+
+## Relationships
+
+The relationship graph is part of the model, not a flat list of vendors.
+
+- **Vendor → service → engagement → contract.** A vendor can hold many services, each with its own risk profile, owners, and assessments; engagements bind a service to a business use; contracts hang off the relationship and resolve into components.
+- **Legal entities.** A vendor is matched to real corporate entities from registries, so the paper, the payments and the screening all attach to the entity that actually signs.
+- **Nth-party relationships.** A vendor's own suppliers are recorded as relationships, so concentration and fourth-party exposure are queryable rather than anecdotal.
+- **Documents, findings, obligations and reviews** attach to whichever level they belong to and roll up.
+- **Your own references.** External IDs are carried on records so a Coverbase vendor and its row in your ERP, CMDB or GRC platform stay joined.
+
+## Assessment content
+
+<CardGroup cols={2}>
+  <Card title="Control sets" icon="shield-check" href="/control-library">
+    Fork any of 68 library templates spanning 4,337 curated controls, or author your own from scratch. Your copy is fully editable: add controls, re-section, change weights, attach evidence sources.
+  </Card>
+  <Card title="Questionnaires" icon="clipboard-question" href="/user-guides/irq-library">
+    Build the inherent-risk questionnaire and any vendor-facing questionnaire, including branching, scoring, and per-section reviewers.
+  </Card>
+  <Card title="Clause sets" icon="file-contract" href="/user-guides/clause-set-library">
+    Your contract playbook: reference clauses with tiered fallback language, authored by hand, forked from the library, or extracted from your own template paper.
+  </Card>
+  <Card title="Report templates" icon="file-word" href="/reporting/assessment-report-templates">
+    Upload your own Word deliverable with placeholders and Coverbase fills it per assessment.
+  </Card>
+</CardGroup>
+
+## Automations
+
+The **Workflows** section of the dashboard is a no-code designer. You compose a trigger, any number of conditions, and the actions that follow, then activate it. Workflows are versioned, each run is inspectable step by step, and the same definitions are readable and writable over the API.
+
+Nothing about the orchestration layer is locked after go-live. A workflow can be edited, disabled, cloned or replaced by an admin at any time, and a running instance can be interrupted or redirected. See [Workflow engine](/integrations/workflow-engine).
+
+## What still involves Coverbase
+
+Being straight about the edges, because the line matters when you are planning a program:
+
+| Self-serve | Involves Coverbase |
+| --- | --- |
+| Everything on this page | Some modules are released behind a per-organization feature flag, among them the workflow designer, custom roles, Inspect, and features still in beta. Your account team switches them on for your organization; there is no build work and no professional-services engagement, and once a module is on, its configuration is entirely yours. |
+| Connecting DocuSign, Slack, Jira and other API-key integrations from **Configuration → External integrations** | Deep bidirectional connectors to a GRC or ERP system of record, where field mapping to your instance is real integration work. See the [platform-specific guides](/integrations/guides/processunity). |
+| Building, editing and replacing your own workflows | Nothing. Workflows built with you during onboarding are handed over as ordinary editable definitions, not as locked configuration. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Admin and setup" icon="rocket" href="/user-guides/admin-setup">
+    The setup sequence, in order, for a new environment.
+  </Card>
+  <Card title="Field reference" icon="table-list" href="/fields/overview">
+    Every field, its path, and where it can be used.
+  </Card>
+  <Card title="Reviews, approvals and gates" icon="gavel" href="/user-guides/reviews-and-approvals">
+    Configuring the decision points themselves.
+  </Card>
+  <Card title="Permissions and roles" icon="lock-keyhole" href="/user-guides/permissions-and-roles">
+    Custom roles built from resource, action and scope.
+  </Card>
+</CardGroup>

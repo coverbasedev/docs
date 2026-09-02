@@ -1,0 +1,126 @@
+---
+title: "Internal control monitoring"
+description: "Coverbase against your own applications: evidence collected from live admin consoles, 362 internal controls out of the box, drift detection between runs, and internal findings sharing the same findings, workflow and reporting machinery as third-party risk."
+icon: "building-shield"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Most risk platforms make you run two programs: one for your third parties and one for yourself, in different tools, with different evidence, different findings and different reporting. Coverbase runs both on the same objects.
+
+The third-party half is what Coverbase is best known for. This page is about the other half: evaluating the controls inside the applications **you** run, on the same control model, feeding the same findings, workflows, dashboards and audit trail.
+
+<Note>
+  Internal control monitoring is delivered by [Coverbase Inspect](/products/agentic-inspect) and is enabled per organization. If you do not see **Inspect** in your navigation, ask your Coverbase team to switch it on.
+</Note>
+
+## Evidence read from the source, not asked for
+
+Traditional compliance evidence collection is a screenshot request. Someone is asked whether MFA is enforced, they open the admin console, they screenshot it, they paste it into a ticket, and a quarter later nobody knows whether it is still true.
+
+Inspect signs in to the application tenant with **read-only** credentials and reads the answer off the live admin console itself, then records what it saw with chain-of-custody metadata: the screenshot, the source URL, the timestamp, and the request context.
+
+<CardGroup cols={2}>
+  <Card title="Read-only by construction" icon="eye">
+    The inspection identity holds a read-only role inside each target application. Authentication and authorization are separate concerns: your identity provider authenticates the inspection identity, and the target application's own read-only role is what bounds it.
+  </Card>
+  <Card title="Absent evidence is reported" icon="circle-question">
+    An observation that could not be obtained still exists and still says why: unsupported, authentication required, forbidden, inconclusive, or failed. An application that does not sell a capability is not marked down for lacking it.
+  </Card>
+  <Card title="Per-control isolation" icon="grid-2">
+    Each control gets its own run, so one control failing to collect evidence never stops the rest of the set.
+  </Card>
+  <Card title="Judgment is separate from collection" icon="scale-balanced">
+    **Explore** establishes whether the evidence can be collected at all. **Evaluate** adjudicates it against the control expectation and your scale. Progress and outcome stay separate facts.
+  </Card>
+</CardGroup>
+
+## 362 internal controls, ready to run
+
+The [Internal Controls Library](/control-library#internal-controls-library) ships **21 templates spanning 362 controls**, so a program does not start from a blank control set.
+
+| Area | Templates |
+| --- | --- |
+| Baseline | Security Configuration Baseline |
+| Identity and access | Identity & Authentication Baseline, Privileged & Administrative Access, Application Access Lifecycle |
+| Scope | Application Scope & Feature Drift, Integrations, OAuth & Connected Apps |
+| Data | Data Services & Storage Surface, PII Data Scope & Handling, Retention Residency & Deletion, Export Sharing & External Collaboration |
+| Regulated data | PHI & HIPAA Application Safeguards, GDPR & Cross-Border Privacy |
+| AI | AI Features & Model Usage, AI Agents Copilots & Autonomous Actions |
+| Resilience | Operational Resilience & Failover, Performance & SLA Conformance, Audit Logging & Monitoring |
+| Commercial | Usage Seats & Licensing |
+
+Each control states an expectation carrying its own threshold, names the admin surface that answers it plus the alternate labels different vendors use for the same screen, and defines what counts as incomplete. Fork a template and it becomes your control set, fully editable, exactly like a vendor framework.
+
+## Continuous, not annual
+
+Point-in-time evidence decays the moment an administrator changes a setting. Inspect's **Drift** mode compares a run against a compatible earlier one and reports what moved.
+
+- **Outcome** is `exact`, `changed`, or an explicit reason it could not be compared, never a silent pass.
+- **Materiality** is judged on a change: material, immaterial, or inconclusive, with a summary of what actually differs. A renamed label is not the same event as a disabled control.
+- **Re-run on a cadence you choose**, so "is MFA still enforced on the finance system" is a question your evidence answers this week rather than last audit.
+
+Drift results are findings like any other: assigned to an owner, tracked to closure, escalated by workflow, and visible in the same dashboards as third-party findings.
+
+## One risk model, both sides
+
+This is the part that matters for an enterprise risk view. Internal and third-party risk are not parallel systems in Coverbase; they are the same system pointed at two populations.
+
+| Shared object | Internal | Third party |
+| --- | --- | --- |
+| **Control sets** | Internal Controls Library, forked and edited | Vendor Controls Library: SOC 2, ISO 27001, NIST, PCI, the Interagency Guidance, and 60-plus more |
+| **Evaluations** | Read from your admin consoles | Read from vendor evidence, attestations and questionnaires |
+| **Risk domains** | The same domains, so an identity weakness scores in the same place whoever owns it | Same |
+| **Risk scales** | Your scale | Your scale |
+| **Findings** | Assigned, tracked, escalated, closed with evidence | Same objects, same queue |
+| **Workflows** | Same trigger, condition and action engine | Same |
+| **Reviews and approvals** | Same gates, same outcomes, same attribution | Same |
+| **Dashboards and reporting** | Same charts, filtered by population | Same |
+| **Audit trail** | One trail | One trail |
+
+The practical consequence: a single dashboard can show that your own privileged-access control is weak **and** that three critical vendors have the same gap, scored on the same scale, in the same risk domain. That is the question an ERM function actually asks, and it is normally the one that requires a spreadsheet.
+
+<Tip>
+  Start with the applications that already carry your regulated data. Inspect the identity provider, the CRM, the HRIS and the finance system against the Identity & Authentication Baseline and Privileged & Administrative Access sets. Those four applications and two control sets usually surface more than the first year of a manual internal control program does.
+</Tip>
+
+## Compliance evidence automation
+
+Where an internal audit or a compliance program needs evidence on a schedule rather than a request:
+
+<Steps>
+  <Step title="Define the control set once">
+    Fork the internal templates that match your framework, edit expectations to your thresholds, and attach them to the applications in scope.
+  </Step>
+  <Step title="Let Inspect collect">
+    Evidence is gathered from the live console, with the screenshot, source and timestamp attached to each observation. Nobody is asked for a screenshot.
+  </Step>
+  <Step title="Adjudicate and route the exceptions">
+    Evaluate produces the judgment against your scale. Anything that fails or is inconclusive becomes a finding with an owner, a due date and a workflow behind it.
+  </Step>
+  <Step title="Re-run and watch for drift">
+    Subsequent runs compare against the baseline. A material change is a new finding; an immaterial one is noise that does not reach anyone's queue.
+  </Step>
+  <Step title="Export the file">
+    The same [evidence packaging](/reporting/due-diligence-file) that produces a third-party due-diligence file produces the internal control evidence package, with the audit trail behind it.
+  </Step>
+</Steps>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Agentic Inspect" icon="magnifying-glass" href="/products/agentic-inspect">
+    The inspection engine itself, and the vendor-facing half of it.
+  </Card>
+  <Card title="Control Set library" icon="shield-check" href="/control-library">
+    Every internal and vendor control set, with counts and sources.
+  </Card>
+  <Card title="Findings Manager" icon="triangle-exclamation" href="/products/findings-manager">
+    The shared findings and remediation surface.
+  </Card>
+  <Card title="Regulatory alignment" icon="landmark" href="/security/regulatory-alignment">
+    How both halves map to banking supervisory expectations.
+  </Card>
+</CardGroup>

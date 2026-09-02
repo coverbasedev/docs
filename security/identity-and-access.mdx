@@ -1,0 +1,115 @@
+---
+title: "Identity and access management"
+description: "How people sign in to Coverbase and how their access ends: SAML 2.0 single sign-on with your identity provider's MFA and conditional access, just-in-time provisioning, IGA-driven lifecycle management, role-based access control, and network restriction."
+icon: "id-badge"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase does not want to be your identity provider. Authentication is delegated to the IdP your organization already governs, so the access policy you have already written, and already prove to your auditors, is the policy that applies to Coverbase.
+
+## Single sign-on
+
+<CardGroup cols={2}>
+  <Card title="SAML 2.0" icon="key">
+    Enterprise SSO over SAML 2.0, configured per organization against a verified email domain. Both **SP-initiated** and **IdP-initiated** sign-in are supported, and IdP-initiated can be switched off if your policy requires SP-initiated only.
+  </Card>
+  <Card title="Self-serve setup" icon="sliders">
+    An admin sets it up from **Organization → Single Sign-On**: copy the ACS URL and SP entity ID into your IdP, paste your IdP metadata URL back, test the connection, activate. No support ticket, no professional services.
+  </Card>
+  <Card title="Just-in-time provisioning" icon="user-plus">
+    A user who signs in through your IdP for the first time gets a Coverbase account created from the assertion. Email, first name and last name stay synchronized from the IdP on subsequent sign-ins.
+  </Card>
+  <Card title="No password to steal" icon="shield-halved">
+    An SSO user has no Coverbase password. Coverbase never sees a credential, so credential policy, rotation and recovery stay entirely inside your IdP.
+  </Card>
+</CardGroup>
+
+Coverbase runs the self-serve wizard against **Okta** today. Other SAML 2.0 identity providers, including **Microsoft Entra ID**, **Google Workspace**, **Ping** and **OneLogin**, are supported through the same connection model and are set up with your Coverbase team. Ask us before you plan around it, and we will confirm your provider on the call rather than after the contract.
+
+### MFA and conditional access
+
+Because authentication happens at your IdP, your authentication policy is enforced **before** an assertion ever reaches Coverbase:
+
+- **Multi-factor authentication** is enforced by your IdP's policy. Coverbase accepts the assertion your IdP produces; it has no way to bypass the factor your policy demanded.
+- **Microsoft Entra Conditional Access**, Okta's sign-on policies, and their equivalents apply to Coverbase as they apply to any other SAML application: device compliance, managed-device requirements, network location, risk-based step-up, session lifetime and re-authentication frequency all carry through.
+- **Application assignment** in your IdP is the outer gate. Removing the Coverbase app assignment stops sign-in immediately, regardless of what Coverbase itself still holds.
+
+<Note>
+  This is a deliberate design choice, not a gap. A separate MFA setting inside a SaaS application is a second policy to keep aligned and a second place to be wrong. Coverbase inherits yours instead.
+</Note>
+
+## Lifecycle management
+
+Provisioning, role change and deprovisioning are exposed as an API designed for identity-governance tooling to drive.
+
+| Operation | Endpoint | Behavior |
+| --- | --- | --- |
+| Provision | `POST /v1/users` | Create-or-get. Creates the account and an org membership in `invited` status, idempotent under an `Idempotency-Key`. The user links to your IdP by email on first SSO. |
+| Look up | `GET /v1/users?email=` | Resolve an email to a Coverbase user ID, for downstream owner and reviewer assignment. |
+| Change role | `PATCH /v1/users/{id}` | Move a user between Admin, Member, Siloed member, Auxiliary member and Guest. |
+| Deprovision | `PATCH /v1/users/{id}` | Archives the user and sets org membership to `inactive`. Reversible by the same call, so a leaver who returns is reactivated rather than duplicated. |
+
+This is the integration point SailPoint, Okta Workflows, Microsoft Entra lifecycle workflows and HRIS-driven joiner/mover/leaver pipelines target: your IGA platform owns the approval, and Coverbase reflects the resulting entitlement.
+
+<Info>
+  **SCIM.** Coverbase does not publish a SCIM 2.0 service-provider endpoint today. Lifecycle is driven through the Users API above, which every major IGA platform can call from an outbound connector or workflow, and which is what our identity-governance customers use. If a native SCIM endpoint is a requirement for your program, raise it with your Coverbase team so it can be planned rather than assumed.
+</Info>
+
+Removing someone's IdP assignment blocks sign-in immediately. Deprovisioning through the API additionally removes their access to org data and takes them out of assignment and notification routing. Do both; they answer different questions in an access review.
+
+## Authorization inside Coverbase
+
+Once someone is authenticated, what they can reach is governed by role-based access control.
+
+- **Six default roles** (Admin, Member, Siloed member, Auxiliary member, Guest, Service account) plus **custom roles** built from a resource, an action and a scope.
+- **Record-level scoping.** A Siloed member sees the same features against only the records they own, watch or analyze.
+- **Least privilege by default.** API keys carry no elevated scopes unless an admin grants them, and a scoped key can never grant a scope, not to itself and not to another key.
+- **Separation of duties.** Service accounts, which is what every API key authenticates as, can request a change to supplier bank details but by default cannot approve one; approval stays with a person. Bypassing that review requires a separate scope an admin has to mint deliberately and can revoke. See [API key scopes](/conventions#api-key-scopes).
+
+Full detail: [Permissions and roles](/user-guides/permissions-and-roles).
+
+## Session and network controls
+
+<CardGroup cols={2}>
+  <Card title="API IP allowlist" icon="network-wired" href="/conventions#api-ip-allowlist">
+    Restrict every public-API request to a set of IPv4/IPv6 CIDRs. The control is fail-closed and evaluates the load-balancer-provided client IP, which a caller cannot spoof.
+  </Card>
+  <Card title="Session policy at the IdP" icon="clock-rotate-left">
+    Session lifetime, idle timeout and re-authentication frequency follow your IdP's session policy for SSO users.
+  </Card>
+  <Card title="Scoped, rotatable API keys" icon="key" href="/api-reference/api-keys">
+    Admins list, create, rotate and revoke keys self-service. Each key is bound to exactly one organization.
+  </Card>
+  <Card title="Every call is logged" icon="list-timeline" href="/conventions#public-api-audit-log">
+    Every authenticated public-API request records the method, route, status, duration, key ID and name, client IP and a correlation ID. Bodies are never persisted.
+  </Card>
+</CardGroup>
+
+## Access reviews
+
+Everything an access review asks for is readable without a support request:
+
+- Current members, their roles and their membership status, from the dashboard or `GET /v1/users`.
+- What each role can actually do, from the permission matrix, exportable per role.
+- Who changed a role, and when, from the role's own activity log and the organization [audit trail](/security/audit-trails).
+- Which API keys exist, who minted them, what scopes they hold, and what each has called.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Permissions and roles" icon="lock-keyhole" href="/user-guides/permissions-and-roles">
+    The six default roles and how custom roles are built.
+  </Card>
+  <Card title="Security governance" icon="sitemap" href="/security/governance">
+    How Coverbase governs its own workforce access.
+  </Card>
+  <Card title="Data protection" icon="lock" href="/security/data-protection">
+    Encryption, field-level protection, tenant isolation and residency.
+  </Card>
+  <Card title="Audit trails" icon="list-timeline" href="/security/audit-trails">
+    The exportable record of every action.
+  </Card>
+</CardGroup>
