@@ -1,0 +1,97 @@
+---
+title: "Document expiry reminders"
+description: "How Coverbase reminds you before a vendor document lapses: which dates it fires from, who receives the email, and where to see everything that is expiring."
+icon: "bell"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers reminders on vendor documents — certificates of insurance, SOC reports, ISO certificates and anything else with an expiry. For reminders on the dates in a contract record, see [Contract dates and reminders](/user-guides/contract-dates-and-reminders).
+</Info>
+
+A certificate of insurance lapses. A SOC 2 report goes stale. An ISO certificate reaches its expiry. Coverbase can email someone before each of those happens, and this guide covers the three decisions you make: **when** the email goes out, **who** receives it, and **where** you see what is coming.
+
+## Where reminders are configured
+
+Two places, one editor. Whichever you use, you are editing the same org-wide policy.
+
+<CardGroup cols={2}>
+  <Card title="From a document" icon="file">
+    Open the vendor, open the document, then **Actions → Configure notifications**. The document's type is already selected.
+  </Card>
+  <Card title="From Documents" icon="folder-open">
+    Go to **Configuration → Documents → Reminders** for every reminder your organization has, in one table.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Reminders apply to **every document of that type, across every vendor** — not to the one document you opened. Changing the certificate of insurance reminder changes it for all of them.
+</Warning>
+
+## When the reminder fires
+
+A reminder is one or more conditions, each an offset from a date on the document:
+
+- **30 days before** the policy expiration date
+- **on** the policy expiration date
+- **7 days after** it, to chase a certificate that never arrived
+
+Which dates you can choose from depends on the document type. A certificate of insurance offers its policy expiration date, policy effective date and certificate date. A SOC report offers its publication date and audit period dates.
+
+### Certificates covering several policies
+
+A certificate of insurance often covers general liability, auto, umbrella and workers' compensation, each with its own expiry. Coverbase treats each coverage line as its own date, so a reminder fires ahead of each one. Two policies expiring on the same day produce one email that names both, rather than two that look like duplicates.
+
+### Documents with no extracted date
+
+Coverbase reads dates out of the documents it knows how to parse. For everything else — an ISO 27001 certificate, a professional licence, a tax certificate — set the date yourself: open the document, then **Actions → Set expiration date**. Once it is set, that document type can carry reminders like any other.
+
+<Note>
+  If a condition points at a date the document does not have, the editor says so. The reminder is saved, but it cannot fire until the date exists.
+</Note>
+
+## Who receives it
+
+Each reminder has a **To** line and a **Cc** line. Add any mix of:
+
+| Recipient | Resolves to |
+| --- | --- |
+| **Relationship owner** | The vendor's relationship owners, and the members of any user group set as one |
+| **Risk analyst** | The vendor's risk analysts, and the members of any user group set as one |
+| **Watcher** | Everyone watching the vendor |
+| **Uploaded by** | Whoever uploaded that document |
+| **Vendor contact** | The vendor's own contacts — an external recipient, so the picker flags it |
+| A person | One named user, the same for every vendor |
+| A user group | Every active member of that group |
+| An email address | Anything you type, the same for every vendor |
+
+Roles resolve per vendor when the reminder fires, so "risk analyst" means *that vendor's* risk analyst.
+
+<Tip>
+  To route certificate expiries to your risk analysts instead of the relationship owner, put **Risk analyst** on the To line and move **Relationship owner** to Cc — or take it off entirely.
+</Tip>
+
+### If nobody resolves
+
+If no To recipient resolves for a vendor — nobody is assigned as its risk analyst, say — Coverbase sends to the Cc line instead, so the reminder still lands. If neither line resolves to anyone, no email is sent for that vendor.
+
+## Seeing what is expiring
+
+**Configuration → Documents → Expirations** lists every date across every document, soonest first, with:
+
+- how long until it expires, or how long ago it passed
+- which coverage line it belongs to, on a certificate covering several
+- whether a reminder covers that date at all
+
+Filter by window to answer the two questions worth asking: what has **already passed**, and what expires in the **next 30 days**.
+
+<Note>
+  A row marked **No rule** has a date nobody is being reminded about. That is usually the row to act on first.
+</Note>
+
+## When reminders go out
+
+Once a day. A reminder set for "30 days before" goes out on the day that is exactly 30 days ahead of the date — not repeatedly through the month. Add several conditions if you want several nudges.
