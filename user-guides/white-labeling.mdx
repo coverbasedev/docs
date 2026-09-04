@@ -1,0 +1,78 @@
+---
+title: "White-labeling your vendor-facing domain"
+description: "Send vendor emails and host the portal on your own subdomain instead of coverbase.ai and coverbase.app, and choose between Coverbase-managed and organization-managed DNS."
+icon: "globe"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the vendor-facing *domain*: the subdomain vendor emails come from and the portal is hosted on. For logo, color, and layout branding, see [Step 1 of the Admin and setup guide](/user-guides/admin-setup#step-1-organization-users-and-branding) and [Applying your own branding](/user-guides/email-notifications#applying-your-own-branding).
+</Info>
+
+By default, Coverbase sends vendor email from `mailer@coverbase.ai` and vendors submit documents through `dashboard.coverbase.app`. That works with no setup, but most customers white-label it: hosting the vendor experience on their own subdomain instead.
+
+## Why white-label
+
+- **Higher response rates.** Vendors are more likely to open and act on email from a domain they recognize.
+- **Unified branding.** Your organization's identity stays front and center through the whole vendor interaction, not just inside the email body.
+- **Reduced friction.** Fewer "is this a phishing attempt?" questions landing on your security team's desk.
+
+## Before you start
+
+You need:
+
+- A dedicated subdomain you control, such as `vendors.yourorg.com`. Don't use your root domain, since Coverbase needs its own DNS records without touching the rest of your mail and web setup.
+- A chosen email prefix, such as `outreach@`, for the address vendor email will send from.
+- Either the ability to delegate that subdomain's nameservers, or access to create records directly with your DNS provider.
+
+Talk to your Coverbase contact to kick off setup. They'll confirm your subdomain and email prefix and help you pick one of the two paths below.
+
+## Two ways to set it up
+
+| | Coverbase-managed DNS (recommended) | Organization-managed DNS |
+| --- | --- | --- |
+| **You do** | Delegate NS records for the subdomain to Coverbase | Create and maintain ~10-12 individual records yourself |
+| **Coverbase does** | Configures and maintains TLS certificates, inbound/outbound email, and web routing | Provides the exact record values; you keep them current |
+| **Timeline** | Fully operational within 24 hours of provisioning | 1-2 weeks, due to manual coordination and troubleshooting |
+| **Choose it when** | Your policy allows delegating a subdomain's nameservers | Your organization's policy prevents Name Server delegation |
+
+### Option 1: Coverbase-managed DNS (recommended)
+
+This is the "set it and forget it" path, and the lowest-maintenance option for your IT team.
+
+Provision **NS (Name Server) records** for your chosen subdomain, pointing to Coverbase. Once delegated, Coverbase handles the configuration and ongoing maintenance of TLS certificates, inbound and outbound email traffic, and web routing on that subdomain. You won't need to touch DNS again after the initial delegation.
+
+<Tip>
+  Choose this path unless your organization's policy specifically prevents delegating a subdomain's nameservers to a third party. It's less setup work now and no maintenance later.
+</Tip>
+
+### Option 2: Organization-managed DNS
+
+Choose this if your organization's policy prevents Name Server delegation. Your team creates and manages the individual records instead, which typically takes 1-2 weeks due to the manual coordination and troubleshooting involved.
+
+Your Coverbase contact provides the specific record values once your subdomain is confirmed. The categories you'll provision:
+
+| Category | Record type | Purpose |
+| --- | --- | --- |
+| Outbound email | `TXT`, `CNAME` | DKIM and Return Path |
+| Inbound email | `MX`, `TXT` | Routes vendor replies back to the Coverbase platform |
+| Web traffic | `A` | Directs traffic from your subdomain to the API and dashboard servers |
+| Security & auth | `CNAME` | TLS certificate validation and secure authentication through the identity provider (Clerk) |
+
+<Warning>
+  These are placeholder categories, not values. Wait for your Coverbase contact to send the specific records for your subdomain rather than guessing at them, and keep them current on your end since Coverbase doesn't manage records under this path.
+</Warning>
+
+## Related guides
+
+<CardGroup cols={2}>
+  <Card title="Admin and setup guide" icon="sliders" href="/user-guides/admin-setup#step-1-organization-users-and-branding">
+    Step 1 covers organization, users, and logo branding, the setup that happens before or alongside white-labeling.
+  </Card>
+  <Card title="Email and notifications" icon="envelope" href="/user-guides/email-notifications#applying-your-own-branding">
+    How your logo and brand color flow into the emails sent from your white-labeled domain.
+  </Card>
+</CardGroup>
