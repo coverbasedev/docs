@@ -13,7 +13,7 @@ The Coverbase MCP server does not have its own permission system. Every tool cal
 This page explains how that works end to end: how a request is authenticated, how a role is resolved, and how read-only versus read/write access is decided and enforced.
 
 <Note>
-  **The short version.** Access is tied to each user's role in Coverbase. **Admins** and **Members** get read **and** write. **Guests** and **Siloed Members** are **read-only**. Change someone's role in Coverbase and it takes effect on their next request; there is nothing separate to re-issue.
+  **The short version.** Two things decide access: the **role** of the identity connecting, and the **scopes** on the credential. **Admins** and **Members** can write; **Guests** and **Siloed Members** are read-only. On top of that, an API key can be minted **read-only**, which withholds write regardless of role. Change someone's role in Coverbase and it takes effect on their next request; there is nothing separate to re-issue.
 </Note>
 
 ## Permission inheritance
@@ -47,13 +47,14 @@ Coverbase organization roles map to MCP access as follows.
 | **Siloed Member** | Yes | Yes | No (read-only) |
 | **Guest** | Yes | Yes | No (read-only) |
 | **Auxiliary Member** | No | - | - |
-| **Service Account** | No | - | - |
+| **Service Account** | API key only | Yes | No (read-only) |
 
 A few specifics:
 
 - **Read access** (search vendors, pull assessment detail, list findings, run portfolio reports, and so on) is available to every role that can connect.
 - **Write access** (creating or updating vendors, assessments, findings, obligations, notes, tags, and other records) is reserved for **Members** and **Admins**.
-- **Auxiliary Members** and **Service Accounts** cannot use the MCP server at all. These are non-interactive identities, so they are excluded from the connectable set entirely and receive a `403` if a token for one is ever presented.
+- **Auxiliary Members** cannot use the MCP server at all, and receive a `403` if a token for one is ever presented.
+- **Service Accounts** are non-interactive by design, so they cannot sign in through OAuth or a dashboard session; those paths still return `403`. They *can* hold an API key, which is what makes a programmatic read-only connection possible without a human seat. A service account can never write through MCP.
 
 <Info>
   The MCP write boundary is deliberately conservative. Write access through the connector is limited to Members and Admins, so it is **never broader** than what the same user could do in the dashboard. For some roles it is intentionally tighter. If you need a user to make changes through an assistant, give them the Member or Admin role.
@@ -73,7 +74,7 @@ Every request flows through the same gate, regardless of which client or token t
   </Step>
 
   <Step title="Enforce the connect allowlist">
-    If the resolved role is not one of the connectable roles (Guest, Siloed Member, Member, Admin), the request is rejected with `403` before any tool runs.
+    If the resolved role is not one of the connectable roles (Guest, Siloed Member, Member, Admin, plus Service Account on an API key), the request is rejected with `403` before any tool runs.
   </Step>
 
   <Step title="Enforce per-tool access">
@@ -95,7 +96,7 @@ Read-only versus read/write is not a single switch: a write tool only executes w
   </Step>
 
   <Step title="Scope check">
-    The access token must carry the **`mcp:write`** scope. Tokens can be issued without it to produce a strictly read-only connection, even for a user whose role would otherwise allow writes. (See [OAuth scopes](#oauth-scopes).)
+    The credential must carry the **`mcp:write`** scope. An API key minted read-only, or an OAuth token issued without it, produces a strictly read-only connection even for a user whose role would otherwise allow writes. (See [Scopes](#scopes).)
   </Step>
 
   <Step title="Explicit confirmation (human-in-the-loop)">
@@ -107,31 +108,59 @@ Read-only versus read/write is not a single switch: a write tool only executes w
   These checks are applied **server-side**, inside the write guard, before any database write. They do not rely on the client or the model behaving correctly. A misbehaving or compromised client cannot bypass the role check, the scope check, or the confirmation requirement.
 </Warning>
 
-## OAuth scopes
+## Scopes
 
 The server defines two scopes:
 
 | Scope | Grants |
 | --- | --- |
 | `mcp:read` | Access to all read tools (search, detail, reports). |
-| `mcp:write` | Access to write tools, in combination with a Member/Admin role and explicit confirmation. |
+| `mcp:write` | Access to write tools, in combination with a write-capable role and explicit confirmation. |
 
-By default, tokens are issued with **both** scopes, so in normal use the user's **role** is the effective read-only-versus-read/write switch. The authorization endpoint also accepts a narrower `scope` request, which makes it possible to mint a deliberately read-only token even for a user who could otherwise write.
+Every credential carries `mcp:read`. Whether it also carries `mcp:write` is fixed when the credential is issued:
+
+- **API keys** store their scopes on the key itself. Tick **Read-only** when you generate one under **Configuration → MCP Server** and the key never carries `mcp:write` — not now, and not if the owner is promoted to Admin later. The key list shows the grant on each key.
+- **OAuth tokens** are issued with both scopes by default. The authorization endpoint also accepts a narrower `scope` request, so a client can ask for `mcp:read` alone.
 
 <Note>
-  **Want a guaranteed read-only connection?** Two levers give you that:
+  A read-only credential is not merely refused at the last moment. The `mutate` tool is **hidden** from such a connection: it does not appear in the client's tool list, and `mcp_capabilities` reports no mutations. The assistant never proposes a change it cannot make, so you are never asked to confirm a write that was going to fail.
+</Note>
 
-  1. Connect with a **Guest** or **Siloed Member** account; their role blocks writes regardless of scope.
-  2. Or issue a token without the `mcp:write` scope; writes are blocked regardless of role.
+## Programmatic read-only access
 
-  Either is sufficient on its own; the write guard requires *both* a write-capable role *and* the write scope.
+The common case is a pipeline, a scheduled report, or an internal assistant that should read Coverbase and never change it. You do not need a human seat for this.
+
+<Steps>
+  <Step title="Generate the key as an admin">
+    Go to **Configuration → MCP Server** and choose **New API key**.
+  </Step>
+  <Step title="Choose what the key acts as">
+    **Service account** is the usual answer: a built-in non-human identity that needs no seat in your identity provider and never signs in. Choose **Another user** instead to attribute the key's activity to a particular member — a Guest kept for reporting, for example.
+
+    Either choice makes the key **read-only automatically**. A key that authenticates as someone else can never write, so a change is never recorded under a name that did not make it.
+  </Step>
+  <Step title="Store the key">
+    The secret is shown once. Send it as `Authorization: Bearer cb_mcp_...` from your client. See [Connecting clients](/mcp/connecting).
+  </Step>
+</Steps>
+
+<Info>
+  You keep control of a key you minted for a service identity: it appears in your key list and you can revoke it, even though it authenticates as something else.
+</Info>
+
+<Note>
+  **Want a guaranteed read-only connection?** Any one of these is sufficient on its own, because the write guard requires *both* a write-capable role *and* the write scope:
+
+  1. Mint the API key **read-only**.
+  2. Bind the key to a **service account** or another user, which forces read-only.
+  3. Connect with a **Guest** or **Siloed Member** account; their role blocks writes regardless of scope.
 </Note>
 
 ## Live revalidation
 
 Because permissions are resolved from live membership, changes you make in Coverbase propagate without any re-install or token re-issuance on the user's side.
 
-- **API-key and session tokens** look up the user's membership on **every request**. If the user has been removed from the organization, the request is rejected with `403`, even if the token itself is still otherwise valid.
+- **API-key and session tokens** look up the user's membership on **every request**. If the user has been removed from the organization, the request is rejected with `403`, even if the token itself is still otherwise valid. A key's *scopes* do not follow the role: a read-only key stays read-only through any promotion, which is what makes it safe to hand to an automation.
 - **OAuth tokens** bind the role at authorization time and **re-check live membership on every refresh**. A user who is demoted (for example, Member → Guest) or removed from the organization cannot keep using a previously elevated token: the next refresh either downgrades the role baked into the new token or fails outright. Access tokens are short-lived and clients refresh silently, so a role change converges quickly.
 
 <Info>
