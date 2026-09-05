@@ -4,6 +4,28 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-09-05: Review a vendor's attributed estate
+
+Security Intelligence now shows every domain and address it attributes to a vendor as a list you can correct, and every finding carries the step that resolves it.
+
+### New features
+
+- **Attributed estate.** The Security tab lists every asset the scan attributes to the vendor, with when each was first and last seen. Filter to what still needs a decision, and **Confirm** or **Dispute** each one from its row. A disputed asset leaves the next scan and the rating; withdrawing the dispute puts it back. See the [security intelligence guide](/user-guides/security-intelligence#attributed-estate).
+- **Add an asset the scan cannot find.** Discovery reads certificate transparency, so a host with no public certificate never appears. **Add asset** puts one in the estate, and the next scan probes and scores it like any other. Assets you add survive a scan that cannot see them.
+- **Remediation on every finding.** Opening a finding shows what was observed, whether it cost the rating points and how many, how long it has been open, and the step that fixes it. Forwarding one to a provider now hands them the change to make rather than the problem to research.
+- **Generate findings in bulk.** **Generate findings** raises a tracked finding for every scored issue at once, ticked by default and ordered by severity, for the sweep that turns up the same problem on a dozen hosts.
+- **Transport checks per host.** TLS is measured on each attributed host rather than only the vendor's main domain, so one neglected server does not hide behind a well-configured front door.
+
+### Fixes
+
+- DNSSEC, TLS reporting and email authentication no longer read as failures for domains that have simply not adopted them. Non-adoption is now recorded as an observation rather than scored like a misconfiguration, and DNSSEC is read from the signed zone rather than from the resolver's answer.
+
+### Documentation
+
+- The [security intelligence guide](/user-guides/security-intelligence) gains sections on opening a finding, raising findings from a scan, and reviewing the attributed estate, with new screenshots and three troubleshooting rows.
+
+---
+
 ## 2026-09-01: Radar signals
 
 Radar now works as one signal per event instead of the old per-detector alerts feed, with titles and summaries written for your organization.
