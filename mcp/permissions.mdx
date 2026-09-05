@@ -145,7 +145,7 @@ The common case is a pipeline, a scheduled report, or an internal assistant that
 </Steps>
 
 <Info>
-  You keep control of a key you minted for a service identity: it appears in your key list and you can revoke it, even though it authenticates as something else.
+  You keep control of a key you minted for a service identity: it appears in your key list and you can revoke it, even though it authenticates as something else. For what shows up in the audit trail once it is running, see [Attributing a key that acts as a service account](#attributing-a-key-that-acts-as-a-service-account).
 </Info>
 
 <Note>
@@ -189,7 +189,39 @@ Because permissions are resolved from live membership, changes you make in Cover
 
 ## Auditability
 
-Every tool call, read or write, is logged with the OAuth user identity, the tool name, the parameters, a timestamp, and the outcome. Write actions taken through the MCP server land in the same Coverbase audit trail as actions taken in the dashboard, so administrators have one consolidated record of who did what, regardless of whether it happened through the UI or an assistant.
+Every tool call, read or write, is logged with the connected identity, the tool name, the parameters, a timestamp, and the outcome. Write actions taken through the MCP server land in the same Coverbase audit trail as actions taken in the dashboard, so administrators have one consolidated record of who did what, regardless of whether it happened through the UI or an assistant.
+
+### Attributing a key that acts as a service account
+
+A reasonable question about any non-human credential: if it changes something, whose name is on it?
+
+For MCP keys the answer is that it cannot change anything. A key bound to a service account or to another user is read-only, and a service account is additionally excluded from the write-capable roles. **A bound key never produces a write in your audit trail**, so there is no such thing as a change you cannot trace to a person. Only a key that acts as *you* can write, and those entries carry your name exactly as if you had made the change in the dashboard.
+
+What you can still see for a bound key:
+
+<CardGroup cols={2}>
+  <Card title="Who provisioned it" icon="user-check">
+    Creating and revoking an MCP key are recorded in **Settings → Audit log** under **Integrations**, attributed to the admin who did it, with the key's name. The key also stores that admin internally, so a key always traces back to a person even though it runs unattended.
+  </Card>
+
+  <Card title="What it read, and when" icon="list-check">
+    Every tool call the key makes is logged with the connected identity, the tool, the arguments, and the outcome. Read activity is recorded, not just writes.
+  </Card>
+</CardGroup>
+
+<Warning>
+  **One service account identity is shared by every integration in your organization**, and it is the same identity behind your REST API keys. Two MCP keys bound to it are not distinguishable from each other in the per-call logs, which record the identity rather than the individual key.
+
+  So issue **one key per integration** rather than reusing a single key across several, and give each a name that says what it is for. That way the provisioning record in the audit log tells you which integration was set up when and by whom, and revoking one key stops exactly one integration instead of all of them at once.
+</Warning>
+
+<Info>
+  This differs from the [REST API](/conventions#public-api-audit-log), where each request records the calling `ak_` key's id and name alongside the shared identity. Per-key attribution on individual MCP tool calls is not available today.
+</Info>
+
+<Note>
+  If you need machine activity attributed to a distinct named identity rather than the shared service account, bind the key to a dedicated user instead: create a **Guest** for it and use **Another user** when generating the key. That costs a seat in your identity provider, which the service account option avoids, so it is a trade between attribution granularity and provisioning overhead.
+</Note>
 
 <Card title="Security and privacy" icon="shield-halved" href="/mcp/security">
   Authentication, transport security, what we log, what we don't retain, and how to revoke access.
