@@ -105,11 +105,15 @@ Choose **Confirm** when you have checked an asset and it is theirs. That records
 
 The scan only finds hosts that appear in a public certificate, so an internal host, or one the vendor never published a certificate for, never shows up on its own.
 
-<Frame caption="Adding a host the scan cannot discover on its own.">
-  <img src="/images/user-guides/vendor-intelligence-estate-add.png" alt="A dialog titled Add an Asset with a Hostname or IP address field containing api-eu.northwind-data.io and an Add and rescan button." />
+<Frame caption="Adding the hosts the scan cannot discover on its own, in one go.">
+  <img src="/images/user-guides/vendor-intelligence-estate-add.png" alt="A dialog titled Add Assets with a Hostnames or IP addresses box holding three entries on separate lines and an Add 3 and rescan button." />
 </Frame>
 
-Click **Add asset**, enter the hostname or IP address, and the next scan probes and scores it like any other. Assets you added are marked **Added by hand** and survive a scan that cannot see them, because they are your assertion rather than an observation.
+Click **Add asset**, then enter the hostnames or IP addresses, one per line or separated by commas. The next scan probes and scores them like any other asset. Assets you added are marked **Added by hand** and survive a scan that cannot see them, because they are your assertion rather than an observation.
+
+Add the whole list in one go rather than one at a time. Each submission starts a single rescan covering everything in it, so ten hosts added together cost one scan, where ten separate additions cost ten.
+
+If a line is not a hostname or an IP address, the rest are still added and the dialog stays open holding only the lines that failed, so you fix those rather than retyping the list. A mistyped address such as `999.1.1.1` is rejected rather than accepted as a hostname, which would otherwise put an asset in the estate that can never resolve.
 
 <Note>
   Disputing an asset starts a rescan, and so does withdrawing a dispute. A verdict only reaches the rating once the scan has run again, and withdrawing one is what puts the asset back into the score.
@@ -162,8 +166,9 @@ A mail-capable lookalike is the one to care about. It can host a page and receiv
 | A factor shows no findings but a low score | Expand it. Some factors score on configuration rather than on discrete findings. |
 | A vulnerability looks wrong | Version detection is remote and imperfect. Check the flagged component with the vendor before recording it. |
 | An asset in the estate is not the vendor's | Dispute it from the row's actions menu. The next scan drops it from the sweep and from the rating. |
-| A host you know about is not in the estate | It has no public certificate, so discovery cannot see it. Use **Add asset**. |
+| A host you know about is not in the estate | It has no public certificate, so discovery cannot see it. Use **Add asset**, and add every missing host in the same submission so they share one rescan. |
 | A dispute has not changed the rating yet | The rescan it started has to finish first. The rating moves on the next completed scan, not on the click. |
+| A line was refused when you added assets | It did not read as a hostname or an IP address. The rest were still added, and the dialog keeps the refused lines so you can correct them. |
 
 ## Related
 
