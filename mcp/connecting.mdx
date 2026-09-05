@@ -26,7 +26,8 @@ The server accepts two kinds of credential, and which one you want depends on wh
 | --- | --- | --- |
 | Setup | Browser sign-in on first connect | Paste a key into your client config |
 | Best for | Desktop and IDE clients you use yourself | Headless pipelines, CI, containers |
-| Identity | The signed-in user | The user who generated the key |
+| Identity | The signed-in user | Whoever the key was minted to act as |
+| Access | Read/write, or narrower if the client asks | Read/write or read-only, fixed when the key is generated |
 
 OAuth (PKCE, no client secret) is the default and the right choice for interactive clients. The rest of this page assumes it.
 
@@ -35,6 +36,8 @@ If a browser step is impossible, generate a long-lived key instead and send it a
 <Steps>
   <Step title="Generate a key">
     In Coverbase, go to **Configuration → MCP Server** and generate a key under **API key**. It starts with `cb_mcp_` and is shown only once.
+
+    Two choices on that dialog decide what the key can do. **This key acts as** picks the identity behind it — yourself, a **service account** that needs no seat in your identity provider, or another user. **Read-only** withholds write permanently. If you are wiring up an automation that should only ever read, see [Programmatic read-only access](/mcp/permissions#programmatic-read-only-access).
 
     <Note>
       This is a different page from **Configuration → API Keys**, which issues `ak_` keys for the [Coverbase REST API](/api-reference/api-keys). The two key types are not interchangeable: an `ak_` key will not authenticate against the MCP server.
