@@ -42,6 +42,35 @@ Each factor expands to show the specific observations behind its score, so a low
 
 That distinction matters when you are writing up an assessment. "Not measured" belongs in the questions you ask the vendor, not in the findings you record against them.
 
+## Open a finding to get the fix
+
+Click any finding in a factor to open it.
+
+<Frame caption="A finding opened from the Email authentication factor, showing what was observed and the step that resolves it.">
+  <img src="/images/user-guides/vendor-intelligence-finding-detail.png" alt="A panel titled DMARC reports forged mail but still delivers it, marked High, with Impacts rating Yes minus 24, first and last seen dates, an observed value of p=none, and a remediation step." />
+</Frame>
+
+The panel answers the four questions you need before you can raise it with anyone:
+
+- **Impacts rating** tells you whether this finding actually cost points, and how many. A finding recorded for completeness that moved nothing says **No**, which saves you chasing a number that never changed.
+- **First seen** and **Last seen** tell you how long it has been open. A finding that has survived months has been seen by the vendor's own team too.
+- **Observed** is the raw value the scan read, such as `p=none` or `TLSv1.0`.
+- **Remediation** is the step that resolves it, written for whoever operates the asset rather than for you.
+
+That last field is why the panel exists. When you forward a finding to a vendor, "TLS 1.0 is enabled" hands them the problem and the research together. The remediation step means they can act on it without a round trip.
+
+## Raise findings from what the scan found
+
+**Raise finding** on an open finding creates a tracked finding against the vendor, pre-filled with the asset, the observed value and the scan date, so it stands on its own once it leaves Coverbase.
+
+When a sweep turns up the same problem across a dozen hosts, use **Generate findings** at the top of the page instead.
+
+<Frame caption="Every scored issue, ticked by default, ordered by severity.">
+  <img src="/images/user-guides/vendor-intelligence-generate-findings.png" alt="A dialog titled Generate Findings for Northwind Data listing eight scored issues with severity badges, each with a checkbox, and a Generate 8 findings button." />
+</Frame>
+
+Only issues that actually cost the rating points are listed, because a zero-penalty observation is not something a provider needs to action. Untick anything the provider already owns before you generate.
+
 ## Rating over time
 
 Each point is a restatement of the whole rating. A step change usually means a scan found something new rather than the vendor changing overnight, so read the factors before drawing a trend.
@@ -49,6 +78,48 @@ Each point is a restatement of the whole rating. A step change usually means a s
 ## Attack surface
 
 What is reachable from the internet under the vendor's domains: hosts, exposed services and open ports. A large surface is not automatically a finding; it is context for the rest of the page.
+
+Transport checks run per host rather than only against the vendor's main domain, so one neglected server does not hide behind a well-configured front door.
+
+<Frame caption="Each attributed host handshaken separately, with its own chain, protocol and expiry.">
+  <img src="/images/user-guides/vendor-intelligence-tls-by-host.png" alt="A certificates-by-host table listing two hosts with their trusted-chain status, negotiated protocol, days to expiry and issuer." />
+</Frame>
+
+## Attributed estate
+
+The scan works out which domains and addresses belong to the vendor from certificate transparency logs and public scan data, then measures each one. **Attributed Estate** is that list, and it is where you correct what the scan got wrong.
+
+<Frame caption="Every asset the scan attributes to this vendor, filtered by what still needs a decision.">
+  <img src="/images/user-guides/vendor-intelligence-estate.png" alt="A table titled Attributed Estate listing nine domains and addresses with status badges reading Unreviewed, Confirmed and Disputed, plus first and last seen dates and a row actions menu." />
+</Frame>
+
+Attribution is worked out from domain names, so two kinds of mistake are normal and both are yours to fix.
+
+### Something is listed that is not theirs
+
+Shared hosting, a reseller, or a product the vendor buys rather than runs. Open the row's actions menu and choose **Dispute**. The next scan skips that asset entirely, and its findings leave the rating.
+
+Choose **Confirm** when you have checked an asset and it is theirs. That records the decision so nobody re-reviews it, and it does not change the rating.
+
+### Something they run is missing
+
+The scan only finds hosts that appear in a public certificate, so an internal host, or one the vendor never published a certificate for, never shows up on its own.
+
+<Frame caption="Adding the hosts the scan cannot discover on its own, in one go.">
+  <img src="/images/user-guides/vendor-intelligence-estate-add.png" alt="A dialog titled Add Assets with a Hostnames or IP addresses box holding three entries on separate lines and an Add 3 and rescan button." />
+</Frame>
+
+Click **Add asset**, then enter the hostnames or IP addresses, one per line or separated by commas. The next scan probes and scores them like any other asset. Assets you added are marked **Added by hand** and survive a scan that cannot see them, because they are your assertion rather than an observation.
+
+Add the whole list in one go rather than one at a time. Each submission starts a single rescan covering everything in it, so ten hosts added together cost one scan, where ten separate additions cost ten.
+
+If a line is not a hostname or an IP address, the rest are still added and the dialog stays open holding only the lines that failed, so you fix those rather than retyping the list. A mistyped address such as `999.1.1.1` is rejected rather than accepted as a hostname, which would otherwise put an asset in the estate that can never resolve.
+
+<Note>
+  Disputing an asset starts a rescan, and so does withdrawing a dispute. A verdict only reaches the rating once the scan has run again, and withdrawing one is what puts the asset back into the score.
+</Note>
+
+Each row carries when the asset was first and last seen. An asset the scan can no longer find is kept and marked **No longer seen** rather than deleted, because an asset leaving the estate is as worth knowing about as one arriving.
 
 ## Email authentication
 
@@ -94,6 +165,10 @@ A mail-capable lookalike is the one to care about. It can host a page and receiv
 | The rating moved and nothing looks different | Open the rating history. Certificates expire and DMARC records change without anyone announcing it. |
 | A factor shows no findings but a low score | Expand it. Some factors score on configuration rather than on discrete findings. |
 | A vulnerability looks wrong | Version detection is remote and imperfect. Check the flagged component with the vendor before recording it. |
+| An asset in the estate is not the vendor's | Dispute it from the row's actions menu. The next scan drops it from the sweep and from the rating. |
+| A host you know about is not in the estate | It has no public certificate, so discovery cannot see it. Use **Add asset**, and add every missing host in the same submission so they share one rescan. |
+| A dispute has not changed the rating yet | The rescan it started has to finish first. The rating moves on the next completed scan, not on the click. |
+| A line was refused when you added assets | It did not read as a hostname or an IP address. The rest were still added, and the dialog keeps the refused lines so you can correct them. |
 
 ## Related
 
