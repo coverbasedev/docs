@@ -1,0 +1,130 @@
+---
+title: "Risk geography map"
+description: "Read where your suppliers actually are, filter the map with the same vendor filters you use everywhere else, and see every supplier sitting on a shared address."
+icon: "map-location-dot"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. For how supplier addresses get into Coverbase in the first place, see [Supplier information](/user-guides/supplier-information).
+</Info>
+
+Concentration risk is a geography question before it is anything else. If forty of your suppliers run out of one metro area, one flood or one grid failure reaches all forty at once, and no amount of per-vendor scoring will tell you that. The **Geography** tab under **Risk** answers it directly: it draws every supplier location you hold, and lets you narrow that picture with the same filters you use on the vendor list.
+
+<Frame caption="The world view. Colour shows where locations cluster; the pale country tints and small dots mark countries where you hold a supplier but no address.">
+  <img src="/images/user-guides/geography/world-view.png" alt="Risk geography world map showing supplier density clusters across North America, Europe and Asia" />
+</Frame>
+
+## What the map draws
+
+The map has two layers, and they answer different questions.
+
+**Density** is the coloured surface. It is built from suppliers whose address you actually hold and have geocoded, and it shows where those addresses pile up. A bright core means several suppliers within a short distance of each other, which is the concentration you care about. The scale in the side panel is the real one the surface is drawn against, so you can read a colour off the map and get a number.
+
+**Country marks** are the small dots and the pale country tint. They stand for suppliers where you recorded a country but no street address. There is nothing to place precisely, so Coverbase does not pretend otherwise: the mark sits at the country's centre and stays deliberately small, because its size would otherwise imply a precision the data does not have. The count is exact, and you get it by hovering the mark or reading the side panel.
+
+<Frame caption="Hovering a country mark. The count is exact even though the position is only country-level.">
+  <img src="/images/user-guides/geography/country-hover.png" alt="Country popover on the world map listing suppliers recorded in India with a Show more link" />
+</Frame>
+
+<Note>
+  A country-only supplier is a complete record, not a half-filled one. Plenty of suppliers legitimately have no single street address worth recording. The map keeps them visible rather than dropping them, because a supplier you cannot place is still exposure you carry.
+</Note>
+
+## Filtering the map
+
+The **Filter** button sits at the top left of the map and opens the same filter menu as the **Vendors** and **Assessments** lists. Anything you can filter a vendor by, you can filter the map by.
+
+<Frame caption="The filter menu. Every vendor field is here, including relationships, dates, and your workspace's custom fields.">
+  <img src="/images/user-guides/geography/filter-menu.png" alt="Filter menu open over the map listing Vendor, Tags, Archived, Risk Analysts, Status, and other vendor fields" />
+</Frame>
+
+Pick a field, pick a value, and the map redraws to the suppliers that match. Rules stack, and the bar under the button shows what is applied.
+
+<Frame caption="A rule applied. Remove it with the ✕, add another with +, or drop them all with Clear.">
+  <img src="/images/user-guides/geography/filter-active.png" alt="Map with an active filter reading Archived is Yes, plus add and clear controls" />
+</Frame>
+
+Some things this makes easy:
+
+| Question | Filter |
+| --- | --- |
+| Where are my critical suppliers? | **Inherent Risk Level** is your top band |
+| Which regions does one analyst carry? | **Risk Analysts** is that person |
+| Where is a single supplier? | **Vendor** is that supplier |
+| Where do my payments-tagged suppliers sit? | **Tags** any of `Payments` |
+
+Arriving from a vendor's **Locations** card drops you here with that supplier already filtered. The rule is an ordinary one, so you can widen it, add to it, or clear it to get back to the whole estate.
+
+### Archived suppliers
+
+Archived suppliers are **off the map by default**. An archived supplier is one you have stopped working with, and leaving it in would inflate every country count you read.
+
+To see them, add the **Archived** filter and set it to **Yes**. That reverses the default rather than adding to it, so you get archived suppliers only — useful for checking what a wind-down actually removed from a region.
+
+<Warning>
+  Archiving a supplier does not delete its addresses. They stay on the record, and they come back to the map the moment the supplier is restored.
+</Warning>
+
+## Zooming into a country
+
+Click any country to zoom in. The side panel switches to that country's breakdown by state or province, and the map swaps the density surface for one pin per address.
+
+<Frame caption="A focused country. Each pin is a place, and the side panel breaks the country down by state.">
+  <img src="/images/user-guides/geography/focused-country.png" alt="United States focused view with address pins and a state-by-state breakdown panel" />
+</Frame>
+
+Your choice is remembered on the device, so returning to the tab reopens on the same country. **Back to world view** in the side panel returns to the full map.
+
+## Many suppliers at one address
+
+Shared campuses, office towers and colocation facilities mean several suppliers often sit on exactly the same coordinates. Drawn one mark per supplier, they stack into a single dot and you can only ever see whichever happened to draw last.
+
+Coverbase groups them instead. Hovering the mark tells you how many are there and lists them, with the site name and address for each.
+
+<Frame caption="Thirty-four suppliers at one Ashburn address. The list expands to ten, then points you at the filter.">
+  <img src="/images/user-guides/geography/shared-address-popover.png" alt="Popover reading 34 locations here, listing suppliers with their site names and addresses, ending in 24 more" />
+</Frame>
+
+The list shows a few, expands to ten, and then stops and says how many remain. That cap is deliberate: past ten names, a longer list stops being readable and the useful move is to narrow the map. Filter to the supplier, the tag, or the owner you are actually chasing, and the same mark will show you just those.
+
+## What you need to see anything
+
+<Steps>
+  <Step title="The Risk module is enabled">
+    **Geography** appears under **Risk**. If you have no **Risk** section, the module is not switched on for your workspace.
+  </Step>
+  <Step title="You can read vendors">
+    The map shows supplier names and links to their records, so it requires vendor read access. Someone without it will not be able to open the tab.
+  </Step>
+  <Step title="You hold some locations">
+    Addresses come from supplier site records — collected through questionnaires, added on the vendor's **Locations** card, or loaded through the API. A workspace with no sites recorded gets an empty map.
+  </Step>
+  <Step title="Addresses have been geocoded">
+    Coverbase resolves addresses to coordinates on a schedule rather than at the moment you save one, so a location added minutes ago may appear as a country mark first and move to its exact spot shortly after.
+  </Step>
+</Steps>
+
+## Reading it honestly
+
+A few things worth knowing before you present anything off this map.
+
+**Density is about addresses, not headcount or spend.** A supplier with one office and a supplier with thirty each contribute what they have recorded. The map answers "where are my suppliers" and not "how much of my spend is here".
+
+**A pale country with no bright core is not the same as a country with nothing in it.** It usually means you hold the country but not the addresses. The country mark's count tells you how much is sitting in that state.
+
+**The counts follow your filters.** Once a rule is applied, every number in the side panel and every popover describes the filtered set, not the whole estate. Clear the filter before reading a total.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Supplier information" icon="building-columns" href="/user-guides/supplier-information">
+    How addresses and other supplier records are collected and validated.
+  </Card>
+  <Card title="Filter fields" icon="filter" href="/fields/overview">
+    Every field you can filter on, and what the operators mean.
+  </Card>
+</CardGroup>
