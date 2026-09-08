@@ -21,6 +21,16 @@
 
 {/* Add any project-specific style rules below */}
 
+- **Never use an em dash (`—`).** Rewrite as two sentences, or use a comma, a
+  colon, or parentheses. Keep other dashes rare too. This is enforced by the
+  `Coverbase.EmDash` Vale rule, which fails the docs check; `.vale.ini` exempts
+  `irq-library.mdx` and `dashboard-library.mdx`, which predate it. Do not add to
+  that exemption list.
+- No dramatic or self-important phrasing. Say what the screen does and what
+  happens if the reader gets it wrong. Cut sentences whose job is to sound
+  weighty: "the part an auditor reads", "the moment the signature is committed",
+  "what makes the record worth something". A sentence that survives losing its
+  flourish did not need it.
 - Use active voice and second person ("you")
 - Keep sentences concise: one idea per sentence
 - Use sentence case for headings
