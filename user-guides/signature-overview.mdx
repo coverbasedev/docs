@@ -1,0 +1,129 @@
+---
+title: "E-signature overview"
+description: "How Coverbase gets an agreement signed: the template you build once, the envelope you send from it, what the counterparty sees, and the sealed copy and audit trail you keep afterwards."
+icon: "signature"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It is the entry point for signing. The three guides that follow it go deeper: [templates](/user-guides/signature-templates), [envelopes](/user-guides/signature-envelopes), and [the signing experience](/user-guides/signature-signing-experience).
+</Info>
+
+Coverbase signs agreements in the same place it stores them, so there is no exporting a PDF, sending it somewhere else, and filing the executed copy back by hand. The contract, the signature, the record of what happened, and the sealed document all sit on the same record.
+
+<Note>
+  Coverbase also connects to [DocuSign](/integrations/guides/docusign) if your organization already signs there. The two are alternatives, not layers: DocuSign creates the envelope in your own DocuSign account, while everything on this page happens inside Coverbase. Pick one per agreement rather than both.
+</Note>
+
+## The four things
+
+<CardGroup cols={2}>
+  <Card title="Template" icon="file-lines" href="/user-guides/signature-templates">
+    The paper you send repeatedly, with the signing parties and the fields already placed. Built once, used many times.
+  </Card>
+  <Card title="Envelope" icon="paper-plane" href="/user-guides/signature-envelopes">
+    One agreement, out for signature, addressed to named people. Created from a template or from a document on its own.
+  </Card>
+  <Card title="Portal" icon="pen-nib" href="/user-guides/signature-signing-experience">
+    What your counterparty opens. No account, no download, a link that works on a phone.
+  </Card>
+  <Card title="Executed copy" icon="shield-check" href="/user-guides/signature-envelopes#the-audit-trail">
+    The sealed PDF plus a hash-chained record of everything that happened to it.
+  </Card>
+</CardGroup>
+
+## The shape of a signing
+
+A template is optional. The parts that are not optional are the envelope, the signing, and the copy you keep.
+
+<Steps>
+  <Step title="Build a template, or skip it">
+    A template holds a source document, the **signing parties** as roles rather than people, and the fields each role fills. If this is a one-off, start from a document instead and place the fields on the envelope itself.
+  </Step>
+  <Step title="Create an envelope and name the people">
+    The template's roles become empty seats. You fill in who sits in each one, in what order they are asked, and how long they have.
+  </Step>
+  <Step title="Send it">
+    Coverbase emails the first routing step. Later steps are notified as the envelope advances, so nobody is asked before it is their turn.
+  </Step>
+  <Step title="They sign in the portal">
+    Consent, then adopt a signature, then fill what is theirs. Everything they do is timestamped and recorded against their address.
+  </Step>
+  <Step title="Coverbase seals the result">
+    Once the last party signs, the fields are flattened into the page, the document is sealed, and a signing certificate is generated alongside it.
+  </Step>
+</Steps>
+
+## Where everything lives
+
+| | |
+| --- | --- |
+| **Contracts → Signatures** | Every envelope, with cards for what is in flight, stalled, expiring, executed and closed. |
+| **Contracts → Templates** | The templates your organization sends from. |
+| **Configuration → Signing Settings** | Seal level, consent wording, accepted signature types, verification, email copy and portal branding. Set once, applies to everything. |
+
+<Frame caption="The signatures inbox. The cards across the top are saved filters, not statistics: pick one and the table below it narrows.">
+  <img src="/images/user-guides/signing-inbox.png" alt="Signatures inbox showing in flight, stalled, expiring this week, executed and closed cards above a table of agreements" />
+</Frame>
+
+## An envelope's statuses
+
+Status is about the envelope as a whole. Each recipient also has their own state, which is what the **Waiting On** column reads.
+
+| Status | Meaning |
+| --- | --- |
+| **Draft** | Created but not sent. Nobody has been emailed and nothing is binding. |
+| **Out for signature** | Sent, with the first routing step asked. No signatures yet. |
+| **Partially signed** | At least one party has signed and at least one has not. |
+| **Executed** | Every party has signed. The sealed copy and certificate exist. |
+| **Declined** | A party refused. The envelope stops; nobody further is asked. |
+| **Voided** | You cancelled it. Links stop working. |
+| **Expired** | The expiry date passed before everyone signed. |
+| **Failed** | Sealing did not complete. Rare, and worth raising with support. |
+
+Each recipient also carries their own state: *not yet notified*, *notified*, *opened*, *consented*, *signed*, *completed*, *declined* or *delegated*. That is what the envelope's **Signing Order** panel reads out, party by party.
+
+<Note>
+  A draft envelope is real. It holds a reference to the template it came from, so opening the send wizard and abandoning it leaves a draft behind. Drafts do not freeze the template they were built from. Only sending does.
+</Note>
+
+## Before your first send
+
+Signing settings are organization-wide and only need doing once. They cover the seal, the consent wording, what signers may do, and how the emails and the portal look.
+
+<Frame caption="Configuration → Signing Settings. Everything here applies to every envelope your organization sends.">
+  <img src="/images/user-guides/signing-settings.png" alt="Signing Settings page showing seal and certificate, electronic signature consent, and signing rules sections" />
+</Frame>
+
+<AccordionGroup>
+  <Accordion title="Seal and Certificate">
+    **Target Seal Level** is the PAdES level Coverbase aims for on the executed copy. Anything above B-B needs a signing certificate and a **Timestamp Authority URL**; until both are provisioned, envelopes are sealed and reported at the level actually achieved rather than the one you asked for. The page says which of the two is missing.
+  </Accordion>
+  <Accordion title="Electronic Signature Consent">
+    The ESIGN disclosure every signer sees before any field becomes writable. It is stored verbatim with each acceptance, so editing it publishes a new version and acceptances already recorded keep the text they were actually shown. That is the point: a later edit cannot appear to change what someone agreed to.
+  </Accordion>
+  <Accordion title="Signing Rules">
+    **Accepted Signature Types** decides whether signers may draw, type, or upload an image. **Default Expiry (Days)** is what a new envelope starts at when nothing more specific applies. **Require a signature meaning** makes every signature record what the signer intended by it, which regulated workflows need and most do not.
+  </Accordion>
+  <Accordion title="Signer Verification">
+    Turn this on and a party must prove the address the agreement was sent to before the document is shown. The invitation links to the portal, which checks a one-time code first. Use it when the counterparty's address is the only thing identifying them. This is the default a new envelope starts at, and the sender can change it for one envelope on the review step.
+  </Accordion>
+  <Accordion title="Signing Emails and Portal Branding">
+    Your own wording for the invitation, reminder and completion mail; leave a field blank to keep the built-in copy. Branding controls the logo and accent a counterparty sees on the signing link. Both are covered in [the signing experience](/user-guides/signature-signing-experience#branding-the-portal).
+  </Accordion>
+</AccordionGroup>
+
+## What Coverbase keeps
+
+Every envelope carries three tabs.
+
+- **Overview**: the document, the parties, the fields and their values, and the portal link.
+- **Audit trail**: every event, hash-chained, with IP and user agent. Covered in [envelopes](/user-guides/signature-envelopes#the-audit-trail).
+- **Certificate**: the signing certificate generated when the envelope completed.
+
+<Tip>
+  The audit trail is what answers "prove this person signed this document on this date". It records the source document's SHA-256 before anyone touched it and the executed document's SHA-256 after sealing, so a reader can check the file they are holding against the record.
+</Tip>

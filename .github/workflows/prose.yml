@@ -1,0 +1,38 @@
+# House style bans the em dash, and this is what makes that stick. It lives
+# here rather than in .vale.ini because Mintlify's hosted Vale check reports
+# findings as neutral rather than failing, and a rule that cannot fail a PR is
+# a convention, not a rule.
+name: Prose
+
+on:
+  pull_request:
+    paths:
+      - "**/*.mdx"
+      - ".github/workflows/prose.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  em-dash:
+    name: No em dashes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject em dashes
+        run: |
+          # irq-library and dashboard-library predate this rule and use a
+          # question-then-options layout built on em dashes throughout. They
+          # need a rewrite, not a find and replace. Do not extend this list.
+          matches=$(grep -rn --include='*.mdx' \
+            --exclude='irq-library.mdx' \
+            --exclude='dashboard-library.mdx' \
+            -- '—' . || true)
+          if [ -n "$matches" ]; then
+            echo "$matches"
+            echo
+            echo "Em dash found. Rewrite as two sentences, or use a comma, a colon, or parentheses."
+            exit 1
+          fi
+          echo "No em dashes."
