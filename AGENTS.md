@@ -22,10 +22,10 @@
 {/* Add any project-specific style rules below */}
 
 - **Never use an em dash (`—`).** Rewrite as two sentences, or use a comma, a
-  colon, or parentheses. Keep other dashes rare too. This is enforced by the
-  `Coverbase.EmDash` Vale rule, which fails the docs check; `.vale.ini` exempts
-  `irq-library.mdx` and `dashboard-library.mdx`, which predate it. Do not add to
-  that exemption list.
+  colon, or parentheses. Keep other dashes rare too. The `Prose` workflow in
+  `.github/workflows/prose.yml` fails any PR that adds one. It exempts
+  `irq-library.mdx` and `dashboard-library.mdx`, which predate the rule. Do not
+  add to that exemption list.
 - No dramatic or self-important phrasing. Say what the screen does and what
   happens if the reader gets it wrong. Cut sentences whose job is to sound
   weighty: "the part an auditor reads", "the moment the signature is committed",
