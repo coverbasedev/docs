@@ -4,6 +4,27 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-09-09: Reputational risk on a Zero Touch run
+
+A Zero Touch run now reports what it found against the vendor's name as its own section, in the app and in both exports.
+
+### New features
+
+- **Reputational risk section.** Adverse media on the vendor's leadership, open watchlist matches where your organization screens, and the run's own reputation controls now arrive as one section rather than three places to go looking. Findings are filed under five dimensions: media and customer sentiment, litigation exposure, regulatory and enforcement, executive conduct and stability, and sanctions and association. See the [Zero Touch guide](/user-guides/zero-touch-assessments#reading-the-reputational-section).
+- **Not screened is never reported as clear.** Each dimension reports its own standing, and a dimension nothing searched reads **Not screened** rather than **Clear**. The section names every unscreened dimension, so a short findings list is not mistaken for a clean vendor.
+- **Material findings first.** A matter the subject was cleared of, or one a reviewer has dispositioned, is still listed because it is part of the record of what the run read. It is not counted as material and it does not deduct from the score.
+- **Second in both exports.** The section prints straight after the vendor identity in the PDF, with the overall standing on the first page. The spreadsheet carries the read on the summary sheet under the score and a **Reputational risk** tab beside it, one row per finding with its publisher, date and link. The portfolio export gains reputational standing and material finding count columns.
+
+### API
+
+- `GET /v1/zero_touch_assessment/{id}` returns `result.reputation`, carrying the overall standing, the five `dimensions` and the `findings` behind them. It is `null` on a run scored before this shipped, which means the run never assembled one rather than that the vendor is clear. See the [API reference](/api-reference/zero-touch-assessments#read-a-run).
+
+### Documentation
+
+- The [Zero Touch guide](/user-guides/zero-touch-assessments) gains a section on reading the reputational read, an updated export walkthrough, and a troubleshooting row on the difference between **Not screened** and **Clear**.
+
+---
+
 ## 2026-09-05: Review a vendor's attributed estate
 
 Security Intelligence now shows every domain and address it attributes to a vendor as a list you can correct, and every finding carries the step that resolves it.

@@ -88,7 +88,7 @@ One archived or unknown vendor in a selection of forty does not cost you the oth
   `GET /v1/zero_touch_assessment/{assessment_id}`
 </ParamField>
 
-Returns the single-page result: who the vendor is, the composite, the components behind it, control-set coverage, open issues with their evidence, and every source cited.
+Returns the single-page result: who the vendor is, what turned up against its name, the composite, the components behind it, control-set coverage, open issues with their evidence, and every source cited.
 
 <ResponseField name="result.profile" type="object | null">
   The researched company profile: `company_name`, `url`, `description`, `industry`, `use_case`, `services`, `hq_location`, and `confidence`, which is how sure the run is it profiled the right company. `null` until the research completes, which happens shortly after launch and independently of the controls.
@@ -109,6 +109,22 @@ Returns the single-page result: who the vendor is, the composite, the components
 <ResponseField name="result.components" type="object[]">
   One entry per component (`controls`, `financial_health`, `security`, `registration`, `people`), each with `status` (`scored` / `unavailable` / `disabled`), its own `score`, the `configured_weight` set for your org, and the `weight` it actually carried.
 </ResponseField>
+
+<ResponseField name="result.reputation" type="object | null">
+  What the run found against the vendor's name, gathered from adverse media, open watchlist matches and the run's own `ZT-REP-*` controls. Carries an overall `standing`, a one-line `headline`, `finding_count` and `material_count`, a `dimensions` array, and a `findings` array. `null` on a run scored before this section existed, which means the run never assembled one rather than that the vendor is clear.
+</ResponseField>
+
+<ResponseField name="result.reputation.dimensions" type="object[]">
+  One entry per dimension (`media_sentiment`, `litigation`, `regulatory`, `executive_conduct`, `association`), each with its `label`, its own `standing`, `finding_count`, `material_count` and a `detail` line.
+</ResponseField>
+
+<ResponseField name="result.reputation.findings" type="object[]">
+  One entry per reputational matter, ordered material first then by severity. Each carries the `origin` that raised it (`adverse_media`, `screening`, `control`), the `dimension` it is filed under, a `headline` and `summary`, the `subject` it attaches to (`null` for the company itself), a `severity`, an `outcome`, `publisher`, `published_at`, `jurisdiction`, `source_urls`, `is_disputed` and `is_resolved`.
+</ResponseField>
+
+<Warning>
+  **A dimension nothing searched reads `not_screened`, never `clear`.** The four standings are `adverse`, `watch`, `clear` and `not_screened`. `clear` means something searched and found nothing; `not_screened` means nothing searched, and carries no information about the vendor. `coverage_note` names every unscreened dimension. Do not treat an empty `findings` array as a clean record without reading `dimensions`.
+</Warning>
 
 <ResponseField name="result.sources" type="object[]">
   Every place the run drew evidence from, grouped by `kind`: `web`, `registry`, `infrastructure`, `document`.
