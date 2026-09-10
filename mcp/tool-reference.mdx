@@ -22,7 +22,7 @@ Each read tool takes a `kind` and the identifiers that kind needs. All are read-
 
 ### `query_vendors`
 
-Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_terms`, `limit`.
+Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_terms`, `run_id`, `document_type`, `document_status`, `service_id`, `uploaded_after`, `uploaded_before`, `limit`.
 
 | `kind` | Returns |
 | ------ | ------- |
@@ -31,9 +31,11 @@ Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_ter
 | `detail` | The consolidated profile: people, assessments, findings, contracts, engagements, obligations, radar alerts, documents. One call. |
 | `people` | Contacts on a vendor. |
 | `onboarding_status` | Where a vendor sits in onboarding. Takes an ID, not a name. |
-| `documents` | Evidence files for a vendor, or org-wide. |
+| `documents` | Evidence files for a vendor, or org-wide. Narrows on `query`, `document_type`, `document_status`, `service_id`, `uploaded_after`, `uploaded_before`. |
 | `document_summary` | A summary of one document. |
 | `document_download` | A download link for one document. |
+| `document_evidence` | Starts reading the documents themselves to answer a question. Returns a run id, not the answer: a model picks which one or two documents to read (`limit`, default 2, max 5) and reads them. Takes a couple of minutes. |
+| `document_evidence_result` | The answer from a started pull, by `run_id`: per document, an answer, a verbatim quote with its page, a confidence, a snippet image, and a link that opens the document highlighted. Omit `run_id` to list recent pulls. |
 | `risk_summary` | Risk tier and open finding counts. |
 | `financial_health` | The Coverbase Financial Health Score: 0-100 score, risk band, confidence tier, pillar breakdown, financial vitals, peer percentile, adverse events, and the source behind each figure. Never compare scores across confidence tiers. |
 | `company_registration` | Validated corporate identity from GLEIF, OpenCorporates, and SEC EDGAR: official name, status, jurisdiction, addresses, and LEI / DUNS / company number / CIK, each with a citation. Prefer this over a web search when a corporate fact is in question. |
@@ -258,7 +260,7 @@ It's the recommended first call when an assistant isn't sure which route applies
   </Card>
 
   <Card title="Canned prompts" icon="wand-magic-sparkles" href="/mcp/prompts">
-    Nineteen scripted workflows you can invoke by name.
+    Twenty scripted workflows you can invoke by name.
   </Card>
 
   <Card title="Roles and permissions" icon="user-shield" href="/mcp/permissions">

@@ -4,6 +4,26 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-09-10: Ask your documents a question
+
+Ask a question in chat and Coverbase reads the vendor's documents to answer it, returning the passage the answer rests on.
+
+### New features
+
+- **Document evidence pulls.** Ask something like "does Acme's SOC 2 cover encryption at rest?" through a connected assistant. Coverbase filters the vendor's documents on metadata, lets a model pick the one or two most likely to hold the answer, reads them, and returns a direct answer with a verbatim quote, its page number, a confidence, and a cropped image of the page with the passage highlighted. See [Asking your documents a question](/user-guides/document-evidence-pull).
+- **Links that open the document highlighted.** Every answer carries a link that opens the document preview on the right page with the passage marked. The highlight travels as the quote itself rather than as page coordinates, so it still resolves after a re-render that would move a stored bounding box.
+- **Repeat questions reuse what was already quoted.** Passages earlier work cited from the same documents are offered to the selection step, so a question already answered can come back without opening anything. A passage whose underlying insight has since been re-extracted is never reused.
+- **Scanned documents are readable.** A pull reads the searchable rendition produced at ingestion, so an OCR'd scan answers and highlights like a native PDF. Excel workbooks are read as workbooks and cite a sheet name instead of a page.
+- **`pull_document_evidence` prompt.** A scripted version of the whole flow, in the prompt menu of any connected client. See [Canned prompts](/mcp/prompts).
+- **Sharper document filters over MCP.** Listing a vendor's documents now narrows on free text, document type, status, service, and upload date range.
+
+### Documentation
+
+- New guide: [Asking your documents a question](/user-guides/document-evidence-pull), covering what comes back, how documents are chosen, reading an answer critically, and the limits.
+- The [tool reference](/mcp/tool-reference) and [example prompts](/mcp/example-prompts) gain the evidence routes.
+
+---
+
 ## 2026-09-09: Reputational risk on a Zero Touch run
 
 A Zero Touch run now reports what it found against the vendor's name as its own section, in the app and in both exports.

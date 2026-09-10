@@ -134,6 +134,42 @@ The full intake request runs in conversation. You don't need to say "intake" for
   </Accordion>
 </AccordionGroup>
 
+## Evidence out of documents
+
+Coverbase reads the documents and returns the passage the answer rests on. Full guide: [Asking your documents a question](/user-guides/document-evidence-pull).
+
+<AccordionGroup>
+  <Accordion title="Answer a control question from the SOC 2" defaultOpen icon="file-magnifying-glass">
+    > Does Acme encrypt customer data at rest? Check their SOC 2.
+
+    The assistant resolves Acme, calls `query_vendors(kind="document_evidence")` scoped to that vendor, and gets a run id back rather than an answer. A model picks the one or two documents most likely to hold it, reads them, and locates the passage. A minute or two later the assistant calls `query_vendors(kind="document_evidence_result", run_id=...)` and reports the answer with its verbatim quote, the page, a cropped image of the highlighted passage, and a link that opens the document there.
+  </Accordion>
+
+  <Accordion title="Pull a contract term with its exact wording" icon="file-contract">
+    > What is the termination notice period in Acme's MSA, and quote the clause.
+
+    Naming the document type narrows the candidate set before anything is read. The quote comes back verbatim, so it can go straight into a negotiation note.
+  </Accordion>
+
+  <Accordion title="Check one specific document" icon="file">
+    > In the Acme penetration test report, were any critical findings left unresolved?
+
+    Naming a document skips the selection step and reads that document.
+  </Accordion>
+
+  <Accordion title="Evidence for an assessment answer" icon="clipboard-check">
+    > I need evidence that Northwind does background checks on staff with production access. Find it and give me something I can cite.
+
+    The answer arrives with a page citation and a permanent Coverbase link. Paste the link into the assessment rather than the image: the image link expires after about an hour.
+  </Accordion>
+
+  <Accordion title="When nothing answers the question" icon="circle-minus">
+    > Does Acme have a documented incident response SLA?
+
+    If the documents read do not address it, the response says so rather than inferring an answer. Ask the assistant to widen the scope (drop the document type, raise the document limit) before concluding the control does not exist.
+  </Accordion>
+</AccordionGroup>
+
 ## Vendor intelligence
 
 <AccordionGroup>
@@ -347,7 +383,7 @@ The full intake request runs in conversation. You don't need to say "intake" for
 
 <CardGroup cols={2}>
   <Card title="Canned prompts" icon="wand-magic-sparkles" href="/mcp/prompts">
-    Nineteen scripted workflows you can invoke by name, including `weekly_briefing`, `submit_intake_request`, and `tune_control_guidance`.
+    Twenty scripted workflows you can invoke by name, including `weekly_briefing`, `submit_intake_request`, and `tune_control_guidance`.
   </Card>
 
   <Card title="Tool reference" icon="screwdriver-wrench" href="/mcp/tool-reference">
