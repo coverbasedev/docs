@@ -1,0 +1,94 @@
+---
+title: "Inspect roadmap"
+description: "What Coverbase is building next for Inspect and what it is investigating, described by what it will let you do. No dates, and nothing here is available until it ships."
+icon: "road"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+This page lists the Inspect capabilities Coverbase intends to build and the questions it is still investigating, so that a security or program review can plan around what exists today rather than what is described in a demo. Everything on the rest of the Inspect reference describes the current release; nothing on this page does.
+
+<Info>
+  Last reviewed in September 2026. Items move between the two lists as decisions are made, and an item leaves this page when it ships and is documented. Coverbase does not commit to delivery dates here; ask your Coverbase team for timing on a specific item.
+</Info>
+
+## How to read this page
+
+- **Planned** means Coverbase has decided to build it and has scoped the work. The design can still change, and there is no committed date.
+- **Under investigation** means Coverbase is evaluating whether and how to do it. It may not happen.
+
+## Planned
+
+### Automation you configure
+
+Today an inspection is launched by a person and a person elevates an evaluation to a finding. Planned automation lets you decide what should happen without anyone clicking:
+
+- **Recurring inspections.** Schedule an inspection to repeat on a cadence you choose, from within Inspect, with the next run visible and the schedule pausable. A missed run is shown as missing coverage, never as a passing result.
+- **Findings from qualifying evaluations, if you opt in.** Choose the conditions under which an evaluation becomes a finding automatically, with the same provenance a manually created finding carries. Manual promotion stays available.
+- **Inspections started by a Radar detection.** Start an inspection of an application from a relevant continuous-monitoring event, using a target and control configuration you already have, so a vendor change can prompt a check of your own settings.
+- **Scheduled outcomes into reporting.** Connect scheduled inspections, the findings they produce and your reporting into one repeatable workflow.
+
+Repeated event delivery will not create duplicate inspections or findings.
+
+### Notifications you configure
+
+Today the platform's workflows and webhooks can act on findings. Planned Inspect notifications tell the right person when an inspection needs them: when a run stops needing attention, when a run fails, and when a new actionable finding appears. You decide which events reach whom, so an accepted gap does not page anyone. A suppressed notification is a notification setting; it does not change an evaluation.
+
+### Correcting an evaluation
+
+When an evaluation's conclusion is wrong, an authorized reviewer will be able to correct it. The original generated evaluation and its evidence are preserved, the effective result is shown alongside them, and the correction records who made it, why, and when. Historical evidence is never rewritten.
+
+### Judging whether a change matters
+
+Drift already reports exactly which records and fields changed between two inspections. Planned materiality judgment adds a verdict of material, immaterial or inconclusive with a summary of what differs, so that a renamed label and a disabled control are not the same event in your queue.
+
+### Keeping plans current automatically
+
+Plans are prepared from vendor documentation that Coverbase curates and refreshes by hand today. Planned automation discovers, ingests and refreshes that documentation, compares successive versions, and re-prepares plans when a vendor's settings change, so an admin console that moves does not leave a plan pointing at the wrong place.
+
+### Browser inspection without vendor documentation
+
+Today a control runs only where a plan has been prepared from documentation. Planned support lets the browser channel collect evidence for Explore, Evaluate and Drift without a documented source, keeping the same evidence schemas and safeguards. API evidence will still require documented operations.
+
+### Stricter route restrictions
+
+Today the application's allowed domains bound where the agent may read, and a plan suggests where to start. A planned strict-route option restricts navigation to approved routes within those domains. Route restrictions bound where the agent goes; they do not redact what a page shows.
+
+### Redaction
+
+Today evidence is stored as captured, and the page text the agent reads is sent to the model as is. Planned redaction masks customer data in that text before it reaches the model and in stored observations and screenshots. Neither is available today; see [Hosting and data handling](/inspect/hosting-and-data-handling).
+
+### Inspect summaries in your dashboards
+
+A planned dashboard widget summarizes Inspect results, such as issues by application over a time window, on the existing saved dashboards and in existing scheduled report delivery, with the same counts the Inspect overview shows.
+
+### A documented deletion policy
+
+Deletion of inspection data is available on request today. A documented policy covering retention, deletion scope, how requests are handled and how completion is confirmed is planned.
+
+## Under investigation
+
+### Coverbase-operated browser hosting
+
+Coverbase is actively investigating alternatives for running Inspect's browser sessions on infrastructure it operates itself, so that browser hosting, session recording and any future redaction sit inside the same boundary as the rest of the platform. This is an investigation, not a committed change, and it is distinct from a customer-dedicated or customer-hosted deployment, which is not offered. See [Hosting and data handling](/inspect/hosting-and-data-handling).
+
+### Broader evaluation of read requests
+
+The Network Guard releases `GET`, `HEAD` and `OPTIONS` requests on method alone. Coverbase is considering model adjudication of reads as well, to add protection against a request that looks like a read but has a server-side effect. The application's own read-only permissions would remain necessary either way. See [Safeguards and limits](/inspect/safeguards-and-limits).
+
+### Accepted exceptions
+
+How an accepted, known gap should be treated across repeated inspections, beyond marking a control not applicable and tracking the finding in your risk register, is still being explored. Configurable notifications above are the first step; a durable exception mechanism is not promised.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="How Inspect works" icon="diagram-project" href="/inspect/overview">
+    What is available today, including the status table.
+  </Card>
+  <Card title="Working with Coverbase" icon="handshake" href="/security/working-with-coverbase">
+    Release cadence, roadmap transparency, and how customers influence what gets built.
+  </Card>
+</CardGroup>
