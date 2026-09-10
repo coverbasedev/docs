@@ -31,9 +31,9 @@ Inspect reads your applications with access you provision, on the principle that
 
     **Provision:** a credential the vendor documents for reading configuration, with read scopes only. Inspect supports a static bearer token or OAuth client credentials. Grant no write scope; Inspect will never use one, and a credential with none is a simpler review.
 
-    **Store:** the token or client secret is entered once in Coverbase and held in the platform secrets store. The value is never displayed again and no API returns it.
+    **Store:** the token or client secret is entered once in Coverbase and held in the platform secrets store. Coverbase workers retrieve it to make requests; it is not displayed again and credential-management APIs do not return it.
 
-    **Revoke:** revoke the credential at the vendor, then remove or replace it on the target in Coverbase. Runs in progress fail with `authentication_required`.
+    **Revoke:** revoke the credential at the vendor, then remove or replace it on the target in Coverbase. Runs already in progress stop when their next request fails or their runtime timeout expires.
   </Tab>
   <Tab title="IdP-initiated SSO (Okta or Entra)">
     **Use when** the application is behind your identity provider and the console is the evidence source.
@@ -41,7 +41,7 @@ Inspect reads your applications with access you provision, on the principle that
     **Provision:**
 
     1. A dedicated user in your IdP for inspection (for example `inspect-bot@yourdomain`), enrolled with a software one-time-code factor that Inspect can answer. Do not weaken your sign-on policy for other users; scope a narrow authentication policy to this identity if your default policy requires a factor Inspect cannot satisfy.
-    2. Assignment of that user to the application in your IdP, with the application's **read-only** role. Where the IdP pushes roles through profile attributes or SCIM, set the read-only role there. Where it cannot (Google Workspace is one example), assign a custom read-only administrator role in the application itself. Never assign a super-administrator or global-administrator role.
+    2. Assignment of that user to the application in your IdP, with the application's **read-only** role. Where the IdP pushes roles through profile attributes or SCIM, set the read-only role there. Where it cannot (Google Workspace is one example), assign a read-only administrator role in the application itself. Prefer a read-only or auditor role over a super-administrator or global-administrator role; if the application offers no read-only administrator role, see the guidance on broader access below.
     3. A read-only service application in your IdP so Coverbase can enumerate applications, users and group assignments for the inventory views. For Okta that is an API Services app using private-key JWT with the scopes `okta.apps.read`, `okta.users.read`, `okta.groups.read` and `okta.logs.read`, plus a read-only administrator role. Entra uses an equivalent application registration.
 
     **Sign-in state:** after a successful sign-in, Inspect keeps a browser profile so the next run does not sign in again. The profile is deleted after 12 hours without use.
@@ -58,9 +58,9 @@ Inspect reads your applications with access you provision, on the principle that
   <Tab title="Username and password">
     **Use when** the application has no IdP integration and no usable API.
 
-    **Provision:** a dedicated account with a read-only role, a strong unique password, and a software one-time-code factor if the application supports one. Inspect can also answer a passkey challenge for this account through a virtual authenticator scoped to the application's domains.
+    **Provision:** a dedicated account with a read-only role, a strong unique password, and a software one-time-code factor if the application supports one. If you register a passkey for this account and configure it on the target, Inspect can answer the passkey challenge through a virtual authenticator scoped to the application's domains.
 
-    **Store:** the password and factor seed are held in the platform secrets store and entered by the runtime during sign-in. The collecting agent never has a tool that can type into a sign-in form.
+    **Store:** the password and factor seed are held in the platform secrets store. During sign-in the runtime enters the password and a generated code into the browser session; the seed itself stays server-side. The collecting agent has no tool that retrieves a credential value.
 
     **Revoke:** disable the account or change its password at the application, then remove the target in Coverbase.
   </Tab>
@@ -80,7 +80,7 @@ If you prefer to provision the identity yourself, do so and skip this option ent
 
 ## What the inspection identity should be able to see
 
-Give the identity the narrowest role that can read the surfaces your controls name. Inspect does not verify that the role is read-only; it relies on it, and its own guards are the second layer. A useful test: sign in as the identity yourself and confirm that the pages the controls need are readable and that the save, invite and delete controls are absent or disabled.
+Prefer a read-only administrator or auditor role where the application offers one. Where it does not, check whether a custom role can give the visibility the controls need. Where neither exists, you can grant the identity the access that is available, including broader access, and rely on Inspect's route restrictions, DOM checks and Network Guard to keep the session read-only. Those safeguards refuse writes and record every decision, but they are not the same as a role the application itself enforces, and they do not remove every possibility of a state-changing request; see [Safeguards and limits](/inspect/safeguards-and-limits). The choice between narrower access and fuller evidence is yours. Whichever you choose, sign in as the identity once and confirm that the pages the controls need are readable.
 
 ## Inside Coverbase
 
