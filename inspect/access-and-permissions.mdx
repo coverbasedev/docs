@@ -1,0 +1,124 @@
+---
+title: "Access, permissions and revocation"
+description: "What to provision so Inspect can read an application you run, what each choice grants, who approves it, and how to take it away."
+icon: "key"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Inspect reads your applications with access you provision, on the principle that the application's own read-only role is the control that bounds it. This page lists the choices, the minimum each needs, and how to revoke each one. Keep it next to the change request that grants the access.
+
+## Who is involved
+
+| Role | Owns |
+| --- | --- |
+| Application owner | Creating the read-only role or API credential in the application, and confirming what it can see |
+| Identity administrator | The SSO application or service account in your IdP, if Inspect signs in through it |
+| Coverbase administrator in your organization | Adding the target in Coverbase, storing the credential reference, and approving any provisioning Coverbase performs |
+| Security reviewer | Approving the access model and reviewing run evidence |
+
+<Note>
+  Inspect is enabled per organization. If you do not see **Inspect** in your navigation, ask your Coverbase team to switch it on for your organization before planning the steps below.
+</Note>
+
+## Choose an access route per application
+
+<Tabs>
+  <Tab title="API credential">
+    **Use when** the plan for your controls collects evidence over the vendor's documented API.
+
+    **Provision:** a credential the vendor documents for reading configuration, with read scopes only. Inspect supports a static bearer token or OAuth client credentials. Grant no write scope; Inspect will never use one, and a credential with none is a simpler review.
+
+    **Store:** the token or client secret is entered once in Coverbase and held in the platform secrets store. Coverbase workers retrieve it to make requests; it is not displayed again and credential-management APIs do not return it.
+
+    **Revoke:** revoke the credential at the vendor, then remove or replace it on the target in Coverbase. Runs already in progress stop when their next request fails or their runtime timeout expires, or sooner if you cancel them from the inspection page.
+  </Tab>
+  <Tab title="IdP-initiated SSO (Okta or Entra)">
+    **Use when** the application is behind your identity provider and the console is the evidence source.
+
+    **Provision:**
+
+    1. A dedicated user in your IdP for inspection (for example `inspect-bot@yourdomain`), enrolled with a software one-time-code factor that Inspect can answer. Do not weaken your sign-on policy for other users; scope a narrow authentication policy to this identity if your default policy requires a factor Inspect cannot satisfy.
+    2. Assignment of that user to the application in your IdP, with the application's **read-only** role. Where the IdP pushes roles through profile attributes or SCIM, set the read-only role there. Where it cannot (Google Workspace is one example), assign a read-only administrator role in the application itself. Prefer a read-only or auditor role over a super-administrator or global-administrator role; if the application offers no read-only administrator role, see the guidance on broader access below.
+    3. A read-only service application in your IdP so Coverbase can enumerate applications, users and group assignments for the inventory views. For Okta that is an API Services app using private-key JWT with the scopes `okta.apps.read`, `okta.users.read`, `okta.groups.read` and `okta.logs.read`, plus a read-only administrator role. Entra uses an equivalent application registration.
+
+    **Sign-in state:** after a successful sign-in, Inspect keeps a browser profile so the next run does not sign in again. The profile is deleted after 12 hours without use.
+
+    **Revoke:** remove the application assignment or deactivate the identity in your IdP. Sign-in stops immediately. Then remove the target in Coverbase and rotate any factor seed you enrolled.
+  </Tab>
+  <Tab title="Google OAuth">
+    **Use when** the application signs in with a Google account.
+
+    **Provision:** a Google Workspace user with a custom read-only administrator role in the application. Inspect authorizes through Google's OAuth consent as that user.
+
+    **Revoke:** revoke the app's access from the Google account's security settings, or suspend the user, then remove the target in Coverbase.
+  </Tab>
+  <Tab title="Username and password">
+    **Use when** the application has no IdP integration and no usable API.
+
+    **Provision:** a dedicated account with a read-only role, a strong unique password, and a software one-time-code factor if the application supports one. If you register a passkey for this account and configure it on the target, Inspect can answer the passkey challenge through a virtual authenticator scoped to the application's domains.
+
+    **Store:** the password and factor seed are held in the platform secrets store. During sign-in the runtime enters the password and a generated code into the browser session; the seed itself stays server-side. The collecting agent has no tool that retrieves a credential value.
+
+    **Revoke:** disable the account or change its password at the application, then remove the target in Coverbase.
+  </Tab>
+</Tabs>
+
+## Optional: let Coverbase provision the inspection identity in Okta
+
+For Okta-connected organizations, Coverbase can create and manage the inspection identity for you: create the user, set a strong password and enroll its one-time-code factor, and assign only the applications you select with the read-only mapping known for each. This is the one place Inspect writes to a system of yours, and it is designed as such:
+
+- It requires an administrator of your Coverbase organization, the Inspect feature enabled for the organization, a ticked approval checkbox, and the Okta org being on an explicit allowlist that Coverbase configures with you. Without all four, the request is refused.
+- The service application needs the additional scopes `okta.users.manage` and `okta.apps.manage`, and an Okta role that permits creating and activating a user, setting its password, enrolling its factor, and assigning applications. Grant those only if you use this option; enumeration and inspection do not need them.
+- Every write is recorded twice, in a provisioning ledger with the redacted request and result, actor and timestamp, and in your organization's activity feed.
+- Applications whose read-only role Okta cannot set are recorded as requiring a manual step and shown to you, never silently elevated.
+- **Deprovision** removes every assignment Inspect created and deactivates the identity, and each undo is recorded in the same ledger.
+
+If you prefer to provision the identity yourself, do so and skip this option entirely; nothing else depends on it.
+
+## What the inspection identity should be able to see
+
+Prefer a read-only administrator or auditor role where the application offers one. Where it does not, check whether a custom role can give the visibility the controls need. Where neither exists, you can grant the identity the access that is available, including broader access, and rely on Inspect's route restrictions, DOM checks and Network Guard to keep the session read-only. Those safeguards refuse writes and record every decision, but they are not the same as a role the application itself enforces, and they do not remove every possibility of a state-changing request; see [Safeguards and limits](/inspect/safeguards-and-limits). The choice between narrower access and fuller evidence is yours. Whichever you choose, sign in as the identity once and confirm that the pages the controls need are readable.
+
+## Inside Coverbase
+
+- **Who can run inspections.** Inspect surfaces follow your organization's roles, and the permission that launches an inspection also cancels one. Provisioning and deprovisioning through Okta are administrator-only.
+- **Network allow rules.** Rules proposed during a run start provisional and are confirmed only by an independent later verdict; see [Safeguards and limits](/inspect/safeguards-and-limits). There is no customer-facing editor for them today.
+- **Where changes are logged.** Target creation, credential changes and provisioning land in the organization [audit trail](/security/audit-trails); run-level decisions are on each inspection's activity timeline.
+- **Access to Coverbase itself.** Your users sign in through your IdP; see [Identity and access management](/security/identity-and-access).
+
+## Revocation checklist
+
+<Steps>
+  <Step title="Stop sign-in at the source">
+    Remove the IdP application assignment or deactivate the identity, revoke the API credential at the vendor, or disable the local account. Cancel any inspection still running from its inspection page.
+  </Step>
+  <Step title="Remove the target and its stored credential in Coverbase">
+    Delete the target, and remove or replace the stored credential on it. Stored sign-in profiles expire on their own within 12 hours and are not reusable without the credential.
+  </Step>
+  <Step title="Deprovision if Coverbase provisioned">
+    Run deprovision from the Okta integration panel so assignments created by Inspect are removed and the identity is deactivated, with the ledger updated.
+  </Step>
+  <Step title="Keep the evidence, or delete it">
+    Revoking access does not delete inspections already run. Evidence stays under your organization's retention terms; delete inspections you no longer want to hold.
+  </Step>
+</Steps>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Safeguards and limits" icon="shield-check" href="/inspect/safeguards-and-limits">
+    The guards that back up the read-only role.
+  </Card>
+  <Card title="Hosting and data handling" icon="server" href="/inspect/hosting-and-data-handling">
+    Where credentials and evidence are stored.
+  </Card>
+  <Card title="Permissions and roles" icon="lock-keyhole" href="/user-guides/permissions-and-roles">
+    Roles inside Coverbase.
+  </Card>
+  <Card title="Identity and access management" icon="id-badge" href="/security/identity-and-access">
+    SSO into Coverbase and lifecycle through your IGA.
+  </Card>
+</CardGroup>

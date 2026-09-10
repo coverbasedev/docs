@@ -1,0 +1,103 @@
+---
+title: "Safeguards and limits"
+description: "The safeguards that keep an Inspect browser session read-only, what is recorded about every decision, and the limits of each safeguard."
+icon: "shield-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Inspect is designed to read your applications and not change them. Both evidence channels enforce that in code rather than relying on the model to behave. This page describes each safeguard, what it records, and where its coverage stops, so a security review can be based on how the system actually works.
+
+<Info>
+  Technical details on this page were last reviewed in September 2026 against the current release.
+</Info>
+
+## The safeguards, in one place
+
+Four safeguards apply to a browser session. They are introduced here and referred to by these names below.
+
+| Safeguard | What it is |
+| --- | --- |
+| **Route restrictions** | Each application platform carries a list of allowed domains (for example, the application's own domains plus its identity provider's). The agent can only open addresses within them, and a plan suggests where in the console to start. |
+| **DOM checks** | Before the agent clicks an element, the live element is inspected and refused if it is a form field, a submit control, a download link, or a control whose label reads as an action that changes state. |
+| **Network Guard** | Every request the browser makes is paused at the browser and released or blocked according to its method, headers, body, and any allow rule for that request shape. |
+| **Model adjudicator** | A model that judges two kinds of ambiguity: whether a paused request that is not a plain read is nonetheless read-safe, and whether an address the agent chose names a page or an action. Its verdicts are cached and recorded. |
+
+Underneath all four sits the access you granted the inspection identity in the application itself. See [Access, permissions and revocation](/inspect/access-and-permissions).
+
+## What the agent can do
+
+The browser agent is given a small set of tools: open an address within the route restrictions, click a control that passes the DOM checks, read dropdown options, find text on the page, type a query into a search box the console provides, and capture evidence. It has no generic click, type or keyboard tool, no JavaScript evaluation tool, no file read, write, upload or download tool, and no terminal, shell or other code execution tool of any kind. Text entry is limited to two places. The agent can type into a field the page itself marks as a search box, to filter a list or find a setting; the in-page guard permits that entry and still blocks submission. During sign-in, a configured authentication factor is entered into a visible verification field by the runtime, and the value is never shown to the model.
+
+## Clicks
+
+Every click goes through the DOM checks. Form fields, submit controls, download links, and controls whose label carries a verb such as save, delete, invite, revoke, enable, disable, reset or export are refused, including labels padded with invisible characters. Each refusal is recorded on the run's activity timeline with the reason. A sign-in button is allowed during sign-in and refused afterwards.
+
+## Direct navigation
+
+Opening an address is a separate action from clicking, and it is checked separately. The address must fall within the route restrictions. Because a direct navigation is a plain `GET`, the Network Guard releases it on method alone, so an address that leaves the surface the plan expected is passed to the model adjudicator, which sees the path and the query parameter names (never values) and judges whether it names a page or an action. Addresses judged to be actions are refused. Verdicts are cached per address so the same question is not asked twice in a run.
+
+## Network Guard
+
+Every request is paused at the browser before it is sent.
+
+- `GET`, `HEAD` and `OPTIONS` requests are released.
+- Any other method is blocked unless an allow rule for that exact request shape exists.
+- A request that disguises a write, through a method-override header, a GraphQL mutation, or an action verb in the path, is blocked regardless of any rule.
+- A request whose body cannot be read is treated as unsafe and blocked.
+
+Coverbase is considering a broader evaluation of requests beyond the method-based rule above. Any change would be described here when it ships.
+
+### Allow rules for read-only requests that are not `GET`
+
+Many admin consoles fetch data with `POST` requests that only read. The first time such a request shape appears, the model adjudicator sees a reduced form of it (field paths and operation names, with values redacted) and judges whether it is read-safe. A read-safe verdict is cached for the run and stored as a **provisional** allow rule for your organization. The rule stays provisional until a later, independent run meets the same request shape and the adjudicator confirms it, rejects it, or narrows it to a stricter rule. A rule is scoped to the exact request shape and is never widened by the agent.
+
+## Sign-in factors
+
+Where an application asks for a second factor after sign-in, Inspect answers with factors you configure for that target: a one-time code from an enrolled authenticator seed, or a passkey registered for the inspection identity. Nothing is enrolled automatically. A passkey is loaded into the session's virtual authenticator only for the application's allowed domains; a credential whose relying party falls outside them is skipped and recorded.
+
+## Other browser surfaces
+
+Cross-origin frames, popups and workers are separate browser targets; each is armed with the same Network Guard when it attaches, and one that cannot be armed is recorded as a block. WebSocket connections and service workers are covered by their own guards.
+
+## The API channel
+
+The API channel needs fewer safeguards because it has fewer moving parts. A plan can only name a documented `GET`. The request is assembled by code from the pinned plan and the target's values, with no model in the loop during collection. Compiled API methods cannot be edited by a customer, so a plan revision cannot introduce a write.
+
+## Stopping a run
+
+A user with permission to run inspections can cancel a running inspection, or individual control runs within it, from the inspection page. Cancellation ends the run, records the cancellation and who requested it, and releases the browser session. In the current release a cancelled run is listed with the same status as a failed run; the recorded reason tells them apart.
+
+## What is recorded
+
+Every allow, block and degraded decision on a browser session is written as an append-only event on the control run, with the safeguard that made it, the reason, and the method, origin and path involved. The inspection's activity timeline shows those decisions alongside the pages visited and the evidence captured, live during the run and afterwards. A session recording of each browser run is available for playback in the dashboard.
+
+A write-like step the console requires, such as generating a report on demand, shows up as a recorded block with a reason, and the control's observation says the evidence was unavailable.
+
+## How the safeguards are tested
+
+Coverbase exercises the browser safeguards against a hostile test application: pages with benign-looking controls that fire writes, requests that disguise a write as a read, addresses that encode an action, and page text that tells the agent to ignore its restrictions. The result is a checked-in report that also lists the cases the safeguards do not cover, such as a read-looking address with a server-side effect, and continuous integration flags the report when the enforcement code changes without the test being rerun. This is regression evidence for the safeguards described on this page, not a guarantee about any particular application.
+
+## Limits
+
+- **Reads leave the tenant.** The records the plan asked for, the screenshots that prove them, and the page content the agent read to get there are all sent to Coverbase. Inspect does not redact values from evidence. See [Hosting and data handling](/inspect/hosting-and-data-handling).
+- **Safeguards refuse writes; they do not make writes impossible.** They cover the request methods, element types and addresses described above. A `GET` that an application treats as a state change is not distinguishable by method; the model adjudicator's judgment of the address is the safeguard for that case. The access you grant the inspection identity in the application is the boundary that holds regardless of what the safeguards decide.
+- **The adjudicator is a model.** Its verdicts on ambiguous requests and addresses are judgments made on a reduced view of the request. Each verdict is recorded, and a rule is confirmed only by a second independent verdict. There is no customer-facing screen for editing allow rules today; your Coverbase team can review the rules in force with you.
+- **One coverage gap for passkeys.** The virtual authenticator does not follow the agent into a tab opened later in a run, so a sign-in that continues in a new tab can stall.
+- **Sign-in and provisioning are writes.** Signing in creates a session at the application, and the optional provisioning of an inspection identity writes to your identity provider. Both are deliberate, approved and recorded. See [Access, permissions and revocation](/inspect/access-and-permissions).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="API and browser evidence channels" icon="route" href="/inspect/evidence-channels">
+    What each channel can reach and what it sends.
+  </Card>
+  <Card title="Access, permissions and revocation" icon="key" href="/inspect/access-and-permissions">
+    The access that bounds a session, and how to grant and revoke it.
+  </Card>
+  <Card title="Audit trails" icon="list-timeline" href="/security/audit-trails">
+    The organization-wide audit trail that Inspect configuration changes land in.
+  </Card>
+</CardGroup>
