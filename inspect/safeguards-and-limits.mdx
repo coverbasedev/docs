@@ -1,0 +1,83 @@
+---
+title: "Safeguards and limits"
+description: "How Inspect keeps a browser session read-only in code, what it records about every decision, and where the guarantees stop."
+icon: "shield-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Nothing Inspect does inside your tenant may change it. Both evidence channels refuse writes in code rather than asking a model to behave, because a prompt that usually holds is not a guarantee anybody should offer about a production tenant. This page describes those controls precisely, including their limits, so your security review can decide on facts.
+
+## Layers on a browser session
+
+<Steps>
+  <Step title="The agent's toolset is small by construction">
+    The browser agent is given only read-only tools: navigate within the verified application domains, click a control that has been checked in the live page to be a navigation or expansion control, read dropdown options, search within the page, and capture evidence. It has no generic click, type, keyboard-send, JavaScript evaluation, file read or write, upload, download or PDF tool. The only typing tool is entering an authentication factor during sign-in, and it is withdrawn once collection starts.
+  </Step>
+  <Step title="Element checks before every click">
+    Before a click is performed, the live element is inspected. Form fields, submit controls, download links, and controls whose label carries a mutating verb (save, delete, invite, revoke, enable, disable, reset, export, and so on, including labels padded with invisible characters) are refused, and the refusal is recorded.
+  </Step>
+  <Step title="Every request is paused and judged">
+    The session's network traffic is intercepted at the browser. `GET`, `HEAD` and `OPTIONS` requests are released. Anything else is blocked unless it matches an allow rule. A request that disguises a write, through a method-override header, a GraphQL mutation, or a mutating verb in the path, is blocked as an affirmed mutation regardless of any rule. A request whose body cannot be read is treated as unsafe.
+  </Step>
+  <Step title="Ambiguous requests are adjudicated once, then confirmed independently">
+    Modern consoles issue `POST` requests that only read. The first time such a request shape appears it is adjudicated by a model that sees a reduced form of the request (field paths and operation names, with values redacted). A read-safe verdict is cached for the run and stored as a **provisional** allow rule for your organization. It stays provisional until a later, independent run meets the same request shape and the adjudicator confirms it, rejects it, or narrows it to a stricter rule. A rule is scoped to the exact request shape and is never widened by the agent.
+  </Step>
+  <Step title="Navigation is judged too">
+    A direct navigation is a `GET`, so it passes the method check. When the agent chooses an address that leaves the surface the plan expected, the address path and query parameter names (never values) are judged as naming a page or an action, and actions are refused.
+  </Step>
+  <Step title="Side channels are closed">
+    New tabs and frames opened by the page, WebSocket connections and service workers are covered by their own guards. Passkeys are installed only for the application's allowed domains, and a credential whose relying party falls outside them is skipped and recorded.
+  </Step>
+</Steps>
+
+## On the API channel
+
+The API channel needs fewer layers because it has fewer moving parts. A plan can only name a documented `GET`. The request is assembled by code from the pinned plan and the target's values, with no model in the loop during collection. A customer cannot edit a compiled API method, so a plan revision cannot introduce a write.
+
+## Everything is recorded
+
+Every allow, block and degraded decision on a browser session is written as an append-only event on the control run, with the kind of guard that made it, the reason, and the method, origin and path involved. The inspection's activity timeline shows those decisions alongside the pages visited and the evidence captured, live during the run and afterwards. A session recording of each browser run is available for playback in the dashboard.
+
+An expected write-like step, such as a report the console generates on demand, therefore shows up as a recorded block with a reason, and the control's observation says the evidence was unavailable. It does not fail silently and it does not proceed.
+
+## Limits
+
+Read these before your review, because they are the questions a careful reviewer will ask.
+
+- **Reads are not nothing.** Evidence leaves your tenant by design: the records the plan asked for, the screenshots that prove them, and the page content the agent read to get there. Inspect does not redact values from evidence. See [Hosting and data handling](/inspect/hosting-and-data-handling).
+- **The guards make writes refused, not impossible.** They cover the request methods and element types described above. A `GET` that a poorly designed application treats as a state change is not distinguishable by method; navigation adjudication exists for that case, and it is a judgment, not a proof. The strongest control against writes is the read-only role you assign the inspection identity in the application itself. See [Access, permissions and revocation](/inspect/access-and-permissions).
+- **Adjudication is a model judgment.** Read-safe verdicts on ambiguous requests are made by a model on a reduced view of the request. A second independent verdict is required before a rule is confirmed, and every verdict is recorded on the timeline. There is no dashboard screen for editing rules today; ask your Coverbase team for a review of the rules in force.
+- **Coverage follows browser targets, with one gap.** Cross-origin frames, popups and workers are separate browser targets; each is armed with the same request interception when it attaches, and one that cannot be armed is recorded as a block. The passkey authenticator does not follow into a tab opened later in a run, so a sign-in that continues in a new tab can stall rather than proceed.
+- **Reversibility is not claimed.** Because writes are refused rather than performed and reverted, there is nothing to reverse. Inspect does not claim it can undo a change, and you should not accept "reversible" as a substitute for "refused".
+- **Sign-in is a write to the identity provider's session, and provisioning is a write to the identity provider.** Both are deliberate, approved and audited. See [Access, permissions and revocation](/inspect/access-and-permissions).
+
+## What to ask for in a security review
+
+<AccordionGroup>
+  <Accordion title="Evidence that writes are refused" icon="shield-check">
+    Ask for a run's activity timeline showing recorded blocks, and the session recording for the same run. Both are available for any inspection in your organization.
+  </Accordion>
+  <Accordion title="The allow rules in force" icon="list-check">
+    Ask your Coverbase team for the organization's network allow rules, with their status (provisional, confirmed, narrowed, rejected), the run that proposed each, and match counts. Every adjudication is also visible on the run's activity timeline.
+  </Accordion>
+  <Accordion title="The read-only role in the application" icon="user-lock">
+    Ask the application owner for the role assigned to the inspection identity. This is the control that bounds the session whatever the guards do.
+  </Accordion>
+  <Accordion title="Platform assurance" icon="certificate">
+    The SOC 2 Type II report and penetration-test attestation cover the platform Inspect runs on. See [Compliance and assurance](/security/compliance).
+  </Accordion>
+</AccordionGroup>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="API and browser evidence channels" icon="route" href="/inspect/evidence-channels">
+    What each channel can reach and what it sends.
+  </Card>
+  <Card title="Audit trails" icon="list-timeline" href="/security/audit-trails">
+    The organization-wide audit trail that Inspect configuration changes land in.
+  </Card>
+</CardGroup>
