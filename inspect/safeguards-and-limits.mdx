@@ -29,7 +29,7 @@ Underneath all four sits the access you granted the inspection identity in the a
 
 ## What the agent can do
 
-The browser agent is given a small set of tools: open an address within the route restrictions, click a control that passes the DOM checks, read dropdown options, search within the page, and capture evidence. It has no generic click, type or keyboard tool, no JavaScript evaluation tool, no file read, write, upload or download tool, and no terminal, shell or other code execution tool of any kind. The one typing tool is entering a configured authentication factor into a visible verification field during sign-in; the value is resolved by the runtime and never shown to the model.
+The browser agent is given a small set of tools: open an address within the route restrictions, click a control that passes the DOM checks, read dropdown options, find text on the page, type a query into a search box the console provides, and capture evidence. It has no generic click, type or keyboard tool, no JavaScript evaluation tool, no file read, write, upload or download tool, and no terminal, shell or other code execution tool of any kind. Text entry is limited to two places. The agent can type into a field the page itself marks as a search box, to filter a list or find a setting; the in-page guard permits that entry and still blocks submission. During sign-in, a configured authentication factor is entered into a visible verification field by the runtime, and the value is never shown to the model.
 
 ## Clicks
 
@@ -66,11 +66,19 @@ Cross-origin frames, popups and workers are separate browser targets; each is ar
 
 The API channel needs fewer safeguards because it has fewer moving parts. A plan can only name a documented `GET`. The request is assembled by code from the pinned plan and the target's values, with no model in the loop during collection. Compiled API methods cannot be edited by a customer, so a plan revision cannot introduce a write.
 
+## Stopping a run
+
+A user with permission to run inspections can cancel a running inspection, or individual control runs within it, from the inspection page. Cancellation ends the run, records the cancellation and who requested it, and releases the browser session. In the current release a cancelled run is listed with the same status as a failed run; the recorded reason tells them apart.
+
 ## What is recorded
 
 Every allow, block and degraded decision on a browser session is written as an append-only event on the control run, with the safeguard that made it, the reason, and the method, origin and path involved. The inspection's activity timeline shows those decisions alongside the pages visited and the evidence captured, live during the run and afterwards. A session recording of each browser run is available for playback in the dashboard.
 
 A write-like step the console requires, such as generating a report on demand, shows up as a recorded block with a reason, and the control's observation says the evidence was unavailable.
+
+## How the safeguards are tested
+
+Coverbase exercises the browser safeguards against a hostile test application: pages with benign-looking controls that fire writes, requests that disguise a write as a read, addresses that encode an action, and page text that tells the agent to ignore its restrictions. The result is a checked-in report that also lists the cases the safeguards do not cover, such as a read-looking address with a server-side effect, and continuous integration flags the report when the enforcement code changes without the test being rerun. This is regression evidence for the safeguards described on this page, not a guarantee about any particular application.
 
 ## Limits
 

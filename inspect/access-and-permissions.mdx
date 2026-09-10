@@ -33,7 +33,7 @@ Inspect reads your applications with access you provision, on the principle that
 
     **Store:** the token or client secret is entered once in Coverbase and held in the platform secrets store. Coverbase workers retrieve it to make requests; it is not displayed again and credential-management APIs do not return it.
 
-    **Revoke:** revoke the credential at the vendor, then remove or replace it on the target in Coverbase. Runs already in progress stop when their next request fails or their runtime timeout expires.
+    **Revoke:** revoke the credential at the vendor, then remove or replace it on the target in Coverbase. Runs already in progress stop when their next request fails or their runtime timeout expires, or sooner if you cancel them from the inspection page.
   </Tab>
   <Tab title="IdP-initiated SSO (Okta or Entra)">
     **Use when** the application is behind your identity provider and the console is the evidence source.
@@ -84,7 +84,7 @@ Prefer a read-only administrator or auditor role where the application offers on
 
 ## Inside Coverbase
 
-- **Who can run inspections.** Inspect surfaces follow your organization's roles. Provisioning and deprovisioning through Okta are administrator-only.
+- **Who can run inspections.** Inspect surfaces follow your organization's roles, and the permission that launches an inspection also cancels one. Provisioning and deprovisioning through Okta are administrator-only.
 - **Network allow rules.** Rules proposed during a run start provisional and are confirmed only by an independent later verdict; see [Safeguards and limits](/inspect/safeguards-and-limits). There is no customer-facing editor for them today.
 - **Where changes are logged.** Target creation, credential changes and provisioning land in the organization [audit trail](/security/audit-trails); run-level decisions are on each inspection's activity timeline.
 - **Access to Coverbase itself.** Your users sign in through your IdP; see [Identity and access management](/security/identity-and-access).
@@ -93,7 +93,7 @@ Prefer a read-only administrator or auditor role where the application offers on
 
 <Steps>
   <Step title="Stop sign-in at the source">
-    Remove the IdP application assignment or deactivate the identity, revoke the API credential at the vendor, or disable the local account.
+    Remove the IdP application assignment or deactivate the identity, revoke the API credential at the vendor, or disable the local account. Cancel any inspection still running from its inspection page.
   </Step>
   <Step title="Remove the target and its stored credential in Coverbase">
     Delete the target, and remove or replace the stored credential on it. Stored sign-in profiles expire on their own within 12 hours and are not reusable without the credential.
