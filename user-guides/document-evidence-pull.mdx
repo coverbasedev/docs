@@ -14,7 +14,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 A **document evidence pull** answers a question out of a vendor's stored documents. You ask something like "does the SOC 2 cover encryption of data at rest?" and Coverbase decides which one or two documents are worth reading, reads them, and comes back with the passage that answers you.
 
-The point is that the answer arrives with its receipts. Not a summary of what the SOC 2 probably says: the sentence it actually says, the page it is on, a picture of that page with the sentence marked, and a link that opens the document there.
+The answer comes with its source attached: the sentence the document actually contains, the page it sits on, an image of that page with the sentence marked, and a link that opens the document there.
 
 <Note>
   This is different from [Document Insights](/user-guides/document-insights). Insights are fields you configure once and Coverbase populates on every matching document. An evidence pull is a one-off question you ask in the moment, about anything, with no configuration.
@@ -89,7 +89,7 @@ Just ask. All of these start a pull:
 
 ### It takes a couple of minutes
 
-Starting a pull returns a **run id**, not the answer. Reading a document is real work: the file is fetched, a model reads it, and the passage is located and rendered. A typical pull finishes in one to three minutes and a long document can take longer.
+Starting a pull returns a **run id**, not the answer. The file is fetched, a model reads it, and the passage is located and rendered. A typical pull finishes in one to three minutes, and a long document can take longer.
 
 Your assistant should tell you it is running and then collect the result. If it goes quiet, ask it to check the run.
 
@@ -141,7 +141,7 @@ The `![Evidence snippet]` line renders in chat as a crop of the page with the pa
   <img src="/images/user-guides/document-evidence-snippet.png" alt="A crop of a SOC 2 report page. Under the heading CC6.7 Encryption, the sentence beginning All customer data is encrypted at rest using AES-256 is highlighted in yellow across two lines. The unhighlighted CC6.1 Logical Access and CC7.2 Monitoring controls sit above and below it." />
 </Frame>
 
-The quote is what makes this usable in an assessment or a regulator response. Copy the answer if you like, but the quote and the link are the parts that survive someone asking "where does it say that?".
+Cite the quote and the link rather than the answer. They are what show where the answer came from.
 
 ---
 
@@ -168,7 +168,7 @@ Reading every document a vendor has for every question would be slow and expensi
 </Steps>
 
 <Tip>
-  The **Selection** line is worth reading. When an answer is not what you expected, it is usually because a different document was picked than the one you had in mind, and the selection line says which and why. Name the document explicitly to override it.
+  Read the **Selection** line when an answer is not what you expected. Usually a different document was picked than the one you had in mind, and the line says which and why. Name the document explicitly to override it.
 </Tip>
 
 ### Asking the same thing twice is cheap
@@ -196,7 +196,7 @@ https://<your Coverbase URL>/vendors/<vendor>/documents/<document>?page=42&highl
 
 Opening it loads the document preview, jumps to that page, and marks the passage.
 
-The highlight travels as the quote itself rather than as coordinates on the page. That matters: if the document is re-processed and the layout moves, the viewer re-matches the text and still finds it, where a stored box would point at the wrong place. It also means the link is readable, and you can see what it will highlight before you click.
+The highlight travels as the quote itself rather than as coordinates on the page. If the document is re-processed and the layout moves, the viewer re-matches the text and still finds it, where a stored box would point at the wrong place. It also keeps the link readable, so you can see what it will highlight before you click.
 
 <Note>
   The link opens Coverbase and respects your permissions. Someone without access to that vendor sees your normal access error, not the document. Sharing the link with a colleague is safe.
@@ -228,7 +228,7 @@ The highlight travels as the quote itself rather than as coordinates on the page
   </Accordion>
 
   <Accordion title="A document that answers nothing says so" icon="circle-minus">
-    If a document was read and does not address the question, the finding says **No answer to this question in this document**. That is a real result. It usually means the clause you expected is not in the vendor's paper.
+    If a document was read and does not address the question, the finding says **No answer to this question in this document**. This usually means the clause you expected is not in the vendor's paper.
   </Accordion>
 </AccordionGroup>
 
@@ -238,7 +238,7 @@ The highlight travels as the quote itself rather than as coordinates on the page
 
 <AccordionGroup>
   <Accordion title="An answer without a quote is unverified" defaultOpen icon="triangle-exclamation">
-    When the model could not ground its answer in a verbatim span, the response says: **No verbatim quote was grounded in the document, treat the answer as unverified.** Do not put that answer in front of an auditor. Open the document and check.
+    When the model could not ground its answer in a verbatim span, the response says: **No verbatim quote was grounded in the document, treat the answer as unverified.** Open the document and check it yourself before using the answer.
   </Accordion>
 
   <Accordion title="Check what the answer does not cover" icon="list-check">
@@ -267,7 +267,7 @@ The highlight travels as the quote itself rather than as coordinates on the page
 | Snippet image link lifetime | About 1 hour |
 | Coverbase deep link lifetime | Permanent |
 
-A pull that has not reported back within about 25 minutes is reported as stalled. Start another one; nothing is coming for the first.
+A pull that has not reported back within about 25 minutes is reported as stalled. The first pull will not return a result, so start another one.
 
 ---
 
@@ -285,7 +285,7 @@ Every pull is captured in the MCP audit log with the tool called, the user, the 
 
 <CardGroup cols={2}>
   <Card title="Document Insights guide" icon="file-magnifying-glass" href="/user-guides/document-insights">
-    The configured half: fields pulled from every document of a type, automatically, with the same quote-and-page receipts.
+    Fields pulled from every document of a type automatically, with the same quote and page citation.
   </Card>
 
   <Card title="Evidence quality" icon="file-shield" href="/user-guides/evidence-quality">
