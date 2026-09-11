@@ -69,9 +69,9 @@ When you author a questionnaire of type **Know Your Supplier** or **Vendor onboa
 | Question type | What the supplier fills in |
 | --- | --- |
 | Bank account details | Country, then that country's bank fields, plus IBAN and SWIFT where they apply |
-| Supplier site | An address, with the postal code checked against the national format |
-| Tax registration | The tax and company identifiers that country uses, such as a VAT number or a company number |
-| Diversity record | A classification, the certifying body, and the certificate's validity dates |
+| Supplier site | An address, with the postal code checked against the national format, and the email addresses purchase orders and remittance advice go to |
+| Tax registration | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one |
+| Diversity record | An inclusion category, a business size, the certifying body, and the certificate's validity dates |
 
 They do not appear on assessments or RFPs, because there is no supplier profile behind those to write into.
 
@@ -103,6 +103,26 @@ Turn it on and the supplier gets the option to link their bank directly instead 
   <img src="/images/user-guides/supplier-bank-question-connection.png" alt="A bank account details question offering a live bank connection above the manual country fields." />
 </Frame>
 
+### Picking a known bank
+
+Some countries ask for details the supplier has no way to look up. A Colombian form wants the bank's own taxpayer ID, which appears on a bank statement but not on anything a supplier keeps to hand.
+
+Where Coverbase holds a bank list for the country, the supplier picks their bank from a searchable list instead of typing its name, and the fields the list knows are filled in for them. Picking a Colombian bank fills in its code and its taxpayer ID.
+
+A bank the list has never seen is typed as free text. Nothing is filled in, because there is nothing to fill it in from, and the supplier is asked for a recent bank statement showing the account belongs to them. Colombia is the only country that asks for that statement today.
+
+## What a supplier is not asked for
+
+Three values reach your finance system without a supplier ever seeing them, because a supplier has no way to know the right answer and a wrong guess is worse than no answer.
+
+| Value | Where it comes from |
+| --- | --- |
+| Tax region | The address. It is the country code, or the country and state for the four countries that levy tax below national level: the United States, Canada, India and Brazil. |
+| Payment method | Whether the account is cross border. An account held in a country none of your assigned legal entities pay from goes out by wire; anything else is domestic. |
+| Bank code and bank taxpayer ID, where a bank list exists | The bank the supplier picked, as described above. |
+
+An import from your own finance system can carry its own tax region, and that value wins. Nothing else overwrites it.
+
 ## What happens when a supplier submits
 
 ### Normalizing first
@@ -133,6 +153,30 @@ The per country pages say exactly which checks apply. See [Supplier countries](/
 Where a public register exists, a tax or company registration is looked up in the background after it is saved. Companies House and HMRC for the United Kingdom, the VIES service for European VAT numbers, and so on.
 
 This is never part of validation. It runs afterwards, it annotates the record with what the register said, and a reviewer can retry it. A register being slow or down has no effect on a supplier's ability to submit their details, which is the whole reason it sits outside the validation path.
+
+### Rules that read more than one field
+
+Most rules judge a field on its own. These read a second value, so they can only run on submission rather than as the supplier types.
+
+| Rule | What it does |
+| --- | --- |
+| Cross border payment | An account in a country none of your assigned legal entities pay from needs a SWIFT/BIC, because the payment goes out by wire. The supplier is told rather than blocked, and the derived payment method is stored on the account. |
+| Currency held for local suppliers only | BRL is refused on an account whose supplier is not in Brazil. The test is the supplier's own country, not the bank's, so a Brazilian supplier banking abroad still qualifies. |
+| The IBAN and the fields inside it | Where a supplier gives both an IBAN and the bank, branch or account codes separately, those codes must appear inside the IBAN. A mismatch is a warning, because the two came from different documents and either could be the stale one. |
+| A name in the local script | Twelve countries write in a script a romanized name cannot stand in for, among them Japan, China, Korea and Greece. The form asks for the legal name in that script alongside the romanized one, and warns if what is typed is not in it. |
+| A registration without its certificate | Thirteen Latin American countries ship the certificate that proves a registration. This warns rather than blocks: a supplier who has the number but not the PDF to hand can still finish. |
+
+## Addresses hold more than an address
+
+An address carries the details your finance system needs to pay against it, not just the lines and the postal code.
+
+- **Purpose.** An address is a **Primary** or a **Remittance** address. An address is a registration address by carrying a tax registration rather than by being marked as one, so a single address can be both where the supplier is registered and where remittance advice goes.
+- **Email lists.** Two lists per address: where purchase orders go, and where remittance advice goes. A malformed address is refused. A missing one is a warning, on the primary address and on any remittance address, and is never asked for in China.
+- **Tax registrations.** A tax registration can attach to one address rather than to the supplier as a whole, which is how a supplier registered in more than one region records each registration against the site it belongs to.
+
+## Registrations a supplier is exempt from
+
+A supplier who is genuinely exempt from a registration has no number to give. Ticking **Exempt** on a tax registration replaces the identifier with a reason, which is required. The two are alternatives: a submission carrying both is refused.
 
 ## Review: the part that stops fraud
 
@@ -186,6 +230,8 @@ Every reveal of a full identifier is recorded. Everywhere else, and that means c
   </Accordion>
   <Accordion title="What suppliers are asked for" icon="list-check">
     **Collect IBAN** and **Collect country specific extras** apply across every country. Turning an extra off skips fields such as a building society roll number or a branch code that only some countries use. **Diversity certifications** narrows certificate collection to named countries; leave it empty to collect everywhere.
+
+    A diversity record carries an **inclusion category** and a **business size**. The category list follows the certification programs the United States and Canada run, so a supplier picks the one they hold a certificate for rather than describing themselves. Business size is Large, Medium or Small, and is taken from the certificate rather than worked out from headcount, because the size a supplier is certified under is the one the program counts.
   </Accordion>
   <Accordion title="Limits" icon="gauge">
     How many bank accounts and sites one supplier may hold, and how many profile writes a supplier portal may make per hour. The rate limit is deliberately low. Profile edits are rare, so a burst is far more likely to be an attack than a real supplier.
@@ -201,9 +247,11 @@ Every reveal of a full identifier is recorded. Everywhere else, and that means c
 
 Deactivating an entity blocks new assignments and leaves existing ones alone.
 
+One assignment request covers up to five entities. A request that quotes a purchase requisition raised more than thirty days ago needs a justification before it is accepted; a request quoting no requisition cannot be stale and is not asked for one.
+
 ### Country rules
 
-The 39 countries ship with rules already configured, and those are documented per country in [Supplier countries](/user-guides/supplier-countries/overview). Your organization can override any country's rules for its own suppliers, which is how a late correction from your finance team becomes a configuration change rather than a release.
+The 109 countries ship with rules already configured, and those are documented per country in [Supplier countries](/user-guides/supplier-countries/overview). Your organization can override any country's rules for its own suppliers, which is how a late correction from your finance team becomes a configuration change rather than a release.
 
 ## Getting it into your finance system
 
@@ -231,12 +279,16 @@ A bank change's webhook fires on approval, not on submission. If you are testing
 | Nothing was sent after approval | Check webhook delivery, then reconcile with the changes feed. |
 | "This supplier already has N bank accounts" | The organization's bank account limit. Raise it in configuration, or retire an account that is no longer used. |
 | Registry confirmation stuck as pending | The register was unreachable. It retries on a schedule, and a reviewer can retry it by hand. It never blocks anything. |
+| A warning asking for a SWIFT/BIC on a domestic-looking account | The account's country is not one your assigned legal entities pay from, so the payment is treated as a wire. Check the legal entities assigned to that supplier. |
+| A Colombian supplier is asked for a bank statement | They typed a bank name the list does not hold. Have them check the spelling against their statement; a bank on the list fills its own details in and asks for nothing. |
+| "BRL is not available for this supplier" | BRL is held for suppliers in Brazil. The test is the supplier's own country, not the bank's. |
+| A warning that the IBAN and the bank codes disagree | The two were taken from different documents. Have the supplier confirm which is current, usually the IBAN. |
 
 ## Where to next
 
 <CardGroup cols={2}>
   <Card title="Supplier countries" icon="globe" href="/user-guides/supplier-countries/overview">
-    All 39 countries, with the exact fields, formats, checksums and registers for each one.
+    All 109 countries, with the exact fields, formats, checksums and registers for each one.
   </Card>
   <Card title="Requesting a vendor" icon="cart-shopping" href="/user-guides/requesting-a-vendor">
     What happens before any of this: how a supplier gets into Coverbase in the first place.
