@@ -1,0 +1,55 @@
+# Watch Doggo Review trigger, caller side. The canonical copy lives in watch-doggo
+# at `deploy/jobs/review/watch-doggo-review.yml`; keep them in step.
+#
+# This file stays this small on purpose. The authorization check and the
+# StartBuild call live in watch-doggo's reusable workflow, so they are reviewed
+# next to the job they start; only the trigger has to live here, because `on:`
+# cannot be inherited from a reusable workflow.
+#
+# `uses:` and `git-ref` track `main` together, so a merge to watch-doggo is the
+# release (no tag move, no edit here). The approval that gates what runs against
+# this repo's PRs is watch-doggo's own review on main: the called workflow
+# decides the build's environment overrides, and `git-ref` is what the job
+# clones and runs. To hold this repo back while watch-doggo lands changes it
+# should not pick up yet, pin both to the same tag or SHA and point the jobs
+# stack's `triggerWorkflowRef` config at that ref, because the trigger role's
+# OIDC trust matches the workflow ref exactly and an unmatched pin fails the
+# role assumption.
+#
+# Why `pull_request_target`: a `pull_request` workflow on a fork PR gets no
+# secrets and no OIDC identity, so it could not start the build. Nothing is
+# checked out and nothing from the PR is executed, so the usual
+# `pull_request_target` hazard does not apply.
+#
+# Prerequisites, both one-time:
+#   - watch-doggo → Settings → Actions → Access: allow repositories in the
+#     organization, or this repo cannot call the workflow
+#   - this repo → Settings → Secrets → Actions: WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN
+#     (the `triggerRoleArn` output of the `jobs` Pulumi stack)
+name: Watch Doggo Review
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+concurrency:
+  # Serializes only this trigger workflow (seconds long), not the async CodeBuild
+  # runs it starts: re-labeling twice can still run two builds concurrently
+  # (concurrentBuildLimit bounds it). The pipeline's prior-review marker reduces
+  # but does not eliminate double-posting, and nothing pins a build to the SHA
+  # that was labeled — commits pushed between label and clone are reviewed under
+  # the label's authorization, bounded by the job's own band/CI gates.
+  group: watch-doggo-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  review:
+    uses: coverbasedev/watch-doggo/.github/workflows/watch-doggo-review-trigger.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    with:
+      git-ref: main
+    secrets:
+      trigger-role-arn: ${{ secrets.WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN }}

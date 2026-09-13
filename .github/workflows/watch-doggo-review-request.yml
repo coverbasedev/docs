@@ -1,0 +1,42 @@
+# Scheduled half of the Watch Doggo review path: asks, every 30 minutes, which open
+# pull requests want a fresh automated review, and starts a build for each.
+#
+# The decision lives in watch-doggo (`.github/scripts/request_reviews.py`), not here,
+# so the reassignment cooldown and the commit/label ordering are the same in every
+# repository it reviews. watch-doggo-review-request.yml documents why it starts the
+# build directly rather than adding the label and waiting for the `labeled` trigger:
+# a label added by this repo's own GITHUB_TOKEN never fires one.
+#
+# watch-doggo-review.yml beside this file is the other half, for a human adding the
+# label by hand. Both call the same reusable workflow and hold the same prerequisites.
+#
+# Prerequisites, all one-time:
+#   - secret WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN (the `jobs` stack's triggerRoleArn)
+#   - variable WATCHDOGGO_REVIEW_GITHUB_APP_ID and secret
+#     WATCHDOGGO_REVIEW_GITHUB_APP_PRIVATE_KEY, which clone watch-doggo into the job
+#   - this repository listed in watch-doggo's `REVIEWED_REPOS`, or the trust policy
+#     denies the role assumption
+name: Watch Doggo Review request
+
+concurrency:
+  group: watch-doggo-review-request
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  watch_doggo_review_request:
+    uses: coverbasedev/watch-doggo/.github/workflows/watch-doggo-review-request.yml@main
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    with:
+      git-ref: main
+      checkout-app-id: ${{ vars.WATCHDOGGO_REVIEW_GITHUB_APP_ID }}
+    secrets:
+      trigger-role-arn: ${{ secrets.WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN }}
+      checkout-app-private-key: ${{ secrets.WATCHDOGGO_REVIEW_GITHUB_APP_PRIVATE_KEY }}
