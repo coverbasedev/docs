@@ -11,7 +11,8 @@
 # label by hand. Both call the same reusable workflow and hold the same prerequisites.
 #
 # Prerequisites, all one-time:
-#   - secret WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN (the `jobs` stack's triggerRoleArn)
+#   - organization variable WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN (the `jobs` stack's
+#     triggerRoleArn), set once for every repository
 #   - variable WATCHDOGGO_REVIEW_GITHUB_APP_ID and secret
 #     WATCHDOGGO_REVIEW_GITHUB_APP_PRIVATE_KEY, which clone watch-doggo into the job
 #   - this repository listed in watch-doggo's `REVIEWED_REPOS`, or the trust policy
@@ -37,6 +38,6 @@ jobs:
     with:
       git-ref: main
       checkout-app-id: ${{ vars.WATCHDOGGO_REVIEW_GITHUB_APP_ID }}
+      trigger-role-arn: ${{ vars.WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN }}
     secrets:
-      trigger-role-arn: ${{ secrets.WATCHDOGGO_REVIEW_TRIGGER_ROLE_ARN }}
       checkout-app-private-key: ${{ secrets.WATCHDOGGO_REVIEW_GITHUB_APP_PRIVATE_KEY }}
