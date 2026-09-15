@@ -1,0 +1,25 @@
+# How this repository declares itself to Watch Doggo.
+# Schema: watch-doggo/packages/core/src/watchdoggo/core/repo_config.py
+
+[repo]
+branch_prefix = "watchdoggo/"
+
+context_paths = ["AGENTS.md", "CONTRIBUTING.md", "conventions.mdx"]
+
+[codegen]
+# Prose with a build step and no runtime. A wrong page is visible, reversible, and
+# caught by review, which is the profile this is for.
+enabled = true
+
+[review]
+# Paths a Watch Doggo APPROVE may never cover. The review still runs and posts in full.
+#
+# A page is prose and fails visibly. A workflow holds this repo's identity, `docs.json`
+# decides what is published and where every URL points, and `security/` is what we tell
+# customers about our controls, which is a claim rather than a document.
+deny_globs = [
+  ".github/actions",
+  ".github/workflows",
+  "docs.json",
+  "security",
+]
