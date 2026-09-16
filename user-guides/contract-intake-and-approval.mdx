@@ -106,7 +106,9 @@ Each step names who decides:
 Steps are numbered. **Steps sharing a number decide together**, and the chain does not advance until all of them have. Increasing numbers run one after another.
 
 <Note>
-  **A step that resolves to nobody is skipped.** If a policy asks for the vendor owner and the vendor has none, that step is skipped rather than stalling the chain. A policy whose every step skips approves the contract immediately, so review your policies if you see requests clearing with no decisions recorded.
+  **A step that resolves to nobody is skipped, but a policy that resolves to nobody at all is refused.** If a policy asks for the vendor owner and the vendor has none, that step is skipped and the rest of the chain runs. If every step of the policy skips, the submission is refused and names why, because approving on the spot would waive the chain you configured. Give the contract an owner, or name approvers the policy can reach, then submit again.
+
+  A contract submitted when your org has configured no policy at all is approved immediately. An org that has configured no chain is not asking for one.
 </Note>
 
 ### Submitting
@@ -185,6 +187,9 @@ The **Execution** section shows every DocuSign envelope raised on this contract,
 | **Completed** | Everybody has signed. |
 | **Declined** | A recipient refused. The contract returns to approved. |
 | **Voided** | Canceled in DocuSign. The contract returns to approved. |
+| **Expired** | DocuSign's own expiry ran out before everybody signed. The contract returns to approved. |
+
+Every ending but **Completed** returns the contract to approved, so it is ready to send again without anybody editing a record by hand.
 
 <Frame caption="An envelope out for signature. Each party carries its own state, and the order column shows who is asked when.">
   <img src="/images/user-guides/contract-execution-envelope.png" alt="Envelope card showing two signers and a CC recipient with individual statuses" />
@@ -197,7 +202,7 @@ Status arrives on its own. DocuSign notifies Coverbase as the envelope moves, an
 When an envelope completes, Coverbase downloads the signed PDF and the DocuSign certificate of completion and attaches both to the contract. The unsigned draft is kept, not replaced, so the record still shows what was sent out.
 
 <Warning>
-  **A signed copy that differs from the approved draft is flagged, not applied.** Coverbase compares the returned text with the draft the approvers read. If they differ by more than a signature block, the envelope is marked for review and the contract's metadata is left alone. Somebody has to look at it. This catches an agreement edited inside the signing tool after approval, which would otherwise be filed silently with the old numbers attached.
+  **A signed copy that differs from the approved draft is flagged, not applied.** Coverbase compares the returned text with the draft the approvers read, and the envelope is marked for review whenever either check fires: the paper grew or shrank by more than a signature block can account for, or a figure the draft stated no longer appears anywhere in the signed copy. The second is what catches a term rewritten in place. Net 30 becoming net 90 changes no length at all, so only the missing figure gives it away. When an envelope is flagged the contract's metadata is left alone and somebody has to look at it.
 </Warning>
 
 <Frame caption="A completed envelope whose returned paper does not match the approved draft. The contract's metadata is held rather than overwritten.">
