@@ -37,7 +37,7 @@ A new contract goes through four stages: somebody raises a request, a person con
 
 ## Raising a request
 
-Start from the vendor, not the contracts list. The vendor's **Contracts** tab already knows which vendor you mean, and it shows you what else you have with them, which is usually what tells you whether this is a new agreement or an amendment to an existing one.
+Start from the vendor, not the contracts list. The vendor's **Contracts** tab already knows which vendor you mean, and it shows what else you hold with them. That is usually what tells you whether this is a new agreement or an amendment.
 
 Click **New Contract** and fill in:
 
@@ -53,7 +53,7 @@ Click **New Contract** and fill in:
 Attach the pre-execution draft on the same screen. You can attach more documents later from the contract's **Documents** section.
 
 <Tip>
-  **Name the parent agreement now, not later.** An order form with no MSA behind it reads as a standalone commitment in every report that follows, and nobody goes back to fix it.
+  **Name the parent agreement now, not later.** An order form with no MSA behind it reads as a standalone commitment in every report that follows.
 </Tip>
 
 ## Confirming the metadata
@@ -74,18 +74,18 @@ Open the contract and go to its **Approval** section. The **Metadata sign-off** 
 Fix anything that is wrong, then click **Confirm metadata**. Coverbase records who confirmed it and when.
 
 <Warning>
-  **Editing a confirmed value clears the sign-off.** If you change the total value, the dates, the type, or the vendor after confirming, the confirmation is withdrawn and somebody has to confirm again. This is deliberate: approvers decide on the numbers in front of them, and a request must not walk a chain carrying values that changed after the sign-off.
+  **Editing a confirmed value clears the sign-off.** If you change the total value, the dates, the type, or the vendor after confirming, the confirmation is withdrawn and somebody has to confirm again. Approvers decide on the numbers in front of them. A request that changed after the sign-off is no longer the request they were shown.
 </Warning>
 
 ### Where a value came from
 
-Each field records whether it was entered by a person or suggested by the AI. The contract's **Properties** section shows the source per field, so a reviewer can tell at a glance which numbers a human typed and which came off the paper.
+Each field records whether it was entered by a person or suggested by the AI. The contract's **Properties** section shows the source per field. A reviewer can see which numbers a person typed and which came off the paper.
 
 ## The approval chain
 
 ### Setting up policies
 
-Approval policies live under **Settings → Organization → Contract Approvals**. An organization admin creates and maintains them; everybody who can read contracts can see them.
+Approval policies live under **Settings → Organization → Contract Approvals**. Reading them needs permission to read organization settings, and editing them needs permission to change organization settings. Being able to read contracts is not enough for either: the list names every approver and every value threshold in your organization, and it is not tied to any one contract.
 
 Until there is at least one policy, the page says so, and every contract submitted for approval is approved on the spot with no approver.
 
@@ -107,21 +107,23 @@ Until there is at least one policy, the page says so, and every contract submitt
   <img src="/images/user-guides/contract-approval-policy-editor.png" alt="Approval policy editor with name, contract types, value floor, two toggles and two approval steps" />
 </Frame>
 
-Saved policies read back as a ladder, so you can see at a glance what a contract will walk through.
+Saved policies read back as a ladder, which is how you check what a contract will actually walk through.
 
 <Frame caption="Two configured policies. The default covers everything; the second only covers high-value master agreements and sends automatically.">
   <img src="/images/user-guides/contract-approval-policies.png" alt="Two approval policies listed with their conditions and step chains" />
 </Frame>
 
 <Note>
-  **Editing a policy does not change an approval already running.** A contract copies each step's name and approver when it is submitted, so rewriting the ladder afterwards never rewrites what somebody already decided.
+  **Editing a policy does not change an approval already running.** A contract copies each step's name and approver when it is submitted. Rewriting the ladder afterwards cannot rewrite what somebody already decided.
 </Note>
 
 ### How a chain is chosen
 
 Your organization configures approval policies. Each policy has conditions and an ordered list of steps.
 
-When you submit, Coverbase picks the policy that fits, most specific first: a policy naming your contract's type beats one that names none, and among equals the higher value floor wins. **Default** breaks whatever tie is left. You can also name a policy explicitly if you have the right to.
+When you submit, Coverbase picks the policy that fits, most specific first: a policy naming your contract's type beats one that names none, and among equals the higher value floor wins. **Default** breaks whatever tie is left.
+
+You cannot choose the policy yourself. Submission takes no arguments, and the conditions above are the only thing that decides. A request that could name its own policy could pick the shortest one.
 
 ### How steps work
 
@@ -133,10 +135,17 @@ Each step names who decides:
 
 Steps are numbered. **Steps sharing a number decide together**, and the chain does not advance until all of them have. Increasing numbers run one after another.
 
-<Note>
-  **Every policy needs at least one step.** A policy that matches contracts and then approves all of them is the same bypass as having no policy, with none of the visibility, so the editor will not save one.
+Two steps sharing a number cannot name the same approver, and the editor refuses to save that. Two rungs that one person clears alone look like two approvals and are one. This applies to user groups too: the same group twice at one number is refused, though two different groups at one number is fine and is the normal way to ask legal and security together.
 
-  **A step that resolves to nobody refuses the whole submission.** If a policy asks for the vendor owner and the vendor has none, Coverbase does not skip that step and run the rest: a shorter chain than the one you configured is not the chain you configured, and the missing rung is the one nobody notices is missing. The refusal names the step. Give the contract an owner, or name approvers the policy can reach, then submit again.
+<Note>
+  **Every policy needs at least one step.** A policy that matches contracts and then approves all of them has the same effect as no policy, while looking in settings like routing is configured. The editor will not save one.
+
+  **A step that resolves to nobody refuses the whole submission.** Coverbase does not skip the step and run the rest, because a chain missing a rung still reports itself as approved. Two ways a step reaches nobody:
+
+  - The policy asks for the contract owner or the vendor owner, and there isn't one.
+  - The policy names a user group that has no active members. An empty group would open a step that nobody can approve and that sends no mail, leaving the request stuck until somebody withdrew it.
+
+  The refusal names the step it could not fill. Give the contract an owner, add somebody to the group, or point the policy at approvers it can reach, then submit again.
 
   A contract submitted when your org has configured no policy at all is approved immediately, and its Approval section says so rather than showing a bare **Approved** badge. An org that has configured no chain is not asking for one, but if that is a surprise, the fix is to configure one.
 </Note>
@@ -152,7 +161,7 @@ Coverbase emails the approvers on the first step. Later steps are emailed as the
 An approver opens the contract's **Approval** section and sees **Approve** and **Reject** on the step waiting on them. The buttons appear only for the person being asked, so an approver who is not on this step sees the chain but no controls.
 
 <Note>
-  **Approving does not require permission to edit the contract.** An approver is frequently somebody who would never otherwise edit a contract record, such as a finance reviewer signing off on spend. Being named on the step is the whole authorization.
+  **Approving does not require permission to edit the contract.** An approver is frequently somebody who would never otherwise edit a contract record, such as a finance reviewer signing off on spend. Being named on the step is what authorizes the decision.
 </Note>
 
 <Frame caption="An approval chain mid-flight. Legal has cleared, the CFO is being asked, and the decide buttons appear only on the step waiting on the reader.">
@@ -234,7 +243,9 @@ The envelope goes out **as the person who set up the automatic send**, using the
   <img src="/images/user-guides/contract-auto-send-failed.png" alt="Execution section warning that the automatic send did not go out" />
 </Frame>
 
-Clearing the recipient list and saving turns the automatic send back off.
+Clearing the recipient list and saving turns the automatic send back off. You can do that at any point while the contract is still in its chain, and right up to the moment the send claims the contract.
+
+Once the agreement has actually gone out, it is too late: Coverbase refuses the change and tells you the envelope is already with your signers. Turning the plan off at that point would report the send as cancelled while a copy sat in front of the counterparty. To stop an envelope that is already out, void it in DocuSign and choose **Sync status**.
 
 ### Tracking the envelope
 
@@ -251,7 +262,7 @@ The **Execution** section shows every DocuSign envelope raised on this contract,
 | **Voided** | Canceled in DocuSign. The contract returns to approved. |
 | **Expired** | DocuSign's own expiry ran out before everybody signed. The contract returns to approved. |
 
-Every ending but **Completed** returns the contract to approved, so it is ready to send again without anybody editing a record by hand.
+Every ending but **Completed** returns the contract to approved. It is ready to send again without anybody editing a record by hand.
 
 <Frame caption="An envelope out for signature. Each party carries its own state, and the order column shows who is asked when.">
   <img src="/images/user-guides/contract-execution-envelope.png" alt="Envelope card showing two signers and a CC recipient with individual statuses" />
@@ -271,7 +282,7 @@ Only a person can settle it. Open DocuSign and look for the envelope:
 
 <Steps>
   <Step title="Nothing is there">
-    Choose **Abandon send** on the envelope. The contract returns to approved and can be sent again.
+    Choose **Abandon send** on the envelope. The contract returns to approved and can be sent again. The button appears once: an envelope that has already been abandoned shows no action, so a second click cannot free a contract whose retry is out with its signers.
   </Step>
   <Step title="The envelope is there">
     Leave it. It is a real envelope and it will report its own status. If you do not want it signed, void it in DocuSign and choose **Sync status** so Coverbase picks the void up, which returns the contract to approved.
@@ -279,12 +290,12 @@ Only a person can settle it. Open DocuSign and look for the envelope:
 </Steps>
 
 <Warning>
-  **Do not abandon an envelope you can still see in DocuSign.** Abandoning says the agreement never went out. Doing that while a copy sits in front of your signers frees the contract for a second send, and two executable copies of one agreement is the outcome this whole step exists to prevent. Coverbase refuses **Abandon send** on any envelope DocuSign acknowledged.
+  **Do not abandon an envelope you can still see in DocuSign.** Abandoning says the agreement never went out. Doing that while a copy sits in front of your signers frees the contract for a second send, and you end up with two signed copies of one agreement. Coverbase refuses **Abandon send** on any envelope DocuSign acknowledged.
 </Warning>
 
 ### The executed copy
 
-When an envelope completes, Coverbase downloads the signed PDF and the DocuSign certificate of completion and attaches both to the contract. The unsigned draft is kept, not replaced, so the record still shows what was sent out.
+When an envelope completes, Coverbase downloads the signed PDF and the DocuSign certificate of completion and attaches both to the contract. The unsigned draft is kept rather than replaced. The record still shows what was sent out.
 
 <Warning>
   **A signed copy that differs from the approved draft is flagged, not applied.** Coverbase compares the returned text with the draft the approvers read, and the envelope is marked for review whenever either check fires: the paper grew or shrank by more than a signature block can account for, or a figure the draft stated no longer appears anywhere in the signed copy. The second is what catches a term rewritten in place. Net 30 becoming net 90 changes no length at all, so only the missing figure gives it away. When an envelope is flagged the contract's metadata is left alone and somebody has to look at it.
@@ -302,7 +313,7 @@ The vendor's **Contracts** tab is the other half of this. It shows every contrac
 
 Above the list:
 
-- **Committed value** across active contracts. Contracts that bill on usage are counted at their committed floor and reported separately, because adding a usage forecast to signed commitments produces a number nobody can defend in a renegotiation.
+- **Committed value** across active contracts. Contracts that bill on usage are counted at their committed floor and reported separately. A usage forecast added to signed commitments gives a total that is part estimate, which is not what you want in front of you in a renegotiation.
 - **Needs attention.** Contracts with a notice deadline or expiry inside the next ninety days, soonest first, plus any whose required details are still incomplete. An overdue notice deadline is shown in red and stays in the list.
 
 <Frame caption="The needs-attention panel on a vendor's Contracts tab. Overdue in red, approaching in amber, incomplete details in grey.">
