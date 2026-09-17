@@ -10,6 +10,11 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Coverbase connects to **DocuSign** so documents that come out of the vendor lifecycle - agreements, attestations, approval sign-offs - go out for signature without leaving the platform, through your organization's own DocuSign account.
 
+There are two places you can send from, and they behave the same once the envelope is out:
+
+- **From a contract.** The contract's **Execution** section, once the contract has cleared its approval chain. This is the path described in [Contract intake and approval](/user-guides/contract-intake-and-approval).
+- **From a vendor document.** The document's actions menu, for anything that is not a contract record.
+
 ```mermaid
 flowchart LR
   subgraph cb["Coverbase"]
@@ -30,6 +35,7 @@ flowchart LR
 - **The executed agreement stays bound to the record.** Because the envelope is created **from** a Coverbase vendor document, the fully executed agreement is attached to that third party's record by construction, not by someone remembering to file it. From there it flows into the contract family: [Contract Guardian](/products/contract-guardian) runs the clause review, [Document Insights](/products/document-insights) extracts dates, values, notice periods and liability caps, and obligations are tracked against it.
 - **Your account, your audit trail.** Envelopes live in your DocuSign tenant, so your existing DocuSign retention, compliance, and audit posture applies unchanged, including the DocuSign certificate of completion.
 - **Multi-account aware.** Users who belong to several DocuSign accounts pick which one to send from; Coverbase respects DocuSign's account membership rather than assuming one.
+- **Send on approval, without anybody pressing send.** A contract approval policy can carry **Send for signature on approval**. The requester names who signs while the contract is still in its chain, and the envelope goes out as them the moment the last approver signs off. See [Sending automatically](/user-guides/contract-intake-and-approval#sending-automatically).
 
 ## Preparing a document for signature
 
@@ -49,22 +55,76 @@ Each signer needs a unique signature anchor and a unique email address. Coverbas
   Put the anchor set into your standard MSA, DPA and order-form templates once. Every agreement generated from them is then sendable with no preparation step at all.
 </Tip>
 
-## Authentication and provisioning
+## Connecting your account
 
-The connection uses DocuSign's standard OAuth authorization flow: a user authorizes Coverbase against your DocuSign tenant from the **Configuration → External integrations** page, and Coverbase acts only with the access that grant carries. No passwords are stored; tokens are held in Coverbase's secrets manager.
+Connecting is per person, not per organization. Each sender authorizes Coverbase against their own DocuSign login, so envelopes carry the right sender and your DocuSign permissions apply unchanged.
+
+<Steps>
+  <Step title="Open a send screen">
+    Go to a contract's **Execution** section and click **Send to DocuSign**, or open a vendor document's actions menu and choose **Send for signature**. If you are not connected yet, Coverbase says so and offers **Connect DocuSign**.
+  </Step>
+  <Step title="Authorize in DocuSign">
+    Clicking **Connect DocuSign** opens DocuSign in a new tab. Sign in with your normal DocuSign credentials and grant Coverbase access. Coverbase never sees your DocuSign password.
+  </Step>
+  <Step title="Come back">
+    DocuSign returns you to the screen you started from. The send dialog now shows your connected account instead of the connect prompt, and stays connected on your other devices too.
+  </Step>
+  <Step title="Pick the account, if you have several">
+    People who belong to more than one DocuSign account get an account selector. Coverbase preselects the account your organization configured, falls back to your DocuSign default, and lets you change it per send.
+  </Step>
+</Steps>
+
+<Note>
+  **If you belong to several DocuSign accounts and your organization has configured one you are not a member of**, Coverbase warns you and uses your own default instead of failing the send. Ask your DocuSign administrator to add you to the configured account if envelopes should be raised there.
+</Note>
+
+### Setting the organization account
+
+An administrator sets which DocuSign account the organization sends from under **Configuration → External integrations → DocuSign**. This is a default, not a restriction: senders may still pick another account they belong to.
+
+### Disconnecting
+
+The send dialog's account card has a **Disconnect** action. It forgets your grant, so nothing can send as you until you authorize again. Envelopes already in flight are unaffected, and reconnecting takes one authorization round trip.
+
+<Note>
+  **Connect once, not once per device.** Your grant is held against your Coverbase user, so connecting on a laptop is also connected on a phone. Clearing site data does not disconnect you; **Disconnect** does.
+</Note>
+
+<Warning>
+  **You can only ever send as yourself.** Coverbase resolves the DocuSign identity from your own grant, never from anything the screen sends, so no colleague's account is reachable from your session even if you can edit the contract. A person who has not connected sees the connect prompt rather than somebody else's account.
+
+  An automatic send on approval is the one case where an envelope goes out with no browser open, and it is still your own grant: the envelope is sent as the person who **set up that send**, never as the submitter and never as whichever approver clicked last. Disconnecting stops those too.
+</Warning>
+
+## Keeping status in step
+
+Once an envelope is out, three things keep Coverbase's copy of its status honest:
+
+| Mechanism | When it runs |
+| --- | --- |
+| **DocuSign Connect** | Immediately, as DocuSign moves the envelope. Coverbase verifies the signature on every callback and rejects anything unsigned. |
+| **Scheduled reconciliation** | On a schedule, re-reading every envelope that is still in flight. This is the safety net for a callback that never arrived. |
+| **Sync status** | On demand, from the button on the envelope, for when you are watching a signature land. |
+
+Ask your Coverbase contact to enable DocuSign Connect for your account if envelope statuses only update when you press **Sync status**.
 
 ## Onboarding checklist
 
 1. A DocuSign account with API access enabled (standard on business plans).
-2. A user with sending rights completes the OAuth authorization from the integrations page.
-3. Anchor tags added to the document templates you intend to send.
-4. That's it - sending is available from the document actions immediately.
+2. Each sender authorizes Coverbase from a send screen, as above.
+3. An administrator sets the organization's DocuSign account under **Configuration → External integrations**, if you want a shared default.
+4. Anchor tags added to the document templates you intend to send.
+5. DocuSign Connect enabled, so statuses update without anyone pressing a button.
+6. If you want approvals to send on their own, an approval policy with **Send for signature on approval** under **Settings → Organization → Contract Approvals**.
 
 ## Related
 
 <CardGroup cols={2}>
   <Card title="Contract Guardian" icon="file-contract" href="/products/contract-guardian">
     Clause review before execution, and re-evaluation on amendment.
+  </Card>
+  <Card title="Contract intake and approval" icon="clipboard-check" href="/user-guides/contract-intake-and-approval">
+    Raising a request, confirming its values, and the approval chain before a send.
   </Card>
   <Card title="Contracts workspace" icon="folder-open" href="/user-guides/contracts-workspace">
     Where the executed agreement lands, and what the record then tracks.
