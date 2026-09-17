@@ -227,7 +227,7 @@ The envelope goes out **as the person who set up the automatic send**, using the
 </Note>
 
 <Note>
-  **A send that does not go out never undoes an approval.** If DocuSign is unreachable, or the plan author's connection has lapsed, the contract stays approved and the plan stays on it. The Execution section says the automatic send did not go out, and **Send to DocuSign** is right there to do it by hand.
+  **A send that does not go out never undoes an approval.** If DocuSign is unreachable, or the plan author's connection has lapsed, the contract stays approved and the plan stays on it. The Execution section says the automatic send did not go out, and **Send to DocuSign** is right there to do it by hand. The one exception is a send that got as far as DocuSign and lost its answer, covered under [When a send loses its answer](#when-a-send-loses-its-answer).
 </Note>
 
 <Frame caption="Approved, with a plan and nothing out. The automatic send did not run, and the manual one is still available.">
@@ -258,6 +258,25 @@ Every ending but **Completed** returns the contract to approved, so it is ready 
 </Frame>
 
 Status arrives on its own. DocuSign notifies Coverbase as the envelope moves, and a scheduled pass re-reads every in-flight envelope in case a notification was missed. **Sync status** on the envelope reads it back immediately, for when you are watching a signature land and do not want to wait.
+
+### When a send loses its answer
+
+Very occasionally a send reaches DocuSign and the reply never comes back. Coverbase cannot tell that apart from DocuSign refusing the send outright, so it assumes the riskier of the two: the envelope may be out there with your signers. The contract is held as sent for signature, the envelope shows as failed, and the Execution section explains what happened instead of offering **Sync status**, which has nothing to ask about.
+
+Only a person can settle it. Open DocuSign and look for the envelope:
+
+<Steps>
+  <Step title="Nothing is there">
+    Choose **Abandon send** on the envelope. The contract returns to approved and can be sent again.
+  </Step>
+  <Step title="The envelope is there">
+    Leave it. It is a real envelope and it will report its own status. If you do not want it signed, void it in DocuSign and choose **Sync status** so Coverbase picks the void up, which returns the contract to approved.
+  </Step>
+</Steps>
+
+<Warning>
+  **Do not abandon an envelope you can still see in DocuSign.** Abandoning says the agreement never went out. Doing that while a copy sits in front of your signers frees the contract for a second send, and two executable copies of one agreement is the outcome this whole step exists to prevent. Coverbase refuses **Abandon send** on any envelope DocuSign acknowledged.
+</Warning>
 
 ### The executed copy
 
