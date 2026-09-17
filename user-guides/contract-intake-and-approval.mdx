@@ -83,17 +83,45 @@ Each field records whether it was entered by a person or suggested by the AI. Th
 
 ## The approval chain
 
+### Setting up policies
+
+Approval policies live under **Settings → Organization → Contract Approvals**. An organization admin creates and maintains them; everybody who can read contracts can see them.
+
+Until there is at least one policy, the page says so, and every contract submitted for approval is approved on the spot with no approver.
+
+<Frame caption="A brand-new organization. Nothing routes contracts yet, so the page says what that means.">
+  <img src="/images/user-guides/contract-approval-no-policies.png" alt="Contract approval settings with a warning that no policy is configured" />
+</Frame>
+
+**Add approval policy** opens the editor. Give it a name, say which contracts it covers, and add a row for each decision.
+
+| Field | What it does |
+| --- | --- |
+| **Contract types** | Only applies to the types listed. Empty covers every type. |
+| **Minimum total value** | Only applies at or above this amount. Empty covers any value. |
+| **Use as the default policy** | Runs when no other policy matches. |
+| **Send for signature on approval** | Sends the agreement out automatically once the last approver signs off. See [Sending automatically](#sending-automatically). |
+| **Approval steps** | One row per decision: the order number, a name, and who decides. |
+
+<Frame caption="The policy editor. Two rungs: the business owner, then the security group.">
+  <img src="/images/user-guides/contract-approval-policy-editor.png" alt="Approval policy editor with name, contract types, value floor, two toggles and two approval steps" />
+</Frame>
+
+Saved policies read back as a ladder, so you can see at a glance what a contract will walk through.
+
+<Frame caption="Two configured policies. The default covers everything; the second only covers high-value master agreements and sends automatically.">
+  <img src="/images/user-guides/contract-approval-policies.png" alt="Two approval policies listed with their conditions and step chains" />
+</Frame>
+
+<Note>
+  **Editing a policy does not change an approval already running.** A contract copies each step's name and approver when it is submitted, so rewriting the ladder afterwards never rewrites what somebody already decided.
+</Note>
+
 ### How a chain is chosen
 
 Your organization configures approval policies. Each policy has conditions and an ordered list of steps.
 
-| Policy setting | What it does |
-| --- | --- |
-| **Minimum value** | Only applies to contracts at or above this amount. |
-| **Contract types** | Only applies to the types listed. Empty means all types. |
-| **Default** | Used when no other policy matches. |
-
-When you submit, Coverbase picks the policy that fits. You can also name a policy explicitly if you have the right to.
+When you submit, Coverbase picks the policy that fits, most specific first: a policy naming your contract's type beats one that names none, and among equals the higher value floor wins. **Default** breaks whatever tie is left. You can also name a policy explicitly if you have the right to.
 
 ### How steps work
 
@@ -106,9 +134,9 @@ Each step names who decides:
 Steps are numbered. **Steps sharing a number decide together**, and the chain does not advance until all of them have. Increasing numbers run one after another.
 
 <Note>
-  **A step that resolves to nobody is skipped, but a policy that resolves to nobody at all is refused.** If a policy asks for the vendor owner and the vendor has none, that step is skipped and the rest of the chain runs. If every step of the policy skips, the submission is refused and names why, because approving on the spot would waive the chain you configured. Give the contract an owner, or name approvers the policy can reach, then submit again.
+  **A step that resolves to nobody refuses the whole submission.** If a policy asks for the vendor owner and the vendor has none, Coverbase does not skip that step and run the rest: a shorter chain than the one you configured is not the chain you configured, and the missing rung is the one nobody notices is missing. The refusal names the step. Give the contract an owner, or name approvers the policy can reach, then submit again.
 
-  A contract submitted when your org has configured no policy at all is approved immediately. An org that has configured no chain is not asking for one.
+  A contract submitted when your org has configured no policy at all is approved immediately, and its Approval section says so rather than showing a bare **Approved** badge. An org that has configured no chain is not asking for one, but if that is a surprise, the fix is to configure one.
 </Note>
 
 ### Submitting
@@ -173,6 +201,34 @@ On **Send to DocuSign** you choose:
 <Tip>
   Give the vendor signer order `1` and your own authorized signatory order `2`. The envelope reaches your side only once the counterparty has signed.
 </Tip>
+
+### Sending automatically
+
+A policy with **Send for signature on approval** sends the agreement the moment its last approver signs off. Nobody has to be watching.
+
+That needs to know who signs, and it needs to know that before the approval finishes. While the contract is still moving through its chain, **Execution → Set up automatic send** asks the same questions the Send dialog asks: which document, who signs, in what order, and who is copied.
+
+<Frame caption="The automatic send editor. Same questions as the manual send, asked while there is still somebody to answer them.">
+  <img src="/images/user-guides/contract-auto-send-plan.png" alt="Automatic send dialog with a document picker, two recipients and an email subject" />
+</Frame>
+
+Once it is set up, the Execution section says what is about to happen.
+
+<Frame caption="The contract is still in approval, and this is what will go out when it clears.">
+  <img src="/images/user-guides/contract-auto-send-planned.png" alt="Execution section noting the contract goes out to two recipients automatically once approved" />
+</Frame>
+
+The envelope goes out **as the person who submitted the contract**, using the DocuSign connection they made. They do not have to be at a screen when it happens, but they do have to have connected: see [Connecting DocuSign](/integrations/guides/docusign).
+
+<Note>
+  **A send that does not go out never undoes an approval.** If DocuSign is unreachable, or the submitter's connection has lapsed, the contract stays approved and the plan stays on it. The Execution section says the automatic send did not go out, and **Send to DocuSign** is right there to do it by hand.
+</Note>
+
+<Frame caption="Approved, with a plan and nothing out. The automatic send did not run, and the manual one is still available.">
+  <img src="/images/user-guides/contract-auto-send-failed.png" alt="Execution section warning that the automatic send did not go out" />
+</Frame>
+
+Clearing the recipient list and saving turns the automatic send back off.
 
 ### Tracking the envelope
 
