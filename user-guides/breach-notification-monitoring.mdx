@@ -23,7 +23,7 @@ The trade-off is that a filing is terse. A row typically gives you the organizat
 
 ## What Coverbase monitors
 
-The **Breach Notification & Disclosure** group in the source library holds nine
+The **Breach Notification & Disclosure** group in the source library holds twelve
 sources. Every one is checked against the live site before it ships: a source
 that returns a landing page instead of a register is worse than no source.
 
@@ -38,6 +38,9 @@ that returns a landing page instead of a register is worse than no source.
 | Oregon | Reporting organization, plus the breach, discovery, and notification dates |
 | Indiana | The year-to-date register, with dates and Indiana residents affected |
 | Texas | Entity, information affected, and the number of Texans notified |
+| Hawaii | Breached entity, how the breach happened, Hawaii residents impacted, and the notification letter |
+| Rhode Island | The notice itself, dated. Any breach touching more than 500 Rhode Islanders must be reported within 45 days |
+| Maryland | Reporting business, Marylanders affected, what information was breached, and how |
 
 ### Federal sources
 
@@ -48,19 +51,21 @@ that returns a landing page instead of a register is worse than no source.
 
 ### States we would like to cover and cannot yet
 
-Maryland, Iowa, Wisconsin, Montana, Massachusetts, New Hampshire, and the HHS
-OCR healthcare portal all publish something, but none of them can currently be
-read automatically. Some have moved or removed the page, some load their
-register only after you click through a portal, and some block automated access
-outright. They are not in the library because a source that silently collects
-nothing is worse than an absent one. If any of these matter to you, tell us and
-we will prioritize the work.
+Iowa, Wisconsin, Montana, Massachusetts, New Hampshire, and the HHS OCR
+healthcare portal all publish something, but none of them can currently be read
+automatically. Some have moved or removed the page, some load their register
+only after you click through a portal, and some block automated access outright.
+They are not in the library because a source that silently collects nothing is
+worse than an absent one. If any of these matter to you, tell us and we will
+prioritize the work.
 
 ## Why there is no all-50-states source
 
 Every state has a breach notification law, so a vendor must notify. Far fewer states **publish** what they receive, and publishing is what makes a registry monitorable.
 
-New York, and most states, take filings through a portal and publish nothing back. There is no page to watch. Maine took its public database offline in June 2026 after fake filings were submitted against real companies.
+New York, and most states, take filings through a portal and publish nothing back. There is no page to watch. Connecticut received over 1,830 breach notifications in 2025 and publishes none of them; North Dakota, New Jersey, South Carolina, New Mexico, Missouri, and Alaska are the same. Maine took its public database offline in June 2026 after fake filings were submitted against real companies.
+
+We check each state directly rather than working from a list, which is how Maryland came back: its register had moved, and the address we had been given redirected to the Attorney General's homepage.
 
 If you have been asked to cover all fifty states, the honest answer is that the data does not exist for most of them. The sources above are the ones that publish. Between them they cover a large share of filings, because a breach affecting residents of several states is filed in each of them, so a vendor's breach often shows up in California or Washington even when your own state publishes nothing.
 
@@ -68,10 +73,11 @@ If you have been asked to cover all fifty states, the honest answer is that the 
 
 Go to **Configuration → Radar**, open the **Sources** tab, and click **Add source**. Choose the **Breach Notification & Disclosure** group.
 
-You can add all nine at once, or start with a few. Two ways to choose:
+You can add all twelve at once, or start with a few. Three ways to choose:
 
-- **Add California, Vermont, Oregon, and Texas first.** These are the largest registers, so they give you the most coverage for the least setup.
-- **Add Washington if data types matter to you.** Its filings name the categories of information compromised, so health or financial data is visible on the row itself without opening the notice.
+- **Add California, Vermont, Oregon, and Maryland first.** These are the largest registers, so they give you the most coverage for the least setup.
+- **Add Washington or Hawaii if data types matter to you.** Their filings name the categories of information compromised, or how the breach happened, so the detail is visible on the row itself without opening the notice.
+- **Add Rhode Island if recency matters most.** It is the register that runs closest to the present.
 
 <Note>
   Adding a source only starts collection. Nothing alerts until a detector reads it, which is Step 2. Adding sources and stopping there is the usual reason nothing appears to happen.
@@ -101,6 +107,8 @@ Go to the **Signals** tab. A signal from a registry looks different from a news 
 **The filer may not be your vendor.** Registries list the entity that filed. That is often a service provider acting for the company you actually contract with, or a parent, or a subsidiary. The detector calls this out when it can, but it is worth checking before you open a finding against the wrong party.
 
 **Some filings link to a PDF and some link to nothing.** Coverbase reads a PDF notice where the document has a text layer. Where it does not, or where the state publishes no per-filing link at all, the signal still carries the row's own details: the organization, the date, the count, and the data categories.
+
+**Some states publish in batches, months behind.** Maryland is the clearest case: it loads a year at a time rather than posting each filing, so its rows are useful as vendor history and backfill rather than as early warning. California, Washington, and Rhode Island are the ones to watch for something that happened this week.
 
 **Registries publish what filers assert.** These offices do limited validation. Maine took its portal offline after someone submitted fake filings against real companies. Treat a filing as a strong lead, not a proven fact, and confirm with the vendor before acting on it externally.
 
