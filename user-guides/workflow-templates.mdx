@@ -87,7 +87,7 @@ The front door. Every submitted request becomes an owned, dated triage task inst
 
 **What it does.** When an intake session is submitted, it opens one task against the request's vendor. Coverbase creates and links that vendor as part of submission, including for a third party nobody has heard of before, so the task always has something to point at.
 
-**What lands in the queue.** A task titled **"Triage intake request for {vendor}"**, filed as an intake request review, **due in 2 days**, assigned to whoever applied the template. Its instructions ask the triager to check whether the vendor or a close substitute is already in the portfolio, confirm the requester, the business use case and the data the service would touch, and set the vendor's relationship owner and risk analyst so later steps have somewhere to route.
+**What lands in the queue.** A task titled **"Triage intake request for `{vendor}`"**, filed as an intake request review, **due in 2 days**, assigned to whoever applied the template. Its instructions ask the triager to check whether the vendor or a close substitute is already in the portfolio, confirm the requester, the business use case and the data the service would touch, and set the vendor's relationship owner and risk analyst so later steps have somewhere to route.
 
 **Before you turn it on.** Re-point the assignee: an intake desk usually wants a shared department rather than a person. Tune the two-day clock to the intake SLA you actually publish.
 
@@ -97,9 +97,9 @@ The front door. Every submitted request becomes an owned, dated triage task inst
 
 Turns an accepted request into a real assessment the same day it is submitted, with a kickoff task behind it. It closes the gap where a request is approved in principle and then waits a week for someone to open the review.
 
-**What it does.** Two steps, chained. On submission it opens an assessment named **"Onboarding assessment for {vendor}"**. Creating that assessment raises its own event, and the second step hangs off that event rather than off the intake submission, so the kickoff task cannot be raised for an assessment that failed to open.
+**What it does.** Two steps, chained. On submission it opens an assessment named **"Onboarding assessment for `{vendor}`"**. Creating that assessment raises its own event, and the second step hangs off that event rather than off the intake submission, so the kickoff task cannot be raised for an assessment that failed to open.
 
-**What lands in the queue.** The assessment, plus a task titled **"Kick off onboarding review for {vendor}"**, filed as an assessment review, **due in 3 days**.
+**What lands in the queue.** The assessment, plus a task titled **"Kick off onboarding review for `{vendor}`"**, filed as an assessment review, **due in 3 days**.
 
 **Before you turn it on.** Point the assessment step at one of your assessment plans, or it opens an empty ad-hoc assessment that somebody then has to scope by hand. Re-point the assessment's creator, its assignee and the task.
 
@@ -113,7 +113,7 @@ Any vendor added to the portfolio gets an assessment and an owner, whether it ar
 
 **What it does.** The same two-step shape as the intake version, but triggered on vendor creation rather than intake submission, so it catches the vendors that never went through intake at all. Run both if you want intake-sourced vendors treated differently from imported ones; run this one alone if you want a single rule for everything.
 
-**What lands in the queue.** An assessment named **"Onboarding assessment for {vendor}"**, then a task titled **"Kick off onboarding review for {vendor}"**, filed as an assessment review, **due in 5 days**. The longer clock than the intake version is deliberate: a vendor that arrived by import has nobody waiting on an answer.
+**What lands in the queue.** An assessment named **"Onboarding assessment for `{vendor}`"**, then a task titled **"Kick off onboarding review for `{vendor}`"**, filed as an assessment review, **due in 5 days**. The longer clock than the intake version is deliberate: a vendor that arrived by import has nobody waiting on an answer.
 
 **Before you turn it on.** Point the assessment step at an assessment plan. Re-point the creator, assignee and task.
 
@@ -144,7 +144,7 @@ Catches the vendor that was low risk at onboarding and is not any more. When the
 
 **What it does.** Two independent steps on the same trigger, both watching the vendor's `raw_irq_score` and inherent risk level. When either field changes and the resulting score sits between **70 and 100**, one step raises the escalation task and the other opens the register entry. They are independent rather than chained, so removing one leaves the other working.
 
-**What lands in the queue.** A task titled **"High inherent risk: review {vendor}"**, filed as an assessment review, **due in 5 days**, with instructions to confirm the score change is real rather than a half-finished questionnaire, check the assessment scope still matches, and decide whether the relationship needs a senior owner. Alongside it, a risk register entry described as **"Elevated inherent risk on {vendor}"**, opened at **likelihood 3, impact 4**, with no risk domain set.
+**What lands in the queue.** A task titled **"High inherent risk: review `{vendor}`"**, filed as an assessment review, **due in 5 days**, with instructions to confirm the score change is real rather than a half-finished questionnaire, check the assessment scope still matches, and decide whether the relationship needs a senior owner. Alongside it, a risk register entry described as **"Elevated inherent risk on `{vendor}`"**, opened at **likelihood 3, impact 4**, with no risk domain set.
 
 **Before you turn it on.** The 70 to 100 band is a starting line on the 0 to 100 score, not a standard, so move it to your own tier break. Re-point the task and the register entry's owner. Set the entry's risk domain so it rolls into the right appetite tolerance. Treat the 3 and the 4 as a placeholder for a human to correct, not a score.
 
@@ -158,7 +158,7 @@ A service that quietly grows (more data, more users, a new region) is the most c
 
 **What it does.** Watches a service's `description`, `raw_irq_score` and inherent risk level. When any of the three changes, it raises a re-check task.
 
-**What lands in the queue.** A task titled **"Scope changed on {service}: re-check the review"**, filed as an assessment review, **due in 7 days**, asking the owner to compare what changed against the scope the last assessment covered and decide whether a reassessment, an extra control set, or nothing at all is warranted.
+**What lands in the queue.** A task titled **"Scope changed on `{service}`: re-check the review"**, filed as an assessment review, **due in 7 days**, asking the owner to compare what changed against the scope the last assessment covered and decide whether a reassessment, an extra control set, or nothing at all is warranted.
 
 **Before you turn it on.** Trim the watched field list to the ones your organisation actually maintains. Every field left on it is another reason the task fires, and a description your team edits for wording will raise a re-check.
 
@@ -184,7 +184,7 @@ Automatic evidence collection gives up quietly. This catches the handoff and put
 
 **What it does.** Listens for the event Coverbase raises when automatic collection hands an assessment back to a human, and opens a collection task against that assessment's vendor.
 
-**What lands in the queue.** A task titled **"Collect evidence for {vendor}"**, filed as a document collection handoff so it sorts with the rest of the evidence work, **due in 5 days**.
+**What lands in the queue.** A task titled **"Collect evidence for `{vendor}`"**, filed as a document collection handoff so it sorts with the rest of the evidence work, **due in 5 days**.
 
 **Before you turn it on.** Re-point the task to whoever chases vendors for documents, which is rarely the analyst who launched the assessment. Match the five-day clock to the evidence SLA you publish to vendors.
 
@@ -196,7 +196,7 @@ A finding with no owner and no date is a finding that closes when the next audit
 
 **What it does.** Opens one dated remediation task for every new finding, whatever raised it.
 
-**What lands in the queue.** A task titled **"Remediate finding on {vendor}"**, filed as an assessment review, **due in 30 days**, with instructions to confirm the finding is real, agree a remediation or an accepted-risk position with the vendor, and record the commitment.
+**What lands in the queue.** A task titled **"Remediate finding on `{vendor}`"**, filed as an assessment review, **due in 30 days**, with instructions to confirm the finding is real, agree a remediation or an accepted-risk position with the vendor, and record the commitment.
 
 **Before you turn it on.** Re-point the task: findings usually belong to the vendor's risk analyst rather than whoever applied the template.
 
@@ -208,7 +208,7 @@ A finding with no owner and no date is a finding that closes when the next audit
 
 Control gaps live in assessments; the risk committee reads the register. This carries every new finding across so the register reflects what the programme actually found.
 
-**What it does.** Opens a risk register entry for each new finding, described as **"Control gap identified on {vendor}"**, at **likelihood 3, impact 4**, with no risk domain set.
+**What it does.** Opens a risk register entry for each new finding, described as **"Control gap identified on `{vendor}`"**, at **likelihood 3, impact 4**, with no risk domain set.
 
 **Before you turn it on.** Set the risk domain so entries roll into the right appetite tolerance. The likelihood and impact are a starting position for a human to correct before the next committee, not a score the system stands behind.
 
@@ -220,9 +220,9 @@ Control gaps live in assessments; the risk committee reads the register. This ca
 
 Every contract that lands gets a review record and a dated task, so legal and risk see it before it is signed rather than at renewal.
 
-**What it does.** Two independent steps on contract creation. One opens a review record named **"Contract review for {vendor}"**, bound to the contract that triggered it. The other raises the task that gives the review a clock.
+**What it does.** Two independent steps on contract creation. One opens a review record named **"Contract review for `{vendor}`"**, bound to the contract that triggered it. The other raises the task that gives the review a clock.
 
-**What lands in the queue.** The review, plus a task titled **"Review contract for {vendor}"**, filed as a contract review, **due in 7 days**.
+**What lands in the queue.** The review, plus a task titled **"Review contract for `{vendor}`"**, filed as a contract review, **due in 7 days**.
 
 **Before you turn it on.** Re-point both steps. Set the review's status so it starts in your own review pipeline rather than at its default.
 
@@ -236,7 +236,7 @@ Auto-renewal deadlines pass in silence and cost a year of spend. Whenever a rene
 
 **What it does.** Watches four fields on a contract: `renewal_date`, `expiration_date`, `notice_due_to_vendor_date` and `auto_renew`. When any of them moves, it raises the decision task.
 
-**What lands in the queue.** A task titled **"Renewal decision due for {vendor}"**, filed as a contract review, **due in 30 days**.
+**What lands in the queue.** A task titled **"Renewal decision due for `{vendor}`"**, filed as a contract review, **due in 30 days**.
 
 **Before you turn it on.** Understand what triggers it: this fires when a date **moves**, not when one **approaches**. It is the workflow for "somebody just told us the renewal is in March", not the countdown to March itself. Pair it with [contract date reminders](/user-guides/contract-dates-and-reminders) for the countdown. Re-point the task to the contract's owner, and trim the watched date list to the ones your contracts actually carry.
 
@@ -251,9 +251,9 @@ Auto-renewal deadlines pass in silence and cost a year of spend. Whenever a rene
 
 A monitoring programme is only worth the alerts somebody reads. This turns each new signal into an adjudication record and a dated task, so the queue is worked rather than watched.
 
-**What it does.** Two independent steps on signal creation. One opens a review named **"Signal review: {signal}"**, bound to the signal itself so the adjudication has a record from the start. The other raises the task that gives it a clock.
+**What it does.** Two independent steps on signal creation. One opens a review named **"Signal review: `{signal}`"**, bound to the signal itself so the adjudication has a record from the start. The other raises the task that gives it a clock.
 
-**What lands in the queue.** The review, plus a task titled **"Triage monitoring signal for {vendor}"**, filed as an assessment review, **due in 3 days**, carrying the signal's name and severity in its description and instructing the analyst to read the underlying sources before deciding, since monitoring surfaces reports rather than verdicts.
+**What lands in the queue.** The review, plus a task titled **"Triage monitoring signal for `{vendor}`"**, filed as an assessment review, **due in 3 days**, carrying the signal's name and severity in its description and instructing the analyst to read the underlying sources before deciding, since monitoring surfaces reports rather than verdicts.
 
 **Before you turn it on.** Re-point both steps to whoever works the alert queue. Set the review's status.
 
@@ -267,7 +267,7 @@ Archiving a vendor record is not offboarding it. This raises the checklist at th
 
 **What it does.** Listens for a vendor record being archived and opens the checklist task against it.
 
-**What lands in the queue.** A task titled **"Offboarding checklist for {vendor}"**, filed as an assessment review, **due in 14 days**, whose instructions carry the checklist itself: access revoked, data returned or destroyed, the contract terminated rather than left to auto-renew, and open findings closed or moved.
+**What lands in the queue.** A task titled **"Offboarding checklist for `{vendor}`"**, filed as an assessment review, **due in 14 days**, whose instructions carry the checklist itself: access revoked, data returned or destroyed, the contract terminated rather than left to auto-renew, and open findings closed or moved.
 
 **Before you turn it on.** Re-point the task, which usually belongs to security operations rather than the TPRM desk. Edit the checklist in the task's instructions to match your own exit procedure, since this is the one template whose value is almost entirely in its copy.
 
