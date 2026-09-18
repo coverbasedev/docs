@@ -1,6 +1,6 @@
 ---
 title: "Breach notification monitoring guide"
-description: "How to monitor state attorney general breach registries, the HHS OCR HIPAA portal, and SEC cyber incident filings, and turn a filing that names your vendor into an alert."
+description: "How to monitor state attorney general breach registries and SEC cyber incident filings, and turn a filing that names your vendor into an alert."
 icon: "file-shield"
 ---
 
@@ -12,7 +12,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
   This guide is part of the [User Guides](/user-guides/overview) collection. For what Radar does generally, see [Supplier Radar](/products/supplier-radar). For every source Coverbase draws on, see the [source library](/products/source-library).
 </Info>
 
-When a company suffers a breach affecting residents of a state, the law usually requires it to notify that state's attorney general. Many of those offices publish what they receive. Healthcare breaches affecting 500 or more people go to the HHS Office for Civil Rights, which publishes them too, and a public company that suffers a material cyber incident files it with the SEC.
+When a company suffers a breach affecting residents of a state, the law usually requires it to notify that state's attorney general. Some of those offices publish what they receive. A public company that suffers a material cyber incident files it with the SEC.
 
 These registries are the closest thing to a primary record of a breach. They carry two advantages over news coverage:
 
@@ -23,7 +23,9 @@ The trade-off is that a filing is terse. A row typically gives you the organizat
 
 ## What Coverbase monitors
 
-The **Breach Notification & Disclosure** group in the source library holds 16 sources.
+The **Breach Notification & Disclosure** group in the source library holds nine
+sources. Every one is checked against the live site before it ships: a source
+that returns a landing page instead of a register is worse than no source.
 
 ### State attorney general registries
 
@@ -36,15 +38,23 @@ The **Breach Notification & Disclosure** group in the source library holds 16 so
 | Oregon | Reporting organization, plus the breach, discovery, and notification dates |
 | Indiana | The year-to-date register, with dates and Indiana residents affected |
 | Texas | Entity, information affected, and the number of Texans notified |
-| Maryland, Iowa, Wisconsin, Montana, Massachusetts, New Hampshire | Varies by state; each publishes its filings as a page |
 
 ### Federal sources
 
 | Source | What it covers |
 | --- | --- |
-| HHS OCR HIPAA Breach Portal | Healthcare breaches affecting 500 or more individuals. The primary public record for covered entities and their business associates, which makes it the one to watch for TPAs, PBMs, clearinghouses, and healthcare SaaS. |
 | SEC EDGAR, Form 8-K Item 1.05 | The item a public company files to disclose a material cybersecurity incident. |
 | SEC EDGAR, 10-K and 10-Q | Annual and quarterly reports discussing a material cybersecurity incident. |
+
+### States we would like to cover and cannot yet
+
+Maryland, Iowa, Wisconsin, Montana, Massachusetts, New Hampshire, and the HHS
+OCR healthcare portal all publish something, but none of them can currently be
+read automatically. Some have moved or removed the page, some load their
+register only after you click through a portal, and some block automated access
+outright. They are not in the library because a source that silently collects
+nothing is worse than an absent one. If any of these matter to you, tell us and
+we will prioritize the work.
 
 ## Why there is no all-50-states source
 
@@ -58,10 +68,10 @@ If you have been asked to cover all fifty states, the honest answer is that the 
 
 Go to **Configuration → Radar**, open the **Sources** tab, and click **Add source**. Choose the **Breach Notification & Disclosure** group.
 
-You can add all 16 at once, or start with a few. Two ways to choose:
+You can add all nine at once, or start with a few. Two ways to choose:
 
-- **Add California, Washington, Vermont, and Oregon first.** These are the largest registers and the most reliable, so they give you the most coverage for the least noise.
-- **Add HHS OCR if you have healthcare vendors.** For a portfolio with TPAs, PBMs, or clinical systems, it is the single highest-yield source here.
+- **Add California, Vermont, Oregon, and Texas first.** These are the largest registers, so they give you the most coverage for the least setup.
+- **Add Washington if data types matter to you.** Its filings name the categories of information compromised, so health or financial data is visible on the row itself without opening the notice.
 
 <Note>
   Adding a source only starts collection. Nothing alerts until a detector reads it, which is Step 2. Adding sources and stopping there is the usual reason nothing appears to happen.
