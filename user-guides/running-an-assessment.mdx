@@ -60,6 +60,8 @@ You will move faster with these to hand:
     **Inherent risk** is the risk a vendor introduces based on what they do: the data they touch, the systems they connect to, the scope of the engagement. It is established before any evidence is reviewed.
 
     **Residual risk** is what remains once their controls, certifications, and documentation have been evaluated. The assessment is what moves you from one to the other.
+
+    Both scores can sit on the vendor and on its individual services. [Where a vendor's score comes from](#where-a-vendors-score-comes-from) covers which an assessment writes to.
   </Accordion>
   <Accordion title="Assessment Plan" icon="clipboard-list">
     An **Assessment Plan** is a reusable template defining what an assessment evaluates. Plans are managed centrally, so most users pick one rather than building an assessment up field by field.
@@ -493,6 +495,42 @@ Once reviews are in, the assessment moves to **Quality Control**, the last stage
     </Note>
   </Step>
 </Steps>
+
+### Where a vendor's score comes from
+
+An assessment writes its residual risk to whatever it was scoped to. A vendor-scoped assessment moves the vendor's score. A service-scoped assessment scores those services and, by default, leaves the vendor's score unchanged.
+
+This is why a service assessment can come back high while the vendor profile still reads medium.
+
+**Risk Roll-up** carries the service score up to the vendor. Once an administrator turns it on for a risk type (see [Step 5 of the admin setup guide](/user-guides/admin-setup#decide-whether-service-scores-set-the-vendors-score)), a vendor takes the highest score among its services instead of carrying its own. Services with an inactive, discontinued, or denied status are excluded.
+
+Risk domain rows roll up as well as the overall score. A vendor's Data Security row follows the highest Data Security score among its services.
+
+<Note>
+  Roll-up is off until an administrator turns it on, and it applies only to scores set after that. Older vendors can be brought in line with **Recalculate now**.
+</Note>
+
+#### Overriding it for one vendor
+
+Open the score on the vendor's **Risk Profile** and use **Automatically infer from services**.
+
+With it on, the services set the score. The **Risk Score** field is read-only and **Clear risk score** is hidden, because the next change to the services would overwrite anything you entered.
+
+<Frame caption="Following services. The score field is disabled and Clear risk score is absent.">
+  <img src="/images/user-guides/assessment-risk-rollup-vendor.png" alt="Edit Residual Risk Score popover with Automatically infer from services switched on and the score field read-only" />
+</Frame>
+
+With it off, you set the score by hand and record the reason in the note field. The vendor then ignores the organization setting, including one turned on later.
+
+**Use organization default** appears once a vendor has its own score, and returns it to the organization setting.
+
+<Frame caption="Overridden. The score is editable, with Use organization default above it.">
+  <img src="/images/user-guides/assessment-risk-rollup-override.png" alt="Edit Residual Risk Score popover with the switch off, showing Use organization default and an editable score field" />
+</Frame>
+
+<Tip>
+  If the switch is missing, the vendor has no services to roll up from. Add a service first.
+</Tip>
 
 ---
 
