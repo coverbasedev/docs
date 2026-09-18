@@ -1,0 +1,197 @@
+---
+title: "Replacing the assessment export"
+description: "Map every column of the Consolidated Assessment Report export to the MCP call that returns it, with sample input, sample output, and prompts for building a GRC dashboard on top."
+icon: "table-columns"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Teams building an internal GRC dashboard often start from the **Consolidated Assessment Report** export, then move to the MCP server so the data refreshes without anyone clicking **Export**. This page maps that spreadsheet column by column, so you can port a mapping instead of probing calls to find out what exists.
+
+<Info>
+  You do not need this page to ask questions about an assessment. Ask in plain language and the assistant picks the route. This is for when you are writing an integration and need to know which call returns which column.
+</Info>
+
+## Column mapping
+
+| Export column | MCP call |
+| ------------- | -------- |
+| Assessment Name, Status, Assignee, Assessment Score | `query_assessments(kind="detail")`, and every `kind="search"` row |
+| Assessment Outcome | `detail`, `summary`, `details_legacy`, and every `search` row |
+| Residual Risk Score, Residual Risk Level | `detail`, `summary`, `details_legacy`, and every `search` row |
+| Summary | `query_assessments(kind="summary")`. `detail` carries a preview |
+| Notices | `summary` |
+| Date Created, Initiated By, Run Counter | `detail` |
+| Products, Services | `detail` |
+| Policy Control Sets Count | `detail`, which also names the sets |
+| Parsed Questionnaire Count, Parsed Policy Count | `detail`, as one **Parsed controls** line |
+| Supporting Documents Count | `detail`, which also lists the documents |
+| Inherent Risk Score, Inherent Risk Level | `detail`, under the vendor section |
+| SLA stage timings, targets, and breaches | `detail` |
+| Custom field columns | Any read that returns the assessment. See [custom fields](#custom-field-columns) |
+| Errors | Not exposed. See [what is not exposed](#what-is-not-exposed) |
+
+Every count column returns a number even when it is zero, because the export writes a number in every row. An omitted field would be indistinguishable from a count of none.
+
+## The summary report
+
+`kind="detail"` carries the opening 500 characters of the AI summary as a preview, then says so and names the call that returns the rest. `kind="summary"` returns the whole report.
+
+### Input
+
+```json
+{
+  "tool": "query_assessments",
+  "arguments": {
+    "kind": "summary",
+    "assessment_id": "cbqsrw_hub01"
+  }
+}
+```
+
+### Output
+
+```markdown
+# Assessment Summary: 2026 HubSpot, Inc. initial
+**ID:** `cbqsrw_hub01` | https://dashboard.coverbase.app/assessments/cbqsrw_hub01
+**Status:** Complete
+**Outcome:** Conditionally Approve
+**Recommendation status:** conditionally_approve
+**Residual risk:** Moderate - score 38.24
+**Assessment score:** 56.6%
+**Assessment level:** Medium
+**Inherent risk:** Level 3 - score 61.00
+
+## Summary
+## Decision Summary
+Conditionally approve HubSpot for marketing automation.
+
+## Key Business Risks
+- Customer PII (names, emails, phone numbers) is processed in a multi-tenant CRM shared with other HubSpot customers, with logical separation only.
+- No customer-managed encryption keys are offered on the current contract tier, so key rotation and revocation stay with the vendor.
+
+## Required Conditions
+1. Enforce SSO for all admin accounts by 2026-12-01.
+2. Annual SOC 2 Type II on file.
+
+## Follow-Ups
+| Item | Owner | Due |
+|---|---|---|
+| SSO enforcement | IT | 2026-12-01 |
+
+## Vendor Remediation Message
+Please confirm SSO enforcement and share the SOC 2.
+
+## Recommendation
+Approve subject to MFA rollout across admin accounts.
+
+## Notices
+- SOC 2 expires in 30 days
+```
+
+The sections between `## Summary` and `## Recommendation` are whatever your workspace's summary prompt produces. The headings above are an example, not a fixed schema.
+
+A summary whose underlying data was corrected after it was written is flagged as needing regeneration, so you do not publish prose that no longer matches the evaluations it describes.
+
+### Paging a long report
+
+Reports longer than one response can carry are truncated with a notice that names the next call:
+
+```text
+_[Truncated: showing characters 0-20,000 of 26,400. Retrieve the rest with
+query_assessments(kind="summary", assessment_id="cbqsrw_hub01", summary_offset=20000).]_
+```
+
+Pass `full_text=true` to raise the cap instead of paging.
+
+## Mapping a whole portfolio
+
+Do not call `kind="detail"` once per assessment. The outcome and the residual risk are on every `search` row, so a few hundred assessments map in one call per page.
+
+### Input
+
+```json
+{
+  "tool": "query_assessments",
+  "arguments": { "kind": "search", "limit": 50 }
+}
+```
+
+### Output
+
+```text
+Found 1 assessment(s):
+
+- **2026 HubSpot, Inc. initial** (id: `cbqsrw_hub01`, status: Complete,
+  outcome: Conditionally Approve, vendor: cbvndr_hub  score: 56.6%,
+  residual risk: Moderate - score 38.24)
+```
+
+Call `kind="summary"` only for the assessments whose narrative you actually need.
+
+## Custom field columns
+
+Custom field values come back with no extra parameter. They appear as a `## Custom Fields` section on `kind="detail"` and as an indented `_Custom:_ name=value` line under each `kind="search"` row.
+
+Fields with no value set are omitted, so an assessment where the field was never filled in renders nothing at all. If a value is missing that you expect to be there, check the assessment in the app first: an empty field and an unreachable field look the same in the response.
+
+`query_platform(kind="custom_fields", target_type="assessment")` lists the definitions, not the values. Use it to discover which fields exist, then read the values from the assessment itself.
+
+## What is not exposed
+
+**Errors** is the one export column with no MCP equivalent. It holds raw processing error payloads that can incidentally contain personal data, so it is not returned. Everything else in the export is mapped above.
+
+## Scoring settings change what you get
+
+Two settings under **Configuration → Scoring** change every read, matching which columns the export itself drops:
+
+- **Residual risk tracking off**: residual risk is omitted everywhere, level and score alike.
+- **Numerical scores off**: raw inherent and residual risk numbers are omitted and the named levels stay. The assessment score percent is unaffected.
+
+If residual risk is missing from a response and you expect it, check that setting before opening a ticket.
+
+## Prompts for this workflow
+
+<AccordionGroup>
+  <Accordion title="Port the export mapping" defaultOpen icon="table-columns">
+    > We're replacing the Consolidated Assessment Report export with this connector. For assessment cbqsrw_hub01, give me every field that export has: outcome, residual risk score and level, the full summary, and the counts.
+
+    The assistant reads `kind="detail"` for the decision and scope fields, then `kind="summary"` for the narrative, and tells you which columns have no equivalent rather than silently omitting them.
+  </Accordion>
+
+  <Accordion title="Pull the full report for one assessment" icon="file-lines">
+    > Give me the complete written summary for the HubSpot assessment, not the preview. I need the decision summary, the required conditions, and the vendor remediation message.
+
+    Resolves the name to an assessment, then calls `kind="summary"`. If the report is long, it pages through and gives you the whole thing.
+  </Accordion>
+
+  <Accordion title="Build the dashboard feed" icon="chart-line">
+    > List every completed assessment from this quarter with its outcome, residual risk level, and residual risk score, as a table I can load into a dashboard.
+
+    One `kind="search"` call per page carries all three fields, so this does not fan out into one call per assessment.
+  </Accordion>
+
+  <Accordion title="Find the conditional approvals" icon="circle-half-stroke">
+    > Which assessments were conditionally approved, and what conditions did we attach to each?
+
+    The outcome is on the search rows, so the assistant filters there, then reads `kind="summary"` for the required conditions on only the matching assessments.
+  </Accordion>
+
+  <Accordion title="Reconcile against the spreadsheet" icon="scale-balanced">
+    > I exported the Consolidated Assessment Report yesterday. Read the same assessments through the connector and tell me where the two disagree.
+
+    Useful as a one-off during migration. Expect residual risk to be absent if your workspace has residual risk tracking off, and expect Errors to have no equivalent.
+  </Accordion>
+
+  <Accordion title="Chase a missing custom field" icon="magnifying-glass">
+    > The ServiceNow ticket field isn't coming back for cbqsrw_hub01. Is it set on that assessment?
+
+    Custom field values are returned automatically when set, so an absent value usually means an empty field rather than a missing route.
+  </Accordion>
+</AccordionGroup>
+
+<Card title="Tool reference" icon="screwdriver-wrench" href="/mcp/tool-reference">
+  Every kind on every read dispatcher, and the parameters each one takes.
+</Card>
