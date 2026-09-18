@@ -38,7 +38,7 @@ Five cards sit in one row. The first is portfolio value. The other four are queu
 | **Assignment clause needs re-reading** | Contracts where Radar reported a change of control at the vendor. |
 | **Value disagrees with document** | Contracts whose recorded amount does not match the extracted fee. |
 
-Hover a card to see what it counts and why it matters. The card does not expand or move, so you can hover and then click without chasing it.
+Hover a card to see what it counts and why it matters. The card does not expand or move on hover.
 
 Click any of the four queue cards to filter the table below to exactly those contracts. Click it again to clear the filter.
 
@@ -95,6 +95,12 @@ The runway takes vertical space. One control changes that, and it remembers your
 
 Below the runway is the full list, with sorting, filtering, and pagination. Columns marked **AI** hold values Coverbase extracted from the documents rather than values someone typed.
 
+Seven more columns are available from the column picker, so the renewal questions can be answered from the list instead of one record at a time: **Notice due date**, **Auto renewal**, **Initial term**, **Renewal term**, **Renewals applied**, **Renewal decision**, and **Contract type**.
+
+<Tip>
+  To find the contracts that cannot renew, filter on **Auto Renewal** is `automatic` and **Renewal Term** is empty. Those are the ones that will be marked expired instead of rolling forward.
+</Tip>
+
 ## The contract record
 
 <Frame caption="A contract record. Facts on the left, relationships and dates on the right.">
@@ -103,14 +109,15 @@ Below the runway is the full list, with sorting, filtering, and pagination. Colu
 
 Open a contract from the table, the runway, or a search result. The **Overview** tab is laid out in two columns.
 
-The main column runs in the order you would brief someone:
+The main column holds, in order:
 
 1. **Details** and **Properties**, the contract's own facts
-2. **Summary**, the AI read of the agreement
-3. The document block: key documents, document family, contract components, and document insights
-4. **Reviews**
+2. **Commercial terms**, the term, renewal, notice, cost, and legal summary in one form
+3. **Summary**, the AI read of the agreement
+4. The document block: key documents, document family, contract components, and document insights
+5. **Reviews**
 
-The right rail carries context rather than content:
+The right rail holds:
 
 1. **Vendor**
 2. **Lifecycle**
@@ -139,6 +146,82 @@ Eight fields are available: description, contract value, payment terms, services
 
 <Note>
   Removing a field hides it on that one contract, in your browser. It does not delete the value, does not affect other contracts, and does not change what anyone else sees. Add it back from the **+** menu at any time.
+</Note>
+
+### Saving, and undoing a save
+
+The editable rows on a contract commit when you click away. There is no **Save** button, so the confirmation is the toast that appears in the corner: "Description saved", "Renewal term saved", and so on.
+
+Every confirmation carries **Undo**. Click it and the field goes back to the value it held before that save.
+
+<Note>
+  **Undo is offered for one save at a time.** Once you edit the same field again, the earlier offer disappears, because putting back a value from two edits ago would throw away the edit in between. Finish an edit, check the confirmation, then move on.
+</Note>
+
+If a save fails, the toast says so and names the field. The value stays in the box, so you can click away again to retry rather than retyping it.
+
+### The commercial terms card
+
+<Frame caption="Commercial terms: the term, what it renews into, the notice deadline, the renewal decision, the cost, and the legal summary.">
+  <img src="/images/user-guides/contract-commercial-terms.png" alt="Commercial terms card showing term and renewal, renewal decision, cost, and legal summary" />
+</Frame>
+
+These are the questions people ask together, so they sit in one card rather than across the timeline rail, the details card, and the value card. Four sections stack down it.
+
+<AccordionGroup>
+  <Accordion title="Term and renewal">
+    **Initial term** is how long the first term runs. **Renewal term** is what each renewal adds. **Auto-renews** is whether renewal happens by itself, needs a manual step, or does not happen. **Notice period (days)** is how much warning the vendor is owed.
+
+    Below them, read-only, are the two dates those values produce: **Notice due to vendor** and **Current term ends**.
+
+    A badge in the card header shows which term you are on. **Term 4** means the contract has renewed three times.
+  </Accordion>
+  <Accordion title="Renewal decision">
+    Four buttons: **Not decided**, **Renew**, **Terminate**, **Under review**. The current decision is the filled one.
+
+    Under them is a free-text note for why, and who you asked. Both are visible on the renewal runway and filterable across the portfolio, so "which renewals has nobody decided yet" is a question you can answer without opening records one at a time.
+  </Accordion>
+  <Accordion title="Cost">
+    The contract value and its currency, plus the year-by-year breakdown when the spend is not flat across the term.
+  </Accordion>
+  <Accordion title="Legal summary">
+    The AI read of the agreement, shown here so you do not have to scroll to it while you are confirming the terms above. It is read-only in this card. Edit or regenerate it from the **Summary** card below.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  **A contract set to auto-renew with no renewal term cannot renew.** Renewal needs both: the setting that says it renews, and a term to renew into. With only the first, the contract is marked expired on the term end its paperwork names, which can be years in the past.
+
+  The card says so at the top when it applies, and filling in **Renewal term** clears it. The next nightly run then renews the contract and puts its status back to active.
+</Warning>
+
+<Frame caption="The warning shown on a contract set to auto-renew with no renewal term recorded.">
+  <img src="/images/user-guides/contract-renewal-term-missing.png" alt="Commercial terms card showing the missing renewal term warning above the term fields" />
+</Frame>
+
+<Note>
+  If a contract renews while you are recording a decision about the term that just ended, the save is refused and the card tells you the term moved. That is deliberate: the decision was about the old term, and the new one deserves a fresh look. Read the new term, then record the decision again.
+</Note>
+
+### The vendor card
+
+<Frame caption="The vendor card. Who the counterparty is, what else they are paid, and how they were rated.">
+  <img src="/images/user-guides/contract-vendor-context.png" alt="Vendor card showing other contracts, status, owners, risk tier, and assessment dates" />
+</Frame>
+
+The top of the right rail answers the questions that decide how carefully the rest of the page should be read. The same 90 day notice period is routine on a design tool and a board-level problem on the vendor holding your customer data.
+
+| Row | What it tells you |
+| --- | --- |
+| **Other contracts** | How many other live agreements you have with this vendor, and what they are worth. Click through to see them. |
+| **Relationship owners** and **Risk analysts** | Who to ask. |
+| **Risk tier** | The vendor's inherent risk rating. |
+| **Last assessment** and **Next assessment** | When you last looked at them, and when you look again. |
+
+Click the vendor name to open the full vendor record.
+
+<Note>
+  **Unavailable** in the risk tier or last assessment row means the lookup failed, not that the vendor is unrated or never assessed. Reload the page. If it keeps saying **Unavailable**, the vendor record itself will tell you.
 </Note>
 
 ### The documents tab

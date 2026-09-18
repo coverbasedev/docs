@@ -127,6 +127,24 @@ The full intake request runs in conversation. You don't need to say "intake" for
     The assistant calls `query_assessments(kind="detail")` and surfaces the control evaluations that are flagged or have open findings, so the reviewer can focus on what matters.
   </Accordion>
 
+  <Accordion title="The whole written report, not the preview" icon="file-lines">
+    > Give me the complete AI summary for the HubSpot assessment. I want the decision summary, the key business risks, the required conditions, and the vendor remediation message.
+
+    `query_assessments(kind="detail")` carries only the opening of the summary and says so. The assistant calls `query_assessments(kind="summary")` for the whole report, and pages through it if it runs long.
+  </Accordion>
+
+  <Accordion title="Outcomes and residual risk across the portfolio" icon="table-columns">
+    > List every completed assessment this quarter with its outcome and residual risk level, as a table.
+
+    Both fields are on each `query_assessments(kind="search")` row, so this is one call per page rather than one call per assessment. See [Replacing the assessment export](/mcp/assessment-exports) if you are feeding a dashboard.
+  </Accordion>
+
+  <Accordion title="Why was this one conditionally approved?" icon="circle-half-stroke">
+    > Which assessments did we conditionally approve last quarter, and what conditions did we attach to each?
+
+    The outcome is on the search rows, so the assistant filters there first, then reads the summary report for only the matching assessments to pull the conditions out of the narrative.
+  </Accordion>
+
   <Accordion title="Assessment backlog visibility" icon="list-check">
     > What does the assessment backlog look like? How many are in progress, and who owns each?
 
@@ -298,7 +316,7 @@ Coverbase reads the documents and returns the passage the answer rests on. Full 
   </Accordion>
 
   <Accordion title="History and what's applied" icon="clock-rotate-left">
-    > List every bill of materials we've received from Acme over time - which one is currently applied?
+    > List every bill of materials we've received from Acme over time. Which one is currently applied?
 
     The assistant calls `query_vendors(kind="bill_of_materials_history", vendor_id=...)`. The list comes back newest first; the first entry is the applied one.
   </Accordion>
@@ -346,7 +364,7 @@ Coverbase reads the documents and returns the passage the answer rests on. Full 
   </Accordion>
 
   <Accordion title="Dismiss a noisy radar alert" icon="bell-slash">
-    > That radar alert about Acme is a duplicate - dismiss it and suppress similar ones.
+    > That radar alert about Acme is a duplicate. Dismiss it and suppress similar ones.
 
     The assistant proposes the dismissal (alert ID, reason, `suppress_similar`), confirms, then calls `mutate(entity="radar_alert", action="dismiss", data={..., "confirm": true})`.
   </Accordion>
@@ -388,5 +406,9 @@ Coverbase reads the documents and returns the passage the answer rests on. Full 
 
   <Card title="Tool reference" icon="screwdriver-wrench" href="/mcp/tool-reference">
     Every route these prompts resolve to, and the parameters each accepts.
+  </Card>
+
+  <Card title="Replacing the assessment export" icon="table-columns" href="/mcp/assessment-exports">
+    Every Consolidated Assessment Report column mapped to the call that returns it, with sample input and output.
   </Card>
 </CardGroup>
