@@ -51,7 +51,7 @@ Shelves follow the third-party lifecycle rather than the records the templates w
 | **New contract review** | Contracts | A contract is added | 2 | Contracts |
 | **High-value contract legal review** | Contracts | A contract over a value threshold is added | 1 | Contracts |
 | **Contract renewal runway** | Contracts | A renewal or notice date moves | 1 | Contracts |
-| **Executed contract handoff** | Contracts | A contract's approval state moves | 1 | Contracts |
+| **Executed contract handoff** | Contracts | A contract is executed | 1 | Contracts |
 | **Expired contract follow-up** | Contracts | A contract's term runs out | 1 | Contracts |
 | **Contract obligation ownership** | Contracts | An obligation is raised | 1 | Contracts, Obligations |
 | **Monitoring signal triage** | Monitoring | Monitoring raises a signal | 2 | Radar |
@@ -201,15 +201,11 @@ A sanctions or adverse-media hit is only useful if somebody clears it or acts on
 
 **What it does.** Listens for screening raising a match and opens one adjudication task.
 
-**What lands in the queue.** A task titled **"Adjudicate a screening match"**, filed as an assessment review, **due in 3 days**. Its instructions ask the analyst to compare the matched record against what you hold (legal name, jurisdiction, registration, directors), decide between false positive, true match and needs-more-information, escalate a true match before any further payment or onboarding step, and record the reasoning, which is the evidence a regulator asks for.
+**What lands in the queue.** A task titled **"Adjudicate a screening match for `{vendor}`"**, filed as an assessment review, **due in 3 days**. Its instructions ask the analyst to compare the matched record against what you hold (legal name, jurisdiction, registration, directors), decide between false positive, true match and needs-more-information, escalate a true match before any further payment or onboarding step, and record the reasoning, which is the evidence a regulator asks for.
 
 **Before you turn it on.** Re-point the task at the compliance desk that owns screening, which is rarely the TPRM queue. Three days is a starting clock; if you work to a regulatory deadline, set that instead.
 
 **The gate most people add.** Every match raising a task includes the false positives, which are most of them. Gate the trigger once you know your own hit rate.
-
-<Note>
-  The title does not name the vendor, unlike every other template here. A screening match carries the match rather than the third party it matched, so a name in the title would resolve to nothing. Open the task to see which record it belongs to.
-</Note>
 
 ### Zero-touch assessment launch
 
@@ -346,11 +342,15 @@ Auto-renewal deadlines pass in silence and cost a year of spend. Whenever a rene
 
 Signature is where a contract stops being legal's problem and starts being everyone else's. This raises the handoff the moment a contract is executed, so the obligations it creates get owners while the negotiation is still fresh.
 
-**What it does.** Watches the contract's approval state and its execution date. When either moves, it raises the handoff task.
+**What it does.** Watches the contract's approval state and its execution date, and raises the handoff task only once the contract reaches **Executed**. Earlier moves through the approval pipeline raise nothing.
 
 **What lands in the queue.** A task titled **"Hand over `{contract}`"**, filed as a contract review, **due in 5 days**, whose body names the state the contract reached and links it. Its instructions cover recording the obligations with owners and dates, getting the renewal and notice dates onto the record rather than leaving them in the paper, linking the services and spend it covers, and telling the requester it is signed.
 
-**Before you turn it on.** The trigger fires on **every** move through the approval pipeline, not only on execution, so gate it on the state reaching Executed. Re-point the task at whoever owns the relationship after signature, which is rarely the person who negotiated it.
+**Before you turn it on.** Re-point the task at whoever owns the relationship after signature, which is rarely the person who negotiated it.
+
+<Note>
+  A contract that goes back to draft and forward again hands over once each time it is signed, which is usually what you want for a re-executed amendment.
+</Note>
 
 ### Expired contract follow-up
 
