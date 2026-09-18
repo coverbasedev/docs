@@ -1,7 +1,3 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
-
 # Documentation project instructions
 
 ## About this project
@@ -14,18 +10,17 @@
 
 ## Terminology
 
-{/* Add product-specific terms and preferred usage */}
-{/* Example: Use "workspace" not "project", "member" not "user" */}
+- "Coverbase", never "CoverBase". "Organization" and US spelling throughout.
+- "Vendor" is the default term; orgs can rename it, so never build a claim on the label.
+- "Finding" is the vendor-side problem; "obligation" is what your organization owes; "commitment" is a promise attached to either.
+- "Signal" is one Radar event as it affects the organization; "alert" is one detector's verdict on it.
+- "User guide" for a how-to page, "product page" for a `products/` page, "reference" for fields, placeholders and the control library.
 
 ## Style preferences
 
-{/* Add any project-specific style rules below */}
-
 - **Never use an em dash (`—`).** Rewrite as two sentences, or use a comma, a
   colon, or parentheses. Keep other dashes rare too. The `Prose` workflow in
-  `.github/workflows/prose.yml` fails any PR that adds one. It exempts
-  `irq-library.mdx` and `dashboard-library.mdx`, which predate the rule. Do not
-  add to that exemption list.
+  `.github/workflows/prose.yml` fails any PR that adds one, with no exemptions.
 - No dramatic or self-important phrasing. Say what the screen does and what
   happens if the reader gets it wrong. Cut sentences whose job is to sound
   weighty: "the part an auditor reads", "the moment the signature is committed",
@@ -60,5 +55,12 @@ When editing:
 
 ## Content boundaries
 
-{/* Define what should and shouldn't be documented */}
-{/* Example: Don't document internal admin features */}
+- Document what the product does today, from the product source. Do not describe a feature that is not shipped or that lives only in seed data.
+- Do not document Coverbase-staff tooling (the `radar_admin` and `internal/` routes, gates, fork environments, the alert purge).
+- Do not name customers.
+- Heading text on a published page is a URL anchor customers may already hold. Add headings freely; rename one only on purpose.
+- Screenshots come from the demo workspace, never from a customer's.
+
+## User guide structure
+
+Every guide under `user-guides/` opens with the `AgentDirective` snippet and an `<Info>` banner naming its neighbours, states in one sentence the mistake people most often make, and ends with a `## Troubleshooting` table and a `## Related` card group. Groups in `docs.json` mirror the product's left navigation, and `user-guides/overview.mdx` is the directory: a new guide needs a card, a row in the complete directory table, and a row in the lookup table.

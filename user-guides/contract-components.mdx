@@ -18,7 +18,7 @@ one of the obligations. Coverbase reads that pile as a set of **components**: a
 component is one subject the contract has an answer to, wherever that answer
 happens to live.
 
-This page is the catalogue. For each component it says what Coverbase reads it
+This page is the catalog. For each component it says what Coverbase reads it
 as, what it does with it, and which of the contract's own fields it is allowed
 to change.
 
@@ -34,7 +34,7 @@ Three steps, in order.
   </Step>
   <Step title="Resolution">
     All the instances of one component across all the documents resolve into a
-    single **slot** - the contract's answer. How they resolve depends on the
+    single **slot**, the contract's answer. How they resolve depends on the
     component's rule, below.
   </Step>
   <Step title="Contribution">
@@ -65,14 +65,14 @@ than the right one. The largest figure in a master services agreement is
 routinely a $10,000,000 insurance limit, and the largest in a terms of service
 is usually a liability tier. Neither is spend.
 
-So each component is allowed to answer only the fields it can honestly carry. A
+So each component is allowed to answer only the fields it can carry. A
 term date comes from term and renewal; an amount comes from pricing, an order
 form or a statement of work; a cap in the liability component is never mistaken
 for either.
 
 <Note>
   This narrowing is **opt-in per document**. Until someone confirms what a
-  document carries, it may answer any field - a narrower question asked of an
+  document carries, it may answer any field. A narrower question asked of an
   unclassified document would lose data rather than clean it. Confirming a
   document's components is what turns the narrowing on for that document.
 </Note>
@@ -105,7 +105,7 @@ component is allowed to change. **Feeds** is what else in Coverbase reads it.
 
 | # | Component | What Coverbase reads it as | Resolves | May set |
 | --- | --- | --- | --- | --- |
-| 6 | Pricing and rate card | The priced lines themselves - the rate card, the schedule. | Series | value, currency |
+| 6 | Pricing and rate card | The priced lines themselves: the rate card, the schedule. | Series | value, currency |
 | 7 | Payment terms | When invoices fall due. | Singleton | payment terms |
 | 8 | Invoicing and PO reference | Where invoices go and under which PO. | Set | payment terms |
 
@@ -130,28 +130,28 @@ component is allowed to change. **Feeds** is what else in Coverbase reads it.
 
 <Warning>
   The four marked *never sets value* carry the largest currency figures in a
-  typical agreement, and none of them is spend. They are listed here rather than
-  merely left out, so the reason is on the record.
+  typical agreement, and none of them is spend. They are listed here, rather than
+  left out, so the reason is on record.
 </Warning>
 
 ### Data and IP
 
 | # | Component | What Coverbase reads it as | Resolves | May set |
 | --- | --- | --- | --- | --- |
-| 15 | IP ownership and licence grant | Who owns what, and what you are licensed to do. | Singleton | - |
+| 15 | IP ownership and license grant | Who owns what, and what you are licensed to do. | Singleton | - |
 | 16 | Confidentiality | The confidentiality obligation and how long it runs. | Singleton | - |
 | 17 | Data protection addendum | The DPA. Also updates the vendor's data profile. | Singleton | - |
 | 18 | Security requirements | The security exhibit. Maps to assessment questions. | Singleton | - |
 | 25 | Subprocessors | The fourth parties the vendor uses. Feeds Radar. | Set | - |
 | 26 | Cross-border transfer terms | SCCs and transfer mechanisms. | Singleton | - |
 | 27 | AI and model terms | Whether your data trains a model. | Singleton | - |
-| 36 | End user licence | A software schedule or EULA. Grants rights, prices nothing. | Singleton | *never sets value* |
+| 36 | End user license | A software schedule or EULA. Grants rights, prices nothing. | Singleton | *never sets value* |
 
 ### Execution and provenance
 
 | # | Component | What Coverbase reads it as | Resolves | May set |
 | --- | --- | --- | --- | --- |
-| 28 | Signature and execution | Evidence it was actually signed. Decides in-force status. | Singleton | - |
+| 28 | Signature and execution | Evidence it was signed. Decides in-force status. | Singleton | - |
 | 29 | Amendment instrument | The amendment itself, as a link in the chain. | Series | - |
 | 34 | Redline and negotiation history | A marked-up draft. **Never in force.** | Set | *never sets value* |
 | 35 | Quote or proposal | An offer that was not ordered. **Never in force.** | Set | *never sets value* |
@@ -184,7 +184,7 @@ says *what its numbers do to the contract*.
 | Order form | Adds. | An order form or sales order. |
 | Statement of work | Adds. | A SOW or an engagement letter. |
 | Amendment | Adds. | An amendment, addendum, or change order. |
-| Exhibit | Fills blanks only. | A schedule, a licence, an annex. |
+| Exhibit | Fills blanks only. | A schedule, a license, an annex. |
 | Evidence | Fills blanks only. | A certificate of insurance. |
 | Redline draft | Nothing. | A marked-up draft. |
 | Quote | Nothing. | A priced offer nobody accepted. |
@@ -193,7 +193,7 @@ says *what its numbers do to the contract*.
 <Note>
   A currency mismatch stops both halves. If a document states a figure in a
   currency the contract does not already use, neither the amount nor the
-  currency label moves - an unconverted total wearing the wrong label is worse
+  currency label moves. An unconverted total under the wrong label is worse
   than no total at all.
 </Note>
 
@@ -207,21 +207,20 @@ instrument rather than waiting to be told:
 | What it sees | What it concludes |
 | --- | --- |
 | An order form, sales order, SOW or fee schedule beside a master agreement | It is **ordered under** that agreement, and what it prices reaches the contract |
-| An exhibit, schedule, annex or licence | It **hangs off** the agreement, never the other way round - even when the exhibit is the older document |
+| An exhibit, schedule, annex or license | It **hangs off** the agreement, never the other way round, even when the exhibit is the older document |
 | A quote or proposal | It is **kept for the record and priced at nothing**, because nobody accepted it |
 | Two amendments to the same agreement | **Both stand.** Neither replaces the other |
 | Two identical copies of one document | The earlier is the original, the later is marked a **duplicate** |
 
 <Note>
   Two different agreement numbers stop the first rule. `S402411` beside `S40241`
-  is a second agreement, not a line ordered under the first - so Coverbase
+  is a second agreement, not a line ordered under the first, so Coverbase
   groups them but does not add one to the other.
 </Note>
 
-Where the documents genuinely do not settle it - two order forms a year apart,
-neither saying whether the second replaces the first - Coverbase refuses to
-guess and asks you. That is the one question worth being asked, because
-answering it wrong moves money.
+Where the documents do not settle it (two order forms a year apart, neither
+saying whether the second replaces the first), Coverbase asks you rather than
+guessing, because answering it wrong moves money.
 
 ## Correcting what a document carries
 
@@ -234,7 +233,7 @@ components and tick or untick what it carries.
     card and choose **Edit components**.
   </Step>
   <Step title="Correct the list">
-    Every component in the catalogue is offered. Tick what the document carries,
+    Every component in the catalog is offered. Tick what the document carries,
     untick what it does not, and set an effective date where the document states
     one.
   </Step>

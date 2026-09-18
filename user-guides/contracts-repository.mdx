@@ -1,0 +1,308 @@
+---
+title: "The contracts repository"
+description: "Forward an agreement to your organization's paralegal inbox, understand how Coverbase names, deduplicates, versions and files it, check what the AI read off it, and manage the folders and settings behind the inbox."
+icon: "inbox"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Contracts → Repository**: the inbox, the folder browser, the document page and the settings behind them. For the contract records you track renewals and clauses on, see the [Contracts workspace guide](/user-guides/contracts-workspace). For raising a new contract and getting it signed, see [Contract intake and approval](/user-guides/contract-intake-and-approval).
+</Info>
+
+<Note>
+  The Contracts Repository is an optional module. If you do not see **Repository** under **Contracts** in the left navigation, ask your Coverbase representative to turn it on. Mail sent to your organization's inbox address before the module is switched on is kept, and appears once it is.
+</Note>
+
+The repository is a filing inbox. Your organization gets an email address. Forward, CC or BCC any email with agreements attached to it, and each attachment is read, given a title, checked against what you already hold, and filed into a folder. You can also upload files from the page itself. The result is one row per agreement, with every version and everything that happened to it in one place.
+
+It does only the sorting. Nothing in the repository reviews a clause, chases a signature, or sets a renewal reminder. Those belong to the contract records in the [contracts list](/user-guides/contracts-workspace), and a filed document does not become a contract record on its own.
+
+The mistake people make most often is forwarding from an address the inbox does not trust. Only mail from your organization's own domains, its members, or domains you have added is filed. Anything else is logged as **Sender not allowed** and its attachments are dropped. If you forwarded something and nothing appeared, the [inbox log](#the-inbox-log) is the first place to look.
+
+## Where it lives
+
+Open **Contracts** in the left navigation and choose **Repository**. The page has four screens:
+
+| Screen | How to reach it | What it is for |
+| --- | --- | --- |
+| **Repository** | The nav item | Your inbox address, the folder tree, and the documents in the selected view |
+| A document page | Click a row | One agreement: its details, versions and history |
+| **Inbox log** | Button at the top right of the repository page | Every email that reached the inbox and what became of it |
+| **Settings** | Button at the top right of the repository page | The address, who may send to it, the filing scheme and starting folder structures |
+
+<Frame caption="The repository page. The inbox address sits at the top, the folder tree on the left, and the documents in the selected view on the right.">
+  <img src="/images/user-guides/contracts-repository-browser.png" alt="The repository page showing the paralegal inbox address, four stat tiles, a folder tree and a table of filed documents" />
+</Frame>
+
+## Forwarding an agreement
+
+<Steps>
+  <Step title="Copy the address">
+    It is at the top of the repository page under **Your paralegal inbox**, with a copy button next to it. The address ends in `@paralegal.coverbase.app`. It is also shown on the **Settings** page.
+  </Step>
+  <Step title="Forward, CC or BCC the email">
+    Any of the three works. Attach the agreement, or forward the email it arrived on. You can add anything after a plus sign (`acme+legal@...`) and it still reaches the same inbox, which is useful for mail rules.
+  </Step>
+  <Step title="Wait for filing">
+    The message appears in the inbox log at once. The attachments are filed a short while later, and the **Emails received** and **Documents** tiles on the repository page update.
+  </Step>
+</Steps>
+
+### Who can forward
+
+The address is easy to guess, so the inbox checks the sender before it stores anything.
+
+| Sender | What happens |
+| --- | --- |
+| An address on one of your organization's email domains | Filed |
+| An active member of your workspace | Filed |
+| An address on a domain listed under **Additional allowed domains** in Settings | Filed, and every document is marked **Needs review** |
+| Anyone, when **Accept mail from anyone** is on | Filed, and every document is marked **Needs review** |
+| Anyone else | Logged as **Sender not allowed**. No attachments are stored. |
+
+The organization's own domains and **Workspace members** are always allowed. The other two rows are settings you turn on; see [Settings](#settings).
+
+### What happens to the attachments
+
+Only files that can be an agreement are kept: `.pdf`, `.docx`, `.doc`, `.txt`, `.md` and `.rtf`. Images, calendar invites, spreadsheets and inline pictures such as signature logos are dropped before anything is stored. The first few thousand characters of the email body are kept as context for the classifier, never the whole thread.
+
+An attachment that is a readable file but not an agreement, such as an invoice or a receipt, is read and then dropped. It does not appear in any folder. The inbox log still shows the message, with an **Outcome** of `0 filed`.
+
+<Tip>
+  A `.msg` or `.eml` file attached to a forwarded email is not filed. If you want the agreement inside it, forward the original email instead of the saved copy.
+</Tip>
+
+### Uploading from the app
+
+Click **Upload documents** at the top right of the repository page and pick one or more `.pdf`, `.docx`, `.doc`, `.txt` or `.md` files. Uploads go down the same path as a forwarded email: classified, checked for duplicates, versioned and filed by the scheme. You do not choose the folder at upload time. If the scheme puts a file in the wrong place, move it afterwards.
+
+Uploads show in the inbox log with your name as the sender and the subject **Uploaded in the app**.
+
+## How a document is filed
+
+Each attachment goes through the same four checks, in this order.
+
+<Steps>
+  <Step title="Duplicate check">
+    The file's contents are fingerprinted. If any live document already holds that exact file in any of its versions, nothing new is created. The existing document gets a **Duplicate ignored** entry in its history and the message counts it under `duplicates`.
+  </Step>
+  <Step title="Classification">
+    The AI reads the first pages of the document (up to twelve pages) together with the email's sender, subject and body excerpt, and returns: whether the file is an agreement at all, its type, a short title a paralegal would use, the counterparty, every named party, the effective and expiry dates as written in the paper, a summary, a one-sentence reason, and a confidence figure. The email is context only. A subject line saying "signed NDA" does not override what the document says.
+  </Step>
+  <Step title="Version or new document">
+    The arrival is compared with live documents of the same type and counterparty. If the titles agree once version markers are stripped (`v3`, `final`, `executed`, dates, `(2)`), or the file names do, it becomes a new version of that document. Otherwise it is a new document. When in doubt the repository creates a new document, because two rows are easy to spot and merge by hand, and a version buried inside the wrong document is not.
+  </Step>
+  <Step title="Filing">
+    A new document is placed by the folder scheme in Settings. Folders that do not exist yet are created. The document's history records **Received** and **Filed into** the folder.
+  </Step>
+</Steps>
+
+A document is marked **Needs review** instead of **Filed** when the classifier's confidence is below the threshold in Settings (60% by default), or when the sender was a guest (an allowed domain or anyone, rather than a member). A scanned PDF with no text layer is classified from its file name alone, which lands it in review.
+
+## Reading the repository page
+
+Four tiles sit under the address:
+
+| Tile | What it counts |
+| --- | --- |
+| **Documents** | Every live document, across all folders and unfiled |
+| **Needs review** | Documents waiting for a person to confirm the classification |
+| **Folders** | Live folders in the tree |
+| **Emails received** | Every message that reached the inbox, with a `failed` count when any did not finish |
+
+The left column is the folder tree. Three views sit above the folders:
+
+- **All documents**: everything, regardless of folder.
+- **Needs review**: only documents marked for review. Work this list down to zero.
+- **Unfiled**: documents with no folder. A document lands here when you delete its folder from the top level, or move it to **Unfiled** on purpose.
+
+Click a folder to see its documents and those of its subfolders. The path appears above the table, and each segment is clickable.
+
+The table has these columns:
+
+| Column | What it shows |
+| --- | --- |
+| **Title** | The AI's title, or the one you gave it. Click to open the document |
+| **Type** | The document type, as a badge |
+| **Counterparty** | The other party |
+| **Status** | **Filed** or **Needs review** |
+| **Version** | `v1`, `v2`, and so on: how many versions the row holds |
+| **Effective** | The effective date, when the paper states one |
+| **Received** | When the latest version arrived. The default sort, newest first |
+
+Above the table: **Search documents**, a **Document type** filter, and **Filter by sender email**. The sender filter matches any address a version arrived from.
+
+The menu at the end of each row offers **Download** (a link that expires after 15 minutes), **Move to folder** and **Archive**.
+
+## Folders
+
+The plus button next to the **Folders** heading is **New folder**. The menu on any folder offers **New subfolder**, **Rename folder** and **Delete folder**. A folder has a name and an optional description; the description is shown next to the name so colleagues file the same way.
+
+**Delete folder** archives the folder and everything beneath it. Its documents move up one level, to the parent folder or to **Unfiled**. Nothing leaves the repository.
+
+The scheme decides the folders an incoming document is filed into. Every scheme starts with a folder per category, so switching schemes later only changes what sits beneath those.
+
+| Scheme | Example path |
+| --- | --- |
+| **One folder per category** | `Vendors / MSA with Acme Corp.pdf` |
+| **A folder per counterparty** (default) | `Vendors / Acme Corp / MSA with Acme Corp.pdf` |
+| **A folder per counterparty, then per document type** | `Vendors / Acme Corp / Statement of work / SOW 2.pdf` |
+
+Renaming a category folder does not break filing. The repository finds it by its role, not its name, so `Vendors` renamed to `Suppliers` keeps receiving vendor paper.
+
+The category comes from the document type:
+
+| Category | Document types |
+| --- | --- |
+| **Customers** | Customer agreement, Terms of service |
+| **Vendors** | Master services agreement, Statement of work, Order form, Vendor agreement, License, Data processing agreement |
+| **Partners & NDAs** | NDA, Partnership agreement |
+| **People** | Employment agreement, Offer letter, Contractor agreement, Advisor agreement |
+| **Corporate** | Equity, Corporate |
+| **Finance & Insurance** | Loan, Insurance |
+| **Real estate** | Lease |
+| **Other** | Amendment, Other |
+
+## The document page
+
+Click a row to open it.
+
+<Frame caption="A document page. Details and sources on the left, versions and history on the right.">
+  <img src="/images/user-guides/contracts-repository-document.png" alt="A repository document page with type and status badges, a Filed in card, a Details form, a Sources card, a Versions list and a History timeline" />
+</Frame>
+
+The header shows the title, the type and status badges, the current version number, the file name and its size. The buttons on the right are **Download**, **Mark reviewed** (only while the status is **Needs review**), **Move to folder**, and **Archive** or **Restore**.
+
+| Card | What it holds |
+| --- | --- |
+| **Filed in** | The folder path. Each segment opens that folder in the browser. **Unfiled** if the document has no folder |
+| **Details** | **Title**, **Type**, **Category**, **Counterparty**, **Effective**, **Expires** and **Summary**, all editable. Below them, the named **Parties** and a line reading `Classified with N% confidence: <reason>` |
+| **Sources** | **Sent by**: every address a version arrived from, each a link that filters the browser to that sender. **Sent to**: the inbox addresses it reached |
+| **Versions** | Newest first. Each shows its file name, when it arrived, who sent it, and any version marker found in the file (`final`, `v3`). The download icon fetches that version |
+| **History** | Every event on the document, newest first, with who did it and when |
+
+Events you will see in the history:
+
+| Event | Meaning |
+| --- | --- |
+| **Received** | The first version arrived, with the file name and sender |
+| **Filed** | Placed into a folder by the scheme |
+| **New version** | A later version was added, with its number and file name |
+| **Duplicate ignored** | The same file arrived again and was not stored twice |
+| **Moved** | A person moved it to another folder |
+| **Renamed** | A person changed the title, shown as `old → new` |
+| **Reclassified** | A person changed the type, category or counterparty |
+| **Archived** / **Restored** | A person archived it, or brought it back |
+
+### Correcting what the AI read
+
+Every field the classifier filled in can be changed. Edit the fields in **Details** and click **Save**. Changing the title writes a **Renamed** event; changing the type, category or counterparty writes **Reclassified**. Changing the category does not move the document; use **Move to folder** for that.
+
+To clear a **Needs review** flag, check the details, fix what is wrong, then click **Mark reviewed**. The status changes to **Filed** and the document leaves the **Needs review** view.
+
+<Warning>
+  Archived documents leave every list and every view, including search. The **Restore** button is on the document page, so keep the link if you may need it back. Nothing is deleted: the versions and the history stay.
+</Warning>
+
+### Getting a filed document onto a contract record
+
+The repository does not link a filed document to a vendor or to a contract record, and it does not create either. To track renewals or run a clause review on an agreement you filed, download it and attach it to the contract from the contract's **Documents** section, or raise a new contract from the vendor's **Contracts** tab as described in [Contract intake and approval](/user-guides/contract-intake-and-approval#raising-a-request).
+
+## The inbox log
+
+Click **Inbox log** at the top right of the repository page.
+
+<Frame caption="The inbox log. One row per message, with what was filed from it and a Retry button for anything that did not finish.">
+  <img src="/images/user-guides/contracts-repository-inbox.png" alt="The inbox log table listing received emails with sender, subject, attachment count, outcome and status columns" />
+</Frame>
+
+| Column | What it shows |
+| --- | --- |
+| **Received** | When the message arrived |
+| **From** | The sender's name and address (or the uploader, for app uploads) |
+| **Subject** | The email subject, or `(no subject)` |
+| **Attachments** | How many files were stored from it |
+| **Outcome** | `N filed · N versions · N duplicates` |
+| **Status** | One of the statuses below, with the error text under it when there is one |
+
+| Status | Meaning |
+| --- | --- |
+| **Received** | Stored and waiting for the filing run |
+| **Filing** | The filing run is in progress |
+| **Filed** | At least one document, version or duplicate resulted |
+| **No documents** | The run finished and nothing was an agreement, or there were no usable attachments |
+| **Sender not allowed** | The sender failed the check in [Who can forward](#who-can-forward). Nothing was stored |
+| **Failed** | The run hit an error. The error is shown under the badge |
+
+**Retry** appears on any row with stored attachments that is not currently filing. Retrying is safe: an attachment that was already filed is recognized by its fingerprint and skipped. A **Sender not allowed** row has no attachments to retry. Add the sender's domain in Settings and ask them to send again.
+
+## Settings
+
+Click **Settings** at the top right of the repository page. Change what you need and click **Save** at the top.
+
+<Frame caption="Repository Settings: the address, who can send, the filing scheme and the starting structures.">
+  <img src="/images/user-guides/contracts-repository-settings.png" alt="The Repository Settings page with the Inbox Address, Who Can Send, Filing and Starting Structures sections" />
+</Frame>
+
+<AccordionGroup>
+  <Accordion title="Inbox Address" icon="at">
+    The part before the `@`. Letters, digits and hyphens, up to 40 characters, and unique across every Coverbase workspace, so a common word may already be taken. Changing it takes effect immediately and the old address stops working. Tell anyone who has a mail rule pointing at it.
+  </Accordion>
+  <Accordion title="Who Can Send" icon="user-check">
+    **Always allowed** lists your organization's email domains and **Workspace members**. **Additional allowed domains** is for outside counsel or a parent company: their documents are filed but flagged **Needs review**. **Accept mail from anyone** files every message and flags every document. Leave it off unless you have a reason; anyone who learns the address can then put documents in your repository.
+  </Accordion>
+  <Accordion title="Filing" icon="folder-tree">
+    **Folder scheme** is one of the three in [Folders](#folders); an example path updates as you change it. **Review below (% confidence)** sets the threshold under which a document is flagged for a person to check. The default is 60. Raise it to see more in **Needs review**, lower it to see less.
+  </Accordion>
+  <Accordion title="Starting Structures" icon="sitemap">
+    Three folder structures you can apply once with **Apply**: **Simple** (four folders), **Startup** (categories with subfolders for employees, contractors, advisors, formation, financing, equity, banking, insurance) and **Detailed** (agreements separated by type inside each category). Applying one creates the folders you do not have yet and leaves existing folders and their documents alone. You can rename, nest and delete the folders freely afterwards.
+  </Accordion>
+</AccordionGroup>
+
+## Permissions and notifications
+
+Access follows the contract permissions. Anyone who can read contracts can open the repository, browse, search and download. Anyone who can update contracts can also upload, move, rename, reclassify, archive, restore and mark reviewed, manage folders, retry a message, and change Settings. Without update permission, the edit buttons and the **Details** fields are read-only. See [Permissions and roles](/user-guides/permissions-and-roles) for how those permissions are granted.
+
+The repository sends no emails. It does not confirm receipt to the sender and does not notify anyone when a document lands in **Needs review**. Check the **Needs review** tile.
+
+## Emails as evidence
+
+A related job lives outside the repository. When a vendor replies on an email thread and you want that thread on file as evidence, save the email as a `.msg` or `.eml` file and upload it to the vendor's documents like any other file. Coverbase renders the headers and body to a PDF, so the sender's words are previewable, searchable and quotable in an assessment, and every real attachment becomes a document of its own, listed under **Attachments extracted from** the email. Signature images and logos are not kept. An attachment the email only referenced rather than carried is named on the rendered page so the list is not silently short.
+
+This is separate from the repository: the repository's inbox does not accept `.msg` or `.eml` attachments, and a vendor document does not appear in the repository.
+
+## Troubleshooting
+
+| What you see | What is happening |
+| --- | --- |
+| "I forwarded an email and nothing appeared." | Open **Inbox log**. If the row says **Sender not allowed**, you sent from an address the inbox does not trust; add the domain under **Additional allowed domains** or forward from your work address. If there is no row at all, check the address you used against the one on the repository page. |
+| "The row says **No documents**." | Nothing attached was an agreement, or the attachments were types the inbox drops (images, spreadsheets, calendar invites, `.msg` files). Check the **Attachments** column: `0` means nothing usable was stored. |
+| "The row says **Failed**." | The filing run hit an error, shown under the badge. Click **Retry**. Anything already filed is skipped. |
+| "The same agreement is in two rows." | The titles or file names were too different for the versioning check to match them. Open the older one, note its folder, and archive whichever you do not want to keep. |
+| "A new draft became a version of the wrong document." | Same type, same counterparty, and a title or file name that looked alike. A version cannot be detached, and forwarding the same file again is ignored as a duplicate while the document is live. Archive the document, forward or upload both files again so each is filed on its own, then correct the details on the new rows. |
+| "Everything is landing in **Needs review**." | Either the threshold in Settings is high, or the mail is coming from a guest domain. Guests are always flagged. Lower **Review below (% confidence)** if the classifications are right. |
+| "A scanned PDF was filed as **Other** with low confidence." | There was no text to read, so the classifier used the file name. Fix the type and counterparty in **Details** and click **Mark reviewed**. |
+| "I renamed the Vendors folder and new documents still go into it." | That is expected. The scheme files by the folder's role, not its name. |
+| "I changed the address and colleagues' mail bounces." | The old address stopped working as soon as you saved. Send them the new one. |
+| "Settings will not save: 'That address is taken.'" | The address is unique across every Coverbase workspace. Pick another. |
+| "I archived a document and cannot find it." | Archived documents leave every list. Open it from the link you had and click **Restore**. Forwarding the file again does not restore it; an archived document is ignored by the duplicate check, so the file is filed as a new document. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Contracts workspace" icon="folder-open" href="/user-guides/contracts-workspace">
+    The contracts list and the contract record: where renewals, values and clauses are tracked.
+  </Card>
+  <Card title="Contract intake and approval" icon="clipboard-check" href="/user-guides/contract-intake-and-approval">
+    Raise a contract from a vendor, confirm what the AI read off the draft, and send it for signature.
+  </Card>
+  <Card title="Contract components" icon="puzzle-piece" href="/user-guides/contract-components">
+    What a contract record reads each attached document into.
+  </Card>
+  <Card title="Permissions and roles" icon="users" href="/user-guides/permissions-and-roles">
+    Who can read and update contracts, and how to grant it.
+  </Card>
+</CardGroup>

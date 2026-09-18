@@ -1,0 +1,334 @@
+---
+title: "Obligations"
+description: "What your organization owes a vendor: how obligations get extracted from SOC reports and contracts, how to read the list and the record, what each status means, how to assign an owner, ask a business unit to acknowledge one, and where obligations show up elsewhere."
+icon: "list-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the **Obligations** page, the obligation record, and the **Configuration → Obligations** settings. For what the module is, see [Obligations Tracker](/products/obligations-tracker). For pulling obligations in and out programmatically, see the [Obligations API](/api-reference/obligations).
+</Info>
+
+<Note>
+  Obligations are an optional module. If you do not see **Obligations** in the left navigation, ask your Coverbase representative to turn it on.
+</Note>
+
+An obligation is something your organization has to do because of a vendor relationship. A SOC 2 report says the vendor's controls only work if you enable MFA. A master service agreement says you must notify the vendor within 30 days of a change of control. Neither is a problem with the vendor. Both are work that belongs to someone on your side, and the obligations module is where that work gets a record, an owner and a status.
+
+Coverbase can create these records for you when it analyzes a document, or you can extract them on demand or type one in. Once a record exists you decide whether an internal control already covers it, assign it, set a due date, and mark it satisfied with evidence.
+
+The mistake people make most often is flipping the auto-create switches and expecting obligations to appear for documents that were uploaded last year. Extraction runs when a document is analyzed, so anything analyzed before the switch was on is untouched until you extract from it by hand.
+
+## Obligation, finding, or commitment
+
+Three records look alike and are easy to confuse. Each answers a different question.
+
+| Record | Question it answers | Who does the work |
+| --- | --- | --- |
+| **Obligation** | What must *we* do because we use this vendor? | Someone in your organization |
+| **Finding** | What is wrong on the *vendor's* side? | The vendor, usually through a remediation commitment |
+| **Commitment** | Who has promised to do what, by when? | Whoever accepted it: a vendor for a finding, or an internal stakeholder for an obligation |
+
+An obligation can carry a commitment of its own. That is how you ask a business unit to acknowledge it, covered under [Asking a business unit to acknowledge](#asking-a-business-unit-to-acknowledge). Findings and their commitments have their own guide: [Findings and remediation](/user-guides/findings-and-remediation).
+
+## The two types
+
+Every obligation has a **Type**. The extractor picks it, or you set it when extracting by hand.
+
+| Type | What it is | Where it comes from |
+| --- | --- | --- |
+| **CUEC** | A complementary user entity control: a control the vendor's auditor assumes *you* operate, listed in the vendor's SOC report. | SOC 1 Type 2 and SOC 2 Type 2 reports. Coverbase reads the CUEC list the report already contains. |
+| **Shared Responsibility** | A duty the contract puts on your side of the relationship: a notice you must give, a configuration you must maintain, a term you must honor. | Contract documents: order forms, master service agreements, professional service agreements, statements of work, NDAs, amendments, addenda, terms of service, SLAs, software license agreements and generic commercial contracts. Invoices are skipped. |
+
+There are no other types. A technical control you must operate is recorded as whichever of the two it came from, and you link it to an internal control from the record.
+
+## Where obligations live
+
+- **Obligations** in the left navigation: every obligation in your organization, grouped and filtered, with insight cards on the left.
+- A vendor's record, **Obligations** tab: the same table scoped to one vendor and grouped by document. Useful when you are reviewing that vendor and want to see what its paperwork asks of you.
+- **Configuration → Obligations** (also reachable from the **Actions** menu on the Obligations page, **Configuration**): the three organization-wide switches described next.
+
+<Frame caption="The Obligations page. Insight cards on the left, the grouped table on the right, search, filters and Group by along the top.">
+  <img src="/images/user-guides/obligations-list.png" alt="The Obligations page showing insight cards, a search box, filter and group-by controls, and a table grouped by vendor with statement, type, services, control sets and status columns" />
+</Frame>
+
+## Turning on automatic extraction
+
+Only an Admin can change these. Open **Configuration → Obligations**.
+
+<Frame caption="Configuration → Obligations. Three switches, all off by default.">
+  <img src="/images/user-guides/obligations-configuration.png" alt="The Obligations configuration page with three switches: auto-create from vendor CUECs, auto-create from contract shared responsibilities, and require business-unit acknowledgement" />
+</Frame>
+
+| Switch | What it does when on |
+| --- | --- |
+| **Auto-create obligations from vendor CUECs** | When a SOC 1 Type 2 or SOC 2 Type 2 report finishes analysis and contains CUECs, each CUEC becomes a **CUEC** obligation on that vendor. |
+| **Auto-create obligations from contract shared responsibilities** | When a contract document finishes analysis, each shared responsibility Coverbase found becomes a **Shared Responsibility** obligation on that vendor, tied to the services the document is linked to. |
+| **Require business-unit acknowledgement** | Changes what happens when an extracted obligation matches an internal control. Instead of being created **Satisfied**, it is created **Pending Acknowledgement** and stays there until a business unit closes a commitment on it. See [Statuses](#statuses). |
+
+Three things to know before you switch them on:
+
+- **Extraction runs at analysis time.** A document analyzed before the switch was on gets nothing. Use **New Obligations → Create or extract from documents** to cover those, or re-run analysis on the document.
+- **Every obligation is checked against your internal controls.** If a control in one of your internal control sets already covers the statement, the obligation arrives **Satisfied** with that control linked. If another obligation with the same meaning is already satisfied, the new one arrives **Satisfied** too. Otherwise it arrives **Not Satisfied**. You can see which path an obligation took in its **Compliance Type**.
+- **Duplicates are skipped.** A statement that already exists on the same vendor is not created twice.
+
+<Tip>
+  The control matching only works if you have an internal control set. If you have not built one yet, every extracted obligation will land as **Not Satisfied** and you will be linking controls by hand. Load your internal controls first.
+</Tip>
+
+## Reading the list
+
+The top bar, left to right:
+
+- **Search obligations...** matches statement text. Typing expands every group.
+- **Filter** opens a menu of **Vendor**, **Vendor Tags**, **Vendor Inherent Risk Level**, **Vendor Residual Risk Level** (only if your organization tracks residual risk), **Status** and **Type**. Applied filters sit under the bar as badges; click a badge to change it, or its cross to remove it.
+- **Group by** switches the table between **Vendor / Service** (the default), **Vendor**, **Service** and **Document**. Your choice is remembered.
+- **Total obligations** and **Vendor documents** count the whole filtered set, not the page.
+- **Expand all** / **Collapse all** on the right, then the **Actions** menu (**Download as Excel**, **Configuration**) and **New Obligations**.
+
+The table is grouped. A group header shows the vendor (a link to the vendor record), or the service, or the document, plus a satisfaction percentage. Hover the percentage to see the count. In **Document** grouping the header also shows the document type badge (hover it for the file name, expiry date and a preview) and, when the source SOC report has expired, a yellow warning icon.
+
+| Column | What it shows |
+| --- | --- |
+| **Statement** | The obligation, normalized to a single sentence. The verbatim wording lives on the record under **Original language**. |
+| **Type** | **CUEC** or **Shared Responsibility**. |
+| **Services** | The vendor services the obligation is scoped to, if any. |
+| **Control Sets** | The internal controls linked as satisfying this obligation. |
+| **Status** | **Satisfied**, **Not Satisfied** or **Pending Acknowledgement**. Anything not satisfied also carries a small dot: yellow means no commitment or one still waiting for a response, green means a response has arrived. Hover it. |
+
+Click a row to open the record. Click a checkbox, or hold **Shift** and click another, to select rows for bulk actions.
+
+Two details about the shape of the page:
+
+- **Pages are groups, not rows.** The pager counts vendors, services or documents per page, and each group on the page shows every obligation in it, so the header counts are always right.
+- **Archived obligations are not listed.** Archiving is permanent from this page. An archived record can still be opened from a link you kept, but it cannot be changed.
+
+The insight cards on the left summarize the whole filtered set: **Activity (30d)** (created versus resolved per day), **Due dates (±30d)** (how many fall due each day, hover a bar for the vendors), **Satisfaction rate**, and leaderboards of **Assignees** and **Top vendors** that you can flip between **Most** and **Unsatisfied**. The chevron at the far left of the bar hides the cards.
+
+<Note>
+  If a banner reads **Showing only the items assigned to you**, your role sees obligations at assigned scope. You can act on your own; you cannot see the rest. See [Permissions](#permissions).
+</Note>
+
+## Statuses
+
+An obligation's status is written when it is created and changed by people afterwards. Nothing recomputes it in the background except the two events noted below.
+
+| Status | Meaning | How it gets there |
+| --- | --- | --- |
+| **Satisfied** | Your organization meets this obligation. | Extraction matched an internal control or a similar satisfied obligation; someone linked a satisfying control; someone clicked **Mark as satisfied**; or a business unit closed its commitment on a pending obligation. |
+| **Not Satisfied** | Nobody has shown that you meet it. This is the default. | Extraction found no match; someone clicked **Mark as not satisfied**; every satisfying control was removed; or the control that satisfied it was archived. |
+| **Pending Acknowledgement** | A control matched, but your organization requires a business unit to confirm it actually operates before it counts. | Only created by extraction when **Require business-unit acknowledgement** is on. Becomes **Satisfied** when a commitment on it reaches **Closed**. |
+
+Alongside the status, a satisfied obligation carries a **Compliance Type** that records why it is satisfied:
+
+| Compliance Type | Meaning |
+| --- | --- |
+| **Internal Control** | One or more of your internal controls is linked under **Satisfying Controls**. Removing the last one flips the obligation back to **Not Satisfied**. |
+| **Similar Obligation** | Extraction found an obligation with the same meaning that was already satisfied. |
+| **Manual** | Someone used **Mark as satisfied** without linking a control. |
+
+<Warning>
+  Archiving an internal control unlinks it from every obligation it satisfied. An obligation left with no satisfying controls goes back to **Not Satisfied**, and the change is written to its activity log. If you retire a control, check the obligations that leaned on it.
+</Warning>
+
+## Creating obligations
+
+Besides the automatic switches, there are three ways in. All of them need the obligation create permission (an Admin, or a custom role with it).
+
+<Frame caption="New Obligations → Create or extract from documents. Pick existing documents or drop new ones, choose a type, then Extract.">
+  <img src="/images/user-guides/obligations-extract-modal.png" alt="The Extract obligations from documents modal, step 2, with document selection, an upload area, obligation type set to Auto-detect, services, assignee and due date fields" />
+</Frame>
+
+<AccordionGroup>
+  <Accordion title="Extract from documents" icon="file-magnifying-glass" defaultOpen>
+    <Steps>
+      <Step title="New Obligations → Create or extract from documents">
+        Step 1 asks for a vendor. Pick one to move to step 2.
+      </Step>
+      <Step title="Choose the documents">
+        Under **Documents**, select any of the vendor's existing documents, drop new files into the upload area, or both. New files are added to the vendor (and to any services you pick below) before extraction starts.
+      </Step>
+      <Step title="Set the type, services, owner and date">
+        **Obligation type** defaults to **Auto-detect**, which lets the extractor classify each statement. Choose **CUEC** or **Shared Responsibility** to force every result to one type. **Services** scopes the results to the vendor's services. **Assignee** and **Due Date** are applied to every obligation the run creates, so leave them blank if the owners will differ.
+      </Step>
+      <Step title="Extract obligations from documents">
+        The job runs in the background. You get an in-app notification and an email when it finishes, with the count created. Statements already on file for the vendor are skipped, and the same control matching as automatic extraction runs on each result.
+      </Step>
+    </Steps>
+  </Accordion>
+  <Accordion title="Extract from one document on the vendor record" icon="file-lines">
+    On a vendor's **Documents** tab, open a document's actions menu and choose **Extract obligations**. It runs the same job for that one document, with **Auto-detect** type, the document's own service links, no assignee and no due date.
+  </Accordion>
+  <Accordion title="Create manually" icon="plus">
+    **New Obligations → Create manually**, pick the vendor, then fill in **Vendor Document** (required, the obligation has to cite a source), **Statement** (required), **Status**, **Obligation Type** (**CUEC** only for hand-typed records), **Assignee**, **Due Date** and **Satisfying Controls**. Picking at least one control sets the status to **Satisfied** with compliance type **Internal Control**, whatever you chose under **Status**. Click **Create Obligation**.
+  </Accordion>
+</AccordionGroup>
+
+## The obligation record
+
+Clicking a row opens the record in a side panel. Its URL (`/obligations/req/<id>`) is shareable; the link icon next to the **Obligation** badge copies it. The expand button widens the panel.
+
+<Frame caption="An obligation record: source document and type at the top, the status banner, then the details table, commitment, assignee, controls, services, evidence, activity and notes.">
+  <img src="/images/user-guides/obligations-record.png" alt="The obligation side panel showing the document name and type badge, a yellow not-satisfied banner with Mark as satisfied, a details table with statement, original language, type, compliance status and source, followed by assignee and due date fields and a satisfying controls picker" />
+</Frame>
+
+From the top:
+
+1. **Header.** The source document's name and type badge, or **Custom Obligation** for a record with no document. An expired SOC report shows an expiry badge. Underneath, **Created** and **Updated**, and, when the source report has expired, the hint **May be stale - source document expired** with an **Archive** link.
+2. **Status banner.** Green for **Obligation satisfied**, yellow for **Obligation not satisfied** (a pending obligation shows the yellow banner too). The banner carries **Mark as satisfied** or **Mark as not satisfied**, and a menu with **Archive obligation**. Both status buttons open a small dialog with an optional **Reason**; the reason is saved as a note on the obligation. Marking not satisfied also clears the linked controls and compliance type.
+3. **Obligation table.** **Statement** (click **Edit** to reword it), **Original language** (the verbatim text, shown only when it differs from the statement), **Type**, **Compliance Status**, **Compliance Type**, **Matched control set** (the internal control set the satisfying controls belong to), **Created By**, and **Source**, which expands to the document itself.
+4. **Commitment.** Appears only when a commitment has been requested. See [Asking a business unit to acknowledge](#asking-a-business-unit-to-acknowledge).
+5. **Assignee** and **Due Date.** Saved as soon as you change them. The calendar does not offer past dates.
+6. **Satisfying Controls.** A picker over your internal control sets, with a **View internal controls** link. Add a control and the obligation becomes **Satisfied** / **Internal Control**; remove the last one and it becomes **Not Satisfied**.
+7. **Services.** The vendor's services this obligation applies to. Only that vendor's services are offered.
+8. **Evidence Uploads.** Drop files (up to 100 MiB each) that prove the obligation is met. Each file can carry a note, and you can preview, open or remove it.
+9. **Activity** and **Notes.** Every field change, including system changes, and a place to discuss the obligation. A note also emails the vendor's relationship owners if the obligation has an active commitment portal, so they can respond there.
+
+An archived obligation opens with an **Obligation Archived** notice and every control disabled.
+
+## Reviewing extracted obligations
+
+Extraction is tuned to surface too much rather than too little, so a review pass is part of the job. For each new obligation:
+
+<Steps>
+  <Step title="Read the statement against the original language">
+    Open the record and compare **Statement** with **Original language**. If the normalized sentence lost the meaning, click **Edit** and fix it. If it is not an obligation at all (a description of the vendor's own control, say), archive it.
+  </Step>
+  <Step title="Check what matched">
+    If the record arrived **Satisfied** with compliance type **Internal Control**, look at **Matched control set** and **Satisfying Controls** and confirm the control really covers this obligation. Remove it if not; the obligation drops back to **Not Satisfied**.
+  </Step>
+  <Step title="Scope it to a service">
+    A vendor with several services under different contracts needs the obligation on the right one. Set **Services**.
+  </Step>
+  <Step title="Give it an owner and a date">
+    Set **Assignee** to whoever can actually satisfy it, not to the contract owner by default. Set a **Due Date** that matches the contract's own deadline. The **Contract obligation ownership** workflow template raises a task for exactly this step; see [Workflow templates](/user-guides/workflow-templates#contract-obligation-ownership).
+  </Step>
+  <Step title="Decide how it is satisfied">
+    Link a control, mark it satisfied by hand with a reason and evidence, or request a commitment from the business unit that runs it.
+  </Step>
+</Steps>
+
+## Ownership and reassignment
+
+**Assignee** takes a person or a user group. When you assign a group, Coverbase routes it according to that group's rule and notifies the member who was picked. Assigning a single person changes the record and its activity log; it does not send an email on its own. Group routing, round-robin and out-of-office rules are covered in [Assignment, delegation and out of office](/user-guides/assignment-and-delegation).
+
+To reassign several at once, select the rows and use **Change Assignee** in the floating bar. Picking **Unassigned** clears the owner.
+
+The assignee matters for permissions: a role that can edit obligations at assigned scope can only change the obligations assigned to them or to a group they belong to.
+
+## Asking a business unit to acknowledge
+
+An obligation is often satisfied by a team that never opens Coverbase. **Request Commitment** sends them a portal listing the obligations, and records what they say.
+
+<Frame caption="Request commitment, step 1. Due date, description and the obligations the portal will list.">
+  <img src="/images/user-guides/obligations-request-commitment.png" alt="The Request commitment modal showing a due date field, a description with AI autofill, and a list of the selected obligation statements" />
+</Frame>
+
+<Steps>
+  <Step title="Pick the obligations">
+    Switch **Group by** to **Document** and click **Request Commitment** on a document's group header. The unsatisfied obligations in that group are pre-ticked; adjust the ticks, then **Continue**. You can also tick rows first and use **Request Commitment** in the floating bar, which appears only when every selected row comes from the same document.
+  </Step>
+  <Step title="Set a due date and description">
+    **Due date** is pre-filled with the earliest due date among the selected obligations, or 60 days out if none has one. The description is drafted for you (AI autofill runs once; the sparkle re-runs it) and explains what you are asking. Click **Continue**.
+  </Step>
+  <Step title="Send the invitation">
+    **To** is pre-filled with the vendor's relationship owners, the internal people who own the relationship. The obligations' assignees are added on CC. Edit the recipients and the message, then send.
+  </Step>
+</Steps>
+
+What happens next:
+
+- One commitment is created per obligation, and all of them are attached to the vendor's persistent portal, which is reopened if it had been closed. Each record's status badge gains a **Commitment Requested** tag.
+- The recipient opens an **Obligations Portal**. For each obligation they can **Commit** (acknowledge it and take it on), choose **Already satisfied** (describe the existing control and attach evidence), **Add a comment or propose changes** (different terms or a different date), or **Decline** (a reason is required).
+- Back on the record, the **Commitment** section shows the status (**Pending response**, **Response received**, **Mitigation underway**, **Declined**, **Closed**), the response type, any proposed completion date and notes, a **View submission** link, and **Reopen to pending** for anything that has moved past pending.
+- When a commitment reaches **Closed**, an obligation that was **Pending Acknowledgement** becomes **Satisfied**. An obligation in any other status keeps its status; closing the loop is still yours to record.
+
+The commitment statuses, who moves them and how, are the same as for findings: [Working a commitment](/user-guides/findings-and-remediation#working-a-commitment).
+
+## Acting on several at once
+
+Select rows (or a whole group with the checkbox in its header) and the floating bar offers:
+
+<Frame caption="The floating bar for a selection of obligations.">
+  <img src="/images/user-guides/obligations-bulk-actions.png" alt="The obligations table with several rows selected and a floating bar offering Change Assignee, Change Status, Request Commitment, Set Due Date, Set Controls and Archive" />
+</Frame>
+
+| Action | What it does |
+| --- | --- |
+| **Change Assignee** | Sets one owner on every selected obligation, or clears it. |
+| **Change Status** | **Satisfied** or **Not Satisfied**, without a reason dialog. |
+| **Request Commitment** | Only offered when every selected row comes from the same document. Opens the flow above. |
+| **Set Due Date** | One date for all, or **Clear due date**. |
+| **Set Controls** | Links the chosen internal controls to every selected obligation. This **replaces** each one's existing links. **Clear all** removes them, which sets the obligations back to **Not Satisfied**. |
+| **Archive** | Asks for confirmation. Archived obligations leave the list and cannot be restored from the page. |
+
+## Exporting
+
+**Actions → Download as Excel** opens **Build Obligations Report**. Give it an **Export file name** and choose whether to **Apply current filters to the export**. The sheet has one row per obligation: statement, type, status, compliance type, vendor, document, assignee, due date, created by, created and updated dates, and the satisfying controls.
+
+## Emails and notifications
+
+| Email or notification | Who gets it | When |
+| --- | --- | --- |
+| **Obligation extraction status** (in-app and email) | The person who started the extraction | An extraction from documents finishes. Subject: "Obligation extraction for `<vendor>` completed", or "failed" with a request to try again. |
+| **User group assignments** | The group member Coverbase picked | An obligation is assigned to a user group. |
+| Commitment invitation | The vendor's relationship owners (**To**) and the obligations' assignees (**CC**), as edited before sending | You send a **Request Commitment** invitation. |
+| **Obligation note** | The vendor's relationship owners (or the vendor contacts if there are none) | You add a note on an obligation that has an active commitment portal. |
+
+Delivery settings for the first two are per person under notification settings; see [Email and notifications](/user-guides/email-notifications#vendors-and-portals).
+
+## Where obligations show up elsewhere
+
+- **Vendor record.** The **Obligations** tab, and **Include obligations** in the vendor report export.
+- **Archiving cascades.** Archiving a vendor archives its obligations. Archiving a document archives the obligations extracted from it.
+- **Risk register.** With the Risk module, an obligation that is **Not Satisfied** past its due date, or **Pending Acknowledgement** for longer than the configured window (14 days by default), becomes a risk signal on the vendor. The signal clears when the obligation is satisfied or archived.
+- **Workflows.** The **Contract obligation ownership** template fires when an obligation is raised against a vendor's document and creates a task to assign it. See [Workflow templates](/user-guides/workflow-templates#contract-obligation-ownership).
+- **Webhooks.** `Obligation.Created`, `Obligation.Updated` (with a field diff) and `Obligation.Deleted`. See [Webhooks](/api-reference/webhooks).
+- **API and MCP.** `GET`, `POST` and `PATCH` on `/v1/obligations` for GRC round-trips ([Obligations API](/api-reference/obligations)), and the `obligations` query plus `obligation` create and update in the [MCP server](/mcp/overview).
+
+## Permissions
+
+| Role | Obligations | Configuration |
+| --- | --- | --- |
+| **Admin** | Read, create, extract, update, bulk actions, archive | Yes |
+| **Member** (default) | Read only. Can act on obligations assigned to them only if their role grants update at assigned scope | No |
+| Custom role | Whatever `obligation` actions and scope it carries. **Request Commitment** additionally needs commitment create | Needs organization settings update |
+| **Service Account** | Read, create and update through the public API | No |
+
+How resources, actions and scopes combine is in [Permissions and roles](/user-guides/permissions-and-roles).
+
+## Troubleshooting
+
+| What you see | What is happening |
+| --- | --- |
+| "I turned on auto-create and nothing appeared." | Extraction runs when a document is analyzed. Documents analyzed before the switch was on are untouched. Use **New Obligations → Create or extract from documents** for them, or re-run the document's analysis. |
+| "A contract was analyzed but produced no obligations." | Only contract document types are read for shared responsibilities, and only when Coverbase found responsibilities on your side. Invoices never produce obligations. Try **Extract obligations** on the document to run the extractor over the full text. |
+| "Everything arrived Not Satisfied." | You have no internal control set, or none of its controls describe what the obligations ask. Matching uses the control's own guidance text. Build or tighten the set, then link controls by hand or re-extract. |
+| "The obligation says Satisfied but I never did anything." | Look at **Compliance Type**. **Internal Control** means a control matched: check it under **Matched control set**. **Similar Obligation** means an obligation with the same meaning was already satisfied. |
+| "An obligation flipped back to Not Satisfied on its own." | The control that satisfied it was archived. The activity log records it. Link another control or mark it satisfied with a reason. |
+| "Request Commitment is missing from the floating bar." | The selected rows come from more than one document. Select within one document, or use the button on the group header in **Document** grouping. |
+| "The invitation has nobody in To." | The vendor has no relationship owners. Add them on the vendor record, or type the addresses in. |
+| "The business unit committed but the obligation is still Pending Acknowledgement." | Only a commitment that reaches **Closed** flips it. Committing moves it to **Mitigation underway**; someone still has to close it. |
+| "I cannot edit anything on the record." | Either the obligation is archived (see the notice at the top), or your role reads obligations without updating them. Ask an Admin. |
+| "I archived an obligation by mistake." | Archiving cannot be undone from the page. Recreate it with **Create manually**, or ask for it to be restored through the API (`PATCH` with `is_archived: false`). |
+| "A yellow warning sits on the document group." | The source SOC report has expired, so its CUECs may be stale. Open each record; the header offers **Archive** if the newer report replaces them. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Findings and remediation" icon="flag" href="/user-guides/findings-and-remediation">
+    The vendor-side counterpart: findings, remediation commitments and the portal recipients see.
+  </Card>
+  <Card title="Assignment, delegation and out of office" icon="users" href="/user-guides/assignment-and-delegation">
+    How a user group routes an obligation to a person, and what happens when they are away.
+  </Card>
+  <Card title="Workflow templates" icon="diagram-project" href="/user-guides/workflow-templates">
+    Contract obligation ownership and the other automations that react when records are raised.
+  </Card>
+  <Card title="Obligations API" icon="code" href="/api-reference/obligations">
+    List, create and status-sync obligations from your GRC platform.
+  </Card>
+</CardGroup>

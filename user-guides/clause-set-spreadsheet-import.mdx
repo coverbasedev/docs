@@ -73,7 +73,7 @@ Each row is one clause. Rows that share a **Clause Set** value are grouped into 
 </ParamField>
 
 <ParamField path="Rationale" type="text">
-  Written for humans. Why the clause matters, and the context a reviewer needs when they hit a deviation at 5pm.
+  Written for humans. Why the clause matters, and the context a reviewer needs when they hit a deviation.
 </ParamField>
 
 <ParamField path="Applicable Component Types" type="text">
@@ -86,7 +86,7 @@ Each row is one clause. Rows that share a **Clause Set** value are grouped into 
 
 ### Variants
 
-Variants are the heart of the system: they define the tiers of language you're willing to accept, from most protective to minimally acceptable. During review, the vendor's actual language is scored against them.
+Variants define the tiers of language you are willing to accept, from most protective to minimally acceptable. During review, the vendor's actual language is scored against them.
 
 The template ships with three variant slots. Each is a group of three columns:
 
@@ -96,15 +96,15 @@ The template ships with three variant slots. Each is a group of three columns:
 | `Variant N Label` | A short name for the tier, like "3% annual cap" |
 | `Variant N Clause Text` | The acceptable clause language for that tier |
 
-Rules worth knowing:
+Rules:
 
 - **Variant 1 is required.** Variants 2 and 3 are optional; leave all three cells of an unused variant blank.
 - **Each variant on a clause needs a distinct risk tier.** Two variants both marked `1 - Preferred` fails that row.
 - **You can add more slots.** Add `Variant 4 Risk Tier`, `Variant 4 Label`, and `Variant 4 Clause Text` columns and they will be imported. Tiers run from 1 to 5.
-- **Tiers don't have to be contiguous.** A clause with a Tier 1 and a Tier 3 and nothing in between is perfectly normal.
+- **Tiers do not have to be contiguous.** A clause with a Tier 1 and a Tier 3 and nothing in between is normal.
 
 <Tip>
-  A single Tier 1 variant is a floor, not a playbook: it marks anything that isn't your exact preferred language as needing review. If your file has one variant per clause, expect a noisy first review. Add the language you'd actually accept in negotiation before you run the set in anger.
+  A single Tier 1 variant is a floor, not a playbook: it marks anything that is not your exact preferred language as needing review. If your file has one variant per clause, expect a noisy first review. Add the language you would accept in negotiation before you run the set against a live contract.
 </Tip>
 
 ## Upload it
@@ -124,17 +124,17 @@ The result panel reports every row by its spreadsheet row number, in one of thre
   <Accordion title="Already existed" icon="circle">
     A clause with that Identifier is already in the target clause set, so the row was skipped and **nothing about the existing clause changed**.
 
-    This is deliberate. An accidental re-upload of a stale file can't quietly overwrite language your team negotiated. It also means the spreadsheet is not an editing tool: to change a clause that's already in Coverbase, edit it in the clause detail view, where the change is versioned and the old wording is kept.
+    An accidental re-upload of a stale file cannot overwrite language your team negotiated. It also means the spreadsheet is not an editing tool: to change a clause that is already in Coverbase, edit it in the clause detail view, where the change is versioned and the old wording is kept.
   </Accordion>
   <Accordion title="Error" icon="triangle-exclamation">
-    Something in the row couldn't be read: an unrecognized severity, a component type that isn't in the reference list, a clause with no variants, two variants sharing a tier, or a missing required value.
+    Something in the row could not be read: an unrecognized severity, a component type that is not in the reference list, a clause with no variants, two variants sharing a tier, or a missing required value.
 
     Rows are independent. One bad row is reported and skipped; every other row still imports. Fix the reported rows and upload the file again. The rows that already imported come back as "already existed", so re-uploading the whole corrected file is the normal fix, not a problem.
   </Accordion>
 </AccordionGroup>
 
 <Note>
-  If **every** row fails, nothing is saved at all, including any clause set the file would have created. You won't be left with an empty set to clean up.
+  If **every** row fails, nothing is saved at all, including any clause set the file would have created. You are not left with an empty set to clean up.
 </Note>
 
 ### New sets versus existing sets
@@ -151,7 +151,7 @@ Coverbase matches the **Clause Set** column against the names of your active cla
 
 ## After the import
 
-Imported clause sets are created **active**, so they're immediately available to run. Before you point one at a live contract:
+Imported clause sets are created **active**, so they are immediately available to run. Before you point one at a live contract:
 
 <Steps>
   <Step title="Spot-check the variants">
@@ -169,42 +169,56 @@ Imported clause sets are created **active**, so they're immediately available to
 
 The same workbook works in both directions. On **Configuration → Clause Sets**, select a set, open the **⋯** menu on the right of its header, and choose **Export to Spreadsheet**. You get an `.xlsx` file named after the set (`fn-master-agreement.xlsx`) with the same three sheets a template download has, and one row per clause.
 
-The exported file is a valid import file. That is the point of it:
+The exported file is a valid import file, which lets you:
 
 <Steps>
   <Step title="Branch a playbook">
     Export a set, change the **Clause Set** column to a new name, and import it. You get a second set with the same clauses: a regional variant, a stricter tier for a critical vendor, a draft you can edit without touching the live set.
   </Step>
   <Step title="Review it away from the app">
-    Send the workbook to counsel who don't have a Coverbase login. Every tier of language is in the file, in the columns they already know how to read.
+    Send the workbook to counsel who do not have a Coverbase login. Every tier of language is in the file, in the columns they already know how to read.
   </Step>
   <Step title="Keep a copy">
-    A point-in-time snapshot of what your standard said, in a format that outlives any one tool.
+    A point-in-time snapshot of what your standard said, in a format that does not depend on Coverbase.
   </Step>
 </Steps>
 
 <Warning>
-  **Export is not an edit-and-put-back loop.** Re-importing an exported file into the *same* clause set does nothing: every Identifier already exists, so every row comes back as "already existed". That's the same rule that protects you from a stale re-upload, and it applies here too. To change a clause that is already in Coverbase, edit it in the clause detail view, where the change is versioned.
+  **Export is not an edit-and-put-back loop.** Re-importing an exported file into the *same* clause set does nothing: every Identifier already exists, so every row comes back as "already existed". That is the same rule that protects against a stale re-upload. To change a clause that is already in Coverbase, edit it in the clause detail view, where the change is versioned.
 </Warning>
 
-Two things about the file's contents are worth knowing:
+Two things about the file's contents:
 
 - **Only current, non-archived clauses are included.** Archived clauses and superseded versions are left out, because importing them back would recreate them as new clauses.
 - **Variant columns are sized to the set.** A set whose widest clause has five tiers exports five variant slots; a set where every clause has one tier exports one. Clauses with fewer tiers leave the extra slots blank.
 
-Clause text longer than 32,000 characters is truncated in the export, marked with `... [truncated]`, because Excel refuses to open a file with a larger cell. Nothing in Coverbase is changed, but don't re-import a file that shows that marker without restoring the full text first.
+Clause text longer than 32,000 characters is truncated in the export, marked with `... [truncated]`, because Excel refuses to open a file with a larger cell. Nothing in Coverbase is changed, but do not re-import a file that shows that marker without restoring the full text first.
 
 ## Troubleshooting
 
 | What you see | What it means |
 | --- | --- |
 | "Missing required column(s)" | A required header was renamed or deleted on the Clauses sheet. Compare against a fresh template download. |
-| "Invalid file format" | The file isn't `.xlsx` or `.xlsm`. Export from Excel or Sheets as `.xlsx`; a `.csv` won't work, because it can't carry multiple sheets. |
-| "Unable to read the Excel file" | The upload is corrupt or isn't really a workbook. Re-export it. |
+| "Invalid file format" | The file is not `.xlsx` or `.xlsm`. Export from Excel or Sheets as `.xlsx`; a `.csv` does not work, because it cannot carry multiple sheets. |
+| "Unable to read the Excel file" | The upload is corrupt or is not a workbook. Re-export it. |
 | "The Clauses sheet has N rows, more than the 1000 supported in one import." | One workbook can carry 1000 clause rows. Nothing is imported; split the file and upload the parts. |
 | "The uploaded workbook exceeds the maximum supported size." | Files are capped at 20MB. Usually means embedded images or a stray sheet of pasted data; delete those, or split the file. |
-| Every row says "already existed" | The clause set name matched a set you'd already imported into. Expected on a re-upload; check the set contents before assuming it failed. |
+| Every row says "already existed" | The clause set name matched a set you had already imported into. Expected on a re-upload; check the set contents before assuming it failed. |
 | Two clause sets with almost the same name | Trailing spaces or a rename. Names are matched exactly (ignoring case), so `FN Master Agreement ` and `FN Master Agreement` are different sets. |
-| A clause imported but never matches during review | Usually empty Guidance, or Applicable Component Types scoped to a component that isn't in the contract. Clear the component types to let it apply everywhere and re-run. |
-| An exported file imports as all "already existed" | You imported it back into the set it came from. Change the **Clause Set** column to a new name first: export branches a set, it doesn't edit one. |
+| A clause imported but never matches during review | Usually empty Guidance, or Applicable Component Types scoped to a component that is not in the contract. Clear the component types to let it apply everywhere and re-run. |
+| An exported file imports as all "already existed" | You imported it back into the set it came from. Change the **Clause Set** column to a new name first: export branches a set, it does not edit one. |
 | An exported clause ends in `... [truncated]` | The clause text was over Excel's 32,000-character cell limit. The full text is intact in Coverbase; restore it in the file before re-importing. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Contract Guardian guide" icon="file-contract" href="/user-guides/contract-guardian">
+    Clause sets end to end: the reference clause anatomy, writing risk-tier variants, and running a review.
+  </Card>
+  <Card title="Generate a clause set from your own contract" icon="wand-magic-sparkles" href="/user-guides/baseline-contract-extraction">
+    The other upload path: extract a clause set from your template MSA or DPA.
+  </Card>
+  <Card title="The clause set library" icon="book-open" href="/user-guides/clause-set-library">
+    The 12 packaged clause standards you can copy and then export to branch.
+  </Card>
+</CardGroup>

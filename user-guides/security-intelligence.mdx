@@ -24,7 +24,7 @@ Open a vendor, go to **Vendor Intelligence**, and pick the **Security** tab.
 
 ## The rating is a floor, not a verdict
 
-Everything measured here is visible from the public internet. That is its strength and its limit in one.
+Everything measured here is visible from the public internet. That is both its strength and its limit.
 
 A strong rating means the things an attacker can see from outside are in order. It says nothing about what happens inside the vendor's network, how they manage access, or whether they have a working incident process. Those questions need an assessment.
 
@@ -32,7 +32,7 @@ A weak rating is more actionable in the other direction. A monitor-only DMARC po
 
 ## Read the factors, then the number
 
-The overall rating is a weighted roll-up. The factor breakdown underneath it is where the decisions live.
+The overall rating is a weighted roll-up. The factor breakdown underneath it is what you act on.
 
 Each factor expands to show the specific observations behind its score, so a low number always resolves to something concrete: a hostname, a header, a certificate, a CVE.
 
@@ -52,12 +52,12 @@ Click any finding in a factor to open it.
 
 The panel answers the four questions you need before you can raise it with anyone:
 
-- **Impacts rating** tells you whether this finding actually cost points, and how many. A finding recorded for completeness that moved nothing says **No**, which saves you chasing a number that never changed.
+- **Impacts rating** tells you whether this finding cost points, and how many. A finding recorded for completeness that moved nothing says **No**.
 - **First seen** and **Last seen** tell you how long it has been open. A finding that has survived months has been seen by the vendor's own team too.
 - **Observed** is the raw value the scan read, such as `p=none` or `TLSv1.0`.
 - **Remediation** is the step that resolves it, written for whoever operates the asset rather than for you.
 
-That last field is why the panel exists. When you forward a finding to a vendor, "TLS 1.0 is enabled" hands them the problem and the research together. The remediation step means they can act on it without a round trip.
+When you forward a finding to a vendor, "TLS 1.0 is enabled" on its own gives them a problem to research. The remediation step means they can act on it without a round trip.
 
 ## Raise findings from what the scan found
 
@@ -69,7 +69,7 @@ When a sweep turns up the same problem across a dozen hosts, use **Generate find
   <img src="/images/user-guides/vendor-intelligence-generate-findings.png" alt="A dialog titled Generate Findings for Northwind Data listing eight scored issues with severity badges, each with a checkbox, and a Generate 8 findings button." />
 </Frame>
 
-Only issues that actually cost the rating points are listed, because a zero-penalty observation is not something a provider needs to action. Untick anything the provider already owns before you generate.
+Only issues that cost the rating points are listed, because a zero-penalty observation is not something a provider needs to action. Untick anything the provider already owns before you generate.
 
 ## Rating over time
 
@@ -79,7 +79,7 @@ Each point is a restatement of the whole rating. A step change usually means a s
 
 What is reachable from the internet under the vendor's domains: hosts, exposed services and open ports. A large surface is not automatically a finding; it is context for the rest of the page.
 
-Transport checks run per host rather than only against the vendor's main domain, so one neglected server does not hide behind a well-configured front door.
+Transport checks run per host rather than only against the vendor's main domain, so a neglected server is not hidden by a well-configured main domain.
 
 <Frame caption="Each attributed host handshaken separately, with its own chain, protocol and expiry.">
   <img src="/images/user-guides/vendor-intelligence-tls-by-host.png" alt="A certificates-by-host table listing two hosts with their trusted-chain status, negotiated protocol, days to expiry and issuer." />
@@ -113,7 +113,7 @@ Click **Add asset**, then enter the hostnames or IP addresses, one per line or s
 
 Add the whole list in one go rather than one at a time. Each submission starts a single rescan covering everything in it, so ten hosts added together cost one scan, where ten separate additions cost ten.
 
-If a line is not a hostname or an IP address, the rest are still added and the dialog stays open holding only the lines that failed, so you fix those rather than retyping the list. A mistyped address such as `999.1.1.1` is rejected rather than accepted as a hostname, which would otherwise put an asset in the estate that can never resolve.
+If a line is not a hostname or an IP address, the rest are still added. The dialog stays open holding only the lines that failed, so you fix those rather than retyping the list. A mistyped address such as `999.1.1.1` is rejected rather than accepted as a hostname. Accepting it would put an asset in the estate that can never resolve.
 
 <Note>
   Disputing an asset starts a rescan, and so does withdrawing a dispute. A verdict only reaches the rating once the scan has run again, and withdrawing one is what puts the asset back into the score.
@@ -123,7 +123,7 @@ Each row carries when the asset was first and last seen. An asset the scan can n
 
 ## Email authentication
 
-SPF, DKIM and DMARC as actually published. What matters is the policy, not merely the presence of a record: a DMARC record set to `none` monitors and enforces nothing, and an SPF record ending in `+all` authorizes the entire internet to send as that domain.
+SPF, DKIM and DMARC as published. What matters is the policy, not the presence of a record: a DMARC record set to `none` monitors and enforces nothing, and an SPF record ending in `+all` authorizes the entire internet to send as that domain.
 
 ## Web hardening
 
@@ -149,13 +149,13 @@ Which checks ran, when, and which did not resolve. A factor that could not be sc
 
 Vulnerabilities are matched against software observed on the vendor's estate, and ordered by how likely they are to be exploited rather than by severity alone.
 
-A vulnerability on CISA's Known Exploited Vulnerabilities list is called out separately. Those are being used against real targets now, and they are worth a same-week conversation rather than a note in a report.
+A vulnerability on CISA's Known Exploited Vulnerabilities list is called out separately. Those are being exploited now. Raise them with the vendor the same week rather than noting them in a report.
 
 ## Lookalike domains
 
 The page lists domains built to resemble the vendor's own, and marks which of them resolve and which can receive mail.
 
-A mail-capable lookalike is the one to care about. It can host a page and receive replies, which is the shape of a supplier-invoice fraud attempt against you rather than against them.
+A mail-capable lookalike matters most. It can host a page and receive replies, which is what a supplier-invoice fraud attempt against you needs.
 
 ## Troubleshooting
 
