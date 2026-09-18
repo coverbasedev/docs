@@ -1,6 +1,6 @@
 ---
 title: "Workflow templates"
-description: "The nineteen ready-to-run automations Coverbase ships: what each one does, what you have to change before turning it on, and how to make one your own."
+description: "The twenty-four ready-to-run automations Coverbase ships: what each one does, what you have to change before turning it on, and how to make one your own."
 icon: "wand-magic-sparkles"
 ---
 
@@ -12,7 +12,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
   This page is part of the [User Guides](/user-guides/overview) collection. Read it when something in your programme keeps slipping (a request nobody picks up, a renewal that passes in silence, a finding with no clock on it) and you want to know what is already built before you build an automation from scratch.
 </Info>
 
-A workflow in Coverbase watches for something happening: a request submitted, a vendor created, a contract date moved. Then it does something about it. Building one means picking a trigger, adding the gates that narrow it, and configuring the record it writes. That is a good hour's work, and most of the automations a third-party programme needs are the same nineteen.
+A workflow in Coverbase watches for something happening: a request submitted, a vendor created, a contract date moved. Then it does something about it. Building one means picking a trigger, adding the gates that narrow it, and configuring the record it writes. That is a good hour's work, and most of the automations a third-party programme needs are the same twenty-four.
 
 Open them from **Workflows** → **Browse templates**. Pick one, read what it does, apply it, work through the short list of things it says to change, then switch it on.
 
@@ -28,7 +28,7 @@ Open them from **Workflows** → **Browse templates**. Pick one, read what it do
   **An applied workflow arrives switched off.** Every template writes real records against live vendors (tasks, assessments, register entries), so applying one lands you in the editor with the steps drawn and the **Enabled** toggle off. Read the steps, work the setup list, then turn it on.
 </Warning>
 
-## The nineteen templates
+## The twenty-four templates
 
 Shelves follow the third-party lifecycle rather than the records the templates write, so the one you want is usually where the problem happens. **Routing** is the exception and sits last, because it is not a moment in that lifecycle but a rule applied across all of them.
 
@@ -49,8 +49,13 @@ Shelves follow the third-party lifecycle rather than the records the templates w
 | **Findings onto the risk register** | Remediation | A finding is raised | 1 | Risk register |
 | **Vendor commitment tracking** | Remediation | A vendor commitment is recorded | 1 | none |
 | **New contract review** | Contracts | A contract is added | 2 | Contracts |
+| **High-value contract legal review** | Contracts | A contract over a value threshold is added | 1 | Contracts |
 | **Contract renewal runway** | Contracts | A renewal or notice date moves | 1 | Contracts |
+| **Executed contract handoff** | Contracts | A contract's approval state moves | 1 | Contracts |
+| **Expired contract follow-up** | Contracts | A contract's term runs out | 1 | Contracts |
+| **Contract obligation ownership** | Contracts | An obligation is raised | 1 | Contracts, Obligations |
 | **Monitoring signal triage** | Monitoring | Monitoring raises a signal | 2 | Radar |
+| **SLA measurement ownership** | Monitoring | An SLA is recorded | 1 | none |
 | **Vendor offboarding checklist** | Offboarding | A vendor record is archived | 1 | none |
 | **Route work to the vendor's owner** | Routing | Any task is raised | 1 | none |
 
@@ -62,27 +67,31 @@ A module counts as available only when both halves are true. The feature gate sa
 
 | Requirement | Feature gate | Permission | Templates it controls |
 | --- | --- | --- | --- |
-| Contracts | `contracts-page` | Read contracts | New contract review, Contract renewal runway |
+| Contracts | `contracts-page` | Read contracts | Every template on the Contracts shelf |
 | Radar monitoring | `radar-page` | Read Radar alerts | Enrol new vendors in monitoring, Monitoring signal triage |
 | Risk register | `risk-page` | Read risks | High inherent risk escalation, Findings onto the risk register |
 | Screening | `sanctions-screening` | Read screening matches | Screening match adjudication |
+| Obligations | `obligations-page` | Read obligations | Contract obligation ownership |
 | Intake | none | Read intake sessions | Intake request triage, Intake to onboarding assessment |
 
 Intake is the one module with no gate of its own, so the read permission is the whole test. That matches the left-hand navigation, which shows the **Intake** item on the same rule.
 
-Ten templates require nothing beyond vendors, services, assessments, findings and tasks, and are visible in every workspace: New vendor onboarding review, Service scope change review, Bank detail change verification, Zero-touch assessment launch, Evidence collection handoff, Assessment result handoff, Finding remediation clock, Vendor commitment tracking, Vendor offboarding checklist and Route work to the vendor's owner.
+Contract obligation ownership is the only template that needs two modules at once: the obligations it assigns come out of contract paperwork, so it is offered when you have both.
 
-Two near misses are worth naming, because you might expect them to be gated and they are not.
+Eleven templates require nothing beyond vendors, services, assessments, findings, SLAs and tasks, and are visible in every workspace: New vendor onboarding review, Service scope change review, Bank detail change verification, Zero-touch assessment launch, Evidence collection handoff, Assessment result handoff, Finding remediation clock, Vendor commitment tracking, SLA measurement ownership, Vendor offboarding checklist and Route work to the vendor's owner.
+
+Three near misses are worth naming, because you might expect them to be gated and they are not.
 
 - **Finding templates are not gated on the Findings module.** A finding raised inside an assessment is exempt from that gate, so findings exist, and the templates work, in a workspace without the standalone Findings area.
 - **Zero-touch assessment launch has nothing to do with the Zero Touch Assessments module.** It starts an ordinary assessment that happens to collect no documents. The two share an adjective and nothing else.
+- **SLA measurement ownership is not gated on Contracts**, even though an SLA is usually a contract term. SLAs are recorded on a service's **Performance** tab in every workspace, so gating it would hide a template that works. It sits on the **Monitoring** shelf for the same reason: putting it with the contract templates would leave an ungated template on a shelf that is meant to disappear with the Contracts module.
 
 ## Every template in detail
 
 Each entry below gives the trigger the template listens for, the records it writes and their default clocks, and the short list of things to change before you switch it on. Where a template ships deliberately wide, there is a note on the gate most workspaces end up adding.
 
 <Note>
-  Every title below is written the way the template writes it. `{vendor}` stands for the vendor's own name, filled in when the workflow runs, so a real task reads "Triage intake request for Northwind Analytics".
+  Every title below is written the way the template writes it. `{vendor}` stands for the vendor's own name, `{contract}` for the contract's, and `{value}` for its recorded value, all filled in when the workflow runs, so a real task reads "Triage intake request for Northwind Analytics".
 </Note>
 
 ### Intake request triage
@@ -286,13 +295,29 @@ A vendor promising to fix something is where most remediation stops being tracke
 
 Every contract that lands gets a review record and a dated task, so legal and risk see it before it is signed rather than at renewal.
 
-**What it does.** Two independent steps on contract creation. One opens a review record named **"Contract review for `{vendor}`"**, bound to the contract that triggered it. The other raises the task that gives the review a clock.
+**What it does.** Two independent steps on contract creation. One opens a review record named **"Contract review: `{contract}`"**, bound to the contract that triggered it. The other raises the task that gives the review a clock.
 
-**What lands in the queue.** The review, plus a task titled **"Review contract for `{vendor}`"**, filed as a contract review, **due in 7 days**.
+**What lands in the queue.** The review, plus a task titled **"Review `{contract}` for `{vendor}`"**, filed as a contract review, **due in 7 days**, whose body names the kind of agreement and links straight to it.
 
 **Before you turn it on.** Re-point both steps. Set the review's status so it starts in your own review pipeline rather than at its default.
 
-**The gate most people add.** Gate the trigger on contract value or contract type if only some contracts need legal, so a renewal of a small subscription does not open a full review.
+**The gate most people add.** Gate the trigger on contract type if only some contracts need legal. For a value threshold, use the next template rather than building the gate yourself.
+
+### High-value contract legal review
+
+**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 1 · **For:** legal counsel and procurement leads
+
+Most contracts do not need a lawyer and the ones that do are the expensive ones. This sends only contracts over a value threshold to legal, so the queue that reaches them is the queue worth their time.
+
+**What it does.** Fires on contract creation like the template above, but with a gate on the contract's own value: only a contract whose recorded value is over **100,000** raises the task.
+
+**What lands in the queue.** A task titled **"Legal review: `{contract}` (`{value}`)"**, filed as a contract review, **due in 10 days**. Its instructions point the reviewer at liability, indemnity and termination, at whether the signature authority matches the size, and at whether the payment and renewal terms are the negotiated ones rather than the vendor's paper.
+
+**Before you turn it on.** Move the threshold onto whatever your delegation of authority actually says. It reads the contract's own value amount, in the contract's own currency, with **no conversion**: a threshold of 100,000 matches a 100,001 EUR contract and a 100,001 JPY one alike, so set it per currency if you operate in several.
+
+<Warning>
+  A contract whose value has not been filled in yet does not match. If your contracts are created first and priced later, this template never sees them. Trigger on the value being set instead of on creation.
+</Warning>
 
 ### Contract renewal runway
 
@@ -302,14 +327,62 @@ Auto-renewal deadlines pass in silence and cost a year of spend. Whenever a rene
 
 **What it does.** Watches four fields on a contract: `renewal_date`, `expiration_date`, `notice_due_to_vendor_date` and `auto_renew`. When any of them moves, it raises the decision task.
 
-**What lands in the queue.** A task titled **"Renewal decision due for `{vendor}`"**, filed as a contract review, **due in 30 days**.
+**What lands in the queue.** A task titled **"Renewal decision: `{contract}`"**, filed as a contract review, **due in 30 days**, linking the contract.
 
 **Before you turn it on.** Understand what triggers it: this fires when a date **moves**, not when one **approaches**. It is the workflow for "somebody just told us the renewal is in March", not the countdown to March itself. Pair it with [contract date reminders](/user-guides/contract-dates-and-reminders) for the countdown. Re-point the task to the contract's owner, and trim the watched date list to the ones your contracts actually carry.
+
+<Note>
+  The dates themselves are available as `{contract:renewal_date}` and `{contract:notice_due_date}` if you want them in the body, and the template leaves them out on purpose. `auto_renew` is one of the watched fields, so this can fire on a contract that has no renewal date on file yet, and a placeholder with nothing behind it stops the task being raised at all.
+</Note>
 
 <Frame caption="Search spans the whole library, not just the shelf you are on, and matches the job labels as well as the names.">
   <img src="/images/user-guides/workflow-template-search.png" alt="Searching the workflow template gallery for 'renewal', showing the two contract templates" />
 </Frame>
 
+
+### Executed contract handoff
+
+**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 1 · **For:** contract owners, procurement and the TPRM desk
+
+Signature is where a contract stops being legal's problem and starts being everyone else's. This raises the handoff the moment a contract is executed, so the obligations it creates get owners while the negotiation is still fresh.
+
+**What it does.** Watches the contract's approval state and its execution date. When either moves, it raises the handoff task.
+
+**What lands in the queue.** A task titled **"Hand over `{contract}`"**, filed as a contract review, **due in 5 days**, whose body names the state the contract reached and links it. Its instructions cover recording the obligations with owners and dates, getting the renewal and notice dates onto the record rather than leaving them in the paper, linking the services and spend it covers, and telling the requester it is signed.
+
+**Before you turn it on.** The trigger fires on **every** move through the approval pipeline, not only on execution, so gate it on the state reaching Executed. Re-point the task at whoever owns the relationship after signature, which is rarely the person who negotiated it.
+
+### Expired contract follow-up
+
+**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 1 · **For:** procurement, vendor managers and the TPRM desk
+
+A contract whose term ran out is either a renewal nobody actioned or a relationship nobody closed, and both are worth knowing about.
+
+**What it does.** Fires when Coverbase's daily lifecycle job marks a contract expired, which is the day after its term ends.
+
+**What lands in the queue.** A task titled **"`{contract}` has expired"**, filed as a contract review, **due in 7 days**. Its instructions start with the urgent case: establish whether the service is still being used, because an expired contract on a live service is an uncontracted service.
+
+**Before you turn it on.** Re-point the task at the contract's owner. It fires on every expiry, including the ones that expire because a replacement was already signed, so gate it if your renewals supersede rather than extend.
+
+<Note>
+  This is the daily job, not somebody editing a status by hand. A bulk import that back-dates a hundred historical contracts to expired does not raise a hundred tasks.
+</Note>
+
+### Contract obligation ownership
+
+**Shelf:** Contracts · **Needs:** Contracts **and** Obligations · **Steps:** 1 · **For:** contract owners, compliance and control owners
+
+An obligation extracted from a contract and left unassigned is a commitment the org has made and nobody has read. This puts an owner and a date behind each one as it is raised.
+
+**What it does.** Fires when an obligation is raised against a vendor's document, which is usually the moment contract analysis finishes.
+
+**What lands in the queue.** A task titled **"Assign a contract obligation for `{vendor}`"**, filed as a contract review, **due in 14 days**. Its instructions ask the triager to read the obligation against what the business actually does, assign it to whoever can satisfy it rather than to the contract owner by default, link the internal control that already satisfies it where one exists, and set a due date matching the contract's own deadline.
+
+**Before you turn it on.** Contract analysis raises obligations in batches, so a freshly analysed contract can produce a dozen tasks at once. Run it on one contract before turning it on across the workspace.
+
+<Note>
+  An obligation typed in by hand with no source document has no vendor behind it, so no task is raised for it. That is deliberate: the alternative is a task filed against the wrong vendor.
+</Note>
 
 ### Monitoring signal triage
 
@@ -324,6 +397,18 @@ A monitoring programme is only worth the alerts somebody reads. This turns each 
 **Before you turn it on.** Re-point both steps to whoever works the alert queue. Set the review's status.
 
 **The gate most people add.** Every signal raising a task is a lot of tasks. Gate the trigger on severity once you know your own volume, so only the signals worth a person's time reach the queue.
+
+### SLA measurement ownership
+
+**Shelf:** Monitoring · **Needs:** nothing · **Steps:** 1 · **For:** vendor managers and service owners
+
+An SLA recorded and never measured is a number in a document. This raises a task whenever one is added, so somebody owns collecting the measurement before the first review asks for it.
+
+**What it does.** Fires when an SLA is recorded against a vendor, from the service's **Performance** tab or from a contract review that captured one.
+
+**What lands in the queue.** A task titled **"Set up SLA measurement for `{vendor}`"**, filed as an assessment review, **due in 14 days**. Its instructions cover checking the target and window against what the contract says rather than what the vendor markets, agreeing who reads the vendor's reporting and how often, and finding out what the contract entitles you to when the SLA is missed and whether anybody ever claims it.
+
+**Before you turn it on.** Re-point the task at the service owner who can actually read the vendor's performance reporting. Fourteen days is a setup window, not the SLA's own measurement period.
 
 ### Vendor offboarding checklist
 
