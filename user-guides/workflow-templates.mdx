@@ -1,0 +1,219 @@
+---
+title: "Workflow templates"
+description: "The fourteen ready-to-run automations Coverbase ships: what each one does, what you have to change before turning it on, and how to make one your own."
+icon: "wand-magic-sparkles"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This page is part of the [User Guides](/user-guides/overview) collection. Read it when something in your programme keeps slipping (a request nobody picks up, a renewal that passes in silence, a finding with no clock on it) and you want to know what is already built before you build an automation from scratch.
+</Info>
+
+A workflow in Coverbase watches for something happening: a request submitted, a vendor created, a contract date moved. Then it does something about it. Building one means picking a trigger, adding the gates that narrow it, and configuring the record it writes. That is a good hour's work, and most of the automations a third-party programme needs are the same fourteen.
+
+Open them from **Workflows** → **Browse templates**. Pick one, read what it does, apply it, work through the short list of things it says to change, then switch it on.
+
+<Frame caption="Browse templates. Cards on the left, and the selected template's steps and setup list on the right.">
+  <img src="/images/user-guides/workflow-template-gallery.png" alt="The Coverbase workflow template gallery, showing template cards, lifecycle shelves and a detail pane" />
+</Frame>
+
+<Note>
+  Applying a template makes a copy you own. The workflow, its steps and its conditions become ordinary records in your workspace, editable like any other. Rename them, change the triggers, add gates, delete steps. Nothing syncs back: later changes to the Coverbase template never reach your copy, and your edits never leave your workspace.
+</Note>
+
+<Warning>
+  **An applied workflow arrives switched off.** Every template writes real records against live vendors (tasks, assessments, register entries), so applying one lands you in the editor with the steps drawn and the **Enabled** toggle off. Read the steps, work the setup list, then turn it on.
+</Warning>
+
+## The fourteen templates
+
+Shelves follow the third-party lifecycle rather than the records the templates write, so the one you want is usually where the problem happens.
+
+| Template | Shelf | Starts when | Steps | Needs |
+| --- | --- | --- | ---: | --- |
+| **Intake request triage** | Intake | A request is submitted | 1 | Intake |
+| **Intake to onboarding assessment** | Intake | A request is submitted | 2 | Intake |
+| **New vendor onboarding review** | Onboarding | A vendor is created | 2 | none |
+| **Enrol new vendors in monitoring** | Onboarding | A vendor is created | 1 | Radar |
+| **High inherent risk escalation** | Risk triage | A vendor's risk score changes | 2 | Risk register |
+| **Service scope change review** | Risk triage | A service's scope changes | 1 | none |
+| **Zero-touch assessment launch** | Assessments | An assessment is created | 1 | none |
+| **Evidence collection handoff** | Assessments | Automatic collection gives up | 1 | none |
+| **Finding remediation clock** | Remediation | A finding is raised | 1 | none |
+| **Findings onto the risk register** | Remediation | A finding is raised | 1 | Risk register |
+| **New contract review** | Contracts | A contract is added | 2 | Contracts |
+| **Contract renewal runway** | Contracts | A renewal or notice date moves | 1 | Contracts |
+| **Monitoring signal triage** | Monitoring | Monitoring raises a signal | 2 | Radar |
+| **Vendor offboarding checklist** | Offboarding | A vendor record is archived | 1 | none |
+
+The library hides a template your workspace cannot run, so you never adopt an automation whose trigger can never fire. Without the Contracts module the two contract templates are hidden and the Contracts shelf disappears with them; the same goes for intake, the risk register and Radar monitoring. The six templates that depend on nothing beyond vendors, services, assessments and findings are visible in every workspace.
+
+## Every template in detail
+
+### Intake request triage
+
+The front door. Every submitted request becomes an owned, dated triage task instead of an email somebody has to remember, so the requester gets a decision in days and the queue is visible when it is not moving.
+
+**What it does:** on submission, opens a triage task against the request's vendor, due in two days, with instructions to check for a duplicate, confirm the use case and the data involved, and set the vendor's relationship owner so the later steps have somewhere to route.
+
+**Before you turn it on:** re-point the assignee, because an intake desk usually wants a shared department, and tune the two-day clock to the SLA you actually publish.
+
+### Intake to onboarding assessment
+
+Turns an accepted request into a real assessment the same day it is submitted, with a kickoff task behind it. It closes the gap where a request is approved in principle and then waits a week for someone to open the review.
+
+**What it does:** opens an assessment against the request's vendor, then, once that assessment exists, raises a dated kickoff task behind it.
+
+**Before you turn it on:** point the assessment step at one of your assessment plans, or it opens an empty ad-hoc assessment. Re-point the creator, assignee and task. If only some requests should open an assessment, gate the trigger. An inherent-risk threshold is the usual one.
+
+### New vendor onboarding review
+
+Any vendor added to the portfolio gets an assessment and an owner, whether it arrived by intake, by import, or by hand. The route round the front door is the one that usually leaves vendors unassessed.
+
+**What it does:** opens an onboarding assessment on every newly created vendor, then puts a dated kickoff task behind it.
+
+**Before you turn it on:** point the assessment step at an assessment plan. Re-point the creator, assignee and task. If a bulk import would flood the queue, gate the trigger on a risk threshold, or switch the workflow off for the migration.
+
+<Frame caption="A two-step template. The detail pane spells out each step as when / if / then, and lists what to change before turning it on.">
+  <img src="/images/user-guides/workflow-template-detail.png" alt="The detail pane for High inherent risk escalation, showing two steps and three setup notes" />
+</Frame>
+
+### Enrol new vendors in monitoring
+
+Switches continuous business and financial monitoring on for every vendor as it is created, so the portfolio is watched from day one rather than from whenever somebody remembers to enrol it.
+
+**Before you turn it on:** drop the monitoring types you do not license. Monitoring consumes subscription capacity, so gate the trigger on a risk threshold if you only monitor part of the portfolio.
+
+### High inherent risk escalation
+
+Catches the vendor that was low risk at onboarding and is not any more. When the inherent risk score moves into the top band, it escalates for a senior look and opens a register entry so the exposure is tracked rather than noticed.
+
+**What it does:** watches the vendor's inherent risk score and level; when either changes and the score lands in the top band, raises a dated escalation task and opens a risk register entry.
+
+**Before you turn it on:** the band ships as 70 to 100 on the 0 to 100 score. That is a starting line, not a standard, so move it to your own tier break. Re-point the task and the register entry's owner, and set the entry's risk domain so it rolls into the right appetite tolerance.
+
+### Service scope change review
+
+A service that quietly grows (more data, more users, a new region) is the most common way an assessed vendor stops being assessed for what it actually does.
+
+**What it does:** watches a service's description and risk inputs; when they change, raises a task asking whether the assessment on file still covers it.
+
+**Before you turn it on:** trim the watched field list to the ones your org actually maintains. Every field left on it is another reason the task fires. Consider routing it to the service's own relationship owner.
+
+### Zero-touch assessment launch
+
+Assessments that need nothing from the vendor should not wait in a queue for somebody to press Start.
+
+**What it does:** starts any newly created assessment whose document collection mode is "none", and leaves every assessment that does need evidence alone.
+
+**Before you turn it on:** pair it with an assessment plan whose collection mode is "none", or nothing will ever match. Widen the gate only if you are sure.
+
+### Evidence collection handoff
+
+Automatic evidence collection gives up quietly. This catches the handoff and puts it on a named desk with a date, so an assessment does not sit blocked on documents nobody knows are missing.
+
+**Before you turn it on:** re-point the task to whoever chases vendors for documents, and match the five-day clock to the evidence SLA you publish.
+
+### Finding remediation clock
+
+A finding with no owner and no date is a finding that closes when the next audit asks about it.
+
+**What it does:** opens a dated remediation task against every new finding, due in thirty days, with instructions to confirm the finding is real, agree a remediation or an accepted-risk position, and record the commitment.
+
+**Before you turn it on:** re-point the task, because findings usually belong to the vendor's risk analyst. Thirty days is one clock for every finding; if your policy varies by severity, duplicate the step and gate each copy.
+
+### Findings onto the risk register
+
+Control gaps live in assessments; the risk committee reads the register. This carries every new finding across so the register reflects what the programme actually found.
+
+**Before you turn it on:** set the risk domain so entries roll into the right appetite tolerance. Every finding becoming an entry is a lot of entries, so add a severity gate if your register is meant to hold only the material ones. The likelihood and impact it writes are a starting position for a human to correct, not a score.
+
+### New contract review
+
+Every contract that lands gets a review record and a dated task, so legal and risk see it before it is signed rather than at renewal.
+
+**Before you turn it on:** re-point both steps, set the review's status so it starts in your own pipeline, and gate the trigger on contract value or type if only some contracts need legal.
+
+### Contract renewal runway
+
+Auto-renewal deadlines pass in silence and cost a year of spend. Whenever a renewal, expiry or notice date is set or changed, this raises a decision task with a month of runway on it.
+
+**Before you turn it on:** note that it fires when a date *moves*, not when one approaches. Pair it with [contract date reminders](/user-guides/contract-dates-and-reminders) for the countdown itself. Re-point the task to the contract's owner and trim the watched date list to the ones your contracts carry.
+
+<Frame caption="Search spans the whole library, not just the shelf you are on, and matches the job labels as well as the names.">
+  <img src="/images/user-guides/workflow-template-search.png" alt="Searching the workflow template gallery for 'renewal', showing the two contract templates" />
+</Frame>
+
+### Monitoring signal triage
+
+A monitoring programme is only worth the alerts somebody reads. This turns each new signal into an adjudication record and a dated task, so the queue is worked rather than watched.
+
+**Before you turn it on:** re-point both steps to whoever works the alert queue, and set the review's status. Every signal raising a task is a lot of tasks, so gate the trigger on severity once you know your own volume.
+
+### Vendor offboarding checklist
+
+Archiving a vendor record is not offboarding it. This raises the checklist (access revoked, data returned or destroyed, contract terminated, open findings closed or moved) at the moment the record is retired, while somebody still remembers the relationship.
+
+**Before you turn it on:** re-point the task, which usually belongs to security operations, and edit the checklist in the task's instructions to match your own exit procedure.
+
+## Applying one
+
+Selecting a card shows what the template does, step by step, as **when** something happens / **if** these conditions hold / **then** this is written. Underneath it is the list of things to change once it lands.
+
+**Use template** copies it into your workspace and opens it in the editor, switched off.
+
+<Frame caption="The applied workflow, open in the editor. Both steps are drawn, the second hangs off the event the first one emits, and Enabled is off until you turn it on.">
+  <img src="/images/user-guides/workflow-template-applied.png" alt="New vendor onboarding review open in the Coverbase workflow editor, with two connected steps and the Enabled toggle off" />
+</Frame>
+
+It is now an ordinary workflow, and it appears in the list alongside the ones you built by hand.
+
+<Frame caption="An applied template in the workflows list, with its shape previewed on the card.">
+  <img src="/images/user-guides/workflow-templates-list.png" alt="The Coverbase workflows list showing an applied template alongside hand-built workflows" />
+</Frame>
+
+## The two things every template leaves for you
+
+### Who the work goes to
+
+A task with nobody on it does nothing, and a template cannot know your people, so **every task, review and assessment a template creates is assigned to whoever applied it.** That is deliberate: it means the workflow runs correctly the moment you switch it on, rather than silently skipping. It is also the first thing to change on almost every template. Open the step, change the assignee to the person, department or role that should own the work, and save.
+
+### What is org-specific
+
+Templates never reference anything that belongs to one workspace (a status, a tag, an assessment plan, a questionnaire, an email template) because a template holding one would apply everywhere and run nowhere. That is why an assessment step opens an ad-hoc assessment until you point it at a plan, and why a review starts at its default status until you set one.
+
+Both are listed under **Change these before you turn it on**, in the order to work through them.
+
+## Making one your own
+
+A template is a starting point. Once it is in your workspace:
+
+- **Narrow the trigger.** Most templates ship deliberately wide: every vendor, every finding, every signal. Adding a condition (an inherent-risk threshold, a tag, a filter on the record) is usually the difference between a useful queue and a noisy one.
+- **Split a step in two.** A thirty-day remediation clock for every finding becomes two steps with different clocks once you gate each one on severity.
+- **Add a step.** Templates stop at what is portable; yours can send an email from one of your templates, post to a webhook, or open a ServiceNow record.
+- **Rename everything.** Step names, workflow name, the copy inside the tasks. All of it is yours, and the task instructions especially are written to be edited.
+- **Apply the same template twice.** Two copies with different gates, one for critical vendors and one for the rest, is a normal way to use the library.
+
+<Tip>
+  Run a new workflow against a small slice first. Add a gate that matches one tag or one department, watch the tasks it raises for a week, then widen it.
+</Tip>
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Assignment and delegation" icon="user-check" href="/user-guides/assignment-and-delegation">
+    Who owns what, and the departments and roles a workflow step can route to instead of a person.
+  </Card>
+  <Card title="Reviews and approvals" icon="circle-check" href="/user-guides/reviews-and-approvals">
+    The review records the contract and monitoring templates open, and the pipelines they move through.
+  </Card>
+  <Card title="Contract dates and reminders" icon="calendar-days" href="/user-guides/contract-dates-and-reminders">
+    The countdown to a renewal, as opposed to the decision task the renewal template raises when a date moves.
+  </Card>
+  <Card title="Zero touch assessments" icon="bolt" href="/user-guides/zero-touch-assessments">
+    The assessments that need nothing from the vendor, which the zero-touch template starts automatically.
+  </Card>
+</CardGroup>
