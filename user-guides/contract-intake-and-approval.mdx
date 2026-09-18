@@ -9,13 +9,13 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 <AgentDirective />
 
 <Info>
-  This guide is part of the [User Guides](/user-guides/overview) collection. It covers a contract from the moment somebody asks for one to the moment the signed copy is filed. For the screens you work in afterwards, see the [Contracts workspace guide](/user-guides/contracts-workspace). For the DocuSign connection itself, see the [DocuSign integration guide](/integrations/guides/docusign).
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers a contract from the first request to the filing of the signed copy. For the screens you work in afterwards, see the [Contracts workspace guide](/user-guides/contracts-workspace). For the DocuSign connection itself, see the [DocuSign integration guide](/integrations/guides/docusign).
 </Info>
 
 A new contract goes through four stages: somebody raises a request, a person confirms the values read off the draft, the request walks an approval chain, and the approved agreement goes out for signature. Each stage has its own screen, and a contract cannot skip one.
 
 <Note>
-  **Contracts that predate this flow are unaffected.** Every historical and bulk-imported contract sits in **Draft** and stays there. Nothing about a draft implies it is unsigned. If you are migrating a back catalogue, keep using [bulk import](/import); it does not route anything through approvals.
+  **Contracts that predate this flow are unaffected.** Every historical and bulk-imported contract sits in **Draft** and stays there. Nothing about a draft implies it is unsigned. If you are migrating a back catalog, keep using [bulk import](/import); it does not route anything through approvals.
 </Note>
 
 ## The four stages
@@ -25,7 +25,7 @@ A new contract goes through four stages: somebody raises a request, a person con
     From the vendor's **Contracts** tab, click **New Contract**. Fill in what you know and attach the draft agreement.
   </Step>
   <Step title="Confirm the metadata">
-    Coverbase reads the draft and fills in what it can. Open the contract's **Approval** section and confirm the values are right. Nothing moves until somebody does.
+    Coverbase reads the draft and fills in what it can. Open the contract's **Approval** section and confirm the values are right. The request cannot proceed until somebody does.
   </Step>
   <Step title="Approve">
     The request enters the approval chain your organization configured. Each approver is emailed in turn and records a decision.
@@ -74,7 +74,7 @@ Open the contract and go to its **Approval** section. The **Metadata sign-off** 
 Fix anything that is wrong, then click **Confirm metadata**. Coverbase records who confirmed it and when.
 
 <Warning>
-  **Editing a confirmed value clears the sign-off.** If you change the total value, the dates, the type, or the vendor after confirming, the confirmation is withdrawn and somebody has to confirm again. Approvers decide on the numbers in front of them. A request that changed after the sign-off is no longer the request they were shown.
+  **Editing a confirmed value clears the sign-off.** If you change the total value, the dates, the type, or the vendor after confirming, the confirmation is withdrawn and somebody has to confirm again. Approvers decide on the values they were shown, so a request that changed after the sign-off has to be confirmed again.
 </Warning>
 
 ### Where a value came from
@@ -107,14 +107,14 @@ Until there is at least one policy, the page says so, and every contract submitt
   <img src="/images/user-guides/contract-approval-policy-editor.png" alt="Approval policy editor with name, contract types, value floor, two toggles and two approval steps" />
 </Frame>
 
-Saved policies read back as a ladder, which is how you check what a contract will actually walk through.
+Saved policies read back as a ladder, which shows the order a contract will go through.
 
 <Frame caption="Two configured policies. The default covers everything; the second only covers high-value master agreements and sends automatically.">
   <img src="/images/user-guides/contract-approval-policies.png" alt="Two approval policies listed with their conditions and step chains" />
 </Frame>
 
 <Note>
-  **Editing a policy does not change an approval already running.** A contract copies each step's name and approver when it is submitted. Rewriting the ladder afterwards cannot rewrite what somebody already decided.
+  **Editing a policy does not change an approval already running.** A contract copies each step's name and approver when it is submitted. Changing the policy afterwards does not change a decision already recorded.
 </Note>
 
 ### How a chain is chosen
@@ -123,7 +123,7 @@ Your organization configures approval policies. Each policy has conditions and a
 
 When you submit, Coverbase picks the policy that fits, most specific first: a policy naming your contract's type beats one that names none, and among equals the higher value floor wins. **Default** breaks whatever tie is left.
 
-You cannot choose the policy yourself. Submission takes no arguments, and the conditions above are the only thing that decides. A request that could name its own policy could pick the shortest one.
+You cannot choose the policy yourself. Submission takes no arguments, and the conditions above are the only thing that decides. Otherwise a requester could pick the shortest chain.
 
 ### How steps work
 
@@ -135,19 +135,19 @@ Each step names who decides:
 
 Steps are numbered. **Steps sharing a number decide together**, and the chain does not advance until all of them have. Increasing numbers run one after another.
 
-Two steps sharing a number cannot name the same approver, and the editor refuses to save that. Two rungs that one person clears alone look like two approvals and are one. This applies to user groups too: the same group twice at one number is refused, though two different groups at one number is fine and is the normal way to ask legal and security together.
+Two steps sharing a number cannot name the same approver, and the editor refuses to save that. One person clearing both would count as two approvals while being one decision. This applies to user groups too: the same group twice at one number is refused, though two different groups at one number is fine and is the normal way to ask legal and security together.
 
 <Note>
   **Every policy needs at least one step.** A policy that matches contracts and then approves all of them has the same effect as no policy, while looking in settings like routing is configured. The editor will not save one.
 
   **A step that resolves to nobody refuses the whole submission.** Coverbase does not skip the step and run the rest, because a chain missing a rung still reports itself as approved. Two ways a step reaches nobody:
 
-  - The policy asks for the contract owner or the vendor owner, and there isn't one.
+  - The policy asks for the contract owner or the vendor owner, and there is none.
   - The policy names a user group that has no active members. An empty group would open a step that nobody can approve and that sends no mail, leaving the request stuck until somebody withdrew it.
 
   The refusal names the step it could not fill. Give the contract an owner, add somebody to the group, or point the policy at approvers it can reach, then submit again.
 
-  A contract submitted when your org has configured no policy at all is approved immediately, and its Approval section says so rather than showing a bare **Approved** badge. An org that has configured no chain is not asking for one, but if that is a surprise, the fix is to configure one.
+  A contract submitted when your org has configured no policy at all is approved immediately, and its Approval section says so rather than showing a bare **Approved** badge. If that is not what you expect, configure a policy.
 </Note>
 
 ### Submitting
@@ -215,9 +215,9 @@ On **Send to DocuSign** you choose:
 
 ### Sending automatically
 
-A policy with **Send for signature on approval** sends the agreement the moment its last approver signs off. Nobody has to be watching.
+A policy with **Send for signature on approval** sends the agreement as soon as its last approver signs off, with nobody at a screen.
 
-That needs to know who signs, and it needs to know that before the approval finishes. While the contract is still moving through its chain, **Execution → Set up automatic send** asks the same questions the Send dialog asks: which document, who signs, in what order, and who is copied.
+Coverbase needs to know who signs before the approval finishes. While the contract is still moving through its chain, **Execution → Set up automatic send** asks the same questions the Send dialog asks: which document, who signs, in what order, and who is copied.
 
 <Frame caption="The automatic send editor. Same questions as the manual send, asked while there is still somebody to answer them.">
   <img src="/images/user-guides/contract-auto-send-plan.png" alt="Automatic send dialog with a document picker, two recipients and an email subject" />
@@ -232,20 +232,20 @@ Once it is set up, the Execution section says what is about to happen.
 The envelope goes out **as the person who set up the automatic send**, using the DocuSign connection they made. They do not have to be at a screen when it happens, but they do have to have connected: see [Connecting DocuSign](/integrations/guides/docusign).
 
 <Note>
-  **Whoever last saved the plan is who it is sent as.** Anybody who can edit the contract can change the recipient list, and doing so also moves the send to their own Docusign account. Nobody can make an agreement leave under somebody else's name.
+  **Whoever last saved the plan is who it is sent as.** Anybody who can edit the contract can change the recipient list, and doing so also moves the send to their own Docusign account. Nobody can send an agreement under somebody else's name.
 </Note>
 
 <Note>
-  **A send that does not go out never undoes an approval.** If DocuSign is unreachable, or the plan author's connection has lapsed, the contract stays approved and the plan stays on it. The Execution section says the automatic send did not go out, and **Send to DocuSign** is right there to do it by hand. The one exception is a send that got as far as DocuSign and lost its answer, covered under [When a send loses its answer](#when-a-send-loses-its-answer).
+  **A send that does not go out never undoes an approval.** If DocuSign is unreachable, or the plan author's connection has lapsed, the contract stays approved and the plan stays on it. The Execution section says the automatic send did not go out, and **Send to DocuSign** remains available to send it by hand. The one exception is a send that got as far as DocuSign and lost its answer, covered under [When a send loses its answer](#when-a-send-loses-its-answer).
 </Note>
 
 <Frame caption="Approved, with a plan and nothing out. The automatic send did not run, and the manual one is still available.">
   <img src="/images/user-guides/contract-auto-send-failed.png" alt="Execution section warning that the automatic send did not go out" />
 </Frame>
 
-Clearing the recipient list and saving turns the automatic send back off. You can do that at any point while the contract is still in its chain, and right up to the moment the send claims the contract.
+Clearing the recipient list and saving turns the automatic send back off. You can do that at any point while the contract is still in its chain, and until the send starts.
 
-Once the agreement has actually gone out, it is too late: Coverbase refuses the change and tells you the envelope is already with your signers. Turning the plan off at that point would report the send as cancelled while a copy sat in front of the counterparty. To stop an envelope that is already out, void it in DocuSign and choose **Sync status**.
+Once the agreement has gone out, Coverbase refuses the change and tells you the envelope is already with your signers. Turning the plan off at that point would report the send as canceled while a copy sat in front of the counterparty. To stop an envelope that is already out, void it in DocuSign and choose **Sync status**.
 
 ### Tracking the envelope
 
@@ -298,7 +298,7 @@ Only a person can settle it. Open DocuSign and look for the envelope:
 When an envelope completes, Coverbase downloads the signed PDF and the DocuSign certificate of completion and attaches both to the contract. The unsigned draft is kept rather than replaced. The record still shows what was sent out.
 
 <Warning>
-  **A signed copy that differs from the approved draft is flagged, not applied.** Coverbase compares the returned text with the draft the approvers read, and the envelope is marked for review whenever either check fires: the paper grew or shrank by more than a signature block can account for, or a figure the draft stated no longer appears anywhere in the signed copy. The second is what catches a term rewritten in place. Net 30 becoming net 90 changes no length at all, so only the missing figure gives it away. When an envelope is flagged the contract's metadata is left alone and somebody has to look at it.
+  **A signed copy that differs from the approved draft is flagged, not applied.** Coverbase compares the returned text with the draft the approvers read, and the envelope is marked for review whenever either check fires: the paper grew or shrank by more than a signature block can account for, or a figure the draft stated no longer appears anywhere in the signed copy. The second check catches a term rewritten in place: net 30 becoming net 90 does not change the length, so only the missing figure reveals it. When an envelope is flagged the contract's metadata is left alone and somebody has to look at it.
 </Warning>
 
 <Frame caption="A completed envelope whose returned paper does not match the approved draft. The contract's metadata is held rather than overwritten.">
@@ -309,14 +309,14 @@ Everything is recorded on the contract's **Activity** section: the submission, e
 
 ## The vendor's contract overview
 
-The vendor's **Contracts** tab is the other half of this. It shows every contract you hold with that vendor in one list, with the title, type, status, value, dates, renewal, notice deadline, owner, and the parent agreement.
+The vendor's **Contracts** tab shows every contract you hold with that vendor in one list, with the title, type, status, value, dates, renewal, notice deadline, owner, and the parent agreement.
 
 Above the list:
 
-- **Committed value** across active contracts. Contracts that bill on usage are counted at their committed floor and reported separately. A usage forecast added to signed commitments gives a total that is part estimate, which is not what you want in front of you in a renegotiation.
+- **Committed value** across active contracts. Contracts that bill on usage are counted at their committed floor and reported separately, because a usage forecast added to signed commitments would give a total that is part estimate.
 - **Needs attention.** Contracts with a notice deadline or expiry inside the next ninety days, soonest first, plus any whose required details are still incomplete. An overdue notice deadline is shown in red and stays in the list.
 
-<Frame caption="The needs-attention panel on a vendor's Contracts tab. Overdue in red, approaching in amber, incomplete details in grey.">
+<Frame caption="The needs-attention panel on a vendor's Contracts tab. Overdue in red, approaching in amber, incomplete details in gray.">
   <img src="/images/user-guides/vendor-contract-deadlines.png" alt="Needs attention panel listing an overdue notice, two approaching deadlines, and a contract with incomplete details" />
 </Frame>
 

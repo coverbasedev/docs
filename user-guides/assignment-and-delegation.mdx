@@ -9,10 +9,10 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 <AgentDirective />
 
 <Info>
-  This guide is part of the [User guides](/user-guides/overview) collection. It is for admins who own routing. For what the work itself is, see [Reviews, approvals and gates](/user-guides/reviews-and-approvals). For what a person is allowed to do once it reaches them, see [Permissions and roles](/user-guides/permissions-and-roles).
+  This guide is part of the [User Guides](/user-guides/overview) collection. It is for admins who own routing. For what the work itself is, see [Reviews, approvals and gates](/user-guides/reviews-and-approvals). For what a person is allowed to do once it reaches them, see [Permissions and roles](/user-guides/permissions-and-roles).
 </Info>
 
-A gate assigned to one person stops when that person is on leave. Coverbase routes work to a **user group** rather than to a named individual wherever you want it to survive someone's holiday, and records both the group that was asked and the individual who ended up accountable.
+A gate assigned to one person stops when that person is on leave. Coverbase can route work to a **user group** rather than a named individual, so it survives someone's holiday. It records both the group that was asked and the individual who ended up accountable.
 
 ## User groups
 
@@ -51,7 +51,7 @@ Each member of a group has an **Out of office** window: a **From** date and a **
     Anyone inside their window is excluded from the eligible set before the strategy runs. A round-robin rotation steps over them to the next available member rather than parking work in an empty inbox; an assign-to-all group notifies everyone except them.
   </Step>
   <Step title="They return without an admin touching anything">
-    The window expires on its own. Nobody has to remember to re-enable a colleague on the Monday they get back.
+    The window expires on its own. No one has to re-enable the member when they return.
   </Step>
   <Step title="Nothing is silently dropped">
     If every member of a group is out or inactive, the routing outcome is recorded as `no eligible members` rather than passing quietly. That is a visible state you can alert on, not an assignment that never happened.
@@ -66,8 +66,8 @@ Each member of a group has an **Out of office** window: a **From** date and a **
 
 Coverbase treats delegation as an explicit, attributed hand-off rather than an impersonation.
 
-- **Reassign in place.** Every group carries an **Assignments** tab listing the open work across its members, with filters for member, item type and status, and a **Reassign to** action. Reassigning cancels the previous holder's pending item rather than completing it, because they never did the work, and mints a fresh one for the new holder. The completed / canceled distinction is what keeps throughput reporting honest.
-- **Reassign a single gate.** A review's or a submission's reviewer picker takes an individual, a group, or nothing. A group assignment is re-resolved against **current** membership at the moment work actually arrives, not against the roster as it stood when the item was first sent, so a personnel change between send and response routes to the person who is there now.
+- **Reassign in place.** Every group carries an **Assignments** tab listing the open work across its members, with filters for member, item type and status, and a **Reassign to** action. Reassigning cancels the previous holder's pending item rather than completing it, because they never did the work, and mints a fresh one for the new holder. The completed / canceled distinction keeps throughput reporting accurate.
+- **Reassign a single gate.** A review's or a submission's reviewer picker takes an individual, a group, or nothing. A group assignment is re-resolved against **current** membership when the work arrives, not against the roster as it stood when the item was first sent. A personnel change between send and response therefore routes to the person who is there now.
 - **Escalate to the lead.** The group lead is a named, queryable field, which gives a workflow somewhere to send an item that has aged past its target.
 - **Nobody inherits authority.** Delegation moves the item, never the permission. A delegate acts under their own role, and the decision is recorded under their own name. See [Permissions and roles](/user-guides/permissions-and-roles).
 
@@ -86,7 +86,7 @@ Every group-driven routing decision writes its own log row, independent of the o
 | Triggered by | The person or workflow that caused it |
 | Target | The object it happened on, and when |
 
-This is the answer to "who was supposed to approve this, and why did it land on them", asked months later. It survives a member leaving the group, and it records the strategy that was in force at the time rather than the one configured today.
+It answers "who was supposed to approve this, and why did it land on them" months later. It survives a member leaving the group, and it records the strategy that was in force at the time rather than the one configured today.
 
 Group routing decisions also surface in the [organization audit trail](/security/audit-trails) alongside the object changes they caused.
 
@@ -96,7 +96,7 @@ A common financial-services arrangement:
 
 1. **Second-line reviews** route to a `Risk Committee` group on **Assign to all**, because the whole committee is meant to see the item.
 2. **Domain SME reviews** route to per-domain groups (`InfoSec Review`, `Financial Crime`, `Legal`, `Privacy`) on **Round robin**, so each domain has one accountable person per assessment and the load spreads across the desk.
-3. **Every SME sets their own out-of-office window** at the start of leave. The rotation steps over them for the duration; no admin ticket, no shared mailbox, no gate waiting on an empty desk.
+3. **Every SME sets their own out-of-office window** at the start of leave. The rotation steps over them for the duration, with no admin ticket and no gate waiting on an empty desk.
 4. **The `no eligible members` outcome is alerted on**, so a domain that is entirely out during a holiday period surfaces as an operational problem rather than as a quiet backlog.
 
 ## Related

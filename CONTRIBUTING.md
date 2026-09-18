@@ -1,34 +1,32 @@
-> **Customize this file**: Tailor this template to your project by noting specific contribution types you're looking for, adding a Code of Conduct, or adjusting the writing guidelines to match your style.
+# Contributing to the documentation
 
-# Contribute to the documentation
+## Two ways to make a change
 
-Thank you for your interest in contributing to our documentation! This guide will help you get started.
+**On GitHub.** Open the page, click the pencil icon, edit, and open a pull request.
 
-## How to contribute
+**Locally.**
 
-### Option 1: Edit directly on GitHub
+1. Clone the repository and install the Mintlify CLI: `npm i -g mint`.
+2. Create a branch.
+3. Run `mint dev` at the repository root and preview at `http://localhost:3000`.
+4. Run `mint broken-links` before you push.
+5. Open a pull request. The `Prose` workflow fails the PR if it adds an em dash.
 
-1. Navigate to the page you want to edit
-2. Click the "Edit this file" button (the pencil icon)
-3. Make your changes and submit a pull request
+## Adding a user guide
 
-### Option 2: Local development
-
-1. Fork and clone this repository
-2. Install the Mintlify CLI: `npm i -g mint`
-3. Create a branch for your changes
-4. Make changes
-5. Navigate to the docs directory and run `mint dev`
-6. Preview your changes at `http://localhost:3000`
-7. Commit your changes and submit a pull request
-
-For more details on local development, see our [development guide](development.mdx).
+1. Create `user-guides/<slug>.mdx` with `title`, `description` and `icon` in the frontmatter.
+2. Open with the `AgentDirective` snippet and an `<Info>` banner that says the page is part of the User Guides collection and names its neighbours.
+3. Add the page to the matching group in `docs.json`. Groups mirror the product's left navigation.
+4. Add a card for it in `user-guides/overview.mdx`, plus a row in the directory table and, if it answers a common question, a row in the lookup table.
+5. Add screenshots under `images/user-guides/`, named after the guide.
+6. End with a `## Troubleshooting` table and a `## Related` card group.
 
 ## Writing guidelines
 
-- **Use active voice**: "Run the command" not "The command should be run"
-- **Address the reader directly**: Use "you" instead of "the user"
-- **Keep sentences concise**: Aim for one idea per sentence
-- **Lead with the goal**: Start instructions with what the user wants to accomplish
-- **Use consistent terminology**: Don't alternate between synonyms for the same concept
-- **Include examples**: Show, don't just tell
+- Active voice, second person, one idea per sentence.
+- Lead with the goal, then the click path.
+- Use the product's real labels, in bold.
+- Keep information; cut flourish.
+- Never rename a heading on a published page without a reason. Headings are URL anchors.
+
+The complete style rules are in `AGENTS.md`.

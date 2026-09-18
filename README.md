@@ -1,55 +1,38 @@
-# Mintlify Starter Kit
+# Coverbase documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Source for [docs.coverbase.com](https://docs.coverbase.com), built on [Mintlify](https://mintlify.com). Pages are MDX files with YAML frontmatter; `docs.json` holds the navigation and site settings.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## What lives where
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+| Path | Content |
+| --- | --- |
+| `index.mdx` | The home page |
+| `products/` | One page per product capability, grouped under **Get started** |
+| `user-guides/` | Screen-by-screen guides, grouped the way the product's left navigation is grouped. `user-guides/overview.mdx` is the directory |
+| `user-guides/supplier-countries/` | The generated country reference. Regenerated from the IRM repo; do not edit by hand |
+| `reporting/` | Word report templates, placeholders, and the due-diligence file |
+| `api-reference/`, `export*.mdx`, `import*.mdx`, `quickstart.mdx`, `conventions.mdx`, `changelog.mdx` | The developer surface |
+| `fields/` | The filterable field catalog |
+| `integrations/` | Integration patterns and platform-specific guides |
+| `mcp/` | The MCP server |
+| `security/` | Trust and security pages |
+| `images/user-guides/` | Screenshots, taken from a demo workspace |
+| `snippets/` | Shared MDX fragments |
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
-
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+## Working locally
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
+mint dev            # preview at http://localhost:3000
+mint broken-links   # check internal links
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+Pushes to the default branch deploy automatically through the Mintlify GitHub app.
 
-```
-mint dev
-```
+## House style
 
-View your local preview at `http://localhost:3000`.
+The rules every page follows are in `AGENTS.md`: no em dashes (CI fails the PR), no dramatic phrasing, active voice, sentence-case headings, bold for UI labels. Heading text is a URL anchor that may already be in a customer's inbox, so rename a heading only with a redirect or a deliberate decision.
 
-## Publishing changes
+## Screenshots
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
-
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+Screenshots are 1440 by 900 captures of the running app against the demo workspace, saved as PNG under `images/user-guides/` and embedded with `<Frame caption="...">`. Name a file after the guide it belongs to (`findings-and-remediation-list.png`) so a re-shoot is easy to find.

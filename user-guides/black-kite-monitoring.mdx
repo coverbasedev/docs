@@ -26,13 +26,13 @@ You need:
 
 - A Black Kite **client ID and client secret** with API access. Your Black Kite administrator generates these.
 - Permission to manage integrations in Coverbase (**Integrations: update**).
-- Vendors in Coverbase whose website matches the domain Black Kite monitors. That match is how a Black Kite company becomes one of your vendors, and it is exact, so it is worth reading [how matching works](#how-black-kite-companies-become-your-vendors) before you start.
+- Vendors in Coverbase whose website matches the domain Black Kite monitors. That match is how a Black Kite company becomes one of your vendors, and it is exact, so read [how matching works](#how-black-kite-companies-become-your-vendors) before you start.
 
 ## Step 1. Connect your credentials
 
 Go to **API** in the left navigation, open the **Integrations** tab, and choose **Black Kite**.
 
-Paste your client ID and client secret and click **Save**. Then click **Test connection**, which makes one harmless call to Black Kite and confirms the credentials work. It is worth doing now rather than finding out later from a week of failed overnight runs.
+Paste your client ID and client secret and click **Save**. Then click **Test connection**, which makes one harmless call to Black Kite and confirms the credentials work. Do it now rather than finding out from a week of failed overnight runs.
 
 <Frame caption="The Black Kite configuration page. Credentials at the top; once they are saved, the Radar monitoring section below them unlocks.">
   <img src="/images/user-guides/black-kite-configuration-panel.png" alt="Black Kite configuration page showing API credentials and Radar monitoring settings" />
@@ -50,7 +50,7 @@ Coverbase can collect two kinds of signal from Black Kite. Turn on either or bot
 
 **Known exploited vulnerabilities.** CVEs from the CISA Known Exploited Vulnerabilities catalog that Black Kite found on a vendor's internet-facing infrastructure. "Known exploited" means attackers are using the flaw now, not that it is theoretically severe. These merge with the vulnerability intelligence Coverbase already collects from NVD and CISA, so you get one view of a CVE rather than two.
 
-**Focus tags.** The incident write-ups Black Kite's research team attaches to a company, such as a reported ransomware attack, a data breach, or a supply-chain compromise. You get their headline and evidence, not just a label.
+**Focus tags.** The incident write-ups Black Kite's research team attaches to a company, such as a reported ransomware attack, a data breach, or a supply-chain compromise. You get their headline and evidence, not only a label.
 
 <Tip>
   Leave the focus tag list empty to collect every tag. If you name specific tags, Black Kite's newly published ones are ignored until you come back and add them, and the newest tags are usually the ones about a campaign that is currently running.
@@ -62,7 +62,7 @@ Coverbase can collect two kinds of signal from Black Kite. Turn on either or bot
 
 ## Step 3. Decide which vendors are watched
 
-This is the setting worth spending the most time on.
+Spend the most time on this setting.
 
 **Ransomware Susceptibility Index threshold.** Black Kite scores every company from 0 to 1 on how likely it is to suffer a ransomware attack. Set a threshold and Coverbase only looks closely at vendors above it. The default is 0.5. Turning this off means examining every vendor in scope, which uses considerably more of your daily request budget.
 
@@ -85,7 +85,7 @@ Click **Save monitoring settings**.
 
 ## How Black Kite companies become your vendors
 
-This is worth understanding before you troubleshoot anything, because almost every "why is nothing happening" question turns out to be here.
+Read this before you troubleshoot, because most "why is nothing happening" questions come down to matching.
 
 The nightly run matches on **domain**. Black Kite reports a domain for each company it monitors, and Coverbase compares it against the **vendor's own website**, the website on the **company record** the vendor is linked to, and any **domains you have added by hand** (see below). Any one of them matching is enough, which helps when you have recorded the product domain and Black Kite monitors the corporate one.
 
@@ -117,7 +117,7 @@ Coverbase then tries three things in order, stopping at the first that works:
 Two more things follow from matching this way:
 
 - **Matching only ever climbs.** Coverbase would rather miss a match than quietly file one supplier's exploited vulnerability under another.
-- **If two vendors share a domain, only one of them gets the findings.** Which one is stable between runs, but it is arbitrary. That is a sign of a duplicate vendor record worth merging rather than something to configure around.
+- **If two vendors share a domain, only one of them gets the findings.** Which one is stable between runs, but it is arbitrary. That is a sign of a duplicate vendor record to merge, not something to configure around.
 
 For alerts to attribute correctly, a vendor should also be linked to a company record, which happens on its own when you create the vendor by picking it from the directory rather than typing a bare name. Exploited vulnerabilities are recorded against the CVE, so one CVE can affect several of your vendors at once. The company link is how Coverbase keeps each vendor's alert to that vendor's own findings.
 
@@ -129,7 +129,7 @@ Every vendor page carries a **Black Kite** card in its Radar section, in both th
   <img src="/images/user-guides/vendor-black-kite-panel.png" alt="Vendor Black Kite card showing the matched company, its ransomware index and technical grade" />
 </Frame>
 
-**Check Black Kite now** searches your portfolio for this one vendor, by its recorded domains first and then by name. Name search is what makes it useful precisely when the domain never matched. Finding a company **pins it by id**, so every later run matches on that id instead of guessing, and any findings it collects are ingested immediately.
+**Check Black Kite now** searches your portfolio for this one vendor, by its recorded domains first and then by name. Name search is what makes it useful when the domain never matched. Finding a company **pins it by id**, so every later run matches on that id instead of guessing, and any findings it collects are ingested immediately.
 
 <Frame caption="No company matched. Add a domain Black Kite knows the vendor by, then check again.">
   <img src="/images/user-guides/vendor-black-kite-panel-unmatched.png" alt="Vendor Black Kite card reporting that no portfolio company matched" />
@@ -137,7 +137,7 @@ Every vendor page carries a **Black Kite** card in its Radar section, in both th
 
 **Domain matching** holds the domains Black Kite records for the company, and below them the domains your team has added. A scan never overwrites what you added by hand. Use it when Black Kite monitors a domain you do not have recorded anywhere.
 
-Two states worth recognising, because both look like a broken integration and neither is:
+Two states look like a broken integration and are not:
 
 <Frame caption="Matched, but outside the vendor scope. An on-demand check finds results here and the nightly run never will.">
   <img src="/images/user-guides/vendor-black-kite-panel-out-of-scope.png" alt="Vendor Black Kite card warning the vendor is outside the monitoring scope" />
@@ -153,7 +153,7 @@ Two states worth recognising, because both look like a broken integration and ne
 
 ## Seeing what did not match
 
-A nightly run records the portfolio companies it could not attribute to any vendor, as `black_kite_companies_unmatched` with a sample list on the run. These are usually companies you monitor in Black Kite but have not created as vendors in Coverbase, or vendors whose recorded website never lined up. It is the half of a run worth reviewing.
+A nightly run records the portfolio companies it could not attribute to any vendor, as `black_kite_companies_unmatched` with a sample list on the run. These are usually companies you monitor in Black Kite but have not created as vendors in Coverbase, or vendors whose recorded website never lined up. Review this list after a run.
 
 ## Step 4. Create a detector
 
@@ -176,7 +176,7 @@ You can also start from the detector library under **Radar → Detectors → Add
 | **Highest Susceptibility Watch** | You want a short list. Both signals above 0.8. |
 
 <Note>
-  A detector keeps the name it was created with. If you adopted these templates before the names were shortened, your existing detectors still read "(Black Kite)" at the end. Nothing is wrong, and they keep working. Rename them if it bothers you.
+  A detector keeps the name it was created with. If you adopted these templates before the names were shortened, your existing detectors still read "(Black Kite)" at the end. They keep working. Rename them if you prefer.
 </Note>
 
 The detector has its own criteria, and every one of them is a requirement rather than a preference. A finding raises an alert only when its signal is switched on **and** it clears every threshold you have enabled:
@@ -189,7 +189,7 @@ The detector has its own criteria, and every one of them is a requirement rather
 | **Require a CVSS score of at least** | Suppresses lower-severity vulnerabilities |
 | **Require an EPSS probability of at least** | Suppresses vulnerabilities unlikely to be exploited |
 
-Each threshold has its own switch. Switching one off means **no constraint on that criterion**, which is different from setting it to zero. That is why the switches exist.
+Each threshold has its own switch. Switching one off means **no constraint on that criterion**, which is different from setting it to zero.
 
 <Warning>
   A vendor Black Kite has not scored does **not** clear a susceptibility threshold. "Above 0.5" cannot be satisfied by a blank. If you want unscored vendors to alert, turn that requirement off rather than setting it to 0.
@@ -226,17 +226,31 @@ The monitoring section shows **Last successful run**. If that says *Not yet run*
 
 Most shortfalls come back to matching. If Black Kite monitors `acme-corp.com` and your vendor record says `acme.io`, they will not connect. Correct the vendor's website and it will match on the next run, with no need to re-save anything here.
 
-A few timing details that save some guessing:
+Timing details:
 
 - **The first run does not wait a day.** A newly connected source is due immediately and gets picked up on the next scheduled pass, not 24 hours later.
 - **Vendors past the per-run ceiling are deferred, not dropped.** The most ransomware-susceptible are examined first, and the rest are picked up by the following run. A run that looks short is usually this rather than a failure.
 - **A vendor Black Kite has not scored will not clear a susceptibility threshold.** That is a suppressed alert, not a missing finding.
 - **KEV is also one of Black Kite's focus tags.** When you have exploited vulnerabilities switched on, Coverbase does not also collect the KEV tag as a write-up, so the same exposure is not filed twice in two shapes.
 
-If credentials fail partway through a pass, **Last successful run** deliberately does not advance. It reflects the last pass that genuinely completed, so a stale date is a signal rather than a display bug.
+If credentials fail partway through a pass, **Last successful run** does not advance. It reflects the last pass that completed, so a stale date means a run has been failing.
 
 ## Turning it off
 
 Removing the credentials on this page stops everything: no further runs, and no further alerts. Existing alerts and their history are kept.
 
 To pause alerting while keeping collection, disable the detector instead. To stop collecting while keeping your settings, archive the Black Kite source under **Radar → Sources**.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Supplier Radar" icon="satellite-dish" href="/products/supplier-radar">
+    What Radar does, and how sources and detectors fit together.
+  </Card>
+  <Card title="Detector library" icon="list-check" href="/products/detector-library">
+    The ready-made detector policies, including the Black Kite ones.
+  </Card>
+  <Card title="Security intelligence guide" icon="shield-halved" href="/user-guides/security-intelligence">
+    Coverbase's own outside-in security rating on the same vendor.
+  </Card>
+</CardGroup>
