@@ -45,19 +45,35 @@ Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_ter
 
 ### `query_assessments`
 
-Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, `query`, `control_set_id`, `issues_only`, `unresolved_only`, `limit`, `full_text`, `analysis_offset`.
+Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, `query`, `control_set_id`, `issues_only`, `unresolved_only`, `limit`, `full_text`, `analysis_offset`, `summary_offset`.
 
 | `kind` | Returns |
 | ------ | ------- |
-| `search` | Assessments by vendor, status, or assignee. |
-| `detail` | Full assessment: control evaluations, findings with titles, people, documents. |
-| `details_legacy` | The previous detail shape, for compatibility. |
+| `search` | Assessments by vendor, status, or assignee. Each row carries the outcome and the residual risk, so a whole portfolio maps in one call per page. |
+| `detail` | Full assessment: outcome, residual risk, control evaluations, findings with titles, people, documents, and the scope columns (date created, initiated by, run counter, products, services, control sets, parsed control counts). Carries the opening 500 characters of the AI summary as a preview. |
+| `summary` | The complete AI-generated summary report: every section the summary prompt produced, plus the recommendation, the residual risk, and any notices. This is the **Summary** column of the Consolidated Assessment Report export. |
+| `details_legacy` | The previous detail shape, for compatibility. Carries the outcome and residual risk too. |
 | `evals` | Per-control evaluation results. Filterable to issues only or unresolved only. |
 | `eval_detail` | One control evaluation in full, including the AI's complete reasoning. |
 | `plans` | Assessment plans. |
 | `follow_ups` | Follow-ups attached to an assessment. |
 
+<Card title="Replacing the Consolidated Assessment Report export" icon="table-columns" href="/mcp/assessment-exports">
+  Every export column mapped to the call that returns it, with sample input and output.
+</Card>
+
 Reading a long AI analysis: `eval_detail` renders the AI's reasoning whole up to a generous cap. If an analysis is longer than that, the response says so and names the follow-up call that returns the rest: pass `full_text=true` for every section at maximum length, or `analysis_offset` to page through the analysis from a given character. A capped response always announces itself, so a partial analysis is never presented as the complete reasoning.
+
+Reading a long summary report: `summary` works the same way. Pass `full_text=true` or `summary_offset` to page through a report longer than one response can carry. The truncation notice names the exact call that returns the next window.
+
+### Risk scores and your scoring settings
+
+Two settings under **Configuration → Scoring** change what every read returns, matching what the Consolidated Assessment Report export drops:
+
+| Setting off | Effect |
+| ----------- | ------ |
+| Residual risk tracking | Residual risk is omitted everywhere, level and score alike. A workspace that turns this off does not compute the value, so the stored numbers are whatever the last computation left behind. |
+| Numerical scores | Raw inherent and residual risk **numbers** are omitted and the named levels stay. The assessment score percent is a separate column and is unaffected. Vendors are still ranked by inherent risk in the portfolio report, without the score printed. |
 
 ### `query_findings`
 
