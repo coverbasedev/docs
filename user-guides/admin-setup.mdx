@@ -189,6 +189,33 @@ Scales define the bands your program scores against. There's the vendor-level ri
   Different risk domains need different criteria. Your legal team evaluating contract terms uses a different scale than your InfoSec team evaluating technical controls. Custom scales let each domain score its own way while keeping the overall picture consistent.
 </Accordion>
 
+### Decide whether service scores set the vendor's score
+
+If you assess at the service level, decide what that means for the vendor record. By default a service-scoped assessment scores the services it covers and leaves the vendor's own score alone, so a vendor whose payments service came back high can still read medium on its profile.
+
+**Risk Roll-up** changes that. Find it under **Configuration → Scoring** on the **Risk Scoring** tab, below the risk scale itself. Two switches, one per risk type:
+
+- **Roll up inherent risk from services**
+- **Roll up residual risk from services**
+
+Turn one on and every vendor that has not been given its own answer takes the **highest** score among its services for that risk type. Highest, not average, so one high-risk service is enough to make the vendor read high.
+
+Services whose status falls in the inactive, discontinued, or denied group are left out. Retiring the service that was driving the score moves the vendor down to the next live one, without anyone editing the vendor by hand.
+
+The two risk types are independent. Rolling up residual risk while leaving inherent risk manual is a reasonable setup: inherent risk comes from intake, residual risk comes from assessments.
+
+<Frame caption="Risk Roll-up on the Risk Scoring tab. One switch per risk type, and a separate action for the vendors you already have.">
+  <img src="/images/user-guides/admin-risk-rollup.png" alt="Risk Roll-up settings with inherent and residual switches and the Recalculate existing vendors action" />
+</Frame>
+
+<Warning>
+  **Turning a switch on does not touch the scores you already have.** It applies from that point on, as assessments complete and services change. To apply it to your existing portfolio, use **Recalculate now** under **Recalculate existing vendors**. That rewrites the score of every vendor that has not been given its own answer, it cannot be undone, and it asks you to confirm first. Vendors carrying their own answer are left alone either way.
+</Warning>
+
+Recalculation runs in the background rather than while you wait, so a large portfolio takes a few minutes to settle. If neither switch is on, the button tells you there is nothing to recalculate instead of walking the portfolio to change nothing.
+
+Individual vendors can depart from whatever you set here, and hand the decision back later. [Where a vendor's score comes from](/user-guides/running-an-assessment#where-a-vendors-score-comes-from) covers the per-vendor control.
+
 ---
 
 ## Step 6: Upload and tune control sets
