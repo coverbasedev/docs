@@ -189,6 +189,33 @@ Scales define the bands your program scores against. There's the vendor-level ri
   Different risk domains need different criteria. Your legal team evaluating contract terms uses a different scale than your InfoSec team evaluating technical controls. Custom scales let each domain score its own way while keeping the overall picture consistent.
 </Accordion>
 
+### Decide whether service scores set the vendor's score
+
+A service-scoped assessment scores the services it covers. By default it leaves the vendor's own score alone, so a vendor can read medium while one of its services reads high.
+
+**Risk Roll-up** changes that. It sits under **Configuration → Scoring** on the **Risk Scoring** tab, below the risk scale. There is one switch per risk type:
+
+- **Roll up inherent risk from services**
+- **Roll up residual risk from services**
+
+With a switch on, each vendor takes the highest score among its services for that risk type, not the average.
+
+Services with an inactive, discontinued, or denied status are excluded. Retiring the service that set the score moves the vendor to the next highest live one.
+
+The two risk types are set separately. You can roll up residual risk and leave inherent risk manual.
+
+<Frame caption="Risk Roll-up on the Risk Scoring tab. One switch per risk type, and a separate action for the vendors you already have.">
+  <img src="/images/user-guides/admin-risk-rollup.png" alt="Risk Roll-up settings with inherent and residual switches and the Recalculate existing vendors action" />
+</Frame>
+
+<Warning>
+  **Turning a switch on does not change existing scores.** It applies to scores set from that point on. To apply it to vendors you already have, use **Recalculate now** under **Recalculate existing vendors**. It rewrites the score of every vendor without an override, asks you to confirm first, and cannot be undone.
+</Warning>
+
+Recalculation runs in the background, so a large portfolio takes a few minutes. With both switches off, the button reports that there is nothing to recalculate.
+
+Individual vendors can override this setting. See [Where a vendor's score comes from](/user-guides/running-an-assessment#where-a-vendors-score-comes-from).
+
 ---
 
 ## Step 6: Upload and tune control sets
