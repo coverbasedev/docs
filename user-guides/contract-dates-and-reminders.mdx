@@ -58,6 +58,53 @@ The notice date has a third setting for exactly that situation: **No notice date
   **No notice date** and hiding the milestone answer different questions. Choose **No notice date** when you're saying something about the *agreement*: there is no such deadline. Hide the milestone when you're saying something about *your attention*: the deadline is real, you just don't want to be reminded on this contract. Either one stops the emails.
 </Tip>
 
+## What makes a contract renew
+
+A renewal needs two things on the record, and it is the second one people forget.
+
+<CardGroup cols={2}>
+  <Card title="Auto-renews is Automatic" icon="toggle-on">
+    The setting that says renewal happens without anyone doing anything.
+  </Card>
+  <Card title="Renewal term is filled in" icon="calendar-plus">
+    The length each renewal adds. Without it there is nothing to move the term end to.
+  </Card>
+</CardGroup>
+
+Both live in the **Commercial terms** card on the contract. A nightly job looks at every contract whose term end has passed, and each one either renews or is marked expired.
+
+<Warning>
+  **Set to auto-renew with no renewal term, a contract gets marked expired.** Not renewed, and not left alone: the job has no term to roll it into, so it does the only other thing it can. The status flips to expired on the term end the paperwork names, which on a long-running agreement can be a date years in the past.
+
+  This is the most common cause of "our contracts show the wrong dates". The contracts really are renewing in the world. Coverbase was never told what they renew into.
+</Warning>
+
+Filling in the renewal term fixes it going forward and backward at once. The next nightly run renews the contract, moves the term end, sets the status back to active, and re-derives the notice and internal action dates that hang off the term end.
+
+<Tip>
+  To find these across the portfolio in one go, filter the contracts list on **Auto Renewal** is `automatic` and **Renewal Term** is empty.
+</Tip>
+
+### Where the renewal term comes from
+
+Three paths fill it, so most contracts arrive with it already set:
+
+- **Document extraction.** Coverbase reads the renewal term out of the agreement along with the other dates, with a page citation.
+- **Spreadsheet import.** The contract import template has a **Renewal Term** column. Fill it in the same shape as the other term columns, for example `1 year` or `12 months`.
+- **By hand.** Type it into **Renewal term** on the **Commercial terms** card.
+
+### Recording what you intend to do
+
+A renewal date tells you when to decide. It does not record what you decided, which is why renewals get re-litigated in the week they are due.
+
+The **Renewal decision** section of the **Commercial terms** card takes that answer: **Not decided**, **Renew**, **Terminate**, or **Under review**, with a note for the reasoning. The decision shows in the renewal runway hover and the runway's readiness dot, and it is filterable across the portfolio.
+
+<Note>
+  **A renewal clears the decision.** When a contract rolls into a new term, the decision and its note go back to empty on purpose. The old answer was about the term that just ended, and the new one deserves its own look.
+
+  Nothing is lost: every decision is filed in the contract's activity trail with the note, who recorded it, which term it was about, and that term's end date. The card shows the current term, the trail shows the history.
+</Note>
+
 ## Who gets reminded, and when
 
 Reminders are email, and they come from two places:
