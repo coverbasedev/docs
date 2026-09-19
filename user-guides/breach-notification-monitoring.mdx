@@ -1,0 +1,157 @@
+---
+title: "Breach notification monitoring guide"
+description: "How to monitor state attorney general breach registries and SEC cyber incident filings, and turn a filing that names your vendor into an alert."
+icon: "file-shield"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the breach registries specifically; for reading and triaging the signals they produce, see the [Radar signals guide](/user-guides/radar-signals). For what Radar does generally, see [Supplier Radar](/products/supplier-radar). For every source Coverbase draws on, see the [source library](/products/source-library).
+</Info>
+
+When a company suffers a breach affecting residents of a state, the law usually requires it to notify that state's attorney general. Some of those offices publish what they receive. A public company that suffers a material cyber incident files it with the SEC.
+
+These registries are the closest thing to a primary record of a breach. They carry two advantages over news coverage:
+
+- **They land earlier.** A filing is made within days of discovery. Press coverage, if it comes at all, can be weeks later.
+- **They have no editorial filter.** A newsroom covers breaches at companies readers have heard of. A registry lists every filing, including the small processor nobody writes about that happens to hold your data.
+
+The trade-off is that a filing is terse. A row typically gives you the organization, the filing date, how many residents were affected, and which categories of data were involved. That is usually enough to know whether you need to act, and rarely enough to know what happened.
+
+## What Coverbase monitors
+
+The **Breach Notification & Disclosure** group in the source library holds seventeen
+sources, and between them they cover all fifty states. Fifteen of the seventeen were checked
+against the live register before they shipped: a source that returns a landing page instead of
+a register is worse than no source. The two exceptions are marked below.
+
+### State attorney general registries
+
+| State | What the filing gives you |
+| --- | --- |
+| California | Reporting organization, breach dates, and a copy of the notice sent to residents |
+| Delaware | Reporting organization, breach dates, residents affected, and the notice |
+| Washington | Reporting organization, breach date, Washingtonians affected, and the categories of information compromised |
+| Vermont | Reporting organization, its sector, Vermont residents affected, and the categories of data breached |
+| Oregon | Reporting organization, plus the breach, discovery, and notification dates |
+| Indiana | The year-to-date register, with dates and Indiana residents affected |
+| Texas | Entity, information affected, and the number of Texans notified |
+| Hawaii | Breached entity, how the breach happened, Hawaii residents impacted, and the notification letter |
+| Rhode Island | The notice itself, dated. Any breach touching more than 500 Rhode Islanders must be reported within 45 days |
+| Maryland | Reporting business, Marylanders affected, what information was breached, and how |
+| Iowa | The business, its industry, the date reported, and the notice sent to Iowans |
+| Massachusetts | Reporting organization, residents affected, and whether the data was encrypted. Not yet confirmed against the live register |
+| New Hampshire | The notice letters themselves. Not yet confirmed against the live register |
+
+<Note>
+  Massachusetts and New Hampshire block automated requests, so neither could be
+  confirmed against its live register before release. Both are configured and will
+  collect, but check that the first results are real filings before you rely on
+  either one.
+</Note>
+
+### Federal sources
+
+| Source | What it covers |
+| --- | --- |
+| HHS OCR | **Every HIPAA breach of 500 or more records, in all fifty states.** The row names the covered entity's state, how the breach happened, and how many people it touched. |
+| SEC EDGAR, Form 8-K Item 1.05 | The item a public company files to disclose a material cybersecurity incident. |
+| SEC EDGAR, 10-K and 10-Q | Annual and quarterly reports discussing a material cybersecurity incident. |
+| FTC | Federal enforcement, including Health Breach Notification Rule actions. The FTC publishes enforcement rather than a register. |
+
+### How all fifty states are covered
+
+Thirteen states publish a register of their own, listed above. The rest are
+covered by the sources that are national by construction: **HHS OCR** carries
+every HIPAA breach of 500 or more records in every state, **SEC EDGAR** carries
+every public company's material cyber incident wherever it is based, and the
+**FTC** carries federal enforcement.
+
+One further thing closes much of the remaining gap. A breach affecting residents
+of several states must be filed in each of them, so a vendor's breach usually
+appears in California or Washington even when the state you care about publishes
+nothing of its own.
+
+### Two states we cannot reach at all
+
+**Wisconsin** never collects the data: its law requires notice to affected
+individuals only, not to any state agency. **Maine** took its database offline
+in June 2026. **Montana's** breach page no longer exists. In each case there is
+nothing to monitor rather than something we have not built.
+
+## Why there is no all-50-states source
+
+Every state has a breach notification law, so a vendor must notify. Far fewer states **publish** what they receive, and publishing is what makes a registry monitorable.
+
+New York, and most states, take filings through a portal and publish nothing back. There is no page to watch. Connecticut received over 1,830 breach notifications in 2025 and publishes none of them; North Dakota, New Jersey, South Carolina, New Mexico, Missouri, and Alaska are the same. Maine took its public database offline in June 2026 after fake filings were submitted against real companies.
+
+We check each state directly rather than working from a list, which is how Maryland came back: its register had moved, and the address we had been given redirected to the Attorney General's homepage.
+
+If you have been asked to cover all fifty states, the honest answer is that the data does not exist for most of them. The sources above are the ones that publish. Between them they cover a large share of filings, because a breach affecting residents of several states is filed in each of them, so a vendor's breach often shows up in California or Washington even when your own state publishes nothing.
+
+## Step 1. Add the sources
+
+Go to **Configuration → Radar**, open the **Sources** tab, and click **Add source**. Choose the **Breach Notification & Disclosure** group.
+
+You can add all seventeen at once, or start with a few. Three ways to choose:
+
+- **Add HHS OCR first if you only add one.** It is the single source that spans all fifty states, and healthcare filings are the largest category of breach most portfolios are exposed to.
+- **Add California, Vermont, Oregon, and Maryland next.** These are the largest state registers, so they give you the most coverage for the least setup.
+- **Add Washington or Hawaii if data types matter to you.** Their filings name the categories of information compromised, or how the breach happened, so the detail is visible on the row itself without opening the notice.
+- **Add Rhode Island if recency matters most.** It is the register that runs closest to the present.
+
+<Note>
+  Adding a source only starts collection. Nothing alerts until a detector reads it, which is Step 2. Adding sources and stopping there is the usual reason nothing appears to happen.
+</Note>
+
+## Step 2. Turn on the detector
+
+Open the **Detectors** tab and click **Add detector**. In the library, choose **Breach Notification Filings**.
+
+This detector is written for registry input specifically. It treats the filing itself as evidence rather than waiting for a second source to corroborate it, which matters because a registry row will never have corroboration at the time it appears. It also knows that the same breach filed in five states is one incident, so a vendor appearing across several registries in the same week does not escalate as if it were five separate events.
+
+Check two settings before you save:
+
+- **Sources.** Point the detector at the breach sources you added. A detector with no sources selected reads everything, which works but is noisier than scoping it.
+- **Severity threshold.** The default is Medium. High-only cuts volume to filings involving sensitive or regulated data, such as Social Security numbers, financial account data, or health records.
+
+## Step 3. Check what arrives
+
+Give it a pull cycle. Registries are checked every few hours, and the first pull of a large register such as Oregon brings in its full history, so expect a burst on day one and a much smaller trickle after that.
+
+Go to the **Signals** tab. A signal from a registry looks different from a news signal: the summary is the filing's own fields rather than prose. That is expected. Triaging what arrives works the same way as any other signal, which the [Radar signals guide](/user-guides/radar-signals) covers.
+
+## What to know when reading these signals
+
+**One breach, many filings.** A company that breached data belonging to residents of several states files in each of them. You may see the same vendor five times in a week. That is the registries working as intended, not a vendor with five problems.
+
+**The filer may not be your vendor.** Registries list the entity that filed. That is often a service provider acting for the company you actually contract with, or a parent, or a subsidiary. The detector calls this out when it can, but it is worth checking before you open a finding against the wrong party.
+
+**Some filings link to a PDF and some link to nothing.** Coverbase reads a PDF notice where the document has a text layer. Where it does not, or where the state publishes no per-filing link at all, the signal still carries the row's own details: the organization, the date, the count, and the data categories.
+
+**Some states publish in batches, months behind.** Maryland is the clearest case: it loads a year at a time rather than posting each filing, so its rows are useful as vendor history and backfill rather than as early warning. California, Washington, and Rhode Island are the ones to watch for something that happened this week.
+
+**Registries publish what filers assert.** These offices do limited validation. Maine took its portal offline after someone submitted fake filings against real companies. Treat a filing as a strong lead, not a proven fact, and confirm with the vendor before acting on it externally.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    Reading the signal queue and turning a signal into work.
+  </Card>
+
+  <Card title="Source library" icon="rss" href="/products/source-library">
+    Every source Coverbase draws on, across all tiers.
+  </Card>
+
+  <Card title="Detector library" icon="filter" href="/products/detector-library">
+    The full catalog of detectors and what each one looks for.
+  </Card>
+
+  <Card title="Findings Manager" icon="clipboard-list" href="/products/findings-manager">
+    What to do once you have confirmed a vendor is affected.
+  </Card>
+</CardGroup>
