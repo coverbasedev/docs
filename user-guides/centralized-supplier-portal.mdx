@@ -1,0 +1,144 @@
+---
+title: "Centralized supplier portal"
+description: "One page where a supplier signs in and sees every request you have open with them, keeps their own profile up to date, and answers the findings you have raised. How to turn it on and what each setting decides."
+icon: "door-open"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. For what your suppliers see once they are inside, see [The supplier portal, for suppliers](/user-guides/supplier-portal-for-suppliers).
+</Info>
+
+Before this existed, everything you asked a supplier for arrived as its own link in its own email. A supplier with nine open items had nine links in nine threads, no way to see them together, and no way to tell you something had changed unless you happened to ask.
+
+The centralized portal gives each supplier one address. They sign in with their work email, see everything you have open with them, bring their own colleagues in, and keep the details you hold about them current without waiting to be asked.
+
+<Note>
+  Turning it on changes nothing about links you have already sent. Every `/portal/…` link keeps working exactly as it did.
+</Note>
+
+## Turning it on
+
+Go to **Configuration › Portal › Centralized Portal** and switch it on.
+
+The page lists what will change before you flip it, not after. Four things happen:
+
+<Steps>
+  <Step title="Suppliers get one page">
+    They sign in and see every request you have open with them, grouped by kind.
+  </Step>
+  <Step title="Suppliers bring their own people">
+    Whoever you invite first becomes the owner. They can invite colleagues and assign work to them without going through you.
+  </Step>
+  <Step title="New invitations lead with the portal">
+    The button in an invitation or reminder points at the portal. The single-request link stays in the email underneath it, for anyone who would rather not sign in.
+  </Step>
+  <Step title="Everything open appears in it">
+    Including requests you sent before you turned this on. Their own links keep working too.
+  </Step>
+</Steps>
+
+## Choosing sections
+
+Requests, documents and messages are always there. Four more are yours to switch on:
+
+<CardGroup cols={2}>
+  <Card title="Profile" icon="id-card">
+    What you hold about this supplier: bank accounts, addresses, tax registrations, diversity records and legal entities. Masked, and read-only until you open something.
+  </Card>
+  <Card title="Changes" icon="list-check">
+    The second tab of Profile. Every revision the supplier has proposed and what happened to it. On whenever Profile is on.
+  </Card>
+  <Card title="Obligations" icon="clipboard-check">
+    The findings and obligations you have raised with them, with their due dates.
+  </Card>
+  <Card title="Shared documents" icon="folder-open">
+    Documents you have put on the supplier's shelf, alongside the ones they uploaded.
+  </Card>
+</CardGroup>
+
+Every section is off until you turn it on, including on an organization that has the portal on and never opened this tab.
+
+## What a supplier may change without being asked
+
+Under **Profile**, the standing scope decides which parts of their own record a supplier may revise at any time. Nothing is open by default.
+
+| Scope | What it opens |
+| --- | --- |
+| Bank accounts | Adding an account, or replacing one. Always waits for your approval. |
+| Addresses | Adding or correcting a site. |
+| PO email addresses | Where purchase orders and remittance advice are emailed. |
+| Tax registrations | Adding a registration, or declaring an exemption. |
+| Diversity | Declaring a diversity category and its certificate. |
+
+Two scopes cannot be put here at all, and the page shows them locked:
+
+- **Contacts**
+- **Legal entities**
+
+Those are yours to initiate. If you want either updated, send an update request naming that section, and it opens for that supplier for the life of the request.
+
+<Warning>
+  The standing scope and an open request's scope add together, they do not narrow each other. A supplier with PO emails standing open, who is then sent a request asking for a new bank account, may do both until that request closes.
+</Warning>
+
+### Saying which part needs updating
+
+When you send an update request, each section you name carries its own note and its own intent:
+
+- **Add** opens an empty form for a new record.
+- **Replace** shows what is on file beside a new entry, and asks which it supersedes.
+- **Review** shows what is held and asks them to confirm or correct it.
+
+The note renders against the section it names, not at the top of the page. One free-text box for a whole form is the failure this replaces: "we need your new EUR account" written at the top of a page reads, next to an existing account with an edit pencil, as "change this one".
+
+## Nothing writes straight through
+
+Every revision a supplier proposes waits for a person. Bank changes already did; this extends the same rule to the rest, because the supplier's Changes tab needs a status to show.
+
+You review them where you already review bank changes, on the vendor's **Know Your Supplier** tab. Approving writes the change and fires the webhook your finance system listens to. Rejecting asks you for a reason, and the supplier sees it.
+
+## Findings and obligations
+
+Under **Obligations**, choose what a supplier sees:
+
+<CardGroup cols={2}>
+  <Card title="Only what you have raised with them" icon="shield-check">
+    A finding appears once you have created a commitment against it. Recommended: it means nothing reaches a supplier before you decided to ask them about it.
+  </Card>
+  <Card title="Everything open" icon="eye">
+    Every open finding and obligation for that supplier, whether or not you have asked them about it.
+  </Card>
+</CardGroup>
+
+Either way a supplier sees a finding's title, category, status, due date and your recommended remediation. Analyst notes, severity reasoning and evaluation extracts are never in the list.
+
+## Letting suppliers start their own requests
+
+Under **Submissions**, tick the templates a supplier may start themselves: a security incident notification, a change-of-control notice, an insurance certificate refresh.
+
+A template appears in that list only after you turn on **Let suppliers start this themselves** in the template editor. Both have to be true, so archiving a template stops offering it without you editing anything here.
+
+What a supplier starts is an ordinary request. It gets a reference number, lands in your queue, carries its own asks, uploads, messages and reminders, and appears wherever your team already watches for work.
+
+## Sending a template on a schedule
+
+In the template editor's **Centralized Portal** block, pick a cadence: every month, quarter, six months, year, or two years. Leave it on "Only when someone sends it" and nothing changes.
+
+A daily sweep sends the template to every supplier with a portal whose last request from it is older than the cadence. Two things worth knowing:
+
+- A supplier who still has that template open is **skipped, not stacked**. An annual questionnaire nobody answered would otherwise become two open requests, then twelve.
+- The clock runs from the send, not from the answer. A supplier who never answers is still asked again on schedule.
+
+## Where to see whether a supplier has one
+
+The vendor's **Portals** tab says whether that supplier has a centralized portal, how many of the people you invited have signed in, and links straight to it.
+
+## Turning it off
+
+The switch is reversible and loses nothing. The customer disappears from each supplier's list, and every `/portal/…` link you have already sent keeps working. Turn it back on and the requests, documents, messages and members are exactly as they were.
+
+A supplier who had access and finds it gone is told what happened rather than being offered a way to ask for access back, because nobody revoked them and their own owner cannot undo this.
