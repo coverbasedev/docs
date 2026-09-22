@@ -1,0 +1,87 @@
+---
+title: "Adding an application"
+description: "Every application goes through the same four stages before Inspect can inspect it: registered, documented, planned, inspected. What happens at each stage, what you provide, and how to request an application Coverbase has not documented yet."
+icon: "layer-group"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Inspect does not have native and non-native applications. Every application is supported the same way and moves through the same stages. An application Coverbase has not documented yet is not supported less; it is earlier in the lifecycle. This page describes the stages, what you provide at each one, and how to request an application that has not been through them.
+
+For what Inspect is and how it fits the platform, see [Agentic Inspect](/products/agentic-inspect) and [Internal control monitoring](/products/internal-controls-monitoring).
+
+## The four stages
+
+<Steps>
+  <Step title="Registered">
+    Coverbase holds a record of the application itself: the documentation domains it trusts for that vendor, the API authentication scheme the vendor uses, and the browser configuration the agent needs. This record is shared by every organization that inspects the same application. It contains nothing about your tenant.
+  </Step>
+  <Step title="Documented">
+    Coverbase gathers the vendor's own documentation, the API reference and the admin guides, from the trusted domains, and pins it by content hash. Plans are prepared only from this pinned documentation, never from a search at run time.
+  </Step>
+  <Step title="Planned">
+    For each control in your control set, Inspect prepares a plan from the pinned documentation: the evidence the control needs, the shape it must come back in, and the documented ways to obtain it. Readiness in the product shows which controls have a plan and which are waiting.
+  </Step>
+  <Step title="Inspected">
+    You add the application as a target in your organization, provide access, and launch an inspection. From here on the application behaves like any other: Explore, Evaluate and Drift, findings, and revisions to plans.
+  </Step>
+</Steps>
+
+## What you provide, and when
+
+| Stage | You provide | Coverbase does |
+| --- | --- | --- |
+| Registered | The application's name and sign-in address, and which vendor it belongs to | Creates the shared application record |
+| Documented | Nothing. If you have a link to the vendor's API reference or admin guide, it speeds this up | Gathers and pins the documentation |
+| Planned | The control set you want to run | Prepares one plan per control and reports readiness |
+| Inspected | A read-only account or API credential, and the sign-in method | Collects evidence and records a judgment per control |
+
+Your tenant's details, the sign-in URL, identity provider, credentials and any request values, live on the target in your organization only. The application record and its documentation are shared across organizations, which is what lets one plan serve every customer inspecting the same application.
+
+## Requesting an application that is not ready
+
+When you add a target for an application that has not reached the **Planned** stage, readiness tells you so: the application has no documentation for Inspect to prepare plans from. You can still save the target, provision access, and verify that sign-in works. Plans cannot be prepared until the documentation is in place.
+
+To move the application through the first two stages, ask your Coverbase team and include:
+
+- The application's name and the address you sign in at.
+- Whether it belongs to a vendor already in your organization.
+- The control set you intend to run, so Coverbase can check the documentation covers what those controls need.
+- Any link you have to the vendor's API reference or admin guide.
+
+Coverbase confirms receipt, tells you whether the vendor publishes enough documentation for the controls you named, and tells you when plans are ready. Coverbase aims to respond within {/* RESPONSE_TARGET: set before publishing */} and to have plans ready for a typical application within {/* PLAN_TARGET: set before publishing */}. If a vendor publishes no usable documentation, Coverbase tells you which controls that affects rather than preparing plans that cannot be executed.
+
+<Note>
+  A request is about the application, not your tenant. Never include credentials, tokens or account details in it. Those are entered in the product when you configure the target.
+</Note>
+
+## Which stages are manual today
+
+| Stage | Today | Planned |
+| --- | --- | --- |
+| Registered | Coverbase creates the application record on request | The record is created automatically when you add a target for an application Coverbase has not seen |
+| Documented | Coverbase gathers and pins the documentation on request | Inspect checks whether existing documentation covers a control, finds what is missing from the vendor's trusted domains, and adds it |
+| Planned | Automatic, once documentation exists | Unchanged; plans are re-prepared automatically when documentation changes |
+| Inspected | Automatic | Unchanged |
+
+The two manual stages are the ones being automated. Once they are, adding a target is the whole request. Until then, the request above is the path, and it is the same path for every application.
+
+## What does not change between applications
+
+- The evidence channels. API reads where the documentation declares an operation, browser methods for the rest.
+- The safeguards. The same read-only guards, domain boundary and audit trail apply to every application.
+- What you can edit. You can revise a plan's prose and browser instructions for any application. Compiled API methods are assembled from the documentation and are not edited by hand.
+- What Coverbase does not offer. There is no customer-side connector SDK or builder. The lifecycle above is the extension path, for every application.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Agentic Inspect" icon="magnifying-glass" href="/products/agentic-inspect">
+    What Inspect does and how to integrate it.
+  </Card>
+  <Card title="Internal control monitoring" icon="building-shield" href="/products/internal-controls-monitoring">
+    The controls an inspection evaluates.
+  </Card>
+</CardGroup>
