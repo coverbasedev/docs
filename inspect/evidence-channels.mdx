@@ -1,0 +1,82 @@
+---
+title: "API and browser evidence channels"
+description: "The two ways Inspect collects evidence from an application you run: documented API reads assembled in code, and a read-only browser agent on the admin console. What each can reach, what each sends, and how each is bounded."
+icon: "route"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A plan can satisfy one evidence requirement through the application's documented API or through its admin console in a browser. Inspect tries a documented API read first where the plan has one and falls back to a browser method for the same requirement. The two channels have different security properties, so approve them separately.
+
+## Choosing a channel for a trial
+
+| | API channel | Browser channel |
+| --- | --- | --- |
+| Requires | A read-scoped API credential for the application | A read-only account in the application, signed in through your IdP or a stored credential |
+| What runs | An HTTP GET assembled in code from the plan | A browser agent choosing read-only actions on the console |
+| Where it runs | Coverbase workers in AWS (us-east-1) | Chrome hosted by Browserbase, controlled from Coverbase workers |
+| What leaves your tenant | The API response body, validated against the evidence schema | Page content the agent reads, evidence screenshots, and a session recording |
+| Model involvement per step | None during collection | A model chooses each action |
+| Best for | Settings the vendor exposes through a documented endpoint | Settings that exist only on the admin console |
+
+<Tip>
+  Choose the channels per application, and expect both to be in use. The API channel needs one read-scoped credential and no browser session, and answers only the controls whose evidence the vendor documents an endpoint for. The browser channel reaches settings that exist only on the console and needs an account, a sign-in route and a browser session. Both can be enabled on the same application, and browser evidence can be switched off for an inspection, in which case browser-only evidence is reported as unavailable.
+</Tip>
+
+## API channel
+
+The API channel executes **documented read operations only**.
+
+- **Reads only, by schema.** An API method in a plan is a documented `GET`. The plan schema admits no other verb, so a plan cannot be written that issues a write.
+- **The request is assembled in code.** The plan records the documented operation and the shape of its required parameters. Your target holds the parameter values and a reference to the credential. At execution time, code substitutes both in memory and issues the request. Nothing tenant-specific is serialized into the plan, the observation, or the request log.
+- **Authentication.** A static bearer token or OAuth client credentials, whichever the vendor documents. Tokens obtained through client credentials are held in memory for their lifetime and refreshed on expiry. The credential itself is stored in the platform secrets store; Coverbase workers retrieve it to make requests, and credential-management APIs do not return stored values. See [Access, permissions and revocation](/inspect/access-and-permissions).
+- **What comes back.** The response is validated against the requirement's evidence schema before it is written. Records that do not match are not accepted as evidence.
+- **Where it runs.** Requests originate from Coverbase's worker fleet in AWS us-east-1. Coverbase does not publish a fixed egress IP range, and browser traffic originates from Browserbase's infrastructure. If your application restricts access by source IP, raise that with your Coverbase team during setup.
+
+<Note>
+  Plans are shared across organizations because they describe the application, not your tenant. Compiled API method bodies are never editable by a customer, so a customized plan cannot introduce a query that the read-only rules would not have produced.
+</Note>
+
+## Browser channel
+
+The browser channel signs in to the admin console and reads it the way an administrator would, with writes refused in code by the route restrictions, DOM checks and Network Guard described in [Safeguards and limits](/inspect/safeguards-and-limits).
+
+### Sign-in
+
+Inspect signs in with the identity you provisioned for it: an IdP-initiated SSO application (Okta or Microsoft Entra), a Google OAuth account, or a username and password against a sign-in URL. Where the application asks for a second factor after SSO, Inspect answers with a factor you configured for that target: a one-time code from an enrolled authenticator seed, or a passkey registered for the inspection identity and loaded into a virtual authenticator scoped to the application's domains. Sign-in is a separate runtime flow that completes **before** the read-only safeguards are installed. The evidence-collecting agent has no tool that retrieves a credential value and no general typing tool. It can type a query into a search box the console provides, with submission still blocked, and it can ask the runtime to enter a configured second factor, whose value it never sees.
+
+Sign-in state can be kept as a stored browser profile so later runs do not sign in again. A profile that has not been used for 12 hours is deleted.
+
+### Collection
+
+After sign-in, Inspect installs its safeguards on the session and hands the agent a small toolset: open addresses within the application's allowed domains, click controls that pass the DOM checks, expand rows and read dropdown options, find text on the page, type a query into a search box the console provides, and capture evidence. It has no generic click, type or navigate tool, no JavaScript evaluation, file upload, file download or keyboard tool, and no terminal or other code execution tool.
+
+A plan suggests where in the console to start. That route is guidance, not a boundary: the verified application domains are the boundary, and the agent may read elsewhere within them. Where a control's evidence was actually found is remembered per target and offered as the starting point next time.
+
+### What the browser channel sends and stores
+
+- **Page content the agent reads** goes to the model that chooses the next action. See [Hosting and data handling](/inspect/hosting-and-data-handling) for where that model runs.
+- **Evidence screenshots** are captured by code when the agent records an observation, stored in Coverbase's object storage with the source URL and timestamp, and shown next to the observation.
+- **A session recording** is kept by the browser host and played back inside the Coverbase dashboard.
+- **Observed records** are the values read from the console, stored as evidence in your organization's data.
+
+<Warning>
+  Screenshots and observed records are stored as captured. Inspect does not redact personal or sensitive values from evidence today. Choose controls whose evidence you are comfortable holding in Coverbase, and see [Safeguards and limits](/inspect/safeguards-and-limits) for what each safeguard covers.
+</Warning>
+
+## Vendor trust centers
+
+The same engine also reads vendor trust centers and attestation pages on your behalf, which is the vendor-facing half described on [Agentic Inspect](/products/agentic-inspect). Those runs sign in only where a vendor portal requires it, and the read-only enforcement is the same. The rest of this section is about applications your organization runs.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Safeguards and limits" icon="shield-check" href="/inspect/safeguards-and-limits">
+    The guards installed on a browser session and what they do not cover.
+  </Card>
+  <Card title="Access, permissions and revocation" icon="key" href="/inspect/access-and-permissions">
+    Provisioning an API credential or a read-only console identity.
+  </Card>
+</CardGroup>

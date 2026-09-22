@@ -1,0 +1,127 @@
+---
+title: "How Inspect works"
+description: "What happens when Coverbase Inspect inspects one of your applications: the plan it freezes before it starts, the two ways it collects evidence, the run per control, and what you get back."
+icon: "diagram-project"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase Inspect signs in to an application your organization runs, collects evidence for a set of controls, and records a judgment for each one. This section is the technical reference for the security, identity and application teams who have to approve that access. It describes what ships today, names what is planned, and says where the limits are.
+
+For what Inspect is for and how it fits the rest of the platform, start with [Agentic Inspect](/products/agentic-inspect) and [Internal control monitoring](/products/internal-controls-monitoring).
+
+## The shape of an inspection
+
+An **inspection** is one request: one target application, one control set, one purpose. It does not collect evidence itself. It starts one **control run** per control, and each control run finishes on its own. If four controls collect their evidence and the fifth hits a login wall, the inspection is reported as partial and the four keep their answers.
+
+<CardGroup cols={3}>
+  <Card title="Explore" icon="compass">
+    Establishes whether the evidence a control needs can be collected from this application at all. Produces records and their statuses, no score.
+  </Card>
+  <Card title="Evaluate" icon="scale-balanced">
+    Grades the collected evidence against the control's expectation and your risk scale, with a written justification. Can raise a finding.
+  </Card>
+  <Card title="Drift" icon="arrows-left-right">
+    Compares the evidence against a compatible earlier inspection of the same target and reports what changed.
+  </Card>
+</CardGroup>
+
+## The plan is written before the run starts
+
+Inspect does not decide what to look for while it is looking. For each control and each application, a **plan** is prepared ahead of time from the vendor's own documentation, which Coverbase fetches from that vendor's trusted documentation domains and pins by content hash. The plan lists the evidence the control needs, the shape each piece of evidence must come back in, and one or more documented ways to obtain it.
+
+A plan describes the application, never your tenant. It contains no hostnames, credentials, or record values, which is what lets Coverbase share one plan across every customer inspecting the same application. Your tenant's sign-in URL, identity provider, credential references and request values live on the **target**, which belongs to your organization alone.
+
+Once a plan is validated it is immutable. A control run pins exactly one plan version. If you revise a plan, the revision becomes a new version and inspections that already ran keep the version they used. You can read every version afterwards.
+
+<Note>
+  Plan preparation is where a model reads documentation. It chooses among API operations the documentation already declares, by name. Deterministic code then resolves each choice against the pinned documentation and assembles the method. The model never writes a URL path, a query, a selector, a hostname, or a credential into a plan.
+</Note>
+
+## Two ways to collect the same evidence
+
+Each evidence requirement in a plan can be satisfied through the application's documented **API** or through its **admin console in a browser**. Which one runs is decided at execution time, in plan order: a documented API read is tried first where one exists, and a browser method for the same requirement is the fallback. A requirement with no documented API read is browser-only, and browser evidence can be switched off for an inspection. Both produce the same shape of observation, so what you review looks the same whichever channel produced it.
+
+The two channels carry different security properties, so they are documented separately in [API and browser evidence channels](/inspect/evidence-channels).
+
+## Running one control
+
+<Steps>
+  <Step title="Resolve access">
+    The control run resolves the target's credentials from the secrets store and opens either an API session or an authenticated browser session. If it cannot, it stops with a coded reason (missing credential, unconfigured request value, sign-in blocked) rather than a generic failure.
+  </Step>
+  <Step title="Collect each evidence requirement">
+    For each requirement, the run tries the next documented method in plan order. Each attempt returns records or an explicit status saying why nothing came back.
+  </Step>
+  <Step title="Validate against the pinned contract">
+    Every record set is checked against the plan's evidence schema before it is written. A record that does not match the contract is not silently accepted.
+  </Step>
+  <Step title="Write the outcome atomically">
+    Observations are staged for the whole attempt and written together when the run finishes. A half-finished attempt leaves no partial evidence behind, and the screenshots it captured are discarded.
+  </Step>
+  <Step title="Produce the purpose outcome">
+    Explore keeps the records and statuses. Evaluate has a model grade the evidence against the control expectation and write a justification. Drift compares the records against the reference inspection.
+  </Step>
+</Steps>
+
+## What you get back
+
+- **Observations.** For each evidence requirement, the records that were read, the method and channel that produced them, the citations into the vendor documentation that justified the method, and any captured screenshots with their source URL and timestamp.
+- **Statuses instead of silence.** An observation that could not be obtained still exists and says why: `authentication_required`, `forbidden`, `unsupported`, `inconclusive`, or `failed`. An application that does not sell a capability is not marked down for lacking it.
+- **Evaluations.** For Evaluate inspections, a level on your scale with a written justification, snapshotting the control text that was evaluated so a later edit to the control does not rewrite history.
+- **Drift comparisons.** `exact`, `changed` with the records and fields that moved, or a coded reason no comparison was possible (`no_baseline`, `incompatible_contract`, `not_comparable`). None of those reasons is ever rendered as a change.
+- **An activity timeline.** Every step, page visited, security decision and outcome of the run, appended in order and readable while the run is live and afterwards.
+- **A session replay** for browser runs, so a reviewer can watch what the agent did.
+
+<Warning>
+  Progress and outcome are separate facts. "5 of 5 controls finished" says only that execution stopped; read each control's status for whether it passed.
+</Warning>
+
+## Where a model is involved
+
+Code produces every observation you read about your own configuration. A model is used in exactly these places, and kept out of everything else:
+
+| Model call | When | Why a model |
+| --- | --- | --- |
+| Plan preparation | Once per control per application, ahead of any run | Reading vendor documentation and designing evidence collection is a language task |
+| Sign-in agent | Each step of a browser sign-in | Getting through an identity provider's login flow |
+| Browser agent | Each step of a browser evidence attempt | Choosing the next read-only action on an unfamiliar admin console |
+| Network adjudication | The first time an unfamiliar request shape appears, then cached | Deciding whether an outbound request belongs to the task |
+| Navigation adjudication | When the agent chooses an address that leaves the expected surface | Deciding whether a destination names a page or an action |
+| Evaluation | Once per control run with the Evaluate purpose | Judging observations against the control expectation and writing the justification |
+
+Contract validation, the Drift comparison, and status derivation are deterministic, so a reviewer can reproduce them. Where the models run and how their inputs are handled is covered in [Hosting and data handling](/inspect/hosting-and-data-handling).
+
+## Status of the pieces described here
+
+| Capability | Status |
+| --- | --- |
+| Explore, Evaluate and Drift inspections with per-control runs | Available |
+| Pre-run plans from pinned vendor documentation, with versioned revisions | Available |
+| API and browser channels; documented API reads where the plan has them, browser methods for the rest | Available |
+| Findings raised from Inspect evaluations, with remediation guidance | Available |
+| Drift materiality judgment (material, immaterial, inconclusive) | Planned. Today a changed control reports the change and stops there. |
+| Recurring inspections on a schedule you set inside Inspect | Planned |
+| Notifications when an inspection needs a person | Planned |
+| Launching inspections through the public API | Ask your Coverbase team |
+
+Planned and under-investigation items are described, by what they would let you do, on the [Inspect roadmap](/inspect/roadmap).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="API and browser evidence channels" icon="route" href="/inspect/evidence-channels">
+    What each channel can reach, what it sends, and how it is constrained.
+  </Card>
+  <Card title="Safeguards and limits" icon="shield-check" href="/inspect/safeguards-and-limits">
+    The safeguards on a browser session, what is recorded, and the limits of each.
+  </Card>
+  <Card title="Hosting and data handling" icon="server" href="/inspect/hosting-and-data-handling">
+    Where sessions, models and evidence live, and for how long.
+  </Card>
+  <Card title="Access, permissions and revocation" icon="key" href="/inspect/access-and-permissions">
+    What to provision for Inspect, and how to take it away.
+  </Card>
+</CardGroup>
