@@ -825,6 +825,14 @@ Three sections carry outside-in intelligence measured from registries of record 
   Returned only when your organization has the measured security rating enabled; `null` otherwise.
 </ResponseField>
 
+<ResponseField name="security_posture.external_intelligence.recommended_actions" type="object[]">
+  Ranked next steps derived from the profile when it is read, most urgent first. Each carries a `code` (for example `kev_exploited`, `dmarc_not_enforcing`), a `priority` of `urgent`, `soon` or `routine`, a `count`, the `subjects` it rests on (CVE ids, hosts, domains), and the `factor` it relates to. Empty when no rule fired.
+</ResponseField>
+
+<ResponseField name="security_posture.external_intelligence.changes" type="object | null">
+  What this scan found that the previous one did not: `previous_as_of`, `previous_score`, `score_delta`, `factor_deltas`, `new_findings`, `resolved_findings`, `new_vulnerabilities`, `resolved_vulnerabilities`, `new_assets` and `departed_assets`. `null` on a first scan and on a profile stored before the comparison existed.
+</ResponseField>
+
 <ResponseField name="security_posture.external_intelligence.factor_scores" type="object[]">
   One entry per scored factor. `factor` is one of `patching_cadence`, `network_security`, `email_security`, `tls_configuration`, `web_application_headers`, `dns_health`, `leaked_information`, `ip_reputation`, `application_security`, `web_reputation`, `domain_squatting`. `score` is 0-100, `grade` is `A` through `F`, and `weight` is the absolute weight the factor carried in `overall_score`.
 
