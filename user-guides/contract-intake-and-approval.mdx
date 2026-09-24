@@ -12,7 +12,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
   This guide is part of the [User Guides](/user-guides/overview) collection. It covers a contract from the first request to the filing of the signed copy. For the screens you work in afterwards, see the [Contracts workspace guide](/user-guides/contracts-workspace). For the DocuSign connection itself, see the [DocuSign integration guide](/integrations/guides/docusign).
 </Info>
 
-A new contract goes through four stages: somebody raises a request, a person confirms the values read off the draft, the request walks an approval chain, and the approved agreement goes out for signature. Each stage has its own screen, and a contract cannot skip one.
+A new contract goes through four stages: somebody raises a request, a person confirms the values read off the draft, the request walks an approval chain, and the approved agreement goes out for signature. The contract's **Workflow** tab lays them out as numbered steps in that order, and a contract cannot skip one.
 
 <Note>
   **Contracts that predate this flow are unaffected.** Every historical and bulk-imported contract sits in **Draft** and stays there. Nothing about a draft implies it is unsigned. If you are migrating a back catalog, keep using [bulk import](/import); it does not route anything through approvals.
@@ -25,13 +25,13 @@ A new contract goes through four stages: somebody raises a request, a person con
     From the vendor's **Contracts** tab, click **New Contract**. Fill in what you know and attach the draft agreement.
   </Step>
   <Step title="Confirm the metadata">
-    Coverbase reads the draft and fills in what it can. Open the contract's **Approval** section and confirm the values are right. The request cannot proceed until somebody does.
+    Coverbase reads the draft and fills in what it can. Open the contract's **Workflow** tab and confirm the values under **Metadata sign-off**. The request cannot proceed until somebody does.
   </Step>
   <Step title="Approve">
-    The request enters the approval chain your organization configured. Each approver is emailed in turn and records a decision.
+    Click **Submit for approval** on the **Approval chain** step. The request enters the chain your organization configured, and each approver is emailed in turn and records a decision.
   </Step>
   <Step title="Send for signature">
-    Once the chain clears, the contract's **Execution** section offers **Send to DocuSign**. The signed copy comes back and is filed on the same contract.
+    Once the chain clears, the **Signature** step of the Workflow tab offers the send. The signed copy comes back and is filed on the same contract.
   </Step>
 </Steps>
 
@@ -80,13 +80,19 @@ A banner at the top of the contract says it is held. Click **Release for routing
   A held contract still shows in the contracts list. Filter on **Held For Intake Review** is `Yes` to find drafts that have been sitting unreleased.
 </Tip>
 
+## Asking a colleague to look first
+
+The first step on the **Workflow** tab is **Reviews**. Click **Request review** to ask a named colleague or a user group for a decision on the draft, with a note saying what to look at. Each review records its outcome, and the step counts how many have been approved.
+
+Reviews are optional. They do not hold up submission or the approval chain on their own, so a request can be submitted with a review still open. Use them when somebody should read the draft before approvers are asked, and use the approval policy for the decisions that must be recorded before the contract can move. Reviews work the same way everywhere in Coverbase; see [Reviews, approvals and gates](/user-guides/reviews-and-approvals).
+
 ## Confirming the metadata
 
 Coverbase analyzes the attached draft and fills in the values it can read: dates, amounts, notice periods, term length. Scanned PDFs are put through OCR first, so a photographed signature page is read the same as a native one.
 
 **Everything the AI writes is a draft value.** It is never treated as confirmed, and a contract whose values nobody has confirmed cannot be submitted for approval.
 
-Open the contract and go to its **Approval** section. The **Metadata sign-off** card shows:
+Open the contract's **Workflow** tab. The **Metadata sign-off** step shows:
 
 - Which required values are still empty. The card lists them by name, and submission stays blocked until each has a value.
 - Whether anybody has confirmed the set, and who.
@@ -103,7 +109,7 @@ Fix anything that is wrong, then click **Confirm metadata**. Coverbase records w
 
 ### Where a value came from
 
-Each field records whether it was entered by a person or suggested by the AI. The contract's **Properties** section shows the source per field. A reviewer can see which numbers a person typed and which came off the paper.
+Each field records whether it was entered by a person or suggested by the AI. The **Metadata sign-off** step marks the source beside each value, and the same marker appears on the **Overview** tab. A reviewer can see which numbers a person typed and which came off the paper.
 
 ## The approval chain
 
@@ -171,18 +177,18 @@ Two steps sharing a number cannot name the same approver, and the editor refuses
 
   The refusal names the step it could not fill. Give the contract an owner, add somebody to the group, or point the policy at approvers it can reach, then submit again.
 
-  A contract submitted when your org has configured no policy at all is approved immediately, and its Approval section says so rather than showing a bare **Approved** badge. If that is not what you expect, configure a policy.
+  A contract submitted when your org has configured no policy at all is approved immediately, and its **Approval chain** step says so rather than showing a bare **Approved** badge. If that is not what you expect, configure a policy.
 </Note>
 
 ### Submitting
 
-From the **Approval** section, click **Submit for approval**. The button appears only when the metadata is confirmed and no required value is empty.
+On the **Workflow** tab, click **Submit for approval** in the **Approval chain** step. Until the metadata is confirmed and every required value has one, the button is disabled and the step says what is still needed: a value to add under **Terms** on the Overview, the sign-off itself, or an intake hold to release.
 
 Coverbase emails the approvers on the first step. Later steps are emailed as the chain reaches them, so nobody is asked before it is their turn.
 
 ### Deciding
 
-An approver opens the contract's **Approval** section and sees **Approve** and **Reject** on the step waiting on them. The buttons appear only for the person being asked, so an approver who is not on this step sees the chain but no controls.
+An approver opens the contract's **Workflow** tab and sees **Approve** and **Reject** on the chain step waiting on them. The buttons appear only for the person being asked, so an approver who is not on this step sees the chain but no controls.
 
 <Note>
   **Approving does not require permission to edit the contract.** An approver is frequently somebody who would never otherwise edit a contract record, such as a finance reviewer signing off on spend. Being named on the step is what authorizes the decision.
@@ -212,7 +218,9 @@ Date-based reminders, such as an approaching expiry or notice deadline, are conf
 
 ## Sending for signature
 
-Once the chain clears, the contract's **Execution** section offers **Send to DocuSign**. Before then the button is disabled and the section says why.
+Once the chain clears, the **Signature** step of the Workflow tab offers the send. Before then the button is disabled and the step says why.
+
+Which send you see depends on how your organization signs. Organizations on Coverbase's own e-signature see a **Signature** card that raises the envelope inside Coverbase; see the [signature overview](/user-guides/signature-overview). Organizations that sign in DocuSign see **DocuSign Execution** with **Send to DocuSign**, described below.
 
 You need a connected DocuSign account. See [connecting DocuSign](/integrations/guides/docusign#connecting-your-account) if you have not done that.
 
@@ -241,16 +249,16 @@ On **Send to DocuSign** you choose:
 
 A policy with **Send for signature on approval** sends the agreement as soon as its last approver signs off, with nobody at a screen.
 
-Coverbase needs to know who signs before the approval finishes. While the contract is still moving through its chain, **Execution → Set up automatic send** asks the same questions the Send dialog asks: which document, who signs, in what order, and who is copied.
+Coverbase needs to know who signs before the approval finishes. While the contract is still moving through its chain, **Set up automatic send** on the DocuSign Execution card asks the same questions the Send dialog asks: which document, who signs, in what order, and who is copied.
 
 <Frame caption="The automatic send editor. Same questions as the manual send, asked while there is still somebody to answer them.">
   <img src="/images/user-guides/contract-auto-send-plan.png" alt="Automatic send dialog with a document picker, two recipients and an email subject" />
 </Frame>
 
-Once it is set up, the Execution section says what is about to happen.
+Once it is set up, the DocuSign Execution card says what is about to happen.
 
 <Frame caption="The contract is still in approval, and this is what will go out when it clears.">
-  <img src="/images/user-guides/contract-auto-send-planned.png" alt="Execution section noting the contract goes out to two recipients automatically once approved" />
+  <img src="/images/user-guides/contract-auto-send-planned.png" alt="DocuSign Execution card noting the contract goes out to two recipients automatically once approved" />
 </Frame>
 
 The envelope goes out **as the person who set up the automatic send**, using the DocuSign connection they made. They do not have to be at a screen when it happens, but they do have to have connected: see [Connecting DocuSign](/integrations/guides/docusign).
@@ -260,11 +268,11 @@ The envelope goes out **as the person who set up the automatic send**, using the
 </Note>
 
 <Note>
-  **A send that does not go out never undoes an approval.** If DocuSign is unreachable, or the plan author's connection has lapsed, the contract stays approved and the plan stays on it. The Execution section says the automatic send did not go out, and **Send to DocuSign** remains available to send it by hand. The one exception is a send that got as far as DocuSign and lost its answer, covered under [When a send loses its answer](#when-a-send-loses-its-answer).
+  **A send that does not go out never undoes an approval.** If DocuSign is unreachable, or the plan author's connection has lapsed, the contract stays approved and the plan stays on it. The DocuSign Execution card says the automatic send did not go out, and **Send to DocuSign** remains available to send it by hand. The one exception is a send that got as far as DocuSign and lost its answer, covered under [When a send loses its answer](#when-a-send-loses-its-answer).
 </Note>
 
 <Frame caption="Approved, with a plan and nothing out. The automatic send did not run, and the manual one is still available.">
-  <img src="/images/user-guides/contract-auto-send-failed.png" alt="Execution section warning that the automatic send did not go out" />
+  <img src="/images/user-guides/contract-auto-send-failed.png" alt="DocuSign Execution card warning that the automatic send did not go out" />
 </Frame>
 
 Clearing the recipient list and saving turns the automatic send back off. You can do that at any point while the contract is still in its chain, and until the send starts.
@@ -273,7 +281,7 @@ Once the agreement has gone out, Coverbase refuses the change and tells you the 
 
 ### Tracking the envelope
 
-The **Execution** section shows every DocuSign envelope raised on this contract, each recipient's state, and when the status was last read from DocuSign.
+The **DocuSign Execution** card shows every DocuSign envelope raised on this contract, each recipient's state, and when the status was last read from DocuSign.
 
 | Envelope status | What it means |
 | --- | --- |
@@ -296,7 +304,7 @@ Status arrives on its own. DocuSign notifies Coverbase as the envelope moves, an
 
 ### When a send loses its answer
 
-Very occasionally a send reaches DocuSign and the reply never comes back. Coverbase cannot tell that apart from DocuSign refusing the send outright, so it assumes the riskier of the two: the envelope may be out there with your signers. The contract is held as sent for signature, the envelope shows as failed, and the Execution section explains what happened instead of offering **Sync status**, which has nothing to ask about.
+Very occasionally a send reaches DocuSign and the reply never comes back. Coverbase cannot tell that apart from DocuSign refusing the send outright, so it assumes the riskier of the two: the envelope may be out there with your signers. The contract is held as sent for signature, the envelope shows as failed, and the DocuSign Execution card explains what happened instead of offering **Sync status**, which has nothing to ask about.
 
 <Frame caption="A send Docusign never confirmed. Abandon send replaces Sync status, because there is nothing to sync.">
   <img src="/images/user-guides/contract-send-never-acknowledged.png" alt="Envelope card marked failed, with a warning that Docusign never confirmed the send and an Abandon send button" />
@@ -329,7 +337,7 @@ When an envelope completes, Coverbase downloads the signed PDF and the DocuSign 
   <img src="/images/user-guides/contract-executed-copy-flagged.png" alt="Envelope card with a warning that the signed copy differs from the approved draft" />
 </Frame>
 
-Everything is recorded on the contract's **Activity** section: the submission, each review and decision, the comments, the status changes, the send, and the filing of the executed copy.
+Everything is recorded on the contract's **Activity** tab: the submission, each review and decision, the comments, the status changes, the send, and the filing of the executed copy.
 
 ## The vendor's contract overview
 
