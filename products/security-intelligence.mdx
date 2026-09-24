@@ -42,6 +42,14 @@ The distinction that matters: this is **measured**, not reported. A rating built
   <Card title="You correct the attribution" icon="list-check">
     Attribution is worked out from domain names, so it is sometimes wrong in both directions. Dispute an asset that is not the vendor's and it leaves the scan and the rating. Add one the scan cannot discover and it is probed and scored like any other.
   </Card>
+
+  <Card title="The scan tells you what to do" icon="list-ol">
+    Every profile carries a ranked list of next steps, each resting on a named observation: an actively exploited CVE, a database port open to the internet, a DMARC record that does not enforce. Each one copies a question ready to send to the vendor. The list is the same on the page, in a report and through MCP.
+  </Card>
+
+  <Card title="Every scan says what changed" icon="git-compare">
+    A refresh records what it found that the previous one did not, and the reverse: findings that appeared or were resolved, factors that moved, assets that arrived or left. A returning reader learns what is new in two lines rather than by rereading the page.
+  </Card>
 </CardGroup>
 
 ## What gets measured
@@ -105,6 +113,22 @@ Opening a finding also shows the remediation step for its code, and whether the 
 <Tip>
   Take a finding to the vendor as an observation, not an accusation: "your DMARC record is `p=none`, so mail forged from your domain still gets delivered. Is enforcement on the roadmap?" It is a verifiable fact about a public record, and it converts a security review into a specific, answerable question.
 </Tip>
+
+## Next steps and the change log
+
+Two things sit between the rating and the evidence, and both are derived from the scan rather than written by a model.
+
+**Next steps** is a fixed set of rules over the profile, ranked urgent, soon and routine. Urgent rules fire on evidence of active exploitation or an open door: a CVE in CISA's Known Exploited Vulnerabilities catalog, a CVE tied to ransomware campaigns, an administrative or database service reachable from the internet, a failing certificate. Soon rules fire on policy gaps: DMARC at `p=none`, SPF ending in `+all`, TLS 1.0 or 1.1, a certificate within three weeks of expiry, a lookalike domain that accepts mail, staff credentials in a breach within a year of the scan. Routine rules fire on what weakens the rating itself: findings open for six months or more, an estate nobody has reviewed, and a rating that rests on less than 60% of the model's weight.
+
+The rules are evaluated when the page, a report or an MCP client reads the profile, not when the scan ran. A rule added or tightened applies to every vendor on the next read, and every vendor scanned before the rules existed gets a list without a rescan.
+
+**Since last scan** is stored by each refresh against the profile it replaces, because the replaced profile is the only place a resolved finding can be found. It records the score and factor movement, findings that appeared or closed, CVEs that appeared or are no longer observed, and assets that arrived or left. A finding counts as resolved only if its factor was measured in both scans, and CVEs are compared only if both scans reached the vulnerability source, so a skipped credential never reads as a fix.
+
+The same two blocks reach assessment reports as `{{intelligence::security next steps}}` and `{{intelligence::security change since last scan}}`, and the security posture section an agent reads carries them in full.
+
+## Standing among your vendors
+
+With at least five rated vendors, the rating shows where this vendor sits among them: the share of the other rated vendors the viewer can open that it scores at or above. Someone restricted to assigned vendors is ranked among those, never against vendors they cannot see. It is computed when the page opens, from the ratings as they stand, so a vendor archived this morning is out of the cohort this morning. Below five rated vendors it is not shown, because two vendors make one of them "top 50%".
 
 ## The predictive index
 

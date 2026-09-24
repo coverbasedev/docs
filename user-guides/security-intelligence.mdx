@@ -19,8 +19,55 @@ This page rates a vendor's internet-facing security from the outside, by queryin
 Open a vendor, go to **Vendor Intelligence**, and pick the **Security** tab.
 
 <Frame caption="1 Overall rating and grade. 2 Rating over time. 3 Per-factor breakdown, with the findings behind each score.">
-  <img src="/images/user-guides/vendor-intelligence-security.png" alt="The Security tab for a vendor, showing an overall rating of 78, a rating history chart, and a factor breakdown covering patching, network exposure, TLS, email authentication and reputation." />
+  <img src="/images/user-guides/vendor-intelligence-security.png" alt="The Security tab for a vendor, showing an overall rating of 78 with a verdict naming email authentication as the factor costing points, a row of jump links to each section, Next steps and Since last scan side by side, and the score breakdown with email authentication expanded to its three findings." />
 </Frame>
+
+The page is laid out in the order a review runs. The rating comes first, then **Next steps** and **Since last scan** side by side, then the score breakdown and the evidence sections behind it. A row of jump links under the rating takes you to any section without scrolling. It lists only the sections this scan produced, so a vendor with no known vulnerabilities is not offered a link to an empty heading.
+
+## Next steps
+
+<Frame caption="Next steps on the left, most urgent first, and what changed since the previous scan on the right.">
+  <img src="/images/user-guides/vendor-intelligence-next-steps.png" alt="Two panels side by side. Next steps lists four ranked actions: an actively exploited vulnerability marked Urgent, DMARC not enforcing and a mail-capable lookalike domain marked Soon, and findings open for six months or more on two assets marked Routine, each with Ask the vendor and Go to controls. Since last scan shows the score moving from 77 to 78, two factor moves, one new finding, one resolved finding, one new vulnerability, one new asset and one asset no longer seen." />
+</Frame>
+
+**Next steps** turns the scan into a short list of things to do, most urgent first. Each step names the evidence it rests on, says in one line why it matters, and offers two actions:
+
+- **Ask the vendor** copies a question ready to paste into a message. It quotes the observed value, so the vendor gets a specific, checkable claim rather than a request to investigate.
+- **Go to** scrolls to the section holding the evidence.
+
+Steps are ranked **Urgent**, **Soon** or **Routine**. Urgent means something attackers are using now: a vulnerability on CISA's Known Exploited Vulnerabilities list, a CVE tied to ransomware campaigns, a database or remote-desktop port open to the internet, or a failing certificate. Soon covers policy gaps a vendor can fix in a change window: DMARC that does not enforce, a permissive SPF record, legacy TLS, a certificate expiring within three weeks, a mail-capable lookalike domain, or staff credentials exposed in a breach in the last year. Routine covers the things that make the rating itself more trustworthy: findings open for six months or more, an estate nobody has reviewed, and a rating that rests on a minority of the model because a scanner had no credential.
+
+Every step is a rule on the scan data, not a judgment call. The same vendor produces the same list in a report or through MCP, and a list that reads **Nothing in this scan needs action** means every rule came back clear. It does not mean the vendor is secure. See [the rating is a floor, not a verdict](#the-rating-is-a-floor-not-a-verdict).
+
+<Tip>
+  Copy the question before you open a finding. The remediation step on the finding tells the vendor what to change; the question tells them what you saw and asks for a date. Sending both closes the loop in one message.
+</Tip>
+
+## Since last scan
+
+**Since last scan** compares this scan with the previous one and lists what moved: the score, each factor that changed, findings that appeared or were resolved, vulnerabilities that appeared or are no longer observed, and assets that arrived or left the estate. Each count opens to the names behind it.
+
+<Frame caption="Each line is a count. Open one for the names behind it.">
+  <img src="/images/user-guides/vendor-intelligence-since-last-scan.png" alt="The Since last scan panel compared with the scan on Jul 1, 2026, showing the score moving from 77 to 78, Web application headers falling from 76 to 71, TLS configuration rising from 84 to 96, one new finding opened to show a cookie not marked Secure, and one resolved finding opened to show an obsolete TLS version on a departed host." />
+</Frame>
+
+Read it before the factors when you are returning to a vendor you already know. A rating that dropped six points because one factor slipped is a different conversation from one that dropped six points because a new host appeared with an expired certificate, and the panel tells you which in two lines.
+
+Three states look similar and are not:
+
+- **No earlier scan to compare with yet** means there is nothing to compare against: a first scan, or a profile stored before the comparison existed. Changes appear after the next refresh.
+- **Nothing changed** means the scan ran and found the same findings, assets and score as before.
+- A panel with counts means something moved, and the factor rows in the score breakdown carry the same movement as a small badge.
+
+A finding counts as resolved only when its factor was measured in both scans. A source that was skipped this time has not fixed anything, so its findings are left out of the comparison rather than reported as resolved.
+
+A second refresh on the same day keeps comparing against the earlier day rather than against the morning's scan, so running a refresh by hand after the scheduled one does not wipe the panel. Each count is the full number that moved. For a vendor whose estate holds more than 250 assets, the panel reports assets that left but not assets that arrived, because the stored estate is capped and cannot serve as a complete baseline.
+
+## Standing among your vendors
+
+When your organization has at least five vendors with a security rating, the rating carries a standing such as **Top 30%** or **Bottom 20%**. It is the share of the other rated vendors you can open that this one scores at or above, computed when you open the page from the ratings as they stand today. Hover it for the count. A user who can only open assigned vendors is ranked among those vendors, so two people can see different standings for the same vendor.
+
+It ranks the vendor against your portfolio, not against the industry. A vendor in your top 10% can still carry an actively exploited vulnerability, which is why **Next steps** sits above it in the reading order.
 
 ## The rating is a floor, not a verdict
 
@@ -74,6 +121,8 @@ Only issues that cost the rating points are listed, because a zero-penalty obser
 ## Rating over time
 
 Each point is a restatement of the whole rating. A step change usually means a scan found something new rather than the vendor changing overnight, so read the factors before drawing a trend.
+
+The history lives in the drawer at the bottom of the page, beside the **Security timeline**: every dated fact on the profile in one list, newest first. Each rating, the day each open finding was first seen, each breach, each asset that appeared or was no longer seen, and each disclosed incident. Use it to see that a breach, a new host and a rating drop landed in the same fortnight without opening four sections.
 
 ## Attack surface
 
@@ -169,6 +218,10 @@ A mail-capable lookalike matters most. It can host a page and receive replies, w
 | A host you know about is not in the estate | It has no public certificate, so discovery cannot see it. Use **Add asset**, and add every missing host in the same submission so they share one rescan. |
 | A dispute has not changed the rating yet | The rescan it started has to finish first. The rating moves on the next completed scan, not on the click. |
 | A line was refused when you added assets | It did not read as a hostname or an IP address. The rest were still added, and the dialog keeps the refused lines so you can correct them. |
+| Next steps says nothing needs action but a factor scored D | The factor's findings did not trip a rule. Open the factor: a low score built from several small deductions is worth raising, and each finding still has a remediation step and **Raise finding**. |
+| Since last scan says no earlier scan, but the vendor has been scanned for months | The comparison is stored by each scan against the one before it. A profile written before the comparison existed has nothing to compare with until the next refresh runs. |
+| The standing pill is missing | Your organization has fewer than five vendors with a security rating, or this vendor has no rating yet. |
+| A finding shows as resolved but the vendor changed nothing | Check the drawer's scan coverage. A source that was skipped this time drops its findings from the comparison, and the rating; they return when the source runs again. |
 
 ## Related
 
