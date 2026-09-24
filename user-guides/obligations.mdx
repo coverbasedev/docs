@@ -155,7 +155,9 @@ Besides the automatic switches, there are three ways in. All of them need the ob
         **Obligation type** defaults to **Auto-detect**, which lets the extractor classify each statement. Choose **CUEC** or **Shared Responsibility** to force every result to one type. **Services** scopes the results to the vendor's services. **Assignee** and **Due Date** are applied to every obligation the run creates, so leave them blank if the owners will differ.
       </Step>
       <Step title="Extract obligations from documents">
-        The job runs in the background. You get an in-app notification and an email when it finishes, with the count created. Statements already on file for the vendor are skipped, and the same control matching as automatic extraction runs on each result.
+        The job runs in the background. You get an in-app notification and an email when it finishes, with the count created and, when a document already had obligations, the count of statements that were already on file and skipped. A statement is skipped when the same obligation is already recorded against that document, even if it is worded differently. The same control matching as automatic extraction runs on each result.
+
+        Before you start, the modal tells you how many obligations the selected documents already carry, so a low created count on a re-run reads as expected rather than as a failure. On a SOC 1 or SOC 2 report the extractor reads only the complementary user entity controls section; on a contract it reads the whole document.
       </Step>
     </Steps>
   </Accordion>
@@ -273,7 +275,7 @@ Select rows (or a whole group with the checkbox in its header) and the floating 
 
 | Email or notification | Who gets it | When |
 | --- | --- | --- |
-| **Obligation extraction status** (in-app and email) | The person who started the extraction | An extraction from documents finishes. Subject: "Obligation extraction for `<vendor>` completed", or "failed" with a request to try again. |
+| **Obligation extraction status** (in-app and email) | The person who started the extraction | An extraction from documents finishes. Subject: "Obligation extraction for `<vendor>` completed", or "failed" with a request to try again. The body gives the count created and, on a re-run, how many statements were already on file and skipped. |
 | **User group assignments** | The group member Coverbase picked | An obligation is assigned to a user group. |
 | Commitment invitation | The vendor's relationship owners (**To**) and the obligations' assignees (**CC**), as edited before sending | You send a **Request Commitment** invitation. |
 | **Obligation note** | The vendor's relationship owners (or the vendor contacts if there are none) | You add a note on an obligation that has an active commitment portal. |
@@ -315,6 +317,9 @@ How resources, actions and scopes combine is in [Permissions and roles](/user-gu
 | "I cannot edit anything on the record." | Either the obligation is archived (see the notice at the top), or your role reads obligations without updating them. Ask an Admin. |
 | "I archived an obligation by mistake." | Archiving cannot be undone from the page. Recreate it with **Create manually**, or ask for it to be restored through the API (`PATCH` with `is_archived: false`). |
 | "A yellow warning sits on the document group." | The source SOC report has expired, so its CUECs may be stale. Open each record; the header offers **Archive** if the newer report replaces them. |
+| "I re-ran extraction on a document and the count barely moved." | That is the expected result. A re-run adds only statements not already on file for that document; the completion email says how many were skipped. Run it when you believe the first pass missed something, not to refresh what is there. |
+| "A document has the same obligation twice." | The two records were created before duplicate detection compared meaning as well as wording, or the extractor could not tell them apart. Select both in the list, keep the one that carries status and evidence, and archive the other from the floating bar. |
+| "A new SOC report arrived and last year's obligations are still listed." | Each report produces its own obligations, and a newer report does not retire an older one yet. Obligations from the new report that match a satisfied one from the old report arrive **Satisfied** with compliance type **Similar Obligation**. Archive the old report's obligations from the document group once you have checked that carried over, or leave them for history. |
 
 ## Related
 
