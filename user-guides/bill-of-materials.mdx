@@ -1,0 +1,172 @@
+---
+title: "Bills of materials"
+description: "How to upload a vendor's SBOM, read its components, keep the right version applied, and get a Radar alert when a known exploited vulnerability affects a component it lists."
+icon: "boxes-stacked"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. For the rest of the vendor page, see [The vendor record](/user-guides/vendor-record). For how Radar signals are worked once they arrive, see [Working Radar signals](/user-guides/radar-signals).
+</Info>
+
+A bill of materials (BOM) is a vendor's machine-readable list of what its product is built from: libraries, frameworks, containers, firmware, models. Upload one to a vendor and Coverbase breaks it into searchable components. Radar then checks those components against known exploited vulnerabilities and raises an alert on the vendor when one applies.
+
+The most common mistake is expecting alerts from a file that was never read. Coverbase reads bills of materials in JSON only, and Radar only checks files typed **SBOM**. Check the format, type and status badges after every upload.
+
+## Before you start
+
+You need:
+
+- The vendor's bill of materials as **CycloneDX JSON** or **SPDX JSON**. Ask the vendor for JSON if they send another encoding. See [Supported formats](#supported-formats).
+- A file no larger than 100 MB.
+
+To get Radar alerts from it, you also need:
+
+- Radar turned on for your organization.
+- The **NIST National Vulnerability Database (with KEV)** source connected. Add it under **Configuration → Radar → Sources → New Source → From Source Library**. See [Sources](/user-guides/radar-signals#sources).
+- The vendor in **Active** status and linked to a company record. A vendor you created by picking it from the directory is already linked.
+
+## Uploading a bill of materials
+
+1. Open the vendor and choose the **Bill of Materials** tab. To attach the file to one service instead, open that service's page and use its **Bill of Materials** tab.
+2. Drag the file onto **Upload a CycloneDX or SPDX bill of materials**, or click it to browse. One file at a time.
+3. Wait for the toast: *Uploaded "file name". Parsing has started.*
+
+Parsing runs in the background and usually takes seconds. Large SBOMs can take a few minutes. The file also appears on the vendor's **Documents** tab, so it travels with the rest of the vendor's evidence.
+
+<Note>
+  Upload bills of materials on the **Bill of Materials** tab. A CycloneDX or SPDX file uploaded through the **Documents** tab may be classified as an SBOM, but it does not appear on the **Bill of Materials** tab and Radar does not read it. To fix one that was uploaded there, edit the document and set its document type to a bill of materials type (for example **SBOM (CycloneDX)**). It is then parsed like any other upload.
+</Note>
+
+Suppliers cannot upload a bill of materials through the supplier portal. A file a supplier sends you has to be uploaded here by someone on your team.
+
+## Supported formats
+
+Coverbase supports **CycloneDX JSON** and **SPDX JSON**, in files ending `.json` or `.cdx`.
+
+Support for CycloneDX XML and SPDX tag-value is coming soon. Until then, the upload box refuses those files. If a vendor sends one, ask them for a JSON export, or convert it yourself with the CycloneDX or SPDX command-line tools.
+
+Coverbase reads each component's name, version, type, package URL (purl), CPE, supplier, licenses and hashes. It does not read the dependency graph between components.
+
+## Reading the current bill of materials
+
+**Current bill of materials** shows the file Coverbase treats as this vendor's inventory. Its header carries three badges and a count:
+
+- **Format**: **CycloneDX** or **SPDX**, or **Unknown format** when the file was neither.
+- **Type**: **SBOM**, **AI-BOM**, **Hardware BOM** or **SaaS BOM**. See [How the type is decided](#how-the-type-is-decided), because only **SBOM** is checked by Radar.
+- **Status**: **Pending** and **Parsing** while it works, then **Parsed**, **Failed** or **Unsupported**.
+- **Unique components**: identical entries listed more than once in the file are counted once.
+
+**Download** returns the original file.
+
+Once the status is **Parsed**, the components table lists **Name**, **Version**, **Type**, **Licenses**, **Vendor** (the component's supplier as the file states it) and **Package URL**. **Search components** matches the name, package URL or group. **Filter by component type** narrows to one type.
+
+When the status is **Failed** or **Unsupported**, the panel shows *We could not parse this bill of materials.* or *This bill of materials format is not supported.* with the reason underneath. The file is kept either way.
+
+### How the type is decided
+
+SPDX files are always **SBOM**. For CycloneDX, Coverbase reads the component types in the file and picks the first that applies:
+
+1. **AI-BOM** if any component is a machine learning model.
+2. **Hardware BOM** if any component is a device, firmware or operating system.
+3. **SaaS BOM** if the file describes a platform or service.
+4. **SBOM** otherwise.
+
+<Warning>
+  A software SBOM that lists an **operating system** component, such as the base image of a container, is typed **Hardware BOM**. Radar only checks files typed **SBOM**, so that vendor gets no vulnerability alerts. If the type badge is wrong for your file, ask the vendor for an SBOM without the operating system entry, or tell Coverbase support.
+</Warning>
+
+## Keeping the right version applied
+
+Each upload adds a row to **Upload history**, newest first, with **File name**, **Format**, **Type**, **Status**, **Components** and **Uploaded**. One row is badged **Applied**; the rest are **Historical**.
+
+- **The newest upload is applied automatically.** Uploading a newer SBOM replaces the old one as the vendor's inventory. You do not need to remove the old file.
+- **Set as current** makes an older upload the applied one again. It appears only on rows that parsed successfully, and it is recorded in the vendor's activity log.
+- **A newer upload that failed still shows as Applied** on this tab. Radar ignores it and keeps using the newest upload that is a **Parsed SBOM**. Fix the file and upload it again, or use **Set as current** on the last good one so the tab matches what Radar uses.
+
+Click a row to open that upload's components.
+
+### Vendor and service bills of materials
+
+A bill of materials uploaded from a service page belongs to that service and to its vendor. The service's tab shows the newest upload for that service. The vendor's tab shows the newest upload across the vendor and all of its services.
+
+<Note>
+  Radar reads one bill of materials per vendor: the newest parsed SBOM across the vendor and its services. If a vendor has several products, each with its own SBOM, only the most recently uploaded one is checked. Combine them into one file if you need all of them checked.
+</Note>
+
+## How Radar uses a bill of materials
+
+When Radar collects a CVE record from the National Vulnerability Database, it compares the products and version ranges the CVE affects against the components in each vendor's applied SBOM. A component that matches raises an alert on that vendor.
+
+### Which vulnerabilities are checked
+
+The **NIST National Vulnerability Database (with KEV)** source only collects vulnerabilities on the CISA Known Exploited Vulnerabilities (KEV) catalog. An SBOM alert therefore always means a component with a flaw attackers are known to be exploiting, not every CVE that mentions one of the vendor's libraries.
+
+A CVE is checked when Radar collects its record, which happens when the CVE is added to the KEV catalog or its NVD record changes. **Uploading an SBOM does not rescan the vulnerabilities Radar already holds.** A new SBOM is checked against each CVE the next time that CVE's record is collected.
+
+### How a component is matched
+
+Coverbase compares each vulnerable product NVD lists against the component's CPE first, then its package URL, then its name. npm and PyPI packages are matched on their exact package name. Everything else is matched on the vendor and product words.
+
+Then it checks the version against the affected range.
+
+- A version inside the range matches.
+- A version outside it does not.
+- A component **without a version** only matches a vulnerability that affects every version. Otherwise it is skipped, and no alert is raised.
+- A version Coverbase cannot compare, such as a build label, is also skipped.
+
+Radar raises an alert only when the match is certain. An SBOM with complete versions and package URLs gets the most accurate results.
+
+### What you see
+
+A match raises an alert from the **SBOM Vulnerability Alerts** detector. Every organization has this detector. It is managed by Coverbase, applies to all your vendors, and does not appear in your detector list, so there is nothing to configure or enable.
+
+- **Severity** follows the CVE's CVSS score: **High** at 7.0 and above, **Medium** at 4.0 and above, **Low** below that, and **Informational** when NVD gives no score. There is no separate critical level.
+- **The summary** reads *CVE-ID affects component version in vendor's SBOM*, and the reasoning lists every matched component and how it matched.
+- **The signal** lands in **Radar → Signals** like any other, and is triaged the same way. See [Triaging a signal](/user-guides/radar-signals#triaging-a-signal).
+
+On the signal's **Exposure** tab, the vendor appears as a **Direct** exposure with a **Source** column naming the matched components. In the **Flow** view, click a component for **Why This Matched**: the component's package URL and CPE, whether it matched by CPE, PURL or component name, the NVD criteria it matched, and **View uploaded bill of materials**.
+
+### Your bill of materials stays private
+
+CVE events are shared across Coverbase customers. SBOM matches are not. The exposure and the alert belong to your organization only, and another customer looking at the same CVE never sees your vendor, its components, or that a match happened. Vendors often share SBOMs under NDA, and nothing in the file leaves your workspace.
+
+### Replacing or withdrawing an SBOM
+
+A newer upload changes what future CVEs are checked against. It does not withdraw alerts already raised from the older file. Dismiss those on the signal if the new SBOM no longer contains the component.
+
+Only files typed **SBOM** are checked. **AI-BOM**, **Hardware BOM** and **SaaS BOM** files are stored and browsable, but they raise no alerts.
+
+## Troubleshooting
+
+| What you see | Usually means |
+| --- | --- |
+| *is not a JSON file* when you upload | The file is CycloneDX XML or SPDX tag-value. Export or convert it to JSON and upload that. |
+| Status **Unsupported** | The file is JSON but not a CycloneDX or SPDX bill of materials. Ask the vendor for a CycloneDX or SPDX export. |
+| Status **Failed** | The JSON is malformed or truncated. Read the reason in the panel, and ask the vendor for a fresh export. |
+| Status stays **Pending** or **Parsing** for more than 15 minutes | Parsing stopped. Upload the file again. If it stalls a second time, contact support with the file name. |
+| The file is on **Documents** but not on **Bill of Materials** | It was uploaded through **Documents**. Set its document type to a bill of materials type, or upload it again on the **Bill of Materials** tab. |
+| Type shows **Hardware BOM** for a software product | The file lists an operating system component. See [How the type is decided](#how-the-type-is-decided). |
+| No alerts, ever, for a vendor with an SBOM | Check, in order: the **NIST National Vulnerability Database (with KEV)** source is connected, the vendor is **Active** and linked to a company record, the applied file is a **Parsed SBOM**, and the components carry versions. |
+| An alert you expected did not arrive after uploading | The CVE was collected before the upload. It is checked when its NVD record next changes. |
+| An alert names a component the vendor no longer ships | The alert came from an earlier SBOM. Dismiss it on the signal. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    Triaging the signals an SBOM match raises.
+  </Card>
+  <Card title="The vendor record" icon="building" href="/user-guides/vendor-record">
+    The rest of the vendor page, including its documents and services.
+  </Card>
+  <Card title="Source library" icon="book" href="/products/source-library">
+    The NVD source and the other vulnerability feeds Radar can collect.
+  </Card>
+  <Card title="Bill of Materials API" icon="code" href="/api-reference/bill-of-materials">
+    Uploading and searching bills of materials from your own systems.
+  </Card>
+</CardGroup>
