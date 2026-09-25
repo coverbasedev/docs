@@ -14,7 +14,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 A bill of materials (BOM) is a vendor's machine-readable list of what its product is built from: libraries, frameworks, containers, firmware, models. Upload one to a vendor and Coverbase breaks it into searchable components. Radar then checks those components against known exploited vulnerabilities and raises an alert on the vendor when one applies.
 
-The most common mistake is uploading an SBOM in a format Coverbase stores but does not read, usually CycloneDX XML. The file is kept, but it has no components, so nothing can ever match it. Check the file's status after every upload.
+The most common mistake is expecting alerts from a file that was never read. Coverbase reads bills of materials in JSON only, and Radar only checks files typed **SBOM**. Check the format, type and status badges after every upload.
 
 ## Before you start
 
@@ -45,14 +45,9 @@ Suppliers cannot upload a bill of materials through the supplier portal. A file 
 
 ## Supported formats
 
-| Format | Encoding | Read into components |
-| --- | --- | --- |
-| CycloneDX | JSON (`.json`, `.cdx`) | Yes |
-| SPDX | JSON (`.json`) | Yes |
-| CycloneDX | XML (`.xml`) | No. Stored as **Unsupported**. |
-| SPDX | Tag-value (`.spdx`) | No. Stored as **Unsupported**. |
+Coverbase supports **CycloneDX JSON** and **SPDX JSON**, in files ending `.json` or `.cdx`.
 
-The upload box accepts `.xml` and `.spdx` files, so an upload in those encodings succeeds. It is only when parsing finishes that the status shows **Unsupported**. Convert the file to JSON (the CycloneDX and SPDX command-line tools both do this) and upload it again.
+Support for CycloneDX XML and SPDX tag-value is coming soon. Until then, the upload box refuses those files. If a vendor sends one, ask them for a JSON export, or convert it yourself with the CycloneDX or SPDX command-line tools.
 
 Coverbase reads each component's name, version, type, package URL (purl), CPE, supplier, licenses and hashes. It does not read the dependency graph between components.
 
@@ -149,7 +144,8 @@ Only files typed **SBOM** are checked. **AI-BOM**, **Hardware BOM** and **SaaS B
 
 | What you see | Usually means |
 | --- | --- |
-| Status **Unsupported** | The file is CycloneDX XML, SPDX tag-value, or not a bill of materials. Convert it to JSON and upload it again. |
+| *is not a JSON file* when you upload | The file is CycloneDX XML or SPDX tag-value. Export or convert it to JSON and upload that. |
+| Status **Unsupported** | The file is JSON but not a CycloneDX or SPDX bill of materials. Ask the vendor for a CycloneDX or SPDX export. |
 | Status **Failed** | The JSON is malformed or truncated. Read the reason in the panel, and ask the vendor for a fresh export. |
 | Status stays **Pending** or **Parsing** for more than 15 minutes | Parsing stopped. Upload the file again. If it stalls a second time, contact support with the file name. |
 | The file is on **Documents** but not on **Bill of Materials** | It was uploaded through **Documents**. Set its document type to a bill of materials type, or upload it again on the **Bill of Materials** tab. |
