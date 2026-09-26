@@ -24,6 +24,50 @@ Open a vendor, go to **Vendor Intelligence**, and pick the **Security** tab.
 
 The page is laid out in the order a review runs. The rating comes first, then **Next steps** and **Since last scan** side by side, then the score breakdown and the evidence sections behind it. A row of jump links under the rating takes you to any section without scrolling. It lists only the sections this scan produced, so a vendor with no known vulnerabilities is not offered a link to an empty heading.
 
+## The report layout
+
+The page opens as a report. A short summary sits above the rating: what is in good shape, the key gaps, and the checks that could not be measured. Everything below it is the page as before.
+
+<Frame caption="The summary above the rating. A revised page says so, with the scanned and revised ratings.">
+  <img src="/images/user-guides/vendor-intelligence-security-report.png" alt="The Security posture report for a vendor. An Analyst revised badge reads Scanned at 78, revised to 81 by your team. Three columns follow: What's in good shape lists five factors graded A, Key gaps lists an actively exploited vulnerability, DMARC not enforcing and a mail-capable lookalike domain, and Checks still open says domain squatting could not be measured. The rating card and Next steps sit below." />
+</Frame>
+
+To go back to the previous layout, open the actions menu (**...**) at the top of the page and pick **Use previous layout**. Your browser remembers the choice.
+
+## Revising the page
+
+The scan reads what is public, and it can be wrong about a particular vendor. A vulnerability can match a host the vendor no longer runs, or a finding can belong to someone else's infrastructure. **Revise from notes or evidence** corrects the page from text you paste, without changing the shared research.
+
+<Steps>
+  <Step title="Paste what you know">
+    Open the actions menu (**...**) and pick **Revise from notes or evidence**. Paste analyst notes, evidence the vendor sent, or a plain correction, then click **Propose changes**.
+  </Step>
+  <Step title="Review each proposed change">
+    Each change shows the old value, the new one, why, how confident it is, and the words from your text it rests on. Untick any you do not want. The preview on the right shows the rating and grade the changes you keep would leave.
+
+    <Frame caption="A dismissed vulnerability, the quote it rests on, and the rating it would leave.">
+      <img src="/images/user-guides/vendor-intelligence-security-revise.png" alt="The Revise Security Posture dialog. One change is accepted: vulnerability CVE-2026-10233 moves from Active to Dismissed, with the rationale that OpenSSH is not exposed on the vendor estate and a quote saying the host was decommissioned in March. The score preview takes the security rating from 78 to 81, grade B." />
+    </Frame>
+  </Step>
+  <Step title="Apply">
+    Applying saves a new version. The report shows an **Analyst revised** badge with the scanned and revised ratings.
+  </Step>
+</Steps>
+
+On this page you can dismiss a finding or a vulnerability that is not about this vendor. Your text is read as evidence, not as instructions. A change needs support in what you pasted, and anything that reads as an instruction to the product is set aside.
+
+To have Coverbase do this check for you, pick **Check against the vendor's own pages** from the same menu. It reads the vendor's own website and the public record behind each item. A CVE or finding it can show is about a different company, quoting the page or record that shows it, is dismissed as a new version labeled **Automated review**. Read it and restore the previous version if you disagree. The same check runs on its own after every Zero Touch run.
+
+A revision applies to your organization only. Other organizations that monitor the same vendor still see the scan as it ran. When the vendor is rescanned, your accepted changes are carried onto the new scan, and a change whose finding no longer appears falls away.
+
+### Your team's revisions
+
+**Your team's revisions**, at the end of the page, lists each change with its reason and quote, then every version of the page. **Restore** makes an earlier version current again. A restore is itself a new version, so nothing in between is lost. Version 1 is always the page as scanned.
+
+<Frame caption="Each change with its reason and quote, then every version.">
+  <img src="/images/user-guides/vendor-intelligence-security-revisions.png" alt="The Your team's revisions section: a dismissed vulnerability CVE-2026-10233 with its rationale and a quoted line from the analyst's notes, then Version 2, an analyst revision marked Current, and Version 1, the pipeline scan, with a Restore button." />
+</Frame>
+
 ## Next steps
 
 <Frame caption="Next steps on the left, most urgent first, and what changed since the previous scan on the right.">
@@ -212,6 +256,7 @@ A mail-capable lookalike matters most. It can host a page and receive replies, w
 | --- | --- |
 | The page says not yet scanned | The vendor has no website on file, or the first scan has not run. Add a website if it is missing. |
 | The rating moved and nothing looks different | Open the rating history. Certificates expire and DMARC records change without anyone announcing it. |
+| The rating on the card differs from the revised rating | The card shows the scan. The **Analyst revised** badge shows the rating after your team's accepted changes, and **Your team's revisions** lists them. |
 | A factor shows no findings but a low score | Expand it. Some factors score on configuration rather than on discrete findings. |
 | A vulnerability looks wrong | Version detection is remote and imperfect. Check the flagged component with the vendor before recording it. |
 | An asset in the estate is not the vendor's | Dispute it from the row's actions menu. The next scan drops it from the sweep and from the rating. |
