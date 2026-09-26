@@ -26,9 +26,9 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 <Note>
   **Smart limits.** Uploads are capped at **100 MiB** per file. Allowed file
   types: `pdf`, `doc`, `docx`, `rtf`, `txt`, `md`, `xls`, `xlsx`, `xlsm`, `csv`,
-  `ppt`, `pptx`, `png`, `jpg`, `jpeg`, `gif`, `webp`, `zip`. Anything else is
-  rejected with `400 unsupported_file_type`; an oversized file is rejected with
-  `413 file_too_large`. List responses page at `limit` 1-200 (default 50).
+  `ppt`, `pptx`, `png`, `jpg`, `jpeg`, `gif`, `webp`, `zip`, `msg`, `eml`. Anything
+  else is rejected with `400 unsupported_file_type`; an oversized file is rejected
+  with `413 file_too_large`. List responses page at `limit` 1-200 (default 50).
 </Note>
 
 ## Upload a document
@@ -274,7 +274,7 @@ curl -X DELETE "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
 
 ## Attaching documents to assessments
 
-There are two ways to link a document to an assessment:
+There are three ways to link a document to an assessment:
 
 1. **At upload time**: pass `assessment_ids` to `POST /v1/documents` (or
    `service_ids` to attach to services).
@@ -289,6 +289,8 @@ There are two ways to link a document to an assessment:
 | Status | `code` | When |
 | ------ | ------ | ---- |
 | `400` | `unsupported_file_type` | The file extension is not in the allowlist. |
+| `400` | `invalid_extension` | No file extension could be read from the file name. |
+| `400` | `empty_file` | The uploaded file is empty. |
 | `413` | `file_too_large` | The file exceeds the 100 MiB limit. |
 | `422` | `invalid_document_type` | `document_type` is not a known slug. |
 | `404` | `vendor_not_found` | The `vendor_id` does not exist in your org. |

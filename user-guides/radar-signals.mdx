@@ -36,7 +36,7 @@ The chain is: a source pulls an item, Radar folds the item into an event, the ev
 
 ## Where things live
 
-**Radar** in the left navigation opens the **Portfolio risk** chart and three tabs: **Signals**, **Cases** and **Reassessments**. The **Configurations** button at the right of the tab bar opens **Configuration → Radar**, which has its own three tabs: **Detectors**, **Sources** and **Reassessments** (the reassessment triggers).
+**Radar** in the left navigation opens the **Portfolio risk** chart (once there are signals to plot) and three tabs: **Signals**, **Cases** and **Reassessments**. At the right of the tab bar, the **Configurations** menu links to the three tabs of **Configuration → Radar**: **Detectors**, **Sources** and **Reassessments** (the reassessment triggers). Beside it, **New detector** offers **From detector library** and **Create custom detector**, and under **Also add**, **Source from library** and **Log a signal manually**.
 
 Every vendor page also has a **Radar** tab. It lists **Detectors monitoring this vendor** and the vendor's **Recent alerts**, with an **Edit detector** link on each detector.
 
@@ -48,7 +48,7 @@ Open **Radar → Signals**.
   <img src="/images/user-guides/radar-signals-queue.png" alt="Radar Signals tab listing signals with severity, status, vendors and detectors" />
 </Frame>
 
-Three built-in views sit in the view selector. **All Signals** is the default and shows everything, newest first. **In Alert** shows only signals with an active alert, most recently alerted first. This is the queue. **Triaged** shows signals someone has already acted on. Add filters, change columns under **Display options**, and save the arrangement as a view of your own.
+Three built-in views sit in the view selector. **All Signals** is the default and shows everything, newest first. **In Alert** shows only signals with an active alert, most recently alerted first. This is the queue. **Triaged** shows signals someone has already acted on. Search signal titles and summaries, add filters, change sorting and columns under **Display**, and save the arrangement with **New view**.
 
 | Column | What it shows |
 | --- | --- |
@@ -60,8 +60,11 @@ Three built-in views sit in the view selector. **All Signals** is the default an
 | **Last alerted** | When the most recent alert attached. |
 | **Risk domains** | The domains the firing detectors map to. |
 | **First seen** | When Radar first saw the event. |
+| **Nth Parties**, **Nth Party Tags** | The companies your vendors depend on that the event names, and their tags. Hidden by default; turn them on under **Display**. |
 
-Rows group by **Today**, **Yesterday**, **This week**, **Last week** and **Older**. **Collapse all** and **Expand all** fold the groups. The actions menu at the right offers **Download as Excel**, which exports the current view with its filters and columns. **New Signal** records an event by hand: title, summary, impact area, affected vendors, and a checkbox to raise an alert at once. Leave the checkbox off and the detectors evaluate it like any other event.
+Rows group by **Today**, **Yesterday**, **This week**, **Last week** and **Older**. The icon button beside **Display** collapses or expands every group. The **Actions** menu offers **Download as Excel**: the **Export Signals** dialog exports every signal in the view with the table's visible columns, and lets you also include the summary, notes and detector results.
+
+To record an event by hand, choose **New detector → Log a signal manually**. Give it a **Title** and **Summary**, and optionally the **Impact area**, **When it occurred**, **Risk domains**, a **Source URL** and **Source name**, and the **Affected vendors**. **Create signal** opens the new signal, and the detectors evaluate it like any other event.
 
 ### Signal statuses
 
@@ -132,40 +135,40 @@ Open the **Actions** menu on the signal page. What it offers depends on where th
 ### Dismissing
 
 <Frame caption="The dismiss dialog. Every active alert is ticked by default; the signal is dismissed only when all of them are.">
-  <img src="/images/user-guides/radar-signals-dismiss-dialog.png" alt="Dismiss signal dialog with a reason field, the suppress-similar switch and a checklist of alerts" />
+  <img src="/images/user-guides/radar-signals-dismiss-dialog.png" alt="Dismiss signal dialog with a reason field, the alerted detectors, and the signal's alerts all selected" />
 </Frame>
 
-The dialog lists every active alert on the signal, all ticked. Untick the ones you want to keep and only the rest are dismissed; the signal itself is dismissed only when every alert is. Type a **Reason** if you want one on the record. Mention a colleague in it and they get a **Dismissal mentions** notification.
+The dialog names the **Alerted Detectors** with how many alerts each raised, then lists the signal with a count such as **22 of 22 alerts**. Every active alert is ticked. Expand the signal (or **Expand all**) and untick the alerts you want to keep, and the button changes from **Dismiss signal** to **Dismiss N alerts**; the signal itself is dismissed only when every alert is. Type a **Reason (optional)** if you want one on the record. Mention a colleague in it and they get a **Dismissal mentions** notification.
 
-Switch on **Also dismiss future similar alerts** to add the event to the firing detector as a negative example. The reason becomes required, because the detector reads it. This is the main way a detector learns; the other is the detector's own **Test detector** run, below.
+Each dismissed alert also becomes a negative example on the detector that raised it, with your reason attached, so events like it stay quiet next time. That happens only when you can edit detectors; a dismissal by someone who cannot closes the alerts and teaches nothing. **Restore (un-dismiss)** takes the example back out. Dismissing is the main way a detector learns; the others are the thumbs on each alert and the detector's own **Test detector** run, below.
 
 ### Opening a case
 
-**Create a Case** asks for a **Case title** (prefilled with the signal title), a **Case description**, and the vendors. **Include all affected vendors** is the default. **Create and Continue** takes you to **Send Emails**, where a **Shared Draft Template** with placeholders for the vendor name and your organization name can be applied to every pending vendor, edited per vendor, and sent one at a time or with **Send all remaining**. **Skip and Go to Case** leaves the emails for later.
+**Create a Case** asks for a **Title** (prefilled with the signal title), a **Description** (prefilled with its summary), and the **Affected Vendors**. **Include all affected vendors** is on by default. **Create and Continue** takes you to **Send Emails**, where a **Shared Draft Template** with placeholders for the vendor name and your organization name can be applied to every pending vendor, edited per vendor, and sent one at a time or with **Send all remaining**. **Skip and Go to Case** leaves the emails for later.
 
-The case page has **Overview**, **Vendors**, **Notes** and **Activity** tabs, and **Send Emails**, **Add Vendors** and **Import Vendors** buttons. Each vendor thread carries a status, an assignee, a due date and the vendor's replies. **Close Case** asks how it was resolved: **Resolved**, **Won't fix** or **False positive**. Unresolved threads can be resolved with the case or left as they are. **Reopen Case** undoes a close. **Archive Case** is final.
+The case page has **Overview**, **Vendors**, **Notes** and **Activity** tabs, with **Send Emails**, **Add Vendors** and **Finalize Case** at the top and **Export as Excel**, **Import Vendors** and **Archive Case** in the menu beside them. Each vendor thread carries a status, an assignee, a due date and the vendor's replies. **Finalize Case** closes the case as resolved. While vendor threads are still open it asks first: **Resolve All and Close**, or **Close Without Resolving** to leave them as they are. **Reopen Case** undoes a close. **Archive Case** is final.
 
 ### Starting a reassessment
 
-The reassessment opens as a draft on **Radar → Reassessments** with the exposed vendors preselected. Open it, adjust the vendors and the **Assessment plan**, then **Confirm** and **Run reassessment**, which creates one assessment per vendor from the plan. **Dismiss** closes the draft without running it. Reassessments can also be raised without a person, by the triggers under **Configuration → Radar → Reassessments**: each trigger names a plan, a vendor scope, and either risk-score conditions or an **AI event-type instruction** describing the kind of signal that should trigger it.
+**Start a reassessment** lists the exposed vendors. Remove any you do not want, **Add vendor...** for one Radar missed, optionally pick an **Assessment Plan**, and click **Start a reassessment**. The draft opens on its own page and is listed under **Radar → Reassessments**. Check the vendors and the plan there, then **Run reassessment**, which creates one assessment per vendor from the plan. **Dismiss** closes the draft without running it. Reassessments can also be raised without a person, by the triggers under **Configuration → Radar → Reassessments**: each trigger names a plan, a vendor scope, and either risk-score conditions or an **AI event-type instruction** describing the kind of signal that should trigger it.
 
 ### The risk review
 
-When a firing detector has **Residual risk impact** switched on, acknowledging, creating a finding, starting a reassessment, or closing a case as **Resolved** or **Won't fix** raises the affected vendors' residual risk. **Review vendor risk profile updates** opens with the new scores, overall and per domain. Adjust any of them and **Save and continue**, or **Continue** to accept. Dismissing never moves risk, and neither does closing a case as **False positive**. How the size of the move is chosen is on the [Supplier Radar page](/products/supplier-radar#risk-propagation).
+When a firing detector has **Residual risk impact** switched on, acknowledging, creating a finding, starting a reassessment, or finalizing a case raises the affected vendors' residual risk. **Review vendor risk profile updates** opens with the new scores, overall and per domain. Adjust any of them and **Save and continue**, or **Continue** to accept. Dismissing never moves risk. How the size of the move is chosen is on the [Supplier Radar page](/products/supplier-radar#risk-propagation).
 
 ## Sources
 
 Open **Configuration → Radar → Sources**.
 
 <Frame caption="The Sources tab. Library sources and your own, each with its status and when it last fetched.">
-  <img src="/images/user-guides/radar-signals-sources.png" alt="Radar sources list with Name, Status, Date Added and Last Fetched columns" />
+  <img src="/images/user-guides/radar-signals-sources.png" alt="Radar sources list with Name, Type, Date Added, Last Fetched and Status columns" />
 </Frame>
 
-The table shows **Name**, **Status**, **Date Added** and **Last Fetched** (**Never** until the first successful run). The row menu has **Archive**, which stops collection and cannot be undone. Archived sources keep the items they already collected.
+The table shows **Name**, **Type** (**Article feed**, **RSS feed**, **API**, **Snapshot**, **Black Kite** and so on), **Date Added**, **Last Fetched** (**Never** until the first successful run) and **Status**. Search by name or filter the list. The row menu has **Archive**, which stops collection and cannot be undone. Archived sources keep the items they already collected.
 
-**New Source** offers three routes:
+**Add source** offers three routes:
 
-- **From Source Library**: pick from the curated catalog, by segment, and **Connect**. The full list is on the [source library page](/products/source-library). Library sources are shared and run on a schedule Coverbase sets; you can rename one but not change how it fetches.
+- **From Source Library**: tick sources in the curated catalog, narrowed by segment or search (**Add all visible** ticks everything in view), then **Connect**. A source Coverbase has withdrawn is greyed out as **Unavailable**, with the reason. The full list is on the [source library page](/products/source-library). Library sources are shared and run on a schedule Coverbase sets; you can rename one but not change how it fetches.
 - **Black Kite portfolio**: covered in the [Black Kite monitoring guide](/user-guides/black-kite-monitoring).
 - **New Custom Source**: your own **Article Feed** (a news page or RSS feed), **API** (a JSON endpoint with a request configuration and a response mapping), or **Snapshot** (a page or a JSON list watched for changes, with a **Fetch Schedule** of **Hourly**, **Every 4 hours**, **Daily** or **Weekly**).
 
@@ -176,6 +179,7 @@ The table shows **Name**, **Status**, **Date Added** and **Last Fetched** (**Nev
 | **Active** | Collecting. |
 | **Unsupported** | Radar could not build an extractor for this page. It will not be monitored. |
 | **Setup incomplete** | Extractor generation was abandoned. Reopen the source and finish it. |
+| **Paused** | Collection has stopped for this feed, usually because Coverbase withdrew a library source whose page no longer exists or refuses automated requests. Items already collected stay. |
 
 A custom Article Feed without an RSS feed needs a generated extractor. The source page shows sample extracted items for you to **Accept** or **Reject**, and stays quiet until one is accepted.
 
@@ -203,13 +207,15 @@ The table shows **Title**, **Categories** and **Reviewers**. When any detector i
 
 ### Adding one
 
-**Add detector** offers **From detector library** and **Create custom detector**.
+**Add detector** (or **New detector** on the Radar page) offers **From detector library** and **Create custom detector**.
 
-<Frame caption="The detector library. Templates by segment, each with its guidance, an example, and how many organizations use it.">
-  <img src="/images/user-guides/radar-signals-detector-library.png" alt="Detector library dialog with segment tabs and template cards" />
+<Frame caption="The detector library. Templates by segment; the preview shows a template's guidance and the sources it brings with it.">
+  <img src="/images/user-guides/radar-signals-detector-library.png" alt="Detector library dialog with segment chips, a list of templates and a preview showing guidance and sources" />
 </Frame>
 
-The library groups templates into segments (**Recommended**, **Cybersecurity**, **Financial**, **Operational**, **Legal**, **Compliance**, **Reputational**, **Contractual**, **ESG**, **Corporate**, **Geopolitical & External**, **AI Risk**). **Apply** adds a template with its recommended settings; **Configure** opens it for editing first. Tick several and add them at once. Every template is listed with its default severity on the [detector library page](/products/detector-library). A template becomes an ordinary detector on your organization, so everything below applies to it.
+The library filters templates by **All**, **Recommended** and segment (**Cybersecurity**, **Financial**, **Operational**, **Legal**, **Compliance**, **Reputational**, **Contractual**, **ESG**, **Corporate**, **Geopolitical & External**, **AI Risk**). Click a template to preview its **Guidance**, the **Sources** it deploys with, and an **Example**. **Add detector** adds it with its recommended settings; **Configure** adds it and opens it for editing. On a template you already have, the button reads **Enable detector** or **Disable detector**. Tick several and **Enable** them at once. Every template is listed with its default severity on the [detector library page](/products/detector-library).
+
+Enabling a template adds its sources to your organization, where you do not already have them, and scopes the new detector to them, so it starts working without further setup. A source marked **Unavailable** has been withdrawn and is skipped. A template becomes an ordinary detector on your organization, so everything below applies to it, including changing its sources.
 
 ### The detector form
 
@@ -220,13 +226,13 @@ The library groups templates into segments (**Recommended**, **Cybersecurity**, 
 | Field | What it does |
 | --- | --- |
 | **Name**, **Description** | How the detector appears in lists, on alerts and in notification emails. |
-| **Sources** | Restrict the detector to specific sources. Empty means every source. A detector limited to sources sees events you record by hand only if it includes **Manually-created events**. |
+| **Sources** | Restrict the detector to specific sources. Empty means every source. A detector added from the library starts limited to the sources it deployed with, so a source you add later is not read by it until you add it here. A detector limited to sources sees events you record by hand only if it includes **Manually-created events**. |
 | **Vendor targeting** | **Apply to all vendors**, or tag conditions: a vendor matches a condition when it has all of that condition's tags, and conditions are combined with OR. **Include specific vendors** adds named vendors. **Exclude vendors** always wins. |
 | **Categories** | Restrict to impact types (Infosec, Financial, Operational, Legal, Compliance, Reputational, Contractual, ESG, Corporate, Geopolitical & External). Empty means all. |
 | **Severity Threshold** | **No threshold**, **Informational**, **Low**, **Medium** or **High**. An alert is raised when the detected severity meets or exceeds it. |
 | **Guidance** | Plain-language instructions on what to flag and how severe it is. **AI autofill** drafts it from the name and description. Either guidance or a threshold is required. |
 | **Residual risk impact** | Off by default. When on, acting on one of this detector's alerts raises the vendor's residual risk by a value between **Min impact** and **Max impact** (0 to 100), on the overall score when **Affect overall residual risk** is on, and on the mapped **Risk domains**. |
-| **Positive examples**, **Negative examples** | Events the detector should and should not alert on. Dismissals with **Also dismiss future similar alerts** and thumbs ratings land here. Remove an example to make the detector reconsider. |
+| **Positive examples**, **Negative examples** | Events the detector should and should not alert on. Dismissals and thumbs ratings land here. Remove an example to make the detector reconsider. |
 | **Default Reviewers** | Users and user groups notified of every alert. **Send test alert** sends one notification to them, once the detector is saved with at least one reviewer. |
 | **Detector enabled** | Off keeps the settings but stops evaluation. |
 
@@ -237,18 +243,18 @@ Two other detector kinds share the list. A **Watchlist detector** matches vendor
 **Test detector** on a saved detector re-runs it against your recent events over the **Last 7 days**, **Last 30 days** or **Last 90 days**. Each result reads **Will alert** or **Will not alert**. Mark results **This should alert** or **This shouldn't alert**, then **Refine with AI** proposes a rewrite of the guidance, which you can edit before **Apply & re-run**. Tick results and **Create alerts** to turn them into real alerts; a result that already has a live alert is skipped.
 
 <Tip>
-  Start narrow. Keep the threshold at **Medium** or **High**, target the vendors you would act on, and watch two weeks of alerts before loosening anything. Every dismissal with **Also dismiss future similar alerts** makes the detector quieter, so the first weeks are also when it learns fastest.
+  Start narrow. Keep the threshold at **Medium** or **High**, target the vendors you would act on, and watch two weeks of alerts before loosening anything. Every dismissal makes the detector quieter, so the first weeks are also when it learns fastest.
 </Tip>
 
 ## Which vendors are watched
 
 A vendor is evaluated by every enabled detector whose **Vendor targeting** includes it. That is the whole rule. The vendor page's **Radar** tab lists the detectors that currently apply, so it is the quickest way to answer "is this vendor covered?". A vendor with no detectors still gets **Tracked** signals when an event touches it, because tracking needs no detector.
 
-Vendors also carry a monitoring flag that the **Enrol new vendors in monitoring** [workflow template](/user-guides/workflow-templates#enrol-new-vendors-in-monitoring) turns on at creation. That flag is what the **vendors monitored by Radar** count on your subscription uses, so it decides what monitoring costs, not what a detector watches.
+Vendors also carry a monitoring flag, which a workflow's **Enable vendor threat monitoring** action turns on. That flag is what the **vendors monitored by Radar** count on your subscription uses, so it decides what monitoring costs, not what a detector watches.
 
 ## Notifications
 
-Radar sends four notifications. Each person can switch them on or off in their notification settings, where the first three sit in the monitoring group.
+Radar sends four notifications. Each person can switch them on or off in their notification settings: **Radar detector alert** and **Reassessment trigger fired** sit in the monitoring group, **Case created** with cases, and **Dismissal mentions** with mentions.
 
 | Notification | Who gets it | When |
 | --- | --- | --- |
@@ -265,7 +271,7 @@ A detector with no default reviewers raises alerts that nobody is told about. Th
 - **Vendor risk.** With **Residual risk impact** on, triage moves the vendor's residual score, and the vendor's risk history records the change and the detector behind it.
 - **Risk register.** The register's **Signal Sources** settings can attach **Radar signals** and **Radar alerts** at or above a severity threshold to risks, and a risk's **Attach signal** button does it by hand. Turning a source off stops new attachments and leaves existing ones.
 - **Workflows.** A workflow can trigger on a Radar signal, condition on its fields, and update it. The **Monitoring signal triage** [template](/user-guides/workflow-templates#monitoring-signal-triage) opens a review and a dated task for every new signal.
-- **Dashboards.** The **Portfolio risk** chart on the Radar page plots signals over time by severity, with a **3M**, **6M**, **12M** or **All** range and vendor and tag filters; click a point for the affected vendors. Under **Configuration → Usage Analysis**, **Vendor Radar - signal quality** shows alert volume, triage, and how much led to action, and **Radar per-source signal ratio** shows which sources are productive.
+- **Dashboards.** The **Portfolio risk** chart on the Radar page plots signals over time by severity, with a **3M**, **6M**, **12M** or **All** range and vendor and tag filters; click a point for the affected vendors.
 - **API and webhooks.** Events and alerts are readable and dismissable over the [Radar API](/api-reference/radar), and `RadarEvent.*` and `RadarDetectorResult.*` webhooks fire as they change.
 
 ## Who can do what
@@ -291,7 +297,8 @@ Radar is org-wide: a siloed member sees every signal, not only their vendors' si
 | **Send test alert** is disabled. | Save the detector first, and add at least one default reviewer. |
 | A detector alerted on the same event twice. | It fired for two different vendors. Each alert is one detector on one vendor, and both sit under the same signal. |
 | A library source cannot be edited. | Library sources are shared. You can rename them; for different settings, create a custom source. |
-| The Radar page shows an **Alerts** tab instead of **Signals**. | Your organization is on the older alert view. The queue lists alerts individually rather than one row per event. Ask your Coverbase representative about the signal view. |
+| A detector from the library ignores a source you added later. | It is scoped to the sources it deployed with. Add the new source under the detector's **Sources**. |
+| A dismissal did not stop similar alerts. | The person who dismissed it cannot edit detectors, so nothing was taught. Ask an admin to add the event as a negative example on the detector. |
 
 ## Related
 

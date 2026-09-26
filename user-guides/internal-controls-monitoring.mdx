@@ -150,7 +150,7 @@ An inspection carries one status; each control inside it carries its own.
 
 ### Inside a control
 
-Click a control to open its workspace. **Evaluation** shows the level the control landed on and the **Justification** written from the evidence; **This control has not been evaluated yet** and **This control could not be fully evaluated** are the two states short of a verdict. **Observations** lists each evidence key with its records, where it was **Collected from**, the screenshot captures, and **Watch replay** for the browser session. **Activity** is the event log.
+Click a control to open its workspace. A control from a framework-derived set, such as **CIS Controls v8.1 SaaS Baseline**, shows its framework references as badges under its expectation: the CIS safeguard it derives from and the NIST SP 800-53 controls mapped to it. **Evaluation** shows the level the control landed on and the **Justification** written from the evidence; **This control has not been evaluated yet** and **This control could not be fully evaluated** are the two states short of a verdict. **Observations** lists each evidence key with its records, where it was **Collected from**, the screenshot captures, and **Watch replay** for the browser session. **Activity** is the event log.
 
 Each observation carries a status, and an absent one is reported rather than skipped:
 
@@ -238,7 +238,7 @@ Reading a run: **Progress** is **Queued**, **Running**, **Completed**, **Partial
 
 ## Schedules
 
-A schedule reruns an application and control set on a calendar day every month, with no one launching it. Open **Inspections → Schedules**, then **New schedule**: choose the **Application**, **Control set**, **Purpose**, whether to **Allow browser evidence**, and the **Day of month**. **Create schedule** on a finished inspection pre-fills the same dialog.
+A schedule reruns an application and control set on a calendar day every month, with no one launching it. Open **Inspections → Schedules**, then **New schedule**: choose the **Application**, **Control set**, **Purpose**, whether to **Allow browser evidence**, and the **Day of month**. **Create schedule** on a finished inspection pre-fills the same dialog. A **Drift** schedule compares each run against the latest completed inspection of that application that ran the same control set, so run one before its first scheduled date.
 
 
 Each row shows **Cadence** (**Monthly on the 15th**), **Next run**, **Last run** and a **Status** of **Active** or **Paused**. **Actions** offers **Edit schedule**, **Pause**, **Resume** and **Stop repeating**; the last one keeps past runs in the inspections list and runs nothing further.
@@ -252,6 +252,7 @@ Before each run Inspect checks sign-in and plan readiness. A run that cannot sta
 | **No control could be scored** | Apply a scale to the control set. |
 | **The owner lost permission to run inspections** | Restore the owner's integration permission, or have someone else create the schedule. Scheduled runs execute as the person who created or last resumed the schedule. |
 | **The application was unavailable** | **Configure application**, then run. |
+| **No finished inspection of this application ran these controls** | A **Drift** schedule has no baseline yet. Run an inspection of the application with the same control set; the next scheduled check compares against it. |
 
 <Note>
   A monthly schedule that outlives its application keeps running until you pause or stop it. Archiving the application does not stop the schedule.
@@ -294,7 +295,15 @@ Inspect is switched on per organization. Within it, access follows the **integra
 
 ## Notifications
 
-Inspect sends one email, **Inspection needs attention**, to the person who started an inspection when it ends **Blocked** or **Failed**. It says how many controls were blocked, failed or not planned, and **Open inspection** takes you to the page. It is on by default and can be turned off under the **Inspect** category in your notification settings (see [Email notifications](/user-guides/email-notifications)). Findings created from inspections follow the ordinary finding notifications.
+Inspect sends three emails to the person who started an inspection, or, for a scheduled run, to the schedule's owner. Each is on by default and can be turned off under the **Inspect** category in your notification settings (see [Email notifications](/user-guides/email-notifications)).
+
+| Notification | When |
+| --- | --- |
+| **Inspection found an issue** | An **Evaluate** run finds an issue on a control whose previous result on that application was not already an issue. The email names the application, the control, the level it landed on and an excerpt of the justification. |
+| **Inspection found a material change** | A **Drift** run judges a change to a control's evidence **Material**, with a before and after excerpt. |
+| **Inspection needs attention** | The inspection ends **Blocked** or **Failed**. It says how many controls were blocked, failed or not planned. |
+
+Alerts from one inspection are gathered into a single email every few minutes rather than sent one per control, and **Open inspection** takes you to the page. Findings created from inspections follow the ordinary finding notifications.
 
 ## Troubleshooting
 

@@ -17,7 +17,7 @@ Onboarding a supplier eventually comes down to a handful of facts you have to ge
 This part of Coverbase is built around one idea: the country decides the questions. A supplier banking in the United Kingdom is asked for a sort code and an eight digit account number. A supplier banking in Japan is asked for a bank code, a branch code and a deposit type. Nobody is asked for a field their country does not use, and nothing is accepted that the country's own format rules reject.
 
 <Note>
-  This is a gated feature. If you do not see a **Know Your Supplier** tab on your vendors, it has not been switched on for your organization yet. Ask your Coverbase contact.
+  This is a gated feature. If you do not see a **Know-Your-Vendor** tab on your vendors, it has not been switched on for your organization yet. Ask your Coverbase contact.
 </Note>
 
 ## The short version
@@ -46,32 +46,32 @@ Three places, depending on who you are.
 
 <CardGroup cols={3}>
   <Card title="On the vendor" icon="building">
-    A **Know Your Supplier** tab on every vendor. Bank accounts, sites, tax registrations, diversity records, legal entity assignments, pending changes, and the full change history.
+    A **Know-Your-Vendor** tab on every vendor. **Onboarding** holds the questionnaire sent to the vendor and its verification checks; **Records on file** holds bank accounts, sites, tax registrations, diversity records, legal entity assignments, pending changes, and the full change history.
   </Card>
   <Card title="In a questionnaire" icon="clipboard-list">
-    Four question types you can drop into any Know Your Supplier or onboarding questionnaire. This is how suppliers fill things in.
+    Four question types you can drop into any Know-Your-Vendor questionnaire. This is how suppliers fill things in.
   </Card>
   <Card title="In configuration" icon="sliders">
-    **Configuration → Know Your Supplier** for the policy, and **Configuration → Legal entities** for the entities suppliers get assigned to.
+    **Configuration → Know Your Vendor Settings** for the policy, and **Configuration → Legal entities** for the entities suppliers get assigned to.
   </Card>
 </CardGroup>
 
-<Frame caption="The Know Your Supplier tab on a vendor. Bank accounts are masked to the last four digits until someone with the reveal permission asks to see one.">
-  <img src="/images/user-guides/supplier-know-your-supplier-tab.png" alt="The Know Your Supplier tab on a vendor, showing masked bank accounts with validation badges, sites, tax registrations and the change history." />
+<Frame caption="Records on file, on a vendor's Know-Your-Vendor tab. Bank accounts are masked to the last four digits until someone with the reveal permission asks to see one.">
+  <img src="/images/user-guides/supplier-know-your-supplier-tab.png" alt="The Records on file section of a vendor's Know-Your-Vendor tab, showing masked bank accounts with validation badges, sites, tax registrations and the change history." />
 </Frame>
 
 ## Asking a supplier: the four question types
 
 Supplier information is collected through the questionnaire engine rather than through a separate flow. That means assignment, reminders, progress tracking, autofill and review all work as they already do, and a supplier who has filled in one Coverbase questionnaire knows how to fill in this one.
 
-When you author a questionnaire of type **Know Your Supplier** or **Vendor onboarding**, four extra response types appear alongside the usual free text and multiple choice:
+When you author a questionnaire on the **Know-Your-Vendor** tab of **Configuration → Questionnaires**, four extra response types appear alongside the usual text and select types:
 
 | Question type | What the supplier fills in |
 | --- | --- |
-| Bank account details | Country, then that country's bank fields, plus IBAN and SWIFT where they apply |
-| Supplier site | An address, with the postal code checked against the national format, and the email addresses purchase orders and remittance advice go to |
-| Tax registration | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one |
-| Diversity record | An inclusion category, a business size, the certifying body, and the certificate's validity dates |
+| **Bank Account** | Country, then that country's bank fields, plus IBAN and SWIFT where they apply |
+| **Site / Address** | An address, with the postal code checked against the national format, and the email addresses purchase orders and remittance advice go to |
+| **Tax Registration** | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one |
+| **Diversity Record** | An inclusion category, a business size, the certifying body, and the certificate's validity dates |
 
 They do not appear on assessments or RFPs, because there is no supplier profile behind those to write into.
 
@@ -118,7 +118,7 @@ Three values reach your finance system without a supplier ever seeing them, beca
 | Value | Where it comes from |
 | --- | --- |
 | Tax region | The address. It is the country code, or the country and state for the four countries that levy tax below national level: the United States, Canada, India and Brazil. |
-| Payment method | Whether the account is cross border. An account held in a country none of your assigned legal entities pay from goes out by wire; anything else is domestic. |
+| Payment method | Whether the account is cross border. An account held in a country none of the supplier's assigned legal entities pay from goes out by wire; an account in one of their countries is domestic. A supplier with no legal entity assignment gets no payment method until one is assigned. |
 | Bank code and bank taxpayer ID, where a bank list exists | The bank the supplier picked, as described above. |
 
 An import from your own finance system can carry its own tax region, and that value wins. Nothing else overwrites it.
@@ -176,7 +176,7 @@ An address carries the details your finance system needs to pay against it, not 
 
 ## Registrations a supplier is exempt from
 
-A supplier who is exempt from a registration has no number to give. Ticking **Exempt** on a tax registration replaces the identifier with a reason, which is required. The two are alternatives: a submission carrying both is refused.
+A supplier who is exempt from a registration has no number to give. Ticking the box that says the supplier is exempt from that registration replaces the identifier with a **Reason for exemption**, which is required. The two are alternatives: a submission carrying both is refused.
 
 ## Review: the part that stops fraud
 
@@ -184,8 +184,10 @@ Invoice redirection fraud, where an attacker persuades someone to change a suppl
 
 By default, **a bank change never touches the live account**. It goes into a queue and waits. The supplier sees that their submission is recorded and awaiting review. The account your finance system knows about is unchanged, and no webhook fires. When a reviewer approves, the change lands and the webhook goes out. When a reviewer rejects, nothing is restored, because nothing had been replaced.
 
-<Frame caption="The supplier changes queue. Each pending change shows what is being changed, who submitted it, and through which surface.">
-  <img src="/images/user-guides/supplier-changes-queue.png" alt="The supplier changes page listing pending bank account changes awaiting review, with approve and reject actions." />
+The queue is the **Vendor changes** page. Open it from the **Vendor changes** button at the top of the vendor page, which shows a count when something is waiting. The same page also lists subprocessor suggestions waiting for a decision.
+
+<Frame caption="The bank changes on the Vendor changes page. Each pending change shows what is being changed, who submitted it, and through which surface.">
+  <img src="/images/user-guides/supplier-changes-queue.png" alt="The Vendor changes page listing pending bank account changes awaiting review, with approve and reject actions." />
 </Frame>
 
 Two things enforce the control:
@@ -218,10 +220,10 @@ Every reveal of a full identifier is recorded. Everywhere else, and that means c
 
 ## Configuring it for your organization
 
-**Configuration → Know Your Supplier** holds the policy. Everything on it is per organization.
+The **Know Your Vendor** section of **Configuration → Know Your Vendor Settings** holds the policy. Everything on it is per organization.
 
-<Frame caption="Know Your Supplier settings. Bank review is on by default.">
-  <img src="/images/user-guides/supplier-kys-settings.png" alt="The Know Your Supplier configuration page, showing review and approval settings, collection options, limits and update request defaults." />
+<Frame caption="Know Your Vendor settings. Bank review is on by default.">
+  <img src="/images/user-guides/supplier-kys-settings.png" alt="The Know Your Vendor section of the configuration page, showing review and approval settings, collection options, limits and update request defaults." />
 </Frame>
 
 <AccordionGroup>
@@ -251,7 +253,7 @@ One assignment request covers up to five entities. A request that quotes a purch
 
 ### Country rules
 
-The 109 countries ship with rules already configured, and those are documented per country in [Supplier countries](/user-guides/supplier-countries/overview). Your organization can override any country's rules for its own suppliers, which is how a late correction from your finance team becomes a configuration change rather than a release.
+The 109 countries ship with rules already configured, and those are documented per country in [Supplier countries](/user-guides/supplier-countries/overview). Coverbase can override any country's rules for your organization's suppliers, which is how a late correction from your finance team becomes a configuration change rather than a release. Ask your Coverbase contact.
 
 ## Getting it into your finance system
 
@@ -278,10 +280,10 @@ A bank change's webhook fires on approval, not on submission. If you are testing
 | A supplier's new bank details are not in the finance system | The change is waiting in the review queue. Nothing is sent until it is approved. |
 | Nothing was sent after approval | Check webhook delivery, then reconcile with the changes feed. |
 | "This supplier already has N bank accounts" | The organization's bank account limit. Raise it in configuration, or retire an account that is no longer used. |
-| Registry confirmation stuck as pending | The register was unreachable. It retries on a schedule, and a reviewer can retry it by hand. It never blocks anything. |
+| **Registry check pending** or **Registry unavailable** on a tax registration | The background check runs every 15 minutes. **Registry unavailable** means the register could not be reached; it retries on its own, and **Retry verification** runs it again by hand. It never blocks anything. |
 | A warning asking for a SWIFT/BIC on a domestic-looking account | The account's country is not one your assigned legal entities pay from, so the payment is treated as a wire. Check the legal entities assigned to that supplier. |
 | A Colombian supplier is asked for a bank statement | They typed a bank name the list does not hold. Have them check the spelling against their statement; a bank on the list fills its own details in and asks for nothing. |
-| "BRL is not available for this supplier" | BRL is held for suppliers in Brazil. The test is the supplier's own country, not the bank's. |
+| "BRL is held for suppliers in BR only" | BRL is held for suppliers in Brazil. The test is the supplier's own country, not the bank's. |
 | A warning that the IBAN and the bank codes disagree | The two were taken from different documents. Have the supplier confirm which is current, usually the IBAN. |
 
 ## Where to next

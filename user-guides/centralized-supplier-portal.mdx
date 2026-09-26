@@ -31,7 +31,7 @@ The page lists what will change before you flip it, not after. Four things happe
     They sign in and see every request you have open with them, grouped by kind.
   </Step>
   <Step title="Suppliers bring their own people">
-    Whoever you invite first becomes the owner. They can invite colleagues and assign work to them without going through you.
+    The first person at the supplier to sign in becomes the owner. They can invite colleagues and assign work to them without going through you.
   </Step>
   <Step title="New invitations lead with the portal">
     The button in an invitation or reminder points at the portal. The single-request link stays in the email underneath it, for anyone who would rather not sign in.
@@ -47,16 +47,16 @@ Requests, documents and messages are always there. Four more are yours to switch
 
 <CardGroup cols={2}>
   <Card title="Profile" icon="id-card">
-    What you hold about this supplier: bank accounts, addresses, tax registrations, diversity records and legal entities. Masked, and read-only until you open something.
+    What you hold about this supplier: bank accounts, addresses and PO email, tax registrations, diversity records and legal entities. Masked, and read-only until you open something. Its second tab, **Changes**, lists what the supplier has proposed and what you decided; it is on whenever Profile is.
   </Card>
-  <Card title="Changes" icon="list-check">
-    The second tab of Profile. Every revision the supplier has proposed and what happened to it. On whenever Profile is on.
-  </Card>
-  <Card title="Obligations" icon="clipboard-check">
+  <Card title="Obligations and findings" icon="clipboard-check">
     The findings and obligations you have raised with them, with their due dates.
   </Card>
-  <Card title="Shared documents" icon="folder-open">
-    Documents you have put on the supplier's shelf, alongside the ones they uploaded.
+  <Card title="Share documents back to them" icon="folder-open">
+    Documents you share from the vendor's **Portals** tab, shown on the supplier's **Documents** page alongside the ones they uploaded.
+  </Card>
+  <Card title="Submissions" icon="paper-plane">
+    Requests a supplier may start without being asked. See [Letting suppliers start their own requests](#letting-suppliers-start-their-own-requests).
   </Card>
 </CardGroup>
 
@@ -64,20 +64,20 @@ Every section is off until you turn it on, including on an organization that has
 
 ## What a supplier may change without being asked
 
-Under **Profile**, the standing scope decides which parts of their own record a supplier may revise at any time. Nothing is open by default.
+With **Profile** on, **What suppliers may update without being asked** decides which parts of their own record a supplier may revise at any time. Nothing is open by default.
 
 | Scope | What it opens |
 | --- | --- |
-| Bank accounts | Adding an account, or replacing one. Always waits for your approval. |
-| Addresses | Adding or correcting a site. |
-| PO email addresses | Where purchase orders and remittance advice are emailed. |
-| Tax registrations | Adding a registration, or declaring an exemption. |
-| Diversity | Declaring a diversity category and its certificate. |
+| **PO email address** | Where purchase orders and remittance advice are emailed, on each address they hold with you. |
+| **Addresses** | Adding, editing and retiring their own sites. |
+| **Bank accounts** | Adding an account, or replacing one. Waits for your approval while bank review is on. |
+| **Tax registrations** | Registration numbers and exemption declarations. |
+| **Diversity declarations** | Inclusion categories and business size. |
 
-Two scopes cannot be put here at all, and the page shows them locked:
+Two scopes cannot be put here at all, and the page shows them locked as **By request only**:
 
-- **Contacts**
-- **Legal entities**
+- **Contact details**
+- **Your legal entities**
 
 Those are yours to initiate. If you want either updated, send an update request naming that section, and it opens for that supplier for the life of the request.
 
@@ -87,38 +87,34 @@ Those are yours to initiate. If you want either updated, send an update request 
 
 ### Saying which part needs updating
 
-When you send an update request, each section you name carries its own note and its own intent:
+Update requests are sent through the Coverbase API, with `POST /v1/vendors/{vendor_id}/update_requests`. The dashboard has no button for them. A request names the sections it covers and can carry a message; with no sections named, it uses **Sections to request by default** from the **Update requests** settings in [Know Your Vendor settings](/user-guides/supplier-information#configuring-it-for-your-organization), and it expires after **Request expires after (days)**.
 
-- **Add** opens an empty form for a new record.
-- **Replace** shows what is on file beside a new entry, and asks which it supersedes.
-- **Review** shows what is held and asks them to confirm or correct it.
+On the supplier's **Profile**, each section a request names is marked as one you asked about, and they can revise it until the request closes or expires.
 
-The note renders against the section it names, not at the top of the page. One free-text box for a whole form is the failure this replaces: "we need your new EUR account" written at the top of a page reads, next to an existing account with an edit pencil, as "change this one".
+## What waits for your approval
 
-## Nothing writes straight through
+A new or changed bank account waits for a person while **Bank changes need a reviewer** is on in [Know Your Vendor settings](/user-guides/supplier-information#configuring-it-for-your-organization), which it is by default. A legal entity assignment waits when **Legal entity assignments need approval** is on there. Everything else a supplier submits from **Profile** (addresses, PO email addresses, tax registrations and diversity declarations) is checked against their country's rules and saved to their record straight away, and the supplier's **Changes** tab tells them so.
 
-Every revision a supplier proposes waits for a person. Bank changes already did; this extends the same rule to the rest, because the supplier's Changes tab needs a status to show.
-
-You review them where you already review bank changes, on the vendor's **Know Your Supplier** tab. Approving writes the change and fires the webhook your finance system listens to. Rejecting asks you for a reason, and the supplier sees it.
+You decide bank changes where you already review them: the pending changes on the vendor's **Know-Your-Vendor** tab, or the **Vendor changes** page. Approving writes the change and fires the webhook your finance system listens to. Rejecting lets you give a reason, and the supplier sees it on their **Changes** tab.
 
 ## Findings and obligations
 
-Under **Obligations**, choose what a supplier sees:
+With **Obligations and findings** on, choose what a supplier sees:
 
 <CardGroup cols={2}>
   <Card title="Only what you have raised with them" icon="shield-check">
     A finding appears once you have created a commitment against it. Recommended: it means nothing reaches a supplier before you decided to ask them about it.
   </Card>
-  <Card title="Everything open" icon="eye">
+  <Card title="Every open item on their record" icon="eye">
     Every open finding and obligation for that supplier, whether or not you have asked them about it.
   </Card>
 </CardGroup>
 
-Either way a supplier sees a finding's title, category, status, due date and your recommended remediation. Analyst notes, severity reasoning and evaluation extracts are never in the list.
+Either way a supplier sees a finding's title, severity, source, status and due date, and what you asked them to do. An obligation shows its type (**Complementary control** or **Shared responsibility**) where a finding shows severity. Analyst notes, severity reasoning and evaluation extracts are never in the list.
 
 ## Letting suppliers start their own requests
 
-Under **Submissions**, tick the templates a supplier may start themselves: a security incident notification, a change-of-control notice, an insurance certificate refresh.
+With **Submissions** on, tick the templates a supplier may start themselves under **Submissions a supplier may start**: a security incident notification, a change-of-control notice, an insurance certificate refresh.
 
 A template appears in that list only after you turn on **Let suppliers start this themselves** in the template editor. Both have to be true, so archiving a template stops offering it without you editing anything here.
 
@@ -126,16 +122,26 @@ What a supplier starts is an ordinary request. It gets a reference number, lands
 
 ## Sending a template on a schedule
 
-In the template editor's **Centralized Portal** block, pick a cadence: every month, quarter, six months, year, or two years. Leave it on "Only when someone sends it" and nothing changes.
+In the template editor's **Centralized Portal** block, pick a cadence under **Send On A Schedule**: every month, or every 3, 6, 12 or 24 months. Leave it on **Only when someone sends it** and nothing changes.
 
-A daily sweep sends the template to every supplier with a portal whose last request from it is older than the cadence. Two things worth knowing:
+Then pick supplier tags under **Send It To**. Only suppliers carrying one of those tags receive the template. With no tags picked nothing goes out: an empty audience means nobody, not everybody.
+
+A daily sweep sends the template to every supplier in that audience with a portal whose last request from it is older than the cadence. Templates on a cadence are listed under **Requests that go out on a schedule** on the Centralized Portal tab. Two things worth knowing:
 
 - A supplier who still has that template open is **skipped, not stacked**. An annual questionnaire nobody answered would otherwise become two open requests, then twelve.
 - The clock runs from the send, not from the answer. A supplier who never answers is still asked again on schedule.
 
+## What respondents see
+
+**What respondents see** applies to every page a supplier answers a request on:
+
+- **Confidentiality footer**: text shown at the foot of each answering page. Leave it empty for no footer.
+- **Privacy policy link** and **Trust Center link**: shown as links in that footer.
+- **Require a one-time passcode**: a request link asks for a code emailed to the address it was sent to before anything is shown.
+
 ## Where to see whether a supplier has one
 
-The vendor's **Portals** tab says whether that supplier has a centralized portal, how many of the people you invited have signed in, and links straight to it.
+The vendor's **Portals** tab says whether that supplier has a centralized portal, how many of the people you invited have signed in, and links straight to it with **Open portal**. The same card is where you invite someone from the supplier with **Add someone**, as an **Owner** or a **Contributor**, and, with **Share documents back to them** on, share one of the vendor's documents onto their **Documents** page with **Share a document**. A supplier has no portal until you send them their first request.
 
 ## Turning it off
 

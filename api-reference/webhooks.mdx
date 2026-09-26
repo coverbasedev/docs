@@ -202,7 +202,7 @@ Updates a webhook subscription. Only the fields you include are changed; omitted
 ### Request body
 
 <ParamField body="url" type="string">
-  New endpoint. If provided, must start with `https://`.
+  New endpoint. If provided, it must pass the same [URL restrictions](/integrations/webhooks#url-restrictions) as on create.
 </ParamField>
 
 <ParamField body="events" type="string[]">
@@ -227,7 +227,7 @@ Updates a webhook subscription. Only the fields you include are changed; omitted
 curl -X PATCH "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
-  -d '{ "events": ["Vendor.Created", "Vendor.Updated", "Assessment.StatusChanged"] }'
+  -d '{ "events": ["Vendor.Created", "Vendor.Updated", "Assessment.Updated"] }'
 ```
 
 ```bash Rotate the secret
@@ -351,7 +351,7 @@ A=(-H "Authorization: Bearer $AK" -H "Content-Type: application/json")
 ```bash Create a webhook
 WH=$(curl -sS -X POST "$CB/v1/webhooks" "${A[@]}" -d '{
   "url": "https://hooks.example.com/coverbase",
-  "events": ["Vendor.Created", "Assessment.StatusChanged"],
+  "events": ["Vendor.Created", "Assessment.Updated"],
   "secret": "whsec_at_least_16_chars",
   "description": "Prod receiver",
   "enabled": true
@@ -412,19 +412,21 @@ curl -sS -o /dev/null -w '%{http_code}\n' -X DELETE "$CB/v1/webhooks/$WH" "${A[@
 ```
 
 ```bash Org-level API IP allowlist
+# Changing the allowlist and whoami take an admin's dashboard session token, not an ak_ key:
+J=(-H "Authorization: Bearer $ADMIN_JWT" -H "Content-Type: application/json")
 # Configure (CIDRs validated server-side; invalid → 422):
-curl -sS -X POST "$CB/v1/org/$ORG_ID" "${A[@]}" \
+curl -sS -X POST "$CB/v1/org/$ORG_ID" "${J[@]}" \
   -d '{"api_ip_allowlist":["203.0.113.0/24","198.51.100.7/32"]}'
-curl -sS -X POST "$CB/v1/org/$ORG_ID" "${A[@]}" \
+curl -sS -X POST "$CB/v1/org/$ORG_ID" "${J[@]}" \
   -d '{"api_ip_allowlist":["not-a-cidr"]}'        # → 422
-# Read back (org object now returns api_ip_allowlist):
+# Read back with the API key (org object now returns api_ip_allowlist):
 curl -sS "$CB/v1/org/$ORG_ID" "${A[@]}" | jq .api_ip_allowlist
 # Once a non-empty allowlist is set, a call from an IP outside the CIDRs → 403:
 #   {"detail":{"code":"ip_not_allowed","message":"..."}}
 # Clear (unrestricted again):
-curl -sS -X POST "$CB/v1/org/$ORG_ID" "${A[@]}" -d '{"api_ip_allowlist":[]}'
+curl -sS -X POST "$CB/v1/org/$ORG_ID" "${J[@]}" -d '{"api_ip_allowlist":[]}'
 # Find the IP the API sees for the caller (same value the allowlist evaluates):
-curl -sS "$CB/v1/whoami/ip" "${A[@]}"          # → {"client_ip":"203.0.113.42"}
+curl -sS "$CB/v1/whoami/ip" "${J[@]}"          # → {"client_ip":"203.0.113.42"}
 ```
 
 For receiver-side signature verification (Python and Node), see [Webhooks → Signature verification](/integrations/webhooks#signature-verification).

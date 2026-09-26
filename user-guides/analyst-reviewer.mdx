@@ -82,7 +82,7 @@ Launching an assessment opens the review. It attaches control sets, kicks off do
 5. Where the vendor has to be engaged, send the portal invitation with a due date. Reminders and the pre-signed MNDA your admin configured go out automatically. The vendor cannot submit until the required items are done, and when they upload, analysis of the affected controls starts on its own.
 6. Analysis takes roughly 5 to 10 minutes on a small evidence set and 20 to 30 minutes when there is a lot to read. A long SOC 2 takes considerably longer than a certificate of insurance. Large control sets add to it, and a full SIG core is around 300 questions. You do not need to keep the tab open.
 
-The left panel tracks the assessment through four stages (**Collecting Documents**, **Analyzing Controls**, **Review Results**, **Quality Control**) and always tells you what it is waiting for, with a shortcut into that work.
+The left panel tracks the assessment through its stages (**Collecting Documents**, **Analyzing Controls**, **Review Results**, then any stages your organization has added after them, such as a quality-control pass) and always tells you what it is waiting for, with a shortcut into that work.
 
 <Frame caption="The assessment workspace. Control sets attached in the left rail, and the lifecycle (collected documents, then analyzed controls, then reviewed results) tracked as it runs.">
   <img src="/images/user-guides/analyst-assessment-summary.png" alt="Assessment workspace showing control sets and lifecycle" />
@@ -98,15 +98,15 @@ The left panel tracks the assessment through four stages (**Collecting Documents
 
 The AI has measured every document against every control and raised issues where evidence is missing or contradicts the expectation. Work through the results in this order.
 
-1. Start in the Critical Findings view, not the full issue list. Triage the material items first.
-2. Toggle Assign to Me to filter to your controls. Issues can be assigned per risk domain (InfoSec to InfoSec SMEs, and so on) or round-robin across the team.
+1. Start with the issues, not every result. The **Issues** tab opens filtered to the results raised as issues, so triage the material items first.
+2. Turn on **Assigned to me** to filter to your controls. Issues can be assigned per risk domain (InfoSec to InfoSec SMEs, and so on) or round-robin across the team.
 3. Open each issue. You see the expectation, the guidance the AI used, and the analysis citing the specific evidence. Click through to the source language to validate. Never take the summary on faith for a material item.
 4. Spot-check compliant controls too, especially early on. Passes show the same full evidence chain, plus web-sourced supporting articles, and this is how you catch false negatives while you build trust in the output.
 5. Where two control sets overlap, say SIG core and the out-of-box SOC 2 set raising the same gap twice, mark the duplicate as not an issue and tell your admin to drop the redundant set from future assessments.
 
 **Getting around the workspace.** Eleven tabs run across the top; most days you need the first two. **Summary** carries the recommendation, the score and its compliance band, review progress, and the risk domain table: Overall Vendor Risk plus a row per domain with inherent risk, residual risk, and the assigned reviewer. Rows reading "Not set" against residual risk have not been reviewed yet, so that column is your to-do list. **Issues** holds one result per control, opening filtered to the ones raised as issues. The remaining nine (Controls, Findings, Emails, Work Queue, Documents, Activity, Notes, Properties, SLAs) carry supporting detail and the audit trail.
 
-**Working the Issues tab.** Three toggles switch between all results, issues only, and open follow-ups, each with a count. **Group by** defaults to **Control Section**, so results cluster by control set and section with that section's reviewers on the group header. Select rows, or **Select all**, and an action bar appears with everything you can do at once: **Accept risk**, **Add Finding**, **Create follow-ups**, **Delete follow-ups**, **Lock**, and **Draft new email**. On a large assessment, bulk-drafting follow-ups for every missing-document issue is one action rather than a hundred.
+**Working the Issues tab.** Three toggles switch between all results, issues only, and open follow-ups, each with a count. **Group by** defaults to **Control Section**, so results cluster by control set and section with that section's reviewers on the group header. Select rows, or **Select all**, and an action bar appears with everything you can do at once: **Resolve** (mark as mitigated or accept risk), **Add Finding**, **Create follow-ups**, **Delete follow-ups**, **Preserve**, and **Draft new email**. On a large assessment, bulk-drafting follow-ups for every missing-document issue is one action rather than a hundred.
 
 **Judging web evidence.** Evidence pulled from the public web carries a credibility badge (**Authoritative**, **Reputable**, or **Unreliable**) naming how accountable its publisher is, with the reason on hover, plus the page's publication date and how old it was when it was cited. Anything below the minimum your admin set was already discarded before the AI read it, so what you see has passed the bar. See [Evidence quality and source credibility](/user-guides/evidence-quality) when a control is resting on web evidence you want to scrutinize, or when a customer asks how source quality is controlled.
 
@@ -187,7 +187,7 @@ A reviewer opens their domain with **Start review**. Until someone does, the dom
 - Reviewers are notified when results are ready for them, and risk analysts and administrators can resend reminders.
 - Your organization can optionally prevent anyone who is not a risk analyst or administrator from completing assessments.
 
-Once the reviews are in, the assessment moves to **Quality Control**, the last stage on the tracker, for a final pass.
+Once the reviews are in, the assessment moves on to any stage your organization added after **Review Results** (a quality-control pass, for example) before it is completed.
 
 <Warning>
   Depending on configuration, **Complete Assessment** stays disabled until the domain reviews are finished. If the button is grayed out, look at the review column rather than the score.
@@ -249,12 +249,12 @@ The contracts module extracts key terms from MSAs, SOWs, and DPAs (value, effect
   </Card>
 </CardGroup>
 
-<Frame caption="A contract record. Extracted lifecycle, value, and term dates, plus an AI summary of parties, billing, SLAs, liability, and termination.">
+<Frame caption="A contract record: the facts read from its documents, what needs attention, the AI summary, and the terms.">
   <img src="/images/user-guides/analyst-contract-overview.png" alt="Contract overview with extracted terms and AI summary" />
 </Frame>
 
-<Frame caption="Extracted contract terms. Value, effective date, term and renewal, and more, pulled straight from the paper.">
-  <img src="/images/user-guides/analyst-contract-terms.png" alt="Extracted contract terms" />
+<Frame caption="One flagged clause in review. Severity, the matched variant and the AI analysis on the left, and the source language highlighted in the contract on the right.">
+  <img src="/images/user-guides/analyst-contract-terms.png" alt="Clause review of a single clause with its analysis and the highlighted source language" />
 </Frame>
 
 <Frame caption="A clause review. Vendor language scored against your acceptable, fallback, and unacceptable tiers, by severity.">
@@ -271,8 +271,8 @@ The contracts module extracts key terms from MSAs, SOWs, and DPAs (value, effect
 
 Radar watches external sources for events touching your third and fourth parties, and turns each one your organization is exposed to into a signal. Your job is to decide which signals become work, and to keep the rest out of the program.
 
-1. Open **Radar → Signals**. The **Needs attention** view lists every signal in alert, most recently alerted first. Each signal shows the highest severity any detector assigned, the vendors involved, and the detectors that fired. One event is one signal, however many detectors hit it.
-2. Open a signal. The status card says where it stands, and the **Vendors** card lists which of your vendors are linked to it. The summary says what happened, when, and when you were alerted. The **Detectors** tab lists each detector that fired, with its reasoning and confidence, **Sources** holds the articles and advisories behind it, and **Timeline** shows the order things happened.
+1. Open **Radar**. The **Signals** tab opens on **All Signals**; switch to the **In Alert** view for the signals in alert and awaiting review. Each signal shows the highest severity any detector assigned, the vendors involved, the detectors that fired, and when it was last alerted. One event is one signal, however many detectors hit it.
+2. Open a signal. The status card shows where it stands on the path from **Open** through **Tracked** and **In alert** to **Closed**, and the **Vendors** card lists which of your vendors were exposed, with **View full exposure** for the rest. The summary says what happened, and the timeline under it shows when it happened and when you were alerted. The **Detectors** tab lists each detector that fired, with its reasoning and confidence, **Exposure** lists every exposed vendor and why it matched, **Sources** holds the articles and advisories behind it, and **Timeline** shows the order things happened.
 3. Act on it from the **Actions** menu. **Open case** for anything that needs investigation or vendor outreach (a case is preliminary, not yet a confirmed problem). **New finding** when it is confirmed, with an owner and a due date. **Start reassessment** when the vendor's risk picture has changed enough to re-run the plan. **Acknowledge** when you have seen it and nothing more is needed beyond a risk update: the signal is marked Triaged and Radar updates the vendor's risk. **Dismiss** when no action is needed at all. If the signal is irrelevant, dismissing also lets you teach your detectors not to alert on events like it.
 4. Work the case. Send a vendor inquiry if you need their confirmation or remediation plan. Close it if the vendor is unaffected, or promote it to a finding once confirmed.
 5. Check the risk update. When the detectors that fired are set to update risk, acknowledging the signal, creating a finding, starting a reassessment, or closing a case as **Resolved** or **Won't fix** raises the affected vendors' residual risk. **Review vendor risk profile updates** opens with the new numbers. Adjust any of them, then **Save and continue**, or **Continue** to accept. Dismissing never moves risk, and neither does closing a case as **False positive**. How the size of the move is decided is on the [Supplier Radar page](/products/supplier-radar#risk-propagation).
@@ -285,11 +285,11 @@ No detector has fired on a **Tracked** signal. A vendor you depend on is linked 
   <img src="/images/user-guides/analyst-radar-signals.png" alt="Radar Signals tab listing signals with status, severity, vendors, and detectors" />
 </Frame>
 
-<Frame caption="A signal. On the left, its status and the vendors exposed. On the right, the generated summary, the time from event to alert, and the detectors that put the signal in alert.">
+<Frame caption="A signal. On the left, its status, the vendors exposed, and any reviews. On the right, the generated summary, Ask Coverbase AI, the time from event to alert, and the detectors that put the signal in alert.">
   <img src="/images/user-guides/analyst-radar-signal-detail.png" alt="Radar signal page showing the status card, generated summary, and the detectors that fired" />
 </Frame>
 
-<Frame caption="Radar cases. Preliminary investigations tagged to affected vendors, ready to close, promote to a finding, or trigger a reassessment.">
+<Frame caption="The Cases tab. Preliminary investigations tagged to affected vendors, each with its status, progress and assignee, ready to close, promote to a finding, or trigger a reassessment.">
   <img src="/images/user-guides/analyst-radar-cases.png" alt="Radar cases tab" />
 </Frame>
 
@@ -306,7 +306,7 @@ As a reviewer, you validate extractions against source language, assign owners a
 </Frame>
 
 <Note>
-  The full obligations workflow (validation, ownership, and stakeholder attestations) gets its own dedicated guide, which we will add to this collection.
+  The full obligations workflow (validation, ownership, and business-unit acknowledgement) is in the [Obligations guide](/user-guides/obligations).
 </Note>
 
 ---

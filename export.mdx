@@ -11,15 +11,15 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 ## Export Report
 
 <ParamField path="method" type="GET">
-  `GET /v1/export/{report_name}`
+  `GET /v1/export/{slug}`
 </ParamField>
 
-Retrieves the data for the specified report.
+Retrieves the data for the specified report. Authenticate with an `ak_` API key (see [Authentication](/quickstart)).
 
 ### Path parameters
 
-<ParamField path="report_name" type="string" required>
-  The unique identifier of the report.
+<ParamField path="slug" type="string" required>
+  The report's slug, as set on the report in the dashboard. It is also returned as `slug`.
 </ParamField>
 
 ### Query parameters
@@ -38,6 +38,16 @@ Retrieves the data for the specified report.
   other base objects. `total_count` reflects the filtered result.
 </ParamField>
 
+<ParamField query="start_ts" type="integer">
+  For `radar_run` reports only: include runs that started at or after this Unix timestamp (seconds). Ignored for other base objects.
+</ParamField>
+
+<ParamField query="end_ts" type="integer">
+  For `radar_run` reports only: include runs that started before this Unix timestamp (seconds). Ignored for other base objects.
+</ParamField>
+
+A negative `limit` or `offset` returns `400`. An unknown slug returns `404` with `{"detail": "Export report not found"}`.
+
 ### Example request
 
 <CodeGroup>
@@ -55,7 +65,7 @@ import requests
 API_KEY = os.getenv("COVERBASE_API_KEY", "<api-key>")
 BASE_URL = "https://api.coverbase.app"
 
-report_name = "vendor-custom-report"
+slug = "vendor-custom-report"
 
 headers = {
     "Authorization": f"Bearer {API_KEY}",
@@ -63,7 +73,7 @@ headers = {
 }
 
 resp = requests.get(
-    f"{BASE_URL}/v1/export/{report_name}?limit=10&offset=20",
+    f"{BASE_URL}/v1/export/{slug}?limit=10&offset=20",
     headers=headers,
     timeout=30,
 )
@@ -147,8 +157,28 @@ print(f"Returned {len(report['data'])} of {report['total_count']} records")
 </ResponseField>
 
 <ResponseField name="total_count" type="integer">
-  Total number of base objects in Coverbase.
+  Total number of records the report matches, before `limit` and `offset`.
 </ResponseField>
+
+## Download a report as a file
+
+<ParamField path="method" type="GET">
+  `GET /v1/export/{slug}/download`
+</ParamField>
+
+Returns the same data as a CSV or Excel file instead of JSON. The columns are the report's mapped field names, and the file is named after the slug (for example `vendor-custom-report.csv`).
+
+<ParamField query="format" type="string" default="csv">
+  `csv` or `xlsx`.
+</ParamField>
+
+The `limit`, `offset`, `supplier_name`, `start_ts`, and `end_ts` parameters work as above. One request returns at most 100,000 rows; page with `limit` and `offset` for larger reports.
+
+```bash cURL
+curl -L -o vendor-custom-report.xlsx \
+  "https://api.coverbase.app/v1/export/vendor-custom-report/download?format=xlsx" \
+  -H "Authorization: Bearer <api-key>"
+```
 
 <Note>
   Need help? Email [support@coverbase.ai](mailto:support@coverbase.ai).

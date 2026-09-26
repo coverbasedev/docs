@@ -51,32 +51,34 @@ you:
 | Choice | A fixed set of values defined by Coverbase. |
 | Reference | A pointer to one other record, such as a user or a status. |
 | Multi-reference | A set of related records, such as tags or owners. |
-| Structured | A nested object, filtered by key. |
+| Structured | A nested object. Filters can only test whether it is empty. |
 
 ### Operators
 
 | Operator | Applies to | Meaning |
 | --- | --- | --- |
 | is / is not | Most types | Exact match against a single value. |
-| any of / none of | Choice, Reference | Match against a list of values. |
+| any of / none of | Text, Choice, Reference | Match against a list of values. |
 | contains / does not contain | Text | Substring match. |
 | after / on or after / before / on or before | Date | Compare against a point in time. |
 | greater than / at least / less than / at most | Number | Numeric comparison. |
 | between | Date, Number | Inclusive range, given as `{"from": ..., "to": ...}`. |
 | any of / none of | Multi-reference | The record is related to at least one, or none, of the selected values. |
-| all of / not all of | Multi-reference | The record is related to every selected value. Extra values still match. |
-| all are | Multi-reference | Every related record equals the selected value. |
+| all of / not all of | Multi-reference, and choice or reference fields on related records | The record is related to every selected value. Extra values still match. |
+| all are | Reference fields on related records | Every related record equals the selected value. |
 | empty / not empty | Most types | The field has no value, or has any value. |
 
 ## Fields this catalog does not list
 
 <AccordionGroup>
   <Accordion title="Custom fields">
-    Custom fields are defined per workspace, so they cannot be listed here. They
-    appear in the same filter menus alongside the built-in fields once
-    configured. Custom fields can be attached to vendors, services, engagements,
-    contracts, assessments, assessment responses, controls, findings, and
-    reviews. See [Custom fields](/api-reference/custom-fields).
+    Custom fields are defined per workspace, so they cannot be listed here.
+    Custom fields can be attached to vendors, services, engagements, contracts,
+    assessments, assessment responses, controls, findings, and reviews. Once
+    configured, they appear alongside the built-in fields in the filter menus
+    for vendors, services, contracts, assessments, assessment responses, and
+    findings. Engagement and review custom fields are not filterable. See
+    [Custom fields](/api-reference/custom-fields).
   </Accordion>
   <Accordion title="Renamed terms">
     Your workspace can rename core terms: vendor, service, action, task,
@@ -131,5 +133,12 @@ soonest first:
 ```
 
 Groups nest, so a `children` entry can itself be a `combiner` group when you need
-mixed AND/OR logic. See [Conventions](/conventions) for authentication, the
-response envelope, and pagination.
+mixed AND/OR logic. A date value can be an ISO-8601 timestamp or a relative
+duration such as `-P30D`.
+
+<Note>
+  The `/query` routes are the ones the dashboard uses. They accept a signed-in
+  user's session token, not an `ak_...` API key, and return
+  `{ "data": [...], "total_count": <int> }`. `limit` defaults to `50` and can be
+  up to `500`. See [Conventions](/conventions) for authentication.
+</Note>

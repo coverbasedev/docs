@@ -11,27 +11,27 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 ## Import Report
 
 <ParamField path="method" type="POST">
-  `POST /v1/import/{report_name}`
+  `POST /v1/import/{slug}`
 </ParamField>
 
-Submits a batch of records to the specified import report. Records are validated against the report's field mapping, upserted into the target base object using `external_id`, and returned with a per-record result summary.
+Submits a batch of records to the specified import report. Records are processed one at a time against the report's field mapping and upserted on `external_id`. The response lists what each record created or updated.
 
 <Warning>
   Three things commonly cause a `404` or `422` here:
-  - The path is **`/v1/import/{report_name}`**: singular `import`, not `imports`. A request to `/v1/imports/...` returns a generic `404 Not Found`.
-  - The body must be an **array wrapped under `data`**: `{"data": [ { ... } ]}`. A bare record object will not validate.
-  - The Import API requires a **service-account API key**. See [API keys](/api-reference/api-keys).
+  - The path is **`/v1/import/{slug}`**: singular `import`, not `imports`. A request to `/v1/imports/...` returns a generic `404 Not Found`, and a slug with no import report returns `422` with `Invalid import slug`.
+  - The records must be **wrapped under `data`**: `{"data": [ { ... } ]}`. A bare record, or an empty list, returns `422`.
+  - The Import API requires a **service-account API key**. A dashboard session token is rejected with `401 Unauthorized role.` See [API keys](/api-reference/api-keys).
 </Warning>
 
 ### Path parameters
 
-<ParamField path="report_name" type="string" required>
-  The unique identifier of the import report.
+<ParamField path="slug" type="string" required>
+  The import report's slug, shown as the endpoint on the report's **Configure** tab.
 </ParamField>
 
 ### Request body
 
-The request body is a JSON object with a `data` key containing an array of records. Each record is an object whose keys are the mapped field names defined in the report and whose values are the incoming field values.
+The request body is a JSON object with a `data` key containing an array of records (or a single record object). Each record is an object whose keys are the mapped field names defined in the report and whose values are the incoming field values.
 
 <ParamField body="data" type="array" required>
   Records to import. Each record must include all fields marked as Required in the report's mapping.
@@ -72,7 +72,7 @@ import requests
 API_KEY = os.getenv("COVERBASE_API_KEY", "<api-key>")
 BASE_URL = "https://api.coverbase.app"
 
-report_name = "vendor-custom-import"
+slug = "vendor-custom-import"
 
 headers = {
     "Authorization": f"Bearer {API_KEY}",
@@ -99,121 +99,108 @@ payload = {
 }
 
 resp = requests.post(
-    f"{BASE_URL}/v1/import/{report_name}",
+    f"{BASE_URL}/v1/import/{slug}",
     headers=headers,
     json=payload,
     timeout=30,
 )
-resp.raise_for_status()
-result = resp.json()
-
-print(f"Received: {result['received_count']}")
-print(f"Created: {result['created_count']}, Updated: {result['updated_count']}, Failed: {result['failed_count']}")
+if resp.status_code == 422:
+    detail = resp.json()["detail"]
+    print(detail["message"] if isinstance(detail, dict) else detail)
+    for error in (detail.get("errors", []) if isinstance(detail, dict) else []):
+        print(error["record_index"], error.get("field"), error["error"])
+else:
+    resp.raise_for_status()
+    result = resp.json()
+    print(result["message"])
+    for record in result["records"]:
+        vendor = record["vendor"]
+        print(record["record_index"], vendor["id"], "created" if vendor["created"] else "updated")
 ```
 
 </CodeGroup>
 
 ### Example response
 
+`200 OK` when every record succeeds:
+
 ```json
 {
-  "id": "cbimprt_7b2c918fa4e14e6c9a3d7b21d4f8a0c2",
-  "slug": "vendor-custom-import",
-  "report_name": "Vendor Import",
-  "base_object": "vendor",
-  "mapping": {
-    "name": "Name",
-    "external_id": "External Id",
-    "website": "Website",
-    "status": "Status",
-    "hq_location": "Hq Location",
-    "raw_irq_score": "Raw Irq Score"
-  },
-  "received_count": 2,
-  "created_count": 1,
-  "updated_count": 1,
-  "failed_count": 0,
-  "results": [
+  "success": true,
+  "message": "Successfully imported 2 record(s)",
+  "records_created": 2,
+  "errors": null,
+  "records": [
     {
-      "external_id": "vendor-123",
-      "coverbase_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-      "action": "updated",
-      "status": "success"
+      "record_index": 0,
+      "vendor": { "id": "cbvndr_e448ba62882143f3ba0c140bb2e30162", "external_id": "vendor-123", "created": false, "warnings": [] },
+      "services": [],
+      "engagements": [],
+      "assessments": [],
+      "findings": []
     },
     {
-      "external_id": "vendor-456",
-      "coverbase_id": "cbvndr_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071",
-      "action": "created",
-      "status": "success"
+      "record_index": 1,
+      "vendor": { "id": "cbvndr_9f4a1c0d7b2e4e9f8c1d2b3a4e5f6071", "external_id": "vendor-456", "created": true, "warnings": [] },
+      "services": [],
+      "engagements": [],
+      "assessments": [],
+      "findings": []
     }
-  ],
-  "errors": [],
-  "received_at": 1745481600
+  ]
 }
 ```
 
 ### Response fields
 
-<ResponseField name="id" type="string">
-  Unique Coverbase import report ID.
+<ResponseField name="success" type="boolean">
+  `true` on a `200` response.
 </ResponseField>
 
-<ResponseField name="slug" type="string">
-  Unique string used in the API endpoint URL.
+<ResponseField name="message" type="string">
+  A summary, such as `Successfully imported 2 record(s)`.
 </ResponseField>
 
-<ResponseField name="report_name" type="string">
-  Display name for the report.
+<ResponseField name="records_created" type="integer">
+  Number of records processed successfully, whether they created or updated objects.
 </ResponseField>
 
-<ResponseField name="base_object" type="string">
-  The object each record in `data` maps to (`vendor`, `assessment`, or `service`).
+<ResponseField name="records" type="object[]">
+  One entry per successful record: its `record_index` (position in `data`), and the objects it created or updated under `vendor`, `services`, `engagements`, `assessments`, and `findings`. Each object carries `id`, `external_id`, `created` (`true` for a new object, `false` for an update), and `warnings`, such as an owner email that matched no user and was skipped.
 </ResponseField>
 
-<ResponseField name="mapping" type="object">
-  Mapping between Coverbase field names and the field names accepted in the incoming JSON objects.
+<ResponseField name="errors" type="object[] | null">
+  Warnings that did not fail a record, such as a custom field sent as `null`, which is not written. `null` when there are none.
 </ResponseField>
 
-<ResponseField name="received_count" type="integer">
-  Total number of records received in the request body.
+### Errors
+
+If any record fails, the response is `422`. Records that succeeded are still saved, so fix the failed records and resend them; because records upsert on `external_id`, resending the whole batch is also safe. The `detail` object carries:
+
+<ResponseField name="detail.message" type="string">
+  A summary, such as `Imported 1 of 2 record(s) with 1 error(s)`.
 </ResponseField>
 
-<ResponseField name="created_count" type="integer">
-  Number of records that resulted in a new base object being created.
+<ResponseField name="detail.records_created" type="integer">
+  Number of records that succeeded.
 </ResponseField>
 
-<ResponseField name="updated_count" type="integer">
-  Number of records that matched an existing base object on `external_id` and were updated in place.
+<ResponseField name="detail.records_total" type="integer">
+  Number of records in the request.
 </ResponseField>
 
-<ResponseField name="failed_count" type="integer">
-  Number of records that were rejected due to validation or mapping errors.
+<ResponseField name="detail.errors" type="object[]">
+  One entry per failed record, with `record_index`, `error` (a readable message, for example `Record missing required field External Id`), `field` (the incoming field name at fault, when there is one), `base_object` (which object the field belongs to, in a report that imports several), and `created` (objects a multi-object record saved before it failed, or `null`).
 </ResponseField>
 
-<ResponseField name="results" type="array">
-  Per-record result objects for successfully processed records. Each contains `external_id`, `coverbase_id`, `action` (`created` or `updated`), and `status`.
+<ResponseField name="detail.records" type="object[]">
+  The results for the records that succeeded, in the same shape as `records` above.
 </ResponseField>
 
-<ResponseField name="errors" type="array">
-  Per-record error objects for rejected records. Each contains the record index, `external_id` (if available), `error_code`, and a human-readable message.
-</ResponseField>
-
-<ResponseField name="received_at" type="integer">
-  Unix timestamp indicating when the import batch was received.
-</ResponseField>
-
-### Error codes
-
-| Code | Description |
-| --- | --- |
-| `missing_required_field` | A required field (such as `name` or `external_id`) was absent from the record. |
-| `invalid_field_value` | A field value failed type or format validation (for example, a malformed date or non-numeric score). |
-| `unmapped_field` | A field in the record is not defined in the report's mapping and was ignored. Informational only; does not fail the record. |
-| `unknown_base_object` | The report's configured base object is no longer valid. |
-| `duplicate_external_id` | The same `external_id` appears more than once in a single request batch. |
+Other failures return `422` with a plain-string `detail`: a body that is not valid JSON or has no records (`Invalid JSON: ...`), or a slug with no import report (`Invalid import slug`).
 
 <Info>
-  Partial success is supported. Records that pass validation are imported even if other records in the same batch fail. The HTTP response code is `200` when at least one record succeeds and `400` when all records fail validation.
+  Partial success is supported. Records that pass validation are imported even if other records in the same batch fail. The HTTP status is `200` only when every record succeeds.
 </Info>
 
 <Note>

@@ -21,23 +21,22 @@ A **review** is Coverbase's gate object. It is one accountable decision by one n
     The assigned reviewer, and the user group they were drawn from when the gate was routed to a team rather than a person. Both are stored, so group intent and individual accountability survive together.
   </Card>
   <Card title="What" icon="circle-check">
-    The outcome your organization defined, plus the review's status. Outcome and status are separate: a review can be `In review` and still carry no outcome, and a completed review always carries one.
+    The review's status, drawn from your organization's own review statuses under **Configuration → Statuses → Review**. A new organization starts with **Queued**, **Started**, **Accept** and **Reject**. A status in the completed group is the decision, and the review records when it was reached.
   </Card>
   <Card title="Why" icon="comment-dots">
     The reviewer's own decision notes, the admin-authored instructions the gate was raised with, and, on a return for rework, the revision message that goes back to whoever owes the work.
   </Card>
 </CardGroup>
 
-Reviews are first-class records. They appear in the audit trail, they raise `Review.StatusChanged`, `WorkQueueItem.Created` and `WorkQueueItem.Completed` events you can subscribe to over [webhooks](/integrations/webhooks), they accept [custom fields](/api-reference/custom-fields), and they can be created and updated by a workflow as well as by a person.
+Reviews are first-class records. They appear in the audit trail, they raise `Review.Updated`, `WorkQueueItem.Created` and `WorkQueueItem.Completed` events you can subscribe to over [webhooks](/integrations/webhooks), they accept [custom fields](/api-reference/custom-fields), and they can be created and updated by a workflow as well as by a person.
 
 ## Gate outcomes are yours to define
 
-Coverbase does not hard-code an approval vocabulary. **Configuration → Assessment settings → Approval options** holds a list your organization owns, each option carrying a label, a color, and an icon. A new organization starts with three, and most regulated programs extend them.
+Coverbase does not hard-code an approval vocabulary. **Configuration → Assessment Settings → Approval Options** (choose **Edit approval options**) holds a list your organization owns, each option carrying a label, a color, and an icon. A new organization starts with two, and most regulated programs extend them.
 
 | Shipped default | What regulated teams commonly add alongside it |
 | --- | --- |
-| **Approve** | Nothing |
-| **Conditionally approve** | **Approve with finding**: approved, with a tracked finding and an owner. **Approve with policy exception**: approved against standard, with the exception recorded, time-boxed and reportable. |
+| **Approve** | **Conditionally approve**. **Approve with finding**: approved, with a tracked finding and an owner. **Approve with policy exception**: approved against standard, with the exception recorded, time-boxed and reportable. |
 | **Reject** | **Return for rework**: not a rejection. The work goes back to the previous party with a reason and a comment, and the round count increments. |
 
 <Tip>
@@ -51,7 +50,7 @@ Options are archived rather than deleted, so an assessment closed two years ago 
 An outcome is not only a label on a record. The workflow engine can branch on it:
 
 - **Assessment recommendation condition** matches the selected approval option against a set you choose, so `Approve with policy exception` can route to a different downstream path than `Approve`: raising an exception record, notifying the second line, and scheduling an earlier reassessment.
-- **Review outcome** (`approved`, `conditionally approved`, `rejected`) is stored on the review itself and is what gating conditions read when several reviews have to agree.
+- **Review status** is stored on the review itself. A workflow triggered by a review update can act the moment a reviewer moves it to **Accept** or **Reject**, and the work queue items reviews create are what gating conditions read when several reviews have to agree.
 
 See [Workflow engine](/integrations/workflow-engine#review-gates-and-approvals).
 
@@ -98,7 +97,7 @@ Any object that carries reviews can carry several at once. How they combine is a
   </Accordion>
 
   <Accordion title="Threshold and amount-based routing" icon="scale-balanced">
-    A **contract value** condition compares the total value of the contracts on a procurement against a threshold you set, with `greater than` and `less than or equal` operators, so a request above your delegation-of-authority limit picks up the extra approver and one below it does not. Structured contract amounts are summed when present. Two currencies are never silently converted; the comparison refuses rather than guessing a rate.
+    A **contract value** condition compares the total value of the active contracts on a procurement against a threshold you set, with `greater than` and `less than or equal` operators, so a request above your delegation-of-authority limit picks up the extra approver and one below it does not. Structured contract amounts are summed when present. Amounts are added as they are, with no currency conversion, so keep the contracts on one procurement in one currency.
 
     Amount is one axis. Conditions can equally branch on inherent-risk score, vendor tier, data classification, hosting model, jurisdiction, questionnaire answers, tags, whether prior evidence exists, and any custom field, composed with `AND` / `OR` and nested.
   </Accordion>

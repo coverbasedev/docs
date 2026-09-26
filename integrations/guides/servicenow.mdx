@@ -65,9 +65,23 @@ sequenceDiagram
 - **Attachment limits respected.** ServiceNow's instance attachment size limit is enforced client-side before upload; oversized documents are reported rather than failed mid-transfer.
 - **Best-effort completion sync.** A ServiceNow outage never blocks an analyst from completing an assessment; failed pushes are logged with the exact record identifiers for replay.
 
+## Workflow actions
+
+Beyond the VRM completion sync above, any [workflow](/integrations/workflow-engine) can write to ServiceNow once the connection is configured. In the action picker, the **ServiceNow record** group offers:
+
+| Action | What it does |
+| --- | --- |
+| **Create** | Creates a record in the **ServiceNow table** you choose, from **Field mappings** of ServiceNow columns to text or variables, and links it to a Coverbase record (assessment, contract, engagement, finding, procurement, service, vendor or work queue item). **Match Existing Records On** reuses a record whose chosen fields already hold the same values instead of creating a duplicate. |
+| **Update** | Updates the ServiceNow record linked to a Coverbase record. |
+| **Create one per issue or finding** | Creates one record for each unresolved issue on the assessment, or for each finding attached to it, filterable by finding status, severity and source. An **Idempotency column** stops an interrupted run from creating duplicates. |
+| **Send custom request** | Sends a `POST`, `PATCH` or `PUT` with a JSON payload you write to an instance-relative API path, with optional query parameters and value translations. |
+| **Upload documents** | Uploads assessment supporting documents, the triggering document, or documents attached to a questionnaire submission as ServiceNow document records. |
+
+Each linked record raises `ServiceNowRecord.Created`, `ServiceNowRecord.Updated` or `ServiceNowRecord.Deleted`, and a per-issue run ends with `ServiceNowSync.Completed`, so later steps and your [webhooks](/integrations/webhooks#event-catalog) can react.
+
 ## Authentication and provisioning
 
-The connector authenticates with a dedicated ServiceNow integration user (Basic Auth over HTTPS), stored per-organization in Coverbase's secrets manager. The integration user needs write access to the VRM assessment and issue tables and the attachment API, a scoped role your ServiceNow admin controls.
+An admin configures the connection self-serve on the **ServiceNow GRC** card under **Configuration → External Integrations**: the **ServiceNow base URL**, and either **Basic authentication** (a dedicated integration user's username and password) or **OAuth 2.0 (client credentials)** (a client ID and secret from the ServiceNow Application Registry). **Test connection** confirms the credentials, and **Save ServiceNow Configuration** stores them per organization in Coverbase's secrets manager. The integration identity needs write access to the tables your workflows write to (for VRM, the assessment and issue tables) and the attachment API, a scoped role your ServiceNow admin controls.
 
 ## In production
 
@@ -77,7 +91,7 @@ The connector authenticates with a dedicated ServiceNow integration user (Basic 
 
 ## Onboarding checklist
 
-1. A ServiceNow integration user with write access to the VRM assessment and issue tables and the attachment API, for your sub-production instance first.
+1. A ServiceNow integration user or OAuth client with write access to the VRM assessment and issue tables and the attachment API, for your sub-production instance first.
 2. The VRM field choices your process uses (issue types, ratings, states), so Coverbase maps outcomes onto your configured values.
 3. The inbound push from ServiceNow (or an initial bulk load through the [Import API](/import-api)) carrying the assessment and vendor `sys_id` references.
 

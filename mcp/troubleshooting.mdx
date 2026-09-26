@@ -12,7 +12,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AccordionGroup>
   <Accordion title="The connector authorizes but no tools appear" defaultOpen icon="circle-question">
-    Confirm your Coverbase user has API access enabled. Some plans gate this; your admin can confirm in account settings.
+    Confirm your role can connect. Admins, Members, Siloed Members and Guests can; Auxiliary Members and custom roles cannot. See [Roles and permissions](/mcp/permissions#role-to-access-matrix). If only the write tool is missing, the credential is read-only, which is expected for a Guest, a Siloed Member, or a read-only key.
 
     Also confirm the client supports OAuth 2.0 for MCP, not just API-key configurations. Older MCP clients sometimes only support stdio transport, which won't work with the Coverbase server.
   </Accordion>
@@ -88,13 +88,13 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AccordionGroup>
   <Accordion title="Rate limit errors" icon="gauge-high">
-    The MCP server applies the same per-org rate limits as the underlying Coverbase API. If you hit a limit, you'll see an explicit rate-limit error with a `retry_after` hint.
+    The MCP server sits behind the same request-rate limits as the Coverbase API, counted for each combination of credential and IP address over a one-minute window. A client over the limit gets `403` responses until the window passes, so slow down and retry after a minute.
 
     For production use cases that require higher throughput, contact your account manager.
   </Accordion>
 
   <Accordion title="Tools are slow or timing out" icon="hourglass">
-    Some tools (notably `get_org_activity_digest` and `get_vendor_detail`) consolidate many internal calls into one to save tokens, which can be slower on accounts with very large data volumes. Try narrower scoping (specific vendor ID, shorter time window).
+    Some routes (notably `get_report(report_name="org_activity")` and `query_vendors(kind="detail")`) consolidate many internal calls into one to save tokens, which can be slower on accounts with very large data volumes. Try narrower scoping (specific vendor ID, shorter time window).
   </Accordion>
 </AccordionGroup>
 
@@ -117,7 +117,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
     status.coverbase.com
   </Card>
 
-  <Card title="Changelog" icon="list-timeline" href="https://docs.coverbase.com/mcp/changelog">
+  <Card title="Changelog" icon="list-timeline" href="/changelog">
     Tool additions, parameter changes, and deprecations with at least 30 days notice for breaking changes.
   </Card>
 </CardGroup>

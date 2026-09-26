@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The walkthroughs below trace three full lifecycle workflows. Each is built from the same no-code triggers, conditions and actions any admin composes in the **Workflows** section of the dashboard, so treat them as worked examples to copy and edit rather than as fixed templates; the step narration uses conceptual event names for readability. For the authoritative, case-sensitive list of subscribable events and the exact API request/response schemas, always defer to the [event catalog](/integrations/webhooks#event-catalog) and the [API reference](/api-reference/assessments).
+The walkthroughs below trace three full lifecycle workflows. Each is built from the same no-code triggers, conditions and actions any admin composes in the **Workflows** section of the dashboard, so treat them as worked examples to copy and edit rather than as fixed templates. Event names are real catalog values. For the authoritative, case-sensitive list of subscribable events and the exact API request/response schemas, always defer to the [event catalog](/integrations/webhooks#event-catalog) and the [API reference](/api-reference/assessments).
 
 ## Workflow A: Vendor onboarding
 
@@ -36,7 +36,7 @@ A new third-party request enters Coverbase from procurement, gets risk-classifie
     }
     ```
 
-    **Trigger fired:** `vendor.created`.
+    **Trigger fired:** `Vendor.Created`.
   </Step>
 
   <Step title="Workflow runs IRQ classification">
@@ -51,27 +51,27 @@ A new third-party request enters Coverbase from procurement, gets risk-classifie
   </Step>
 
   <Step title="Assessment created and questionnaire dispatched">
-    **Action:** create assessment, send questionnaire to vendor contact.
+    **Action:** create assessment, send a portal with the questionnaire to the vendor contact.
 
-    **Webhook fired:** `evidence.requested`. Payload includes the vendor ID, assessment ID, and the contact email. Your GRC tool receives the webhook and creates a corresponding tracking record.
+    **Webhook fired:** `Assessment.Created`, carrying the `assessment_id`. Your GRC tool receives the webhook and creates a corresponding tracking record.
   </Step>
 
   <Step title="Vendor responds">
     Vendor uploads SOC 2 and completes the questionnaire through the vendor portal.
 
-    **Webhook fired:** `evidence.received`.
+    **Webhook fired:** `QuestionnaireResponse.Updated` as the response moves through its statuses, and `VendorDocument.Created` for each uploaded document.
   </Step>
 
   <Step title="Copilot processes evidence">
-    **Action:** run Copilot against uploaded evidence. Copilot extracts control evidence from the SOC 2 and reconciles it against questionnaire responses. Evaluations are produced for each control.
+    Copilot runs as part of the assessment, not as a separate workflow action. It extracts control evidence from the SOC 2 and reconciles it against questionnaire responses. Evaluations are produced for each control.
 
-    **Webhook fired:** `assessment.completed` with score and findings count.
+    **Webhook fired:** `Assessment.Updated`, with the status change in `field_diffs`, as the assessment moves toward completion.
   </Step>
 
   <Step title="Findings are flagged for review">
-    **Action:** each finding is created as an evaluation with status `flagged`. For findings above a configured severity, the workflow assigns a task to the internal risk owner.
+    **Action:** issues found in the evaluations are raised as findings. For findings above a configured severity, a workflow on `Finding.Created` creates a work queue item for the internal risk owner.
 
-    **Webhook fired:** `evaluation.flagged`, one per finding. Your Jira instance receives webhooks and creates tickets.
+    **Webhook fired:** `Finding.Created`, one per finding. Your Jira instance receives webhooks and creates tickets, or the workflow's **Create jira ticket** action creates them directly.
   </Step>
 
   <Step title="Domain reviews are issued in parallel">
@@ -87,7 +87,7 @@ A new third-party request enters Coverbase from procurement, gets risk-classifie
 
     Each reviewer selects an outcome from your organization's own list: **Approve**, **Approve with finding**, **Approve with policy exception**, **Reject**, or **Return for rework**. The selected outcome is a branch point: an assessment-recommendation condition routes a policy exception down a different path from a clean approval, raising the exception record and scheduling an earlier reassessment.
 
-    **Webhook fired:** `Review.StatusChanged` and `WorkQueueItem.Completed` per decision, then `assessment.approved` and `vendor.status_changed` once the gate clears. The Ariba integration receives `vendor.status_changed` and unblocks the procurement record. Contract management receives the same event and starts contract drafting with risk context attached.
+    **Webhook fired:** `Review.Updated` and `WorkQueueItem.Completed` per decision, then `Assessment.Updated` and `Vendor.Updated`, each with the status change in `field_diffs`, once the gate clears. The Ariba integration receives `Vendor.Updated` and unblocks the procurement record. Contract management receives the same event and starts contract drafting with risk context attached.
   </Step>
 
   <Step title="Or the work goes back">
@@ -99,7 +99,7 @@ A new third-party request enters Coverbase from procurement, gets risk-classifie
   <Step title="Contract Guardian runs on the agreement">
     When the draft MSA is uploaded, either via UI, API, or pulled from your CLM through a separate integration, Contract Guardian runs automatically. Missing clauses, liability deviations, and AI usage provisions are surfaced.
 
-    **Webhook fired:** `contract.analyzed`. The redline summary is delivered to the legal team's inbox via the receiving webhook handler.
+    **Webhook fired:** `Contract.Created` when the agreement lands, and `Contract.Updated` as its fields change. There is no separate event for the clause review finishing, so your receiving handler routes the new contract to the legal team.
   </Step>
 </Steps>
 
@@ -111,15 +111,15 @@ After a vendor is active, Coverbase runs continuous monitoring and triggers reas
 
 Supplier Radar ingests external signals such as breaches, sanctions, regulatory actions, and threat intelligence, and produces events scoped to specific vendors. When an event lands above a configured severity threshold:
 
-- **Trigger fired:** `monitoring.event_detected`.
-- Conditions branch on event type and vendor tier.
-- For high-severity events on tier 1 vendors, action: create a targeted incident assessment, page the on-call risk owner, and send a webhook to PagerDuty.
+- **Trigger fired:** `RadarSignal.Created`, with `RadarDetectorResult.Created` for each alert a detector raises.
+- Conditions branch on the signal's fields and the vendor's tier.
+- For high-severity events on tier 1 vendors, action: create a targeted incident assessment, create a work queue item for the risk owner, and send a webhook to your paging tool.
 
-**Webhook fired:** `workflow.checkpoint` with `checkpoint: "incident_response_initiated"`.
+**Webhook fired:** the **Send webhook** action delivers the triggering signal event to the webhooks it names.
 
 ### Scheduled reassessment
 
-A schedule trigger fires quarterly for tier 1 vendors and annually for tier 2 and 3.
+Reassessment rules set each vendor's next assessment date from its risk level, for example quarterly for the highest level and annually below it. There is no recurring workflow trigger, so when an external GRC tool owns the cadence, it starts the assessment itself:
 
 ```http
 POST /v1/assessments
@@ -133,13 +133,11 @@ POST /v1/assessments
 }
 ```
 
-Copilot runs delta detection against the prior assessment state and generates follow-up questions only for control areas that have changed.
-
 ### Contract renewal trigger
 
-A schedule trigger fires 90 days before contract end date.
+There is no renewal-window trigger. Notice and renewal dates are tracked as [contract dates and reminders](/user-guides/contract-dates-and-reminders), and `Contract.Expired` fires when a contract's term runs out.
 
-**Trigger fired:** `contract.renewal_due`. The workflow optionally launches a renewal-scoped reassessment and sends a webhook to your CLM to start renewal negotiation with current risk context.
+**Trigger fired:** `Contract.Expired`. The workflow optionally launches a reassessment and sends a webhook to your CLM with current risk context.
 
 ## Workflow C: Vendor offboarding
 
@@ -157,29 +155,27 @@ When a relationship ends, Coverbase coordinates the offboarding sequence.
     }
     ```
 
-    **Trigger fired:** `vendor.status_changed`.
+    **Trigger fired:** `Vendor.Updated`, with the status change in `field_diffs`.
   </Step>
 
   <Step title="Termination assessment">
-    **Action:** create a termination assessment focused on data return, access revocation, and exit obligations from the contract. **Action:** send a structured offboarding questionnaire to the vendor covering data destruction certification, access termination confirmation, and return of materials.
+    **Action:** create a termination assessment focused on data return, access revocation, and exit obligations from the contract. **Action:** send a portal with a structured offboarding questionnaire covering data destruction certification, access termination confirmation, and return of materials.
 
-    **Webhook fired:** `evidence.requested`.
+    **Webhook fired:** `Assessment.Created`.
   </Step>
 
   <Step title="Internal access cleanup">
-    **Webhook fired:** `workflow.checkpoint` with `checkpoint: "internal_access_cleanup_required"`. Your IAM tool receives the event and revokes vendor user accounts, API keys, and SSO entitlements.
+    **Action:** **Send webhook** to your IAM tool's endpoint. It receives the event and revokes vendor user accounts, API keys, and SSO entitlements.
   </Step>
 
   <Step title="Document archival">
-    **Action:** archive vendor documents to long-term storage with retention metadata derived from the contract and applicable regulations.
-
-    **Webhook fired:** `workflow.checkpoint` with `checkpoint: "documents_archived"`.
+    Documents stay on the vendor record after offboarding. If your records policy needs a copy in long-term storage, your webhook handler pulls them through the [Documents API](/api-reference/documents).
   </Step>
 
   <Step title="Final closure">
-    When all offboarding tasks complete, the vendor transitions to `offboarded`.
+    When all offboarding tasks complete, an **Update vendor status** action moves the vendor to your offboarded status.
 
-    **Webhook fired:** `vendor.status_changed`. Procurement and finance systems receive the event and close their respective records.
+    **Webhook fired:** `Vendor.Updated`. Procurement and finance systems receive the event and close their respective records.
   </Step>
 </Steps>
 
@@ -198,7 +194,8 @@ Ariba · Icertis · ServiceNow · Jira · Slack · IAM · CLM · Warehouse
 
 Coverbase API
 ─────────────────────────────────────────────────────────────────
-POST /v1/import/{report}      Vendors, Assessments, Services
+POST /v1/import/{slug}        Vendors, Assessments, Services
+POST /v1/vendors              Create vendor
 POST /v1/assessments          Start assessment
 POST /v1/workflows/{name}/run Invoke named workflow
 PATCH /v1/vendors/{id}        Lifecycle transitions
@@ -210,13 +207,12 @@ Workflow Engine
 ─────────────────────────────────────────────────────────────────
 Triggers       ▶  Conditions          ▶  Actions
 Object events     IRQ score              Create assessment
-Schedules         Data class             Send questionnaire
-External calls    Tier                   Run Copilot, Inspect, Guardian
-                  Geography              Raise review gate (per domain)
-                  Contract value         Assign task / work queue item
-                  Approval outcome       Transition state
-                  Reviews complete       Fire webhook
-                  Custom logic           Return for rework
+Scheduled runs    Field filters          Send portal
+External calls    Tier                   Raise review gate (per domain)
+                  Contract value         Create work queue item
+                  Approval outcome       Update status
+                  Reviews complete       Send webhook
+                  Field changes          Jira / ServiceNow record
 
          ▼
 
@@ -226,5 +222,6 @@ vendor · service · engagement · assessment · evaluation
 document · contract · entity · control · control_set
 review · risk_domain · finding · obligation · work_queue_item
 
-All accessible via full CRUD API
+Vendors, services, documents, assessments,
+findings and obligations also via the public API
 ```
