@@ -22,10 +22,13 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/radar/events` |
 | `POST` | `/v1/radar/events` |
 | `GET` | `/v1/radar/events/{event_id}` |
+| `GET` | `/v1/radar/events/{event_id}/alerts` |
 | `GET` | `/v1/radar/alerts` |
 | `GET` | `/v1/radar/alerts/{alert_id}` |
 | `POST` | `/v1/radar/alerts/{alert_id}/dismiss` |
 | `POST` | `/v1/radar/alerts/{alert_id}/undismiss` |
+| `GET` | `/v1/radar/detectors` |
+| `GET` | `/v1/radar/sources` |
 
 None of these honor `Idempotency-Key`.
 
@@ -58,11 +61,11 @@ Returns `201 Created`. Use this to seed an event into Radar without waiting for 
 </ParamField>
 
 <ParamField body="vendor_ids" type="string[]">
-  Vendors directly impacted (`cbvndr_...`). Each is linked as primary-impacted. Vendors that cannot be resolved are skipped silently.
+  Vendors directly impacted (`cbvndr_...`). Each is linked as primary-impacted. Vendors that cannot be resolved, or that are not yet linked to a company record, are skipped silently.
 </ParamField>
 
 <ParamField body="risk_domain_ids" type="string[]">
-  Risk domains to record on the event (`cbrskdmn_...`), returned on the [radar
+  Risk domains to record on the event (`cbrdom_...`), returned on the [radar
   event object](#radar-event-object). An id your org does not have is rejected
   with `400 risk_domain_not_found`.
 </ParamField>
@@ -111,6 +114,10 @@ finish, each carrying this event's `event_id`. What runs against the event:
 
 Re-posting the same event is safe: each (event, vendor, detector) combination is
 evaluated once, so retries do not duplicate alerts or re-notify reviewers.
+
+To tell whether an event was evaluated, read [its alerts](#list-an-events-alerts):
+`evaluation_status` separates "never evaluated", "still evaluating", and "evaluated
+with nothing raised".
 
 ### Example request
 
@@ -177,6 +184,50 @@ The list envelope adds `total`, `limit`, and `offset`. See [pagination](/convent
 </ParamField>
 
 Returns the [radar event object](#radar-event-object), or `404 radar_event_not_found`.
+
+## List an event's alerts
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/events/{event_id}/alerts`
+</ParamField>
+
+Returns the detector results for one event, plus the state of its evaluation. An
+event that raised nothing looks the same from outside whether it was never
+evaluated, is still being evaluated, or was evaluated and judged irrelevant; the
+envelope's counts separate the three.
+
+<ParamField query="include_non_alerting" type="boolean">
+  Include detector runs that scored the event without alerting. Default `false`.
+</ParamField>
+
+<ParamField query="is_dismissed" type="boolean">
+  Dismissal filter. Omit for both; `true` for only dismissed; `false` for only active.
+</ParamField>
+
+<ParamField query="include_archived" type="boolean">
+  Include archived results. Default `false`.
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Page size. Default `50`, range `1`-`200`.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Page offset. Default `0`.
+</ParamField>
+
+The response is the usual list envelope of [radar alert objects](#radar-alert-object)
+(`items`, `total`, `limit`, `offset`) plus:
+
+<ResponseField name="evaluation_status" type="string">
+  `not_requested` (the event was stored without evaluation, or no linked vendor
+  resolved), `pending` (evaluation was requested and no detector has reported yet),
+  or `completed` (at least one detector scored the event).
+</ResponseField>
+<ResponseField name="evaluated_count" type="integer">Detector results recorded for the event, alerting or not, ignoring your filters.</ResponseField>
+<ResponseField name="alert_count" type="integer">How many of those results raised an alert.</ResponseField>
+
+Returns `404 radar_event_not_found` for an unknown event.
 
 ## List radar alerts
 
@@ -309,6 +360,36 @@ Dismissing an already-dismissed alert is a no-op that returns `200` with the ale
 </ParamField>
 
 Restores a dismissed alert to the active list. Returns the refreshed [radar alert object](#radar-alert-object), or `404 alert_not_found`.
+
+## List detectors
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/detectors`
+</ParamField>
+
+Lists your organization's detectors: what an event can be scored against. Filter
+with `enabled` (boolean) and `include_archived` (default `false`); pages with
+`limit` (default `50`, range `1`-`200`) and `offset`.
+
+Each detector carries `id` (`cbrdrdet_...`), `name`, `description`, `enabled`,
+`category_filters` (the impact categories it matches), `source_ids` (the sources it
+is limited to), `applies_to_all_vendors`, `included_vendor_ids`,
+`excluded_vendor_ids`, `severity_threshold`, `is_archived`, `created_at`, and
+`updated_at`.
+
+## List sources
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/sources`
+</ParamField>
+
+Lists your organization's Radar sources. Pages with `limit` (default `50`, range
+`1`-`200`) and `offset`; pass `include_archived=true` to include archived sources.
+
+Each source carries `id` (`cbradarsrc_...`), `name`, `is_archived`, `created_at`, and
+`is_manual_events`, which is `true` on the source that events created through this
+API land on. Add that source to a source-limited detector if you want it to evaluate
+API events.
 
 ## Related
 

@@ -10,6 +10,8 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 This is the complete list of placeholders you can write in an [assessment report template](/reporting/assessment-report-templates). Field names are matched case-insensitively, and whitespace around the entity, the `::`, and the field name is ignored.
 
+The same list is in the product: **Variables Catalog** in the **Add new assessment report template** dialog shows every placeholder with its exact spelling, including your organization's enabled custom fields, and copies one when you click it.
+
 ## Vendor
 
 `{{vendor::<field>}}` resolves against the vendor that the assessment belongs to.
@@ -72,9 +74,10 @@ Formatting follows the same rule as services: a single review renders bare, seve
 | `{{reviews::summary}}` | One self-contained line per review, `<label> - <outcome>: <notes>`. Outcome falls back to `Pending` |
 | `{{reviews::reviewer}}` | Reviewer per review |
 | `{{reviews::status}}` | Review status label |
-| `{{reviews::outcome}}` | Review outcome label |
+| `{{reviews::outcome}}` | Review outcome label, or `Pending` while undecided |
 | `{{reviews::description}}` | Review description |
 | `{{reviews::notes}}` | Reviewer notes |
+| `{{reviews::decided}}` | Date the review reached its outcome. An undecided review has no date |
 | `{{reviews::last updated}}` | Date the review was last updated |
 
 <Tip>
@@ -87,7 +90,7 @@ Formatting follows the same rule as services: a single review renders bare, seve
 
 These are stored values, so they resolve exactly, without a model call. Prefer them over `{{agent::...}}` for any figure that is a fact rather than a judgement: a placeholder cannot get a market capitalization wrong.
 
-Placeholders whose value comes from a Vendor Intelligence surface your organization is not entitled to render empty.
+Every `{{intelligence::...}}` placeholder resolves to something. A field with no value for this vendor (a private company has no market capitalization) renders `Not available` rather than staying in the document as placeholder text. So does a field from a Vendor Intelligence surface your organization is not entitled to.
 
 ### Company and market
 
@@ -145,7 +148,7 @@ Placeholders whose value comes from a Vendor Intelligence surface your organizat
 | `{{intelligence::adverse media}}` | `None found`, `Not searched`, or a count. Never reports an unsearched vendor as clear |
 | `{{intelligence::bbb rating}}` | Better Business Bureau rating |
 | `{{intelligence::trustpilot rating}}` | Trustpilot rating |
-| `{{intelligence::screening status}}` | Sanctions and adverse-media screening result for the vendor |
+| `{{intelligence::screening status}}` | Sanctions and adverse-media screening result for the vendor: `Not enrolled`, `Screened, no matches`, or the number of matches and how many await review |
 
 ### Submitted financial statements
 
@@ -188,19 +191,19 @@ Columns, usable with either set:
 | ------ | ----- |
 | `id`, `public id`, `public idx` | The finding's public reference number |
 | `title` | Finding title |
-| `description` | Finding description |
+| `description` | Finding description, including recommendations |
 | `status` | Finding status |
 | `due date` | Due date, `YYYY-MM-DD` in the export timezone |
-| `risk level` | Risk level name |
-| `risk severity` | Risk severity |
-| `severity` | Severity |
-| `urgency` | Urgency |
+| `risk level` | Risk level from the risk matrix (urgency by severity) |
+| `risk severity` | Criticality tier derived from the control's maximum score |
+| `severity` | Severity set by the reviewer |
+| `urgency` | Urgency set by the reviewer |
 | `assignee`, `assigned to` | Display name of the assignee |
 | `created by` | Display name of the creator |
 | `control`, `control expectation` | The control expectation the finding was raised against |
 | `risk domain`, `risk domains` | Risk domain of the control the finding was raised against. Comma-separated when the finding spans controls in several domains |
 | `score` | Score level name |
-| `resolution timeline` | Resolution timeline in days, as a number |
+| `resolution timeline` | Days allowed to resolve a finding at this risk level, from your findings settings, as a number |
 
 Rows where a column has no value render that cell empty. Each set is capped at 100 rows.
 
@@ -220,7 +223,7 @@ The domain is the name as configured in **Configuration → Risk domains**, matc
 
 `{{agent::<your prompt>}}` generates prose from the assessment. The whole text after `::` is the prompt.
 
-The agent reads the assessment, its findings, evals, reviews and questionnaire responses, and the headline of every Vendor Intelligence section -- company profile, financial health, security posture, corporate registration, people, reputation, compliance and legal, products, and sanctions screening. It can pull any of those sections in full when a prompt needs the evidence behind a headline.
+The agent reads the assessment, its findings, evals, reviews, services and commitments, and questionnaire responses, and the headline of every Vendor Intelligence section -- company profile, financial health, security posture, corporate registration, people, reputation, compliance and legal, products, and sanctions screening. It can pull any of those sections in full when a prompt needs the evidence behind a headline.
 
 Use a placeholder rather than the agent for anything that is a stored value. The agent is for judgement: a conclusion, an overview, a paragraph weighing several facts together.
 

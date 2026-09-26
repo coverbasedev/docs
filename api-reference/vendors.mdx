@@ -188,6 +188,7 @@ print(resp.json())
   "tier": null,
   "primary_contact": null,
   "services": [],
+  "custom_fields": [],
   "created_at": 1746576000,
   "updated_at": 1746576000
 }
@@ -575,11 +576,10 @@ Updates one or more fields. Only included fields change; omitted fields are unto
 <ParamField body="inherent_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for inherent risk.</ParamField>
 <ParamField body="residual_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for residual risk.</ParamField>
 <ParamField body="use_case" type="string">How the vendor is used.</ParamField>
-<ParamField body="engagement_type" type="string">Type of engagement.</ParamField>
 <ParamField body="primary_contact" type="object">Replace the vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)). When supplied, `email` is required and validated.</ParamField>
 
 <Note>
-  `external_id` and `tier` are **not** updatable through this endpoint (`external_id` is set only at creation; `tier` is derived by workflows).
+  `external_id`, `tier`, and `engagement_type` are **not** updatable through this endpoint (`external_id` is set only at creation; `tier` is derived by workflows). The request schema accepts `engagement_type`, but the value is ignored.
 </Note>
 
 ### Example request
@@ -645,7 +645,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 ```json
 {
   "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-  "entity_id": "cbentity_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "entity_id": "cbenty_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
   "status": "completed",
   "progress": ["company profile", "products", "security posture"],
   "generated_at": 1746575800,
@@ -665,12 +665,11 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
     "financial_health": {
       "scorecard": {
         "score": 68,
-        "band": "moderate",
+        "band": "low",
         "confidence_tier": "C",
         "as_of": "2026-08-12",
-        "pillars": [
-          {
-            "pillar": "capital_position",
+        "pillars": {
+          "capital_position": {
             "score": 50,
             "weight": 0.25,
             "contributions": [
@@ -696,11 +695,11 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
               }
             ]
           }
-        ],
+        },
         "provenance": { "edgar": "2026-03-31" },
         "unavailable_sources": ["pitchbook"]
       },
-      "history": [{ "as_of": "2026-05-12", "score": 65, "band": "moderate" }]
+      "history": [{ "as_of": "2026-05-12", "score": 65, "band": "low", "confidence_tier": "C" }]
     }
   },
   "people": { "leadership": [{ "name": "Jordan Lee", "title": "CEO" }] },
@@ -786,7 +785,7 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f
 Three sections carry outside-in intelligence measured from registries of record and from the vendor's own infrastructure, rather than produced by a language model. All three cite their sources. See [Vendor Intelligence](/products/vendor-intelligence), [Financial Health Score](/products/financial-health-score), and [Security Intelligence](/products/security-intelligence) for what each field means.
 
 <Note>
-  The Financial Health Score and the measured security rating are optional features in beta, enabled per organization. Write your integration to treat `financials.financial_health` and `security_posture.external_intelligence` as optional: both are `null` for an organization that does not have them enabled, and a section can be `null` even when `status` is `"completed"`.
+  The Financial Health Score and the measured security rating are optional features in beta, enabled per organization. Write your integration to treat `financials.financial_health` and `security_posture.external_intelligence` as optional. `financial_health` is `null` for an organization that does not have the score enabled. `external_intelligence` is present for every organization once generated, but without the measured rating it scores only the seven original factors. Any section can be `null` even when `status` is `"completed"`.
 </Note>
 
 <ResponseField name="company_profile.registry_validation" type="object | null">
@@ -796,12 +795,12 @@ Three sections carry outside-in intelligence measured from registries of record 
 </ResponseField>
 
 <ResponseField name="financials.financial_health" type="object | null">
-  The Coverbase Financial Health Score. `scorecard` holds `score` (0-100), `band` (`very_high` through `very_low`), `confidence_tier` (`A`, `B`, or `C`), `as_of`, the `pillars` breakdown, `vitals`, `peer_group` and `peer_percentile`, `events`, `overrides_applied`, `provenance` (source → as-of date), and `unavailable_sources`. `history` carries prior scores for trend.
+  The Coverbase Financial Health Score. `scorecard` holds `score` (0-100), `band` (the risk band, from `very_high` risk below 20 to `very_low` risk at 80 and above), `confidence_tier` (`A`, `B`, or `C`), `as_of`, the `pillars` breakdown (an object keyed by pillar: `financial_core`, `capital_position`, `momentum`, `adverse_events`, `corporate_standing`), `vitals`, `peer_group` and `peer_percentile`, `events`, `overrides_applied`, `provenance` (source → as-of date), and `unavailable_sources`. `history` carries prior scores for trend.
 
   Returned only when your organization has the Financial Health Score enabled; `null` otherwise.
 </ResponseField>
 
-<ResponseField name="financials.financial_health.scorecard.pillars[].contributions" type="object[]">
+<ResponseField name="financials.financial_health.scorecard.pillars.<pillar>.contributions" type="object[]">
   The individual inputs behind a pillar score, ordered by weighted shortfall so the input that cost the most comes first. Each entry carries:
 
   - `label_key`: the feature identifier (for example `operating_margin`, `registration_status`), or the adverse-event type
@@ -822,7 +821,7 @@ Three sections carry outside-in intelligence measured from registries of record 
 <ResponseField name="security_posture.external_intelligence" type="object | null">
   The measured outside-in security rating, assembled by querying the vendor's own public infrastructure. Top-level fields: `domain` (the domain that was rated), `generated_at` (unix timestamp), `overall_score` (0-100), `overall_grade` (`A` through `F`), `predictive_index` (0-100 likelihood of imminent exploitation), `factor_scores`, and the raw evidence blocks: `vulnerability_findings`, `exposed_services`, `breach_exposures`, `email_authentication`, `web_headers`, `tls_certificate`, `dns_health`, `web_reputation`.
 
-  Returned only when your organization has the measured security rating enabled; `null` otherwise.
+  Present for every organization once the security posture has been generated. Without the measured security rating, `factor_scores` covers only the seven original factors (see below).
 </ResponseField>
 
 <ResponseField name="security_posture.external_intelligence.recommended_actions" type="object[]">
@@ -903,7 +902,7 @@ curl -X POST "https://sandbox.api.coverbase.app/v1/vendors/cbvndr_e448ba62882143
 ```json
 {
   "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
-  "entity_id": "cbentity_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "entity_id": "cbenty_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
   "status": "pending",
   "message": "Fact sheet regeneration has been queued."
 }

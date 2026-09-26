@@ -24,6 +24,10 @@ A key can carry zero or more **admin scopes**. A standard integration key has no
 | ----- | ------ |
 | `keys:manage` | List, create, rotate, and revoke `ak_*` keys (the endpoints on this page). |
 | `audit:read` | Read the org system audit log (`GET /v1/system_audit_log` and `GET /v1/system_audit_log/metadata`). |
+| `banking:read` | Read full supplier bank account and tax identifiers instead of the masked last four characters. |
+| `review:sensitive_changes` | Approve or reject a queued sensitive supplier change, and write bank details without waiting for review. |
+
+The dashboard's **API keys** page (**Configuration**, under **Developers and integrations**) offers the same scopes under **Admin scopes (optional)** when an admin creates a key. See [API key scopes](/conventions#api-key-scopes) before granting the last two.
 
 <Warning>
   Granting scopes is a deliberate **admin** action and requires an admin dashboard JWT. A scoped `ak_*` key **cannot** grant scopes (not to itself and not to any other key), so a leaked key can never escalate its own access. A non-admin or scoped-key caller that supplies `scopes` is rejected with `403 scope_grant_forbidden`, and a call made with a key that lacks the required scope returns `403 insufficient_scope`.
@@ -109,7 +113,7 @@ Each entry contains:
 </ResponseField>
 
 <ResponseField name="scopes" type="string[]">
-  The admin scopes granted to the key. Each value is one of `"keys:manage"` or `"audit:read"`. A standard integration key returns an empty array (`[]`).
+  The admin scopes granted to the key. Each value is one of `"keys:manage"`, `"audit:read"`, `"banking:read"`, or `"review:sensitive_changes"`. A standard integration key returns an empty array (`[]`).
 </ResponseField>
 
 <ResponseField name="created_by_clerk_user_id" type="string | null">
@@ -137,7 +141,7 @@ Creates a new API key scoped to your org. The raw `ak_*` secret is returned **on
 </ParamField>
 
 <ParamField body="scopes" type="string[]">
-  Optional. Admin scopes to grant the new key: any subset of `"keys:manage"` and `"audit:read"`. Omit or pass `[]` to mint a standard integration key with no elevated access. **Granting scopes requires an admin dashboard JWT**; a non-admin or scoped-key caller that supplies a non-empty `scopes` array is rejected with `403 scope_grant_forbidden`.
+  Optional. Admin scopes to grant the new key: any subset of `"keys:manage"`, `"audit:read"`, `"banking:read"`, and `"review:sensitive_changes"`. Omit or pass `[]` to mint a standard integration key with no elevated access. **Granting scopes requires an admin dashboard JWT**; a non-admin or scoped-key caller that supplies a non-empty `scopes` array is rejected with `403 scope_grant_forbidden`.
 </ParamField>
 
 ### Example request
@@ -180,7 +184,7 @@ curl -X POST "https://api.coverbase.app/v1/api-keys" \
   `POST /v1/api-keys/{api_key_id}/rotate`
 </ParamField>
 
-Atomically rotates a key: mints a new key with the same name, then revokes the original. Use this when a secret may have been compromised, or as part of a scheduled rotation policy. **The new key inherits the same scopes as the rotated key**, so a scoped admin key stays scoped after rotation.
+Atomically rotates a key: mints a new key, then revokes the original. The new key keeps the original name with a `(rotated YYYY-MM-DD)` suffix, because the identity provider rejects duplicate names; a second rotation on the same day adds a counter, such as `(rotated 2025-05-07 2)`. Use this when a secret may have been compromised, or as part of a scheduled rotation policy. **The new key inherits the same scopes as the rotated key**, so a scoped admin key stays scoped after rotation.
 
 If revocation of the original key fails after the new key is minted, the new key is automatically rolled back (also revoked) so the operation never leaves you with two simultaneously-active keys.
 
@@ -204,7 +208,7 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../rotate" \
 ```json
 {
   "id": "ak_5ZmN...newkey",
-  "name": "GRC pipeline (Acme)",
+  "name": "GRC pipeline (Acme) (rotated 2025-05-07)",
   "secret": "ak_live_5ZmN3pQrStUvWxYzABCDEFGHIJKLMNOPQRSTUVWXYZabcdef",
   "revoked_id": "ak_2YkL...redacted",
   "created_at": 1746580000,
@@ -257,14 +261,15 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 
 - Each endpoint accepts **either** an admin dashboard JWT (org **`admin` role**) **or** an `ak_*` key carrying the `keys:manage` scope. A JWT caller without the admin role, or a key without `keys:manage`, is rejected.
 - **Granting scopes is admin-only.** A non-empty `scopes` array on create can only be supplied with an admin JWT; a scoped-key caller that passes `scopes` is rejected with `403 scope_grant_forbidden`. A scoped key can manage keys but can never grant scopes; there is no self-propagation.
-- Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it actually transitions a key from active to revoked**; re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Settings → Audit log** (System Audit → Integrations group).
+- Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it actually transitions a key from active to revoked**; re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Configuration → Audit Logs** (in the **Integrations** group).
 
 ## Error responses
 
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 400 | `{"detail": {"code": "invalid_name", "message": "Name cannot be empty."}}` | `name` is empty or whitespace-only on create. |
-| 401 | `{"detail": "Unauthorized role."}` | Missing/invalid credential, e.g. a JWT whose role is not `admin`, or no bearer token at all. |
+| 401 | `{"detail": "Unauthorized role."}` | A JWT whose role is not `admin`. An unknown or revoked key returns `{"detail": "Invalid or expired API key."}`. |
+| 403 | `{"detail": "Not authenticated"}` | No `Authorization` header. |
 | 403 | `{"detail": {"code": "insufficient_scope", "message": "..."}}` | The `ak_*` key is valid but lacks the `keys:manage` scope required for this endpoint. |
 | 403 | `{"detail": {"code": "scope_grant_forbidden", "message": "..."}}` | A non-admin or scoped-key caller tried to grant `scopes` on create. Scopes can only be granted from an admin dashboard session. |
 | 403 | `{"detail": {"code": "user_not_provisioned", "message": "..."}}` | The admin user record has no Clerk identity (rare; re-provision via support). |

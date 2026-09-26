@@ -15,7 +15,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 Coverbase signs agreements in the same place it stores them, so there is no exporting a PDF, sending it somewhere else, and filing the executed copy back by hand. The contract, the signature, the record of what happened, and the sealed document all sit on the same record.
 
 <Note>
-  Coverbase also connects to [DocuSign](/integrations/guides/docusign) if your organization already signs there. The two are alternatives, not layers: DocuSign creates the envelope in your own DocuSign account, while everything on this page happens inside Coverbase. Pick one per agreement rather than both. On a contract record both start from the **Signature** step of the **Workflow** tab, once the contract has cleared its approval chain; see [Contract intake and approval](/user-guides/contract-intake-and-approval).
+  Coverbase also connects to [DocuSign](/integrations/guides/docusign) if your organization already signs there. The two are alternatives, not layers: DocuSign creates the envelope in your own DocuSign account, while everything on this page happens inside Coverbase. Pick one per agreement rather than both. On a contract record both start from the **Signature** step of the **Workflow** tab, once the contract has cleared its approval chain; see [Contract intake and approval](/user-guides/contract-intake-and-approval). A DocuSign envelope is still listed on **Contracts → Signatures**, with the status DocuSign reports.
 </Note>
 
 ## The four things
@@ -63,7 +63,7 @@ A template is optional. The parts that are not optional are the envelope, the si
 | --- | --- |
 | **Contracts → Signatures** | Every envelope, with cards for what is in flight, stalled, expiring, executed and closed. |
 | **Contracts → Templates** | The templates your organization sends from. |
-| **Configuration → Signing Settings** | Seal level, consent wording, accepted signature types, verification, email copy and portal branding. Set once, applies to everything. |
+| **Configuration → E-signature** | Opens **Signing Settings**: seal level, consent wording, accepted signature types, verification, email copy and portal branding. Set once, applies to everything. |
 
 <Frame caption="The signatures inbox. The cards across the top are saved filters, not statistics: pick one and the table below it narrows.">
   <img src="/images/user-guides/signing-inbox.png" alt="Signatures inbox showing in flight, stalled, expiring this week, executed and closed cards above a table of agreements" />
@@ -83,18 +83,19 @@ Status is about the envelope as a whole. Each recipient also has their own state
 | **Voided** | You canceled it. Links stop working. |
 | **Expired** | The expiry date passed before everyone signed. |
 | **Failed** | Sealing did not complete. Rare; raise it with support. |
+| **Delivered** | DocuSign envelopes only. Everyone in the current routing step has opened it and nobody has signed yet. |
 
-Each recipient also carries their own state: *not yet notified*, *notified*, *opened*, *consented*, *signed*, *completed*, *declined* or *delegated*. That is what the envelope's **Signing Order** panel reads out, party by party.
+Each recipient also carries their own state: *not yet notified*, *notified*, *opened*, *consented*, *signed*, *completed*, *declined* or *delegated*, plus *address bounced* on a DocuSign envelope. That is what the envelope's **Signing Order** panel reads out, party by party.
 
 <Note>
-  A draft envelope is real. It holds a reference to the template it came from, so opening the send wizard and abandoning it leaves a draft behind. Drafts do not freeze the template they were built from. Only sending does.
+  The send wizard saves nothing until you click **Send for signature**, so opening it and abandoning it leaves no draft behind. Only a sent envelope freezes the template it came from.
 </Note>
 
 ## Before your first send
 
 Signing settings are organization-wide and only need doing once. They cover the seal, the consent wording, what signers may do, and how the emails and the portal look.
 
-<Frame caption="Configuration → Signing Settings. Everything here applies to every envelope your organization sends.">
+<Frame caption="Configuration → E-signature opens Signing Settings. Everything here applies to every envelope your organization sends.">
   <img src="/images/user-guides/signing-settings.png" alt="Signing Settings page showing seal and certificate, electronic signature consent, and signing rules sections" />
 </Frame>
 
@@ -106,13 +107,13 @@ Signing settings are organization-wide and only need doing once. They cover the 
     The ESIGN disclosure every signer sees before any field becomes writable. It is stored verbatim with each acceptance, so editing it publishes a new version and acceptances already recorded keep the text they were shown. A later edit cannot appear to change what someone agreed to.
   </Accordion>
   <Accordion title="Signing Rules">
-    **Accepted Signature Types** decides whether signers may draw, type, or upload an image. **Default Expiry (Days)** is what a new envelope starts at when nothing more specific applies. **Require a signature meaning** makes every signature record what the signer intended by it, which regulated workflows need and most do not.
+    **Accepted Signature Types** decides which ways of signing the signing page offers: **Drawn** and **Typed**. **Uploaded image** is also listed, but the signing page has no upload option today, so ticking it adds nothing for a signer. **Default Expiry (Days)** is what a new envelope starts at when nothing more specific applies. **Require a signature meaning** makes every signature record what the signer intended by it, which regulated workflows need and most do not.
   </Accordion>
   <Accordion title="Signer Verification">
-    Turn this on and a party must prove the address the agreement was sent to before the document is shown. The invitation links to the portal, which checks a one-time code first. Use it when the counterparty's address is the only thing identifying them. This is the default a new envelope starts at, and the sender can change it for one envelope on the review step.
+    Turn on **Require email verification** and a party must prove the address the agreement was sent to before the document is shown. The invitation links to the portal, which checks a one-time code first. Use it when the counterparty's address is the only thing identifying them. This is the default a new envelope starts at, and the sender can change it for one envelope on the review step. **Code lifetime (minutes)** sets how long a code stays valid; five wrong guesses spend a code whatever it says.
   </Accordion>
   <Accordion title="Signing Emails and Portal Branding">
-    Your own wording for the invitation, reminder and completion mail; leave a field blank to keep the built-in copy. Branding controls the logo and accent a counterparty sees on the signing link. Both are covered in [the signing experience](/user-guides/signature-signing-experience#branding-the-portal).
+    Your own wording for the invitation, reminder, completion, declined and verification code mail; leave a field blank to keep the built-in copy. **Portal Branding** sets the **Sender Name** and a **Portal Message** shown on the signing page; the logo and accent come from your organization's branding. Both are covered in [the signing experience](/user-guides/signature-signing-experience#branding-the-portal).
   </Accordion>
 </AccordionGroup>
 

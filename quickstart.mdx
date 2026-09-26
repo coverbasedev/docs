@@ -16,11 +16,11 @@ The Coverbase API uses bearer token authentication. Every request must include a
 
 ## Request an API key
 
-API keys are provisioned by a Coverbase admin in your organization. Each key looks like `ak_...`, is scoped to a single organization, and authenticates as a service account. All data it can read or write is implicitly scoped to that org. Contact your admin or Coverbase account manager to request one.
+An admin in your organization creates API keys on the **API keys** page (**Configuration**, under **Developers and integrations**) or through the [API Keys API](/api-reference/api-keys). Each key looks like `ak_...`, is scoped to a single organization, and authenticates as a service account. All data it can read or write is implicitly scoped to that org. Ask your admin for one.
 
 A logged-in user JWT (the dashboard session token) is also accepted, which is convenient for first-party scripts running as a user.
 
-By default a key carries no elevated permissions and can only call ordinary `/v1/*` routes. An admin can also mint a key with **admin scopes**, `keys:manage` (manage `ak_*` keys) and/or `audit:read` (read the system audit log), to drive those admin surfaces headlessly, without a short-lived dashboard token. The admin-JWT path still works for both. See [API key scopes](/conventions#api-key-scopes) and the [API Keys reference](/api-reference/api-keys).
+By default a key carries no elevated permissions and can only call ordinary `/v1/*` routes. An admin can also mint a key with **admin scopes**: `keys:manage` (manage `ak_*` keys), `audit:read` (read the system audit log), `banking:read` (read full supplier bank and tax identifiers), and `review:sensitive_changes` (approve queued bank-detail changes). The admin-JWT path still works for the key and audit-log endpoints. See [API key scopes](/conventions#api-key-scopes) and the [API Keys reference](/api-reference/api-keys).
 
 ## Base URLs
 
@@ -78,11 +78,11 @@ A successful request returns `200 OK`:
 
 <AccordionGroup>
   <Accordion title="401 Unauthorized" icon="lock">
-    Your credential is missing, malformed, expired, or revoked, or its role is not permitted on the public API (the response message reads `Unauthorized role.`). Confirm the `Authorization` header is present and the key is active.
+    Your credential is malformed, expired, or revoked (`Invalid or expired API key.` for an `ak_` key), or its role is not permitted on the endpoint (`Unauthorized role.`). Confirm the key is active and that the endpoint accepts API keys.
   </Accordion>
 
   <Accordion title="403 Forbidden" icon="ban">
-    Your credential is valid but not authorized for what it tried to do: most often an `ak_*` key calling an admin endpoint without the required scope (`insufficient_scope`), or a non-admin caller trying to grant scopes when creating a key (`scope_grant_forbidden`). A configured [API IP allowlist](/conventions#api-ip-allowlist) can also return `403 ip_not_allowed`. See [API key scopes](/conventions#api-key-scopes).
+    A request with no `Authorization` header, or with a scheme other than `Bearer`, returns `403` with `Not authenticated`. Otherwise your credential is valid but not authorized for what it tried to do: most often an `ak_*` key calling an admin endpoint without the required scope (`insufficient_scope`), or a non-admin caller trying to grant scopes when creating a key (`scope_grant_forbidden`). A configured [API IP allowlist](/conventions#api-ip-allowlist) can also return `403 ip_not_allowed`. See [API key scopes](/conventions#api-key-scopes).
   </Accordion>
 
   <Accordion title="404 Not Found" icon="magnifying-glass">

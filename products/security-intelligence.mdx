@@ -72,14 +72,14 @@ The overall score runs 0-100 with a letter grade, computed as a weighted mean ac
 | Factor | Weight | What it covers |
 | ------ | -----: | -------------- |
 | Patching cadence | 18% | Known-exploited and high-EPSS vulnerabilities in the vendor's products |
-| Network security | 14% | Exposed services and administrative interfaces |
-| Email security | 12% | SPF, DMARC, DKIM, MTA-STS, measured as policy |
+| Network exposure | 14% | Exposed services and administrative interfaces |
+| Email authentication | 12% | SPF, DMARC, DKIM, MTA-STS, measured as policy |
 | TLS configuration | 10% | Certificate trust, coverage, expiry, negotiated protocol |
 | Web application headers | 10% | HTTPS enforcement, HSTS, CSP, cookie flags |
 | DNS health | 8% | Resolver and record hygiene |
-| Leaked information | 8% | Credentials exposed in known breaches |
+| Leaked credentials | 8% | Credentials exposed in known breaches |
 | IP reputation | 7% | Malicious activity attributed to the vendor's addresses |
-| Application security | 6% | Application-layer exposure |
+| TLS assessment | 6% | The SSL Labs grade for the vendor's site, and any configuration warnings |
 | Web reputation | 5% | Reputation verdicts from public sources |
 | Domain squatting | 2% | Registered lookalikes that resolve |
 
@@ -142,17 +142,17 @@ The rating answers "how well is this vendor configured?" The predictive index an
   A clean external profile is **not** evidence of good internal security. Everything here is visible from outside the perimeter. It says nothing about access control, key management, secure development, incident response, or how the vendor treats your data once it's inside their systems. Use it to prioritize and to interrogate, never as a substitute for an assessment.
 </Warning>
 
-Two more limits worth stating plainly:
+Three more limits worth stating plainly:
 
 - **DKIM absence is inconclusive.** DKIM has no discovery mechanism; a verifier learns the selector from a message it received. Coverbase probes the selectors major senders publish, so a domain signing with a private selector reads as unsigned. Absence is therefore scored as *unknown* with a small deduction, never as a failure.
-- **The rating describes the domain we scanned.** A vendor with a well-configured marketing domain and a neglected application domain will rate on whichever one is on file.
+- **The rating describes the domain we scanned.** A vendor with a well-configured marketing domain and a neglected application domain will rate on whichever one is on file. **Scan a different domain**, beside the verdict on the Security page, points the scan at another one for every organization that monitors the vendor.
 - **Attribution is heuristic, and correcting it is manual.** Disputing an asset fixes one vendor's estate; it does not make the attribution better for the next vendor. Adding the assets the scan cannot discover is the same trade in the other direction, and although they go in as one list against one rescan, someone still has to know they exist.
 
 ## Where it appears
 
 <CardGroup cols={2}>
   <Card title="Vendor Intelligence" icon="file-lines">
-    The **Security Posture** card carries the score, grade, factor breakdown, and per-factor findings, refreshed on the regular Vendor Intelligence cadence. Its **Security posture** page opens the same data full width, with rating history, every factor expanded to its findings, the reviewable estate, and a section per evidence class.
+    The **External Security Intelligence** card carries the score, grade, factor breakdown, and per-factor findings, refreshed on the regular Vendor Intelligence cadence. The **Security** tab opens the same data full width, with rating history, every factor expanded to its findings, the reviewable estate, and a section per evidence class.
   </Card>
 
   <Card title="Assessments" icon="clipboard-check">

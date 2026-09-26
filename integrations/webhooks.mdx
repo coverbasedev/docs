@@ -10,15 +10,21 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Webhooks are the outbound half of an integration. This page documents how events are delivered, how to verify signatures, retry behavior, and the event catalog. To register, list, update, delete, test, or inspect the delivery history of a subscription, see the [Webhooks API](/api-reference/webhooks). For the audit trail of every attempt, see [Webhook delivery history](/integrations/webhook-deliveries).
 
+Admins can do the same from the dashboard under **Configuration → Webhooks**. **Add webhook** takes an **Endpoint URL**, a **Signing secret** of at least 16 characters (shown only once), the **Events** to subscribe to, an optional **Description**, and an **Enabled** switch. Each row has **Send test**, **Delivery history**, **Edit** and **Delete** buttons, and the **Health** column shows the last delivery's status and the share of recorded deliveries that got a response.
+
 ## When deliveries happen
 
 When a subscribed event occurs, Coverbase POSTs a JSON envelope to **every active webhook subscribed to that event type**. Deliveries originate from three sources, and all of them are recorded in [delivery history](/integrations/webhook-deliveries):
 
 - **Domain-event fan-out**: a domain event (e.g. a vendor is created) fans out to every subscription for that event type.
-- **Workflow `send_webhook` action**: a workflow automation explicitly delivers its triggering event. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
-- **Manual test**: the [test endpoint](/api-reference/webhooks#test-a-webhook) sends a one-off delivery to a single subscription.
+- **Workflow `send_webhook` action**: a workflow automation explicitly delivers its triggering event, either to the webhooks the action names or to every subscription for the event type. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
+- **Manual test**: the [test endpoint](/api-reference/webhooks#test-a-webhook), or **Send test** on the **Webhooks** page, sends a one-off delivery to a single subscription.
 
-For one source event, the **same `event_id` is shared across all webhooks** in the fan-out. Receivers can use it to dedupe a fan-out and to correlate a multi-subscription delivery.
+For one source event, the **same `event_id` is shared across all webhooks** in the fan-out. Receivers can use it to dedupe a fan-out and to correlate a multi-subscription delivery. A workflow `send_webhook` action generates its own `event_id` each time it runs, so an event delivered by both the fan-out and a workflow action arrives with two different IDs.
+
+<Tip>
+  A webhook with no events selected receives nothing from the fan-out. Use that for an endpoint that should only receive what a workflow's `send_webhook` action addresses to it.
+</Tip>
 
 ## Delivery format
 
@@ -48,12 +54,15 @@ The envelope is exactly these four keys; there is no top-level `workflow_run_id`
 | ------ | ----- |
 | `Content-Type` | `application/json` |
 | `Coverbase-Signature` | Lowercase hex HMAC-SHA256 of the raw request body, keyed by your webhook `secret`. |
+| `Coverbase-Timestamp` | Same value as `occurred_at`, in Unix seconds. |
 | `X-Coverbase-Event-Id` | Same value as `event_id`. |
 | `X-Coverbase-Event-Type` | Same value as `event_type`. |
 
 ## Signature verification
 
 The signature is `HMAC-SHA256(secret, raw_request_body)` rendered as a lowercase hex string, sent in the `Coverbase-Signature` header. The key is the `secret` you registered with the subscription. Verify it against the **raw bytes** of the request body, before parsing JSON, with a constant-time comparison.
+
+To reject replayed deliveries, compare `Coverbase-Timestamp` with your own clock and drop anything outside a window you choose (five minutes is typical). The same value is inside the signed body as `occurred_at`, so an attacker cannot change the header without the body no longer matching it.
 
 ```python Python
 import hashlib
@@ -115,13 +124,12 @@ app.post(
 | -------- | ----- |
 | HTTP method | `POST` |
 | Connection timeout | 10 seconds per attempt |
-| Retries | Up to 5 attempts on failure (timeout or connection error) |
-| Retry backoff | None. Hatchet retries immediately; no exponential backoff, no jitter |
+| Retries | None for a failed attempt. A timeout, a connection error or a non-`2xx` response is recorded in [delivery history](/integrations/webhook-deliveries) and is not sent again |
 | Ordering | Not guaranteed; deliveries are unordered |
-| Guarantee | At-least-once; the same `event_id` may be delivered more than once |
+| Duplicates | Rare but possible: if a Coverbase worker fails partway through a delivery, the delivery task can run again with the same `event_id` |
 | Endpoint requirement | Public HTTPS endpoint (see [URL restrictions](#url-restrictions)) |
 
-`occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` quickly to acknowledge; non-`2xx`, timeouts, and connection errors are retried up to 5 times in rapid succession.
+`occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` within 10 seconds. Because a failed attempt is not retried, events sent while your receiver is down or returning errors are not redelivered: after an outage, use [delivery history](/integrations/webhook-deliveries) to see which events you missed and read the affected records back through the API.
 
 ### Source IP
 
@@ -141,41 +149,67 @@ The same check is **re-applied with DNS resolution at delivery time**, so a host
 
 ## Event catalog
 
-These are the **only** values valid in a subscription's `events` array and the only event types emitted. The `events` field is strictly validated against this set; see the [behavior change](#strict-event-type-validation) below. Use the exact, case-sensitive strings.
+These are the **only** values valid in a subscription's `events` array and the only event types emitted. The `events` field is strictly validated against this set; see the [behavior change](#strict-event-type-validation) below. Use the exact, case-sensitive strings. The same list is what the **Events** picker on the **Webhooks** page offers.
 
 | `event_type` | `data` fields |
 | ------------ | ------------- |
-| `Assessment.Created` | `assessment_id` |
-| `Assessment.AssigneeChanged` | `assessment_id`, `old_assignee_id` (nullable), `new_assignee_id` (nullable) |
-| `Assessment.StatusChanged` | `assessment_id`, `old_status`, `new_status` |
-| `QuestionnaireResponse.Created` | `questionnaire_response_id` |
-| `QuestionnaireResponse.StatusChanged` | `questionnaire_response_id`, `old_status`, `new_status` |
-| `Review.StatusChanged` | `review_id`, `old_status_id` (nullable), `new_status_id` (nullable) |
-| `WorkQueueItem.Created` | `work_queue_item_id` |
-| `WorkQueueItem.Completed` | `work_queue_item_id` |
-| `Vendor.Created` | `vendor_id` |
-| `Vendor.Updated` | `vendor_id` |
-| `Procurement.Created` | `procurement_id` |
-| `Procurement.StatusChanged` | `procurement_id`, `old_status_id` (nullable), `new_status_id` |
-| `Service.Created` | `service_id` |
-| `Service.Updated` | `service_id` |
-| `OrgIntake.QuestionnaireRemoved` | `questionnaire_id`, `intake_disabled` (bool) |
+| `Assessment.Created`, `Assessment.Updated`, `Assessment.Deleted` | `assessment_id`; `.Updated` adds `field_diffs` |
+| `Assessment.ManualHandoffRequested` | `assessment_id`, `work_queue_item_id` |
+| `Commitment.Created`, `Commitment.Updated`, `Commitment.Deleted` | `commitment_id`; `.Updated` adds `field_diffs` |
+| `Contract.Created`, `Contract.Updated`, `Contract.Deleted`, `Contract.Expired` | `contract_id`; `.Updated` adds `field_diffs` |
+| `DarkWebExposure.Created`, `DarkWebExposure.Updated`, `DarkWebExposure.Deleted` | `dark_web_exposure_id`; `.Updated` adds `field_diffs` |
+| `Engagement.Created`, `Engagement.Updated` | `engagement_id`; `.Updated` adds `field_diffs` |
+| `Finding.Created`, `Finding.Updated`, `Finding.Deleted` | `finding_id`; `.Updated` adds `field_diffs` |
+| `IntakeSession.Created`, `IntakeSession.Submitted`, `IntakeSession.Updated`, `IntakeSession.Deleted` | `intake_session_id`; `.Updated` adds `field_diffs` |
+| `Obligation.Created`, `Obligation.Updated`, `Obligation.Deleted` | `obligation_id`; `.Updated` adds `field_diffs` |
 | `OrgIntake.Disabled` | `removed_questionnaire_id` |
-| `IntakeSession.Created` | `intake_session_id` |
-| `IntakeSession.Submitted` | `intake_session_id` |
-| `RadarEvent.Created` | `radar_event_id` |
-| `RadarEvent.Updated` | `radar_event_id`, `field_diffs` |
-| `RadarEvent.Deleted` | `radar_event_id` |
-| `RadarDetectorResult.Created` | `radar_detector_result_id` |
-| `RadarDetectorResult.Updated` | `radar_detector_result_id`, `field_diffs` |
-| `RadarDetectorResult.Deleted` | `radar_detector_result_id` |
-| `Reassessment.Created` | `reassessment_id` |
-| `Reassessment.Updated` | `reassessment_id`, `field_diffs` |
-| `Reassessment.Deleted` | `reassessment_id` |
+| `OrgIntake.QuestionnaireRemoved` | `questionnaire_id`, `intake_disabled` (bool) |
+| `Procurement.Created`, `Procurement.Updated`, `Procurement.Deleted` | `procurement_id`; `.Updated` adds `field_diffs` |
+| `QuestionnaireResponse.Created`, `QuestionnaireResponse.Updated` | `questionnaire_response_id`; `.Updated` adds `field_diffs` |
+| `RadarCase.Created`, `RadarCase.Updated`, `RadarCase.Deleted` | `radar_case_id`; `.Updated` adds `field_diffs` |
+| `RadarDetectorResult.Created`, `RadarDetectorResult.Updated`, `RadarDetectorResult.Deleted` | `radar_detector_result_id`; `.Updated` adds `field_diffs` |
+| `RadarEvent.Created`, `RadarEvent.Updated`, `RadarEvent.Deleted` | `radar_event_id`; `.Updated` adds `field_diffs` |
+| `RadarSignal.Created`, `RadarSignal.Updated`, `RadarSignal.Deleted` | `signal_id`; `.Updated` adds `field_diffs` |
+| `Reassessment.Created`, `Reassessment.Updated`, `Reassessment.Deleted` | `reassessment_id`; `.Updated` adds `field_diffs` |
+| `Review.Created`, `Review.Updated`, `Review.Deleted` | `review_id`; `.Updated` adds `field_diffs` |
+| `RiskRegisterEntry.Created`, `RiskRegisterEntry.Updated`, `RiskRegisterEntry.Deleted` | `risk_id`; `.Updated` adds `field_diffs` |
+| `ScreeningMatch.Created`, `ScreeningMatch.Updated`, `ScreeningMatch.Deleted` | `screening_match_id`; `.Updated` adds `field_diffs` |
+| `Service.Created`, `Service.Updated`, `Service.Deleted` | `service_id`; `.Updated` adds `field_diffs` |
+| `ServiceNowRecord.Created`, `ServiceNowRecord.Updated`, `ServiceNowRecord.Deleted` | `servicenow_record_link_id`; `.Updated` adds `field_diffs` |
+| `ServiceNowSync.Completed` | `assessment_id`, `servicenow_table`, `created_record_count` |
+| `Sla.Created`, `Sla.Updated`, `Sla.Deleted` | `sla_id`; `.Updated` adds `field_diffs` |
+| `SupplierDiversityRecord.Updated` | `supplier_diversity_record_id`, plus the [supplier profile fields](#supplier-profile-events) |
+| `SupplierLegalEntityAssignment.Assigned`, `SupplierLegalEntityAssignment.Rejected` | `supplier_legal_entity_assignment_id`, `entity_code` (nullable), plus the [supplier profile fields](#supplier-profile-events) |
+| `SupplierSite.Created`, `SupplierSite.Updated`, `SupplierSite.Deleted` | `supplier_site_id`, plus the [supplier profile fields](#supplier-profile-events) |
+| `SupplierTaxRegistration.Updated` | `supplier_tax_registration_id`, plus the [supplier profile fields](#supplier-profile-events) |
+| `SupplierUpdateRequest.Submitted` | `supplier_update_request_id`, plus the [supplier profile fields](#supplier-profile-events) |
+| `Vendor.Created`, `Vendor.Updated`, `Vendor.Deleted` | `vendor_id`; `.Updated` adds `field_diffs` |
+| `VendorBankAccount.Created`, `VendorBankAccount.Updated`, `VendorBankAccount.Retired` | `vendor_bank_account_id`, plus the [supplier profile fields](#supplier-profile-events) |
+| `VendorContact.Updated` | The [supplier profile fields](#supplier-profile-events) |
+| `VendorDocument.Created`, `VendorDocument.Updated`, `VendorDocument.Deleted` | `vendor_document_id`; `.Updated` adds `field_diffs` |
+| `WorkflowRun.Created` | `workflow_run_id`, `input` |
+| `WorkflowRun.Updated`, `WorkflowRun.Deleted`, `WorkflowRun.Completed`, `WorkflowRun.Failed` | `workflow_run_id`; `.Updated` adds `field_diffs` |
+| `WorkQueueItem.Created`, `WorkQueueItem.Completed`, `WorkQueueItem.Updated`, `WorkQueueItem.Deleted` | `work_queue_item_id`; `.Updated` adds `field_diffs` |
 
 <Note>
-  A **radar alert** is a `RadarDetectorResult`: subscribe to `RadarDetectorResult.Created` to be notified of new alerts and `RadarDetectorResult.Updated` (whose `field_diffs` will include `is_dismissed`) for triage activity. `*.Updated` events carry a `field_diffs` object mapping each changed field to its `{ "old_value", "new_value" }`. A soft-archive (`is_archived` → `true`) surfaces as `*.Deleted`, not `*.Updated`. See the [Radar](/api-reference/radar) and [Reassessments](/api-reference/reassessments) APIs.
+  `*.Updated` events carry a `field_diffs` object mapping each changed field to its `{ "old_value", "new_value" }`, so a status change arrives as `Vendor.Updated` (or `Assessment.Updated`, `Review.Updated`, and so on) with the status field in `field_diffs`. A soft-archive (`is_archived` → `true`) surfaces as `*.Deleted`, not `*.Updated`.
+
+  A **radar alert** is a `RadarDetectorResult`: subscribe to `RadarDetectorResult.Created` to be notified of new alerts and `RadarDetectorResult.Updated` (whose `field_diffs` will include `is_dismissed`) for triage activity. A **signal** is a `RadarSignal`. See the [Radar](/api-reference/radar) and [Reassessments](/api-reference/reassessments) APIs.
 </Note>
+
+### Supplier profile events
+
+The `VendorBankAccount`, `VendorContact`, `SupplierSite`, `SupplierTaxRegistration`, `SupplierDiversityRecord`, `SupplierUpdateRequest` and `SupplierLegalEntityAssignment` events describe changes to a supplier's profile. Besides their own ID, each carries:
+
+| Field | Notes |
+| ----- | ----- |
+| `change_event_id` | The profile change this event reports. Every webhook that receives the change gets the same value, so use it as your idempotency key. Nullable. |
+| `vendor_id`, `entity_id` | The supplier the change belongs to. Nullable. |
+| `sensitivity` | `normal`, or `sensitive` for a fraud-relevant change. Bank account changes are always `sensitive`. |
+| `actor_type` | Where the change came from: `supplier_portal`, `internal_user`, `api` or `system`. |
+| `diff`, `snapshot` | What changed, and the saved record. Account and tax numbers appear only as their last four characters. |
+
+A `sensitive` change fires its event only after a reviewer approves it, not when it is requested.
 
 All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
 

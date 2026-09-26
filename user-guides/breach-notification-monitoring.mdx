@@ -75,7 +75,7 @@ of several states must be filed in each of them, so a vendor's breach usually
 appears in California or Washington even when the state you care about publishes
 nothing of its own.
 
-### Two states we cannot reach at all
+### Three states we cannot reach at all
 
 **Wisconsin** never collects the data: its law requires notice to affected
 individuals only, not to any state agency. **Maine** took its database offline
@@ -94,9 +94,9 @@ If you have been asked to cover all fifty states, the honest answer is that the 
 
 ## Step 1. Add the sources
 
-Go to **Configuration → Radar**, open the **Sources** tab, and click **Add source**. Choose the **Breach Notification & Disclosure** group.
+Go to **Configuration → Radar**, open the **Sources** tab, and click **Add source → From Source Library**. Choose the **Breach Notification & Disclosure** segment.
 
-You can add all seventeen at once, or start with a few. Three ways to choose:
+You can add all seventeen at once with **Add all visible**, or start with a few. You can also skip this step: enabling the detector in Step 2 adds every registry you have not added yet. Ways to choose:
 
 - **Add HHS OCR first if you only add one.** It is the single source that spans all fifty states, and healthcare filings are the largest category of breach most portfolios are exposed to.
 - **Add California, Vermont, Oregon, and Maryland next.** These are the largest state registers, so they give you the most coverage for the least setup.
@@ -109,20 +109,22 @@ You can add all seventeen at once, or start with a few. Three ways to choose:
 
 ## Step 2. Turn on the detector
 
-Open the **Detectors** tab and click **Add detector**. In the library, choose **Breach Notification Filings**.
+Open the **Detectors** tab and click **Add detector → From detector library**. Search for **Breach Notification Filings** (it sits in the **Cybersecurity** segment) and click **Configure** to add it and open it for editing, or **Add detector** to add it with its defaults.
+
+Enabling it adds the seventeen breach registries, plus **HIPAA Journal Breach News**, to your sources where you do not have them already, and scopes the detector to them. The library preview lists them under **Sources**.
 
 This detector is written for registry input specifically. It treats the filing itself as evidence rather than waiting for a second source to corroborate it, which matters because a registry row will never have corroboration at the time it appears. It also knows that the same breach filed in five states is one incident, so a vendor appearing across several registries in the same week does not escalate as if it were five separate events.
 
-Check two settings before you save:
+In the editor, check two settings:
 
-- **Sources.** Point the detector at the breach sources you added. A detector with no sources selected reads everything, which works but is noisier than scoping it.
+- **Sources.** The detector arrives scoped to the registries it deployed with. Remove any you do not want. A source you add later is not read by this detector until you add it here.
 - **Severity threshold.** The default is Medium. High-only cuts volume to filings involving sensitive or regulated data, such as Social Security numbers, financial account data, or health records.
 
 ## Step 3. Check what arrives
 
-Give it a pull cycle. Registries are checked every few hours, and the first pull of a large register such as Oregon brings in its full history, so expect a burst on day one and a much smaller trickle after that.
+Give it a pull cycle. Registries are checked every six hours, and the first pull of a large register such as Oregon brings in its full history, so expect a burst on day one and a much smaller trickle after that.
 
-Go to the **Signals** tab. A signal from a registry looks different from a news signal: the summary is the filing's own fields rather than prose. That is expected. Triaging what arrives works the same way as any other signal, which the [Radar signals guide](/user-guides/radar-signals) covers.
+Go to **Radar → Signals**. A signal from a registry looks different from a news signal: the summary is the filing's own fields rather than prose. That is expected. Triaging what arrives works the same way as any other signal, which the [Radar signals guide](/user-guides/radar-signals) covers.
 
 ## What to know when reading these signals
 
@@ -135,6 +137,16 @@ Go to the **Signals** tab. A signal from a registry looks different from a news 
 **Some states publish in batches, months behind.** Maryland is the clearest case: it loads a year at a time rather than posting each filing, so its rows are useful as vendor history and backfill rather than as early warning. California, Washington, and Rhode Island are the ones to watch for something that happened this week.
 
 **Registries publish what filers assert.** These offices do limited validation. Maine took its portal offline after someone submitted fake filings against real companies. Treat a filing as a strong lead, not a proven fact, and confirm with the vendor before acting on it externally.
+
+## Troubleshooting
+
+| What you see | What is happening |
+| --- | --- |
+| Sources are added but nothing alerts. | No detector reads them. Enable **Breach Notification Filings** (Step 2), or add the sources to an existing detector's **Sources**. |
+| A burst of old filings on the first day. | The first pull of a large register such as Oregon brings in its history. Later pulls only add new rows. |
+| A registry shows **Unavailable** in the source library, or **Paused** in your sources. | Coverbase withdrew it because the page no longer exists, refuses automated requests, or could not be read. It stays listed with the reason. |
+| The same vendor appears several times in a week. | One breach filed in several states. Triage it once. |
+| Massachusetts or New Hampshire results look like an error page. | Both block automated requests and were not confirmed against the live register. Tell Coverbase support and rely on the other registries meanwhile. |
 
 ## Related
 

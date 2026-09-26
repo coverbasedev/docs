@@ -96,9 +96,10 @@ Click a row to open `/findings/<id>/overview`.
 
 The header shows the vendor (click it to open the vendor), the title (click to edit), a **Due** badge (click to pick a date or **Clear due date**) and a copy-link button. The **Actions** menu offers **Show in context**, which opens the finding inside its assessment's Issues tab, and **Archive**.
 
-The left column holds four cards:
+The left column holds these cards:
 
 - **The status card.** The current status with the path before and after it. Pick a new status here.
+- **Risk acceptance.** Appears while the finding is **Risk accepted**, and afterwards once an acceptance has been recorded on it. It shows who approved the acceptance, the justification, and when it expires. See [Accepting risk](#accepting-risk).
 - **Details.** **Severity**, **Urgency** and **Risk Level** (or just **Risk Level**, depending on your settings), **Assignee**, **Watchers** (people or departments) and **External ID**. The External ID row appears when your organization imports findings from another system, and it must be unique.
 - **Risks.** Risk register entries tied to this finding, with a link to add one.
 - **Properties.** Your custom fields, with **Add Custom Field** for admins.
@@ -107,7 +108,7 @@ The right column has five tabs:
 
 | Tab | What you do there |
 | --- | --- |
-| **Overview** | Edit the **Description**, manage **Related issues** and **Assessments**, see the source document, extraction evidence or source clauses, and read or add notes. |
+| **Overview** | Edit the **Description**, manage **Related issues** and **Assessments**, see the source document, extraction evidence or source clauses, and read or add notes. A finding raised from an Inspect evaluation also shows **Recommended Remediation**: suggested steps to fix it, which you can edit or clear. |
 | **Commitments** | The finding's commitments. **New commitment**, **Configure portal**, and **Review** on a commitment with a new vendor response. |
 | **Documents** | Upload evidence and add a note per document. Documents a vendor uploaded through the portal are marked **From portal**. |
 | **Emails** | Emails linked to this finding, and **New Email** to draft one. |
@@ -126,7 +127,7 @@ Every organization starts with seven finding statuses. **Open** is the default a
 | **Open** | Unstarted | Raised and waiting for someone to act. The default for a new finding. |
 | **Finalizing response** | Unstarted | A commitment is waiting on the vendor or being negotiated. |
 | **Mitigation underway** | Started | The vendor accepted the terms and is doing the work. |
-| **Action required** | Started | The vendor declined a commitment. Someone on your side has to decide. |
+| **Action required** | Started | The vendor declined a commitment, or a risk acceptance expired or was revoked. Someone on your side has to decide. |
 | **Mitigated** | Completed | The work is done and accepted. |
 | **Compensating control** | Completed | Another control already covers the gap. |
 | **Risk accepted** | Canceled | You accepted the remaining risk. |
@@ -134,6 +135,24 @@ Every organization starts with seven finding statuses. **Open** is the default a
 Three of them resolve the finding: **Mitigated**, **Compensating control** and **Risk accepted**. Moving into one of these while the source assessment is still running also resolves the connected issues. Coverbase asks first: "Mark finding as Mitigated? 2 connected issues on the ongoing assessment will also be marked as resolved." Compensating control is different: it marks the issues *no longer an issue*, because the gap was never open. Issues on a completed assessment are annotated, not changed.
 
 A finding stops counting as overdue once its status is in the Completed or Canceled group, whichever status that is.
+
+### Accepting risk
+
+Moving a finding to **Risk accepted**, from the status card or with **Change Stage** on a selection, opens the **Accept Risk** dialog. Tick **Record a justification and expiry** to make the acceptance time-bound:
+
+- **Justification** says why the risk is acceptable and what compensates for it. It is required once the box is ticked.
+- **Expires On** defaults to 90 days from today and can be at most a year out.
+- You are recorded as the approver.
+
+Leave the box unticked and the status changes with nothing recorded and nothing expiring. Click **Accept risk** to apply it. On a selection, findings that are already **Risk accepted** are skipped.
+
+<Frame caption="The Accept Risk dialog with a justification and an expiry recorded.">
+  <img src="/images/user-guides/findings-and-remediation-accept-risk.png" alt="Accept Risk dialog with Record a justification and expiry ticked, a justification filled in, and an Expires On date 90 days out" />
+</Frame>
+
+The **Risk acceptance** card on the finding then shows **Approved by**, **Justification**, **Accepted** and **Expires**. A week before the expiry, the finding's assignee, watchers, the people named in its user-type custom fields and the approver are notified. When the expiry passes, the next daily check moves the finding to **Action required**, reopens any assessment issues the acceptance had resolved, and notifies the same people. **Revoke** on the card ends the acceptance early and moves the finding to **Action required**. Earlier acceptances stay listed under **Past exceptions** as expired, revoked or resolved.
+
+A finding accepted before expiries existed shows **No expiry recorded**. Revoke it and accept it again to set one.
 
 ## Severity, urgency, risk and due dates
 
@@ -187,11 +206,13 @@ Overdue is not a status. The due date badge turns red on its own, except on Clos
 
 A vendor can answer in the portal with **Accepted**, **Proposed changes** (a different date or wording), **Compensating Control** (an existing control already covers it), **Declined**, or later **Commitment Completed** with evidence. The **Commitments** tab lists **Latest response**, **Awaiting since** and **Response due** so you can see who the ball is with.
 
+If your organization uses the [centralized supplier portal](/user-guides/centralized-supplier-portal), the vendor sees each commitment there with the finding's severity and where it came from: the assessment, contract or document it was raised in. Internal sources, such as a Radar alert, are never named to the vendor.
+
 ### Working a commitment
 
 Click a commitment on the **Commitments** tab, or on a finding's **Commitments** tab, to open the **Commitment Details** drawer. The left side shows the status card with guidance and the actions for that state, the parent finding and its source, the **Assignee**, and the **Commitment Terms** with their due date. The right side has **Responses** (the vendor's rounds and the portal URL), **Documents**, **Notes** and **Activity**.
 
-<Frame caption="The Commitment Details drawer during a completion review.">
+<Frame caption="The Commitment Details drawer for a commitment still waiting on the vendor.">
   <img src="/images/user-guides/findings-and-remediation-commitment-drawer.png" alt="Commitment details drawer with lifecycle actions and vendor responses" />
 </Frame>
 
@@ -204,13 +225,13 @@ Click a commitment on the **Commitments** tab, or on a finding's **Commitments**
 | Vendor submitted completion | **Accept completion** or **Request more work** | Accepting asks for an optional closing note, then closes the commitment and accepts the submission. Requesting more work sends the round back. |
 | Declined | **Accept risk** or **Re-request** | Accept risk closes the commitment, records your rationale, and moves the finding to **Risk accepted**. |
 
-When a vendor submits completion evidence or claims a compensating control, an **AI Review** card appears on the Responses tab with a suggestion, a confidence level and the reasoning. **Accept and close** and **Send back to vendor** apply it; **Re-run review** tries again. Whether a review applies itself without you is a setting (see below).
+When a vendor submits completion evidence, claims a compensating control, proposes changes or declines, an **AI Review** card appears on the Responses tab with a suggestion, a confidence level and the reasoning. The card offers the two answers that fit that response, with the suggested one marked: **Accept and close** or **Request more work** for a completion, **Accept and close** or **Re-request** for a compensating control, **Adopt proposed terms** or **Keep current terms** for proposed changes, and **Accept risk** or **Re-request** for a decline. A send-back answer takes an optional **Message to vendor**. **Re-run review** tries again. Whether a review applies itself without you is a setting (see below).
 
 The status picker at the top of the status card is an override. It changes the status and nothing else: no email, no portal change. Use the actions above when the vendor is involved.
 
 ### How commitments set the finding status
 
-Every commitment change re-derives the parent finding's status from all of its open commitments:
+Every commitment change re-derives the parent finding's status from all of its commitments:
 
 | Commitments | Finding becomes |
 | --- | --- |
@@ -223,7 +244,7 @@ Every commitment change re-derives the parent finding's status from all of its o
 
 ## Emails and notifications
 
-Internal notifications go to the finding's assignee and to anyone named in a user-type custom field on the finding. Each person turns them on or off in their own notification settings; the defaults are in the [notification catalog](/user-guides/email-notifications#the-notification-catalog).
+Internal notifications go to the finding's assignee and to anyone named in a user-type custom field on the finding. The two risk acceptance notifications also go to the finding's watchers and to the approver. Each person turns them on or off in their own notification settings; the defaults are in the [notification catalog](/user-guides/email-notifications#the-notification-catalog).
 
 | Notification | Fires when | Default |
 | --- | --- | --- |
@@ -235,6 +256,8 @@ Internal notifications go to the finding's assignee and to anyone named in a use
 | Commitment status changed | A commitment changes status, including by AI review | Off |
 | Commitment due reminder | A commitment is due next week, this week, or overdue | Off |
 | Portal commitment submission | The vendor responds through the portal | On |
+| Finding risk acceptance expiring | A week before a risk acceptance on your finding expires | On |
+| Finding risk acceptance expired | The acceptance expired and the finding returned to **Action required** | On |
 
 Vendor-facing email is separate: the portal invitation when you send a request, **Commitment updated** when you change the terms or extend a due date, and **Commitment reminder** when you click **Send reminder**. Coverbase also sends vendors automatic reminders on open commitments; see [Vendor-facing email](/user-guides/email-notifications#vendor-facing-email).
 
@@ -281,7 +304,7 @@ Below that, **Commitment Settings** has its own **Save changes**:
 
 ## Permissions
 
-Admins and Members create and edit findings and commitments. Siloed Members can only touch findings on vendors they own, watch or analyze. Archiving, exporting and creating are separate permissions in a custom role, and portal actions (sending a reminder, re-requesting, pushing back a completion) need the portal update permission. A grayed-out action shows a "no permission" tooltip. Details: [Permissions and roles](/user-guides/permissions-and-roles).
+Admins and Members create and edit findings and commitments. Siloed Members can only touch findings on vendors they own, watch or analyze. Recording a justification and expiry when you accept risk needs an Admin or Member role, or a custom role with the finding approve permission. Archiving, exporting and creating are separate permissions in a custom role, and portal actions (sending a reminder, re-requesting, pushing back a completion) need the portal update permission. A grayed-out action shows a "no permission" tooltip. Details: [Permissions and roles](/user-guides/permissions-and-roles).
 
 ## Troubleshooting
 
@@ -297,6 +320,8 @@ Admins and Members create and edit findings and commitments. Siloed Members can 
 | "Two connected issues were resolved when I closed the finding." | That is the cascade. A resolution status on a running assessment resolves the issues the finding was raised from. Coverbase asked first. |
 | "**Extend** is missing on the commitment." | Extend only exists while mitigation is underway. Before that, edit the terms; after Closed or Declined there is no live deadline. |
 | "**Findings Settings** is not in the Actions menu." | You cannot edit organization settings. Ask an admin. |
+| "A **Risk accepted** finding moved to **Action required** on its own." | Its risk acceptance expired, or someone clicked **Revoke**. The **Risk acceptance** card lists it under **Past exceptions**. Accept the risk again with a new expiry, or work the finding. |
+| "**Accept risk** is grayed out once I tick **Record a justification and expiry**." | Your role cannot approve risk acceptances. Untick the box to move the finding to **Risk accepted** without an expiry, or ask an Admin. |
 
 ## Related
 

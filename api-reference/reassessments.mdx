@@ -56,7 +56,7 @@ Returns `201 Created`. Creates a `draft` reassessment from a radar event with an
 </ParamField>
 
 <ParamField body="assessment_plan_id" type="string">
-  Assessment plan to run (`cbasmtpl_...`). Optional; set later before running.
+  Assessment plan to run (`cbaspl_...`). Optional; set later before running.
 </ParamField>
 
 <ParamField body="title" type="string">
@@ -83,7 +83,7 @@ Returns the [reassessment object](#reassessment-object).
 <ResponseField name="id" type="string">Reassessment ID (`cbrsm_...`).</ResponseField>
 <ResponseField name="status" type="string">`draft`, `confirmed`, `run`, or `dismissed`.</ResponseField>
 <ResponseField name="title" type="string | null">Title.</ResponseField>
-<ResponseField name="assessment_plan_id" type="string | null">Linked assessment plan (`cbasmtpl_...`).</ResponseField>
+<ResponseField name="assessment_plan_id" type="string | null">Linked assessment plan (`cbaspl_...`).</ResponseField>
 <ResponseField name="radar_event_id" type="string | null">Source radar event (`cbrevent_...`).</ResponseField>
 <ResponseField name="alert_ids" type="string[]">Radar alerts that drove the reassessment.</ResponseField>
 <ResponseField name="vendors" type="object[]">Per-vendor entries; see below.</ResponseField>
@@ -109,7 +109,7 @@ Each `vendors[]` entry:
   Filter by status (`draft`, `confirmed`, `run`, `dismissed`).
 </ParamField>
 
-Returns an `items` array of [reassessment objects](#reassessment-object), newest first.
+Returns an `items` array of [reassessment objects](#reassessment-object), newest first, with `total`, `limit`, and `offset`. Every match is returned in one page.
 
 ## Retrieve a reassessment
 
@@ -130,7 +130,7 @@ Update editable metadata. Only included fields change. Rejected with `422 reasse
 ### Request body
 
 <ParamField body="title" type="string">New title.</ParamField>
-<ParamField body="assessment_plan_id" type="string">Assessment plan to run (`cbasmtpl_...`).</ParamField>
+<ParamField body="assessment_plan_id" type="string">Assessment plan to run (`cbaspl_...`).</ParamField>
 <ParamField body="radar_event_id" type="string">Re-link to a different radar event (`cbrevent_...`).</ParamField>
 
 ## Curate the vendor set
@@ -167,7 +167,9 @@ Close a reassessment without running it (`dismissed`).
   `POST /v1/reassessments/{reassessment_id}/run`
 </ParamField>
 
-Create an assessment from the linked plan for each **included** vendor, then mark the reassessment `run`. Requires `assessment_plan_id` to be set first; otherwise `400 missing_assessment_plan`. This **never** creates a case.
+Create an assessment from the linked plan for each **included** vendor that does not have one yet, then mark the reassessment `run`. It can run from `draft` or `confirmed`. Requires `assessment_plan_id` to be set first; otherwise `400 missing_assessment_plan`. This **never** creates a case.
+
+When the reassessment is linked to a radar event, running it also marks that event's signal as triaged and applies the risk impact of the linked alerts (or, if none were recorded, the event's active alerts) to the vendors.
 
 ### Example request
 
@@ -184,7 +186,8 @@ All three return the refreshed [reassessment object](#reassessment-object).
 | ------ | ---- | ---- |
 | 400 | `{"detail": {"code": "missing_assessment_plan", ...}}` | `run` called before an assessment plan is set. |
 | 404 | `{"detail": {"code": "reassessment_not_found", ...}}` | Not found / not in the API key's org. |
-| 422 | `{"detail": {"code": "reassessment_immutable", ...}}` | Editing a `run`/`dismissed` reassessment. |
+| 422 | `{"detail": {"code": "reassessment_immutable", ...}}` | Editing or running a `run`/`dismissed` reassessment. |
+| 422 | `{"detail": {"code": "invalid_reassessment", ...}}` | The request was rejected, for example a vendor or plan that does not resolve. |
 
 ## Related
 
