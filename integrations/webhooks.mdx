@@ -10,7 +10,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Webhooks are the outbound half of an integration. This page documents how events are delivered, how to verify signatures, retry behavior, and the event catalog. To register, list, update, delete, test, or inspect the delivery history of a subscription, see the [Webhooks API](/api-reference/webhooks). For the audit trail of every attempt, see [Webhook delivery history](/integrations/webhook-deliveries).
 
-Admins can do the same from the dashboard under **Configuration → Webhooks**. **Add webhook** takes an **Endpoint URL**, a **Signing secret** of at least 16 characters (shown only once), the **Events** to subscribe to, an optional **Description**, and an **Enabled** switch. Each row has **Send test**, **Delivery history**, **Edit** and **Delete** buttons, and the **Health** column shows the last delivery's status and the share of recorded deliveries that got a response.
+Admins can do the same from the dashboard under **Configuration → Webhooks** (see the [Webhooks guide](/user-guides/webhooks)). **Add webhook** takes an **Endpoint URL**, a **Signing secret** of at least 16 characters (shown only once), the **Events** to subscribe to, an optional **Description**, and an **Enabled** switch. Each row has **Send test**, **Delivery history**, **Edit** and **Delete** buttons, and the **Health** column shows the last delivery's status and the share of recorded deliveries that got a response.
 
 ## When deliveries happen
 
@@ -124,12 +124,12 @@ app.post(
 | -------- | ----- |
 | HTTP method | `POST` |
 | Connection timeout | 10 seconds per attempt |
-| Retries | None for a failed attempt. A timeout, a connection error or a non-`2xx` response is recorded in [delivery history](/integrations/webhook-deliveries) and is not sent again |
+| Retries | Up to 5 retries (6 attempts) after a timeout, a connection error, or a `408`, `429` or `5xx` response, waiting about 4 s, 16 s, 64 s, 4 min and 4 min between attempts. Any other non-`2xx` response, a blocked URL and a test event are not retried. Every attempt is recorded in [delivery history](/integrations/webhook-deliveries) |
 | Ordering | Not guaranteed; deliveries are unordered |
-| Duplicates | Rare but possible: if a Coverbase worker fails partway through a delivery, the delivery task can run again with the same `event_id` |
+| Duplicates | Possible: delivery is at-least-once. A retry after a timeout, or a worker that fails partway through a delivery, can send an event your receiver already processed. Every attempt carries the same `event_id` |
 | Endpoint requirement | Public HTTPS endpoint (see [URL restrictions](#url-restrictions)) |
 
-`occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` within 10 seconds. Because a failed attempt is not retried, events sent while your receiver is down or returning errors are not redelivered: after an outage, use [delivery history](/integrations/webhook-deliveries) to see which events you missed and read the affected records back through the API.
+`event_id` is fixed when the event is raised and stays the same on every attempt. `occurred_at` and the `Coverbase-Timestamp` header are set again for each attempt, so a retry passes a receiver's replay window. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` within 10 seconds. Retries cover a short outage, about 10 minutes from the first attempt. After a longer one, use [delivery history](/integrations/webhook-deliveries) to see which events never reached you and read the affected records back through the API.
 
 ### Source IP
 
