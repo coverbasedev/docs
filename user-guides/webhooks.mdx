@@ -1,0 +1,197 @@
+---
+title: "Webhooks"
+description: "Add, test and manage webhook endpoints from Configuration: choose the events each endpoint receives, set its signing secret, send a test event, and read its delivery history."
+icon: "tower-broadcast"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the **Webhooks** page under **Configuration**, where you register the endpoints Coverbase sends events to. It sits beside [Email and notifications](/user-guides/email-notifications) and [White-labeling your vendor-facing domain](/user-guides/white-labeling). For the event catalog, the payload, the request headers and how to verify a signature, see the [Webhooks reference](/integrations/webhooks). To manage the same endpoints from code, see the [Webhooks API](/api-reference/webhooks).
+</Info>
+
+A webhook is an HTTPS endpoint of yours that Coverbase calls when something changes in your workspace: a vendor is created, an assessment moves to a new status, a finding is raised. Each call is a `POST` with a JSON body, signed with a secret that only you and Coverbase hold, so your receiver can prove the call came from Coverbase before it acts on it.
+
+An endpoint receives events in two ways. It receives every event it is subscribed to on the **Webhooks** page, and it receives whatever a workflow's **Send webhook** step addresses to it. Every attempt either way is recorded in the endpoint's delivery history.
+
+The mistake people make most often is saving the webhook before the signing secret is stored where the receiver can read it. Coverbase never shows the secret again after you save, so the only fix is to set a new one and update the receiver.
+
+## Opening the page
+
+Open **Configuration** at the bottom of the left navigation and choose **Webhooks** in the **Developers and integrations** group, or type "webhook" into **Search configurations...**. The page opens for the Admin and Member roles only. A person with a custom role does not see it, whatever the role grants; see [Permissions and roles](/user-guides/permissions-and-roles).
+
+<Frame caption="The Webhooks page with three endpoints: one subscribed to five events, one that only receives workflow deliveries, and one switched off.">
+  <img src="/images/user-guides/webhooks-list.png" alt="The Coverbase Webhooks page listing three endpoints with their events, status, health and created date, and the four row actions" />
+</Frame>
+
+| Column | What it shows |
+| --- | --- |
+| **Endpoint URL** | The URL Coverbase calls, with the description underneath. |
+| **Events** | The first three subscribed events, then **+2 more** and so on. Hover the extra badge to see the rest. **No events** means the endpoint only receives what a workflow sends it. |
+| **Status** | **Enabled** or **Disabled**. |
+| **Health** | The status of the most recent delivery, with the share of recorded attempts marked **delivered** underneath (each retry counts as an attempt). It reads **No deliveries** until the first attempt. Once there are deliveries, click it to open the delivery history. |
+| **Created** | When the endpoint was added. |
+
+Four icons end each row: **Send test**, **Delivery history**, **Edit** and **Delete**. Hover an icon to see its name. The **Webhook documentation** link under the page title opens the [Webhooks reference](/integrations/webhooks).
+
+## Adding an endpoint
+
+Have the receiver running before you start, and decide on a secret: a random string of at least 16 characters. Coverbase does not generate one for you.
+
+<Steps>
+  <Step title="Open the form">
+    Click **Add webhook** at the top right of the page.
+  </Step>
+  <Step title="Enter the endpoint">
+    Type the full address in **Endpoint URL**. It has to start with `https://`. Coverbase refuses a URL that carries a username or password, uses a non-standard port, or points at a private, loopback, link-local or cloud metadata address. The rules are in [URL restrictions](/integrations/webhooks#url-restrictions).
+  </Step>
+  <Step title="Set the signing secret">
+    Type or paste the secret into **Signing secret**. The eye icon shows what you typed. Copy it into your receiver's configuration now, before you save.
+  </Step>
+  <Step title="Choose the events">
+    Open **Events** and tick the events this endpoint should receive. See [Choosing events](#choosing-events) below. Leave it empty for an endpoint that should only receive what a workflow sends it.
+  </Step>
+  <Step title="Label it">
+    Add a **Description**, such as the system that owns the endpoint. It appears under the URL in the list and in a workflow's **Target webhooks** picker, where it is often the only way to tell two endpoints apart.
+  </Step>
+  <Step title="Save">
+    Leave **Enabled** on and click **Add webhook**. Coverbase confirms with **Webhook created.**
+  </Step>
+</Steps>
+
+<Frame caption="The Add webhook form filled in. The secret is masked, and the eye icon reveals it until you save.">
+  <img src="/images/user-guides/webhooks-add-webhook.png" alt="The Coverbase Add webhook dialog with an endpoint URL, a masked signing secret, five events selected, a description and the Enabled switch on" />
+</Frame>
+
+<Warning>
+  **The signing secret is shown once, while you type it.** After you save, neither the list nor **Edit** shows it again. If you lose it, set a new one (see [Changing the secret](#changing-the-secret)) and update the receiver at the same time.
+</Warning>
+
+## Choosing events
+
+The **Events** picker lists every event Coverbase emits, by a readable name: **Vendor Created** is the `Vendor.Created` event, **Assessment Updated** is `Assessment.Updated`. Type in the search box to narrow the list, and tick as many as you need. The field then reads **5 selected** or similar. What each event carries in its payload is in the [event catalog](/integrations/webhooks#event-catalog).
+
+<Frame caption="The Events picker searched for 'Assessment'. Ticked events are the ones this endpoint receives.">
+  <img src="/images/user-guides/webhooks-event-picker.png" alt="The Coverbase Events picker open over the Add webhook form, filtered to assessment events, with Assessment Created and Assessment Updated ticked" />
+</Frame>
+
+Three things are worth knowing before you tick:
+
+- **An Updated event fires on every edit.** A webhook subscribed to **Vendor Updated** receives every change to every vendor, including a typo fix. There is no field filter on a webhook. If your receiver only cares about some changes, leave the event off the webhook and send it from a workflow that names this endpoint in **Target webhooks**. There, the trigger can watch specific fields and conditions can narrow it further (see [Sending events from a workflow](#sending-events-from-a-workflow)).
+- **One name does not follow the pattern.** `WorkflowRun.Created` is listed as **Running the workflow**.
+- **Monitoring record events are listed only when your workspace uses monitoring records.**
+
+## Testing an endpoint
+
+Send a test before you rely on an endpoint, and again after you change the receiver or the secret.
+
+<Steps>
+  <Step title="Open the test dialog">
+    Click the **Send test** icon (the paper plane) on the endpoint's row. The **Send a test event** dialog opens.
+  </Step>
+  <Step title="Pick the event type">
+    **Event type** starts on `webhook.test`, whose payload is just `{"test": true}`. Pick a real event type instead to send a sample of that event's payload. **Example payload** shows the body your endpoint will receive; the `event_id` and `occurred_at` are filled in when the test is sent.
+  </Step>
+  <Step title="Send it">
+    Click **Send test event**. Coverbase queues the test and confirms with **Test event queued for delivery.** The attempt appears in the endpoint's delivery history a few seconds later.
+  </Step>
+</Steps>
+
+<Frame caption="The test dialog with Vendor Updated selected. The envelope is signed exactly like a real delivery.">
+  <img src="/images/user-guides/webhooks-send-test.png" alt="The Coverbase Send a test event dialog showing the Event type selector set to Vendor Updated and the example JSON envelope" />
+</Frame>
+
+A test with a real event type carries sample IDs that do not exist in your workspace. A receiver that reads the record back through the API gets a not-found error, which is expected. Test with `webhook.test` if your receiver cannot tolerate that.
+
+**Copy as cURL** copies the same test as a command against the [test endpoint of the Webhooks API](/api-reference/webhooks#test-a-webhook). It expects two environment variables: `COVERBASE_API`, the API base URL, and `COVERBASE_API_KEY`, an API key.
+
+<Tip>
+  To bring a new endpoint online without surprises, add it with no events selected, send a test, and check the result in **Delivery history**. Once the receiver answers with a `2xx` and verifies the signature, edit the webhook and add its events.
+</Tip>
+
+## Reading delivery history
+
+Click the **Delivery history** icon on a row, or click the endpoint's **Health** value. The dialog lists every recorded attempt for that endpoint, newest first, 50 to a page. **Previous** and **Next** move between pages.
+
+| Column | What it shows |
+| --- | --- |
+| **Event** | The event type the delivery carried, such as `Vendor.Created` or `webhook.test`. **View payload** expands the `data` object that was sent. |
+| **Status** | The outcome of the attempt, with the reason underneath when it failed. |
+| **Response** | The HTTP status your endpoint returned and how long it took, or a dash when there was no response. |
+| **Attempted** | When the attempt was made. |
+
+| Status | What it means |
+| --- | --- |
+| **delivered** | Your endpoint answered with a `2xx` status. The status and the time it took are in **Response**. |
+| **timeout** | Your endpoint did not answer within 10 seconds. |
+| **error** | The attempt failed. The reason is under the badge: a non-`2xx` status from your endpoint, a connection failure, or a URL Coverbase refused to call because it resolved to a private or internal address when the delivery was made. |
+
+A failed delivery is tried again when a later attempt could succeed: after a timeout, a connection failure, or a `408`, `429` or `5xx` status. Coverbase makes up to six attempts, waiting about 4 seconds, 16 seconds, 64 seconds, then 4 minutes twice between them, and records each attempt as its own row with the same event ID. Any other `4xx` or `3xx` status, a refused URL and a test event are not retried. Each retry is signed again with a new timestamp, so make your receiver idempotent on the event ID: a delivery that succeeded but answered too slowly can arrive twice.
+
+The **Status** filter at the top narrows the page you are looking at, not the whole history, so page through with **Previous** and **Next** when you are hunting for older failures. Coverbase keeps each attempt for 90 days. What each recorded field means, and how to read the same history through the API, is in [Webhook delivery history](/integrations/webhook-deliveries).
+
+## Editing, pausing and deleting
+
+Click the **Edit** icon to open **Edit webhook**. It is the same form, with the current URL, events, description and status filled in. Click **Save changes** to apply an edit, and Coverbase confirms with **Webhook updated.** The next delivery uses the new settings.
+
+<Frame caption="Edit webhook. The signing secret field is empty on purpose: leave it blank to keep the current secret.">
+  <img src="/images/user-guides/webhooks-edit.png" alt="The Coverbase Edit webhook dialog with the signing secret field empty and the help text Leave blank to keep the existing secret" />
+</Frame>
+
+### Changing the secret
+
+**Signing secret** is always empty in **Edit webhook**, and saving with it empty keeps the current secret. To replace it, type a new secret of at least 16 characters and click **Save changes**. Deliveries are signed with the new secret from then on, so update the receiver at the same moment. A receiver still checking the old secret rejects everything in between.
+
+### Pausing an endpoint
+
+Turn **Enabled** off and save. The row shows **Disabled**, and the endpoint stops receiving events: subscribed events are not sent to it, and a workflow step that names it skips it. Events that happen while it is disabled are not sent to it later when you switch it back on.
+
+### Deleting an endpoint
+
+Click the **Delete** icon. **Delete webhook?** warns that this stops all event deliveries to the URL and cannot be undone; click **Delete webhook** to confirm. You can no longer open its delivery history afterwards, so look up anything you need from it first. A workflow step that named the endpoint skips it from then on.
+
+## Sending events from a workflow
+
+A workflow can send its triggering event to your endpoints with the **Send webhook** action, which you find under **Webhook** in the action picker. Use it when an endpoint should only hear about some changes, such as a vendor moving to a particular status, or when the delivery should wait until other steps are done.
+
+| Field | What it does |
+| --- | --- |
+| **Event type** | **Use the triggering event** by default. Pick another event type only if the receiver expects the delivery labeled as that type. |
+| **Target webhooks** | **All subscribed webhooks** by default: every enabled endpoint subscribed to the event. Choose one or more endpoints to deliver to them directly, whatever they are subscribed to. |
+
+The line under the fields tells you before you save how many enabled endpoints will receive the delivery, or that the step will be skipped because none will. How to build the rest of the automation is in [Building a workflow](/user-guides/building-a-workflow). A delivery made by a workflow also appears on that run's step, with the request and the response, when you open the run.
+
+## Troubleshooting
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| **URL must start with https://** under **Endpoint URL** | The address starts with `http://` or has no scheme. | Serve the receiver over HTTPS and enter the full `https://` address. |
+| **Failed to create webhook.** followed by a message about private, link-local, loopback or metadata addresses | The URL points inside a private network, includes credentials, or uses a non-standard port. | Use a public HTTPS address on the standard port. A receiver inside your network needs a public proxy in front of it. |
+| **Secret must be at least 16 characters.** | The secret is too short. | Use a longer random string. |
+| The endpoint shows **No deliveries** and nothing arrives | The webhook has no events, is **Disabled**, or none of its events has happened yet. | Check **Events** and **Status**, then use **Send test** to prove the path end to end. |
+| The receiver rejects every delivery as a bad signature | The receiver holds a different secret, or it verifies the parsed JSON instead of the raw request body. | Set a new secret in **Edit webhook** and give the receiver the same value. Verify against the raw body, as shown in [Signature verification](/integrations/webhooks#signature-verification). |
+| Attempts show **timeout** | The receiver took longer than 10 seconds to answer. | Answer with a `2xx` as soon as the request arrives and do the work afterwards. |
+| The receiver fails on a test event with a not-found error | A test with a real event type carries sample IDs, not records from your workspace. | Expected. Test with `webhook.test`, or make the receiver tolerate unknown IDs. |
+| **Test event queued for delivery.** but nothing in **Delivery history** | The attempt had not run yet when you looked. | Wait a few seconds, then close and reopen **Delivery history**. |
+| The **Status** filter shows nothing though the endpoint has deliveries | The filter only narrows the page you are on. | Move through the pages with **Previous** and **Next**. |
+| A workflow's **Send webhook** step says it will be skipped | No enabled endpoint is subscribed to the event, or the endpoints it names are disabled or deleted. | Enable the endpoint, subscribe it to the event, or pick it in **Target webhooks**. |
+| **Webhooks** is missing from **Configuration**, or **Configuration** is missing | The page opens only for the Admin and Member roles. A custom role never sees it. | Ask an Admin to add or change the endpoint. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Webhooks reference" icon="arrow-right-from-bracket" href="/integrations/webhooks">
+    The event catalog, the delivery envelope, the request headers and signature verification.
+  </Card>
+  <Card title="Webhook delivery history" icon="list-check" href="/integrations/webhook-deliveries">
+    What each recorded attempt holds, and how to read the history through the API.
+  </Card>
+  <Card title="Webhooks API" icon="code" href="/api-reference/webhooks">
+    Register, update, test and delete endpoints from code.
+  </Card>
+  <Card title="Building a workflow" icon="diagram-project" href="/user-guides/building-a-workflow">
+    Triggers, conditions and the Send webhook action, for deliveries that should only happen sometimes.
+  </Card>
+</CardGroup>

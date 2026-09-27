@@ -1,0 +1,218 @@
+---
+title: "Bulk send"
+description: "Send one published signature template to a list of parties in one go. Every row becomes its own envelope, with its own routing and audit trail. The list format, prefilled fields, what each party receives, and tracking a batch."
+icon: "users"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. A bulk send starts from a published template, so read [Signature templates](/user-guides/signature-templates) first. Each row becomes an ordinary envelope, tracked as described in [Sending for signature](/user-guides/signature-envelopes). To write the agreement itself in Coverbase, see [the passage library](/user-guides/signature-passage-library).
+</Info>
+
+<Note>
+  Bulk send is part of e-signature. If you do not see **Signatures** and **Templates** under **Contracts** in the left navigation, ask your Coverbase account team to turn it on.
+</Note>
+
+Bulk send takes one published template and a list of parties, and makes one envelope per row. Use it when the paper is the same and only the counterparty changes: a mutual NDA for every new supplier, or revised terms for a whole category of vendors.
+
+Each envelope it makes is an ordinary envelope. It has its own signing order, its own expiry, its own audit trail and its own executed copy, as if you had sent it through the wizard. The batch is the record of how they were made, and the place to see which rows went out.
+
+The mistake people make most often is pasting a spreadsheet with its own column headings instead of the header line the page gives them: a heading that matches no party and no labeled field is ignored, and the batch sends without the values in that column.
+
+## Before you start
+
+- **Publish the template.** Only published templates are offered. See [Signature templates](/user-guides/signature-templates#publish-it).
+- **Have a name and an email for every party on every row.** A template's parties are all required, and a bulk send cannot drop one. If your own signatory is the same person on every envelope, repeat them on every row.
+- **Label the fields you want to prefill.** Only a field with a **Label** in the field inspector, and not set to **Read only**, can take a value from the list.
+- **Build the template from Upload or Write.** A template built **From a document** or **From a contract** sits on one vendor's document, and Coverbase files the executed copy of every envelope sent from it among that vendor's documents.
+- **Check your signing settings.** Every envelope in a batch expires after your organization's **Default Expiry (Days)** and follows its **Require email verification** setting, both under **Configuration → E-signature**. The bulk send page has no setting for either, and a template's own **Default expiration** does not apply.
+
+## Where it lives
+
+| | |
+| --- | --- |
+| **Contracts → Signatures → Bulk sends** | Every batch your organization has sent, newest first, with **Bulk send** to start another. |
+| **Contracts → Templates → Bulk send** | Goes straight to a new bulk send. |
+
+## Send a batch
+
+<Steps>
+  <Step title="Pick the template">
+    **Template** lists your published templates by name. Once you pick one, **Columns the list needs** shows the header line for that template, with a copy button beside it.
+  </Step>
+  <Step title="Name the batch">
+    **Batch name** is how the batch appears under **Bulk sends**. Leave it empty and it takes the template's name. Signers never see it: each envelope has its own name.
+  </Step>
+  <Step title="Paste the list into Parties">
+    The first line must be the header. Either paste the header line from the page and add one comma-separated line per envelope under it, or put the same headings in the first row of a spreadsheet, one per column, and paste the cells in.
+  </Step>
+  <Step title="Read the preview">
+    The count above the preview is how many envelopes will be made. Each line shows the envelope's name and who fills each party. Anything that cannot be sent is listed in red, and **Send** stays grayed out until it is fixed.
+  </Step>
+  <Step title="Add a message">
+    **Email message** is added to every invitation. Read [what each party receives](#what-each-party-receives) before you rely on **Email subject**.
+  </Step>
+  <Step title="Choose how the links go out, and send">
+    Leave **Email every party their signing link** on unless you will hand the links out yourself. **Send** counts your rows (**Send 4 envelopes** for a list of four), queues the batch, and opens its page.
+  </Step>
+</Steps>
+
+<Frame caption="The first step. Picking a template shows the columns its list needs, as a header line you can copy.">
+  <img src="/images/user-guides/signature-bulk-send-columns.png" alt="Bulk send page with the Mutual NDA template picked, a Columns the list needs panel showing the header line and a copy button, an empty Parties box, email fields, the email switch and a grayed-out Send button" />
+</Frame>
+
+<Frame caption="A list of four, ready to send. The second row had no envelope name, so it will be named from the template.">
+  <img src="/images/user-guides/signature-bulk-send-preview.png" alt="Bulk send page with a pasted comma-separated list, a preview table of envelopes with each party's name and email, the email subject and message filled in, and a Send 4 envelopes button" />
+</Frame>
+
+## How the list is read
+
+The first line is the header. Every line after it that is not blank becomes one envelope.
+
+| Column | Header | Needed |
+| --- | --- | --- |
+| Envelope name | `envelope` (`envelope name`, `agreement` and `name` also work) | No. An empty cell names the envelope after the template and the first party, for example `Mutual NDA · Tomasz Nowak`. |
+| A party's name | `<party> name` | Yes, for every party on every row |
+| A party's email | `<party> email` | Yes, for every party on every row |
+| A party's access code | `<party> access code` | No. See [access codes](#access-codes). |
+| A field's value | The field's **Label** | No. See [prefilling fields](#prefilling-fields). |
+
+`<party>` is either the key the header line uses (`party_1`) or the party's name as the template shows it (`Supplier signatory`). Headings ignore capitals, an underscore counts as a space, and the columns can come in any order, so `Supplier signatory email` and `party_1 email` are the same column.
+
+What catches people out:
+
+- A column headed `Name` on its own is read as the envelope name, not as anyone's name.
+- Write `email`, not `e-mail`. A column headed `e-mail` is ignored.
+- In comma-separated lines, wrap a value that contains a comma in double quotes: `"4 Wharf Road, Leeds"`. Cells pasted from a spreadsheet arrive separated by tabs and need no quotes.
+- Two parties on one row cannot share an email address.
+- A batch holds up to 500 rows.
+- The preview shows the first 50 rows, and the red box the first 10 problems. Every row is sent.
+- Problem messages count the header as row 1, so the first envelope is row 2. Blank lines are not counted.
+
+<Frame caption="Problems are caught before anything is queued. Row 3 has no email for the second party, and row 4 names nobody for the first. The Notes column matches nothing, so it is listed as ignored.">
+  <img src="/images/user-guides/signature-bulk-send-problems.png" alt="Bulk send page with a pasted list, a preview of three rows, a Columns ignored note, and a red box reading 2 rows cannot be sent with one problem for row 3 and one for row 4" />
+</Frame>
+
+### Prefilling fields
+
+A column headed with a field's **Label** fills that field on the row's envelope. The header line on the page lists every field you can prefill, after the party columns.
+
+- Only a field with a **Label** that is not **Read only** can be prefilled.
+- The value goes into every field on the envelope with that label, whichever party the field belongs to. Give two parties' fields different labels if they need different values.
+- The signer sees the value already filled in and can change it.
+- Coverbase does not check the value against the field's options or format, so a **Dropdown** value has to match one of its options exactly.
+- To prefill a field that has no label, add one in the template. If the template has been sent from, that means [a new version](/user-guides/signature-templates#versioning-what-freezes-and-when).
+
+### Access codes
+
+Add a `<party> access code` column to give that party an access code on their envelope, the same as setting **Identity Check** to **Access code** in the wizard. A code has to be 4 to 64 characters. The header line on the page does not include this column, so add it yourself.
+
+Coverbase never shows a code again, on the batch page or anywhere else. Send each one to its party some other way, never in the signing email.
+
+## What each party receives
+
+With **Email every party their signing link** on, which is the default:
+
+- Coverbase works down the list one row at a time, making and sending each envelope.
+- Each envelope asks its parties in the template's order. The first is emailed an invitation when the envelope is sent, and the next when the step before them is done, as for any envelope ([routing order](/user-guides/signature-envelopes#step-2-the-recipients)).
+- The invitation names you as the sender, names the envelope, and carries your **Email message**. Its subject line is your organization's **Invitation** wording under **Signing Emails** in your signing settings. Without your own wording it reads like *Jordan Lee sent you Mutual NDA · Kestrel Freight*. The **Email subject** box on this page does not change it, so put anything the recipient must read in **Email message**.
+- Expiry and email verification follow your organization's settings, as described in [before you start](#before-you-start).
+- When the last party signs, every party is emailed the executed copy.
+
+With the switch off, it reads **Mint links only; I will distribute them**. Coverbase makes and sends every envelope but emails no invitations, and the batch page does not show the links it made. To hand a party their agreement yourself, open the envelope from the batch and copy its **Portal link**. The party enters the email address the envelope was sent to, and Coverbase emails them a one-time code before the document opens.
+
+## Track a batch
+
+The batch page opens as soon as you send, and refreshes itself until the batch finishes. Across the top: the batch name and status, the template, who started it and when, and four counts: **Rows**, **Sent**, **Failed** and **Skipped**. Below it is one line per row. Once a row's envelope exists, its name links to it and **Sent** shows when it went out. A row that could not be sent shows the reason under its status.
+
+<Frame caption="A batch the moment after Send: queued, with nothing sent yet. Row 2 had no envelope name, so it is named after the template and its first party.">
+  <img src="/images/user-guides/signature-bulk-send-batch.png" alt="Batch page for Q4 supplier NDAs with a Queued badge, counts of 4 rows and 0 sent, failed and skipped, a Cancel remaining button, and four pending rows with envelope names and parties" />
+</Frame>
+
+| Batch status | Meaning |
+| --- | --- |
+| **Queued** | Accepted and waiting. Your organization's batches go out one at a time, so a batch waits while another is sending. |
+| **Sending** | Rows are being turned into envelopes, in list order. |
+| **Completed** | Every row was sent. |
+| **Completed with failures** | Some rows were sent and at least one failed. The reason is on each failed row. |
+| **Canceled** | Someone clicked **Cancel remaining**. |
+| **Failed** | Every row failed, so nothing was sent. |
+
+| Row status | Meaning |
+| --- | --- |
+| **Pending** | Not reached yet. |
+| **Sent** | The envelope exists and has been sent. |
+| **Failed** | This row could not be sent, for the reason shown. The rows after it carry on. |
+| **Skipped** | The batch was canceled before this row was reached. |
+
+On **Bulk sends**, **Progress** sums a batch up, for example *3 of 4 sent, 1 not sent*. "Not sent" counts failed and skipped rows together.
+
+Each envelope from a batch is also listed on **Contracts → Signatures** like any other, and the first event on its audit trail says a bulk send created it. To remind, correct or void one, open it and use the actions in [Sending for signature](/user-guides/signature-envelopes#nudging-correcting-cancelling).
+
+Three things to know about the envelopes a batch makes:
+
+- **They are not filed against a vendor or a contract.** An envelope's **Details** read **Not associated with a vendor**. Use **Select a vendor** there if you want it on a vendor's record.
+- **The executed copy is kept on the envelope**, where **Download signed copy** fetches it once every party has signed. It also lands among a vendor's documents only when the template was built on that vendor's document (see [before you start](#before-you-start)).
+- **The first one sent freezes the template.** The template version is then cited in an audit trail, and changing it takes **Edit as new version**, as after any send.
+
+### Cancel remaining
+
+**Cancel remaining** shows while a batch is **Queued** or **Sending**. It stops every row that has not gone out: those rows become **Skipped** with the reason *Canceled by the sender*, and the batch reads **Canceled**.
+
+Envelopes already sent stay out. To stop one of those, void it from the envelope.
+
+<Frame caption="The same batch after Cancel remaining. Every row that had not gone out is Skipped, with the reason under it.">
+  <img src="/images/user-guides/signature-bulk-send-canceled.png" alt="Batch page with a Canceled badge, counts of 4 rows and 4 skipped, and four rows marked Skipped with the reason Canceled by the sender" />
+</Frame>
+
+## Who can do what
+
+| To | You need | Default roles that have it |
+| --- | --- | --- |
+| See **Bulk sends** and open a batch | Read access to contracts | Admin, Member, Siloed Member, Guest |
+| Start a bulk send | The organization-wide **create** permission on contracts | Admin, Member |
+| **Cancel remaining** | The organization-wide **update** permission on contracts | Admin, Member |
+
+Custom roles are covered in [Permissions and roles](/user-guides/permissions-and-roles).
+
+## Limits
+
+- Up to 500 rows in a batch. Split a longer list into several batches.
+- One batch at a time per organization. Later batches wait as **Queued**.
+- If your plan caps envelopes per month, the page says how many your plan still allows under **Columns the list needs**. A longer list shows **More envelopes than the plan allows** and cannot be sent.
+- A batch cannot set its own expiry or email verification, add a private note for one party, or file its envelopes against a vendor or a contract.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| The template is not in **Template** | It is still a draft, or it was archived. | Publish it from the template builder. |
+| **Template** lists two templates with the same name | A new version was published with **Edit as new version**, and the earlier version is still published under the same name. | The list shows the most recently edited first. Check the versions on **Contracts → Templates** before you pick. |
+| Every row says **no party for** a party | The headings do not name the template's parties, for example plain `Name` and `Email`. | Start again from the header line on the page. |
+| **Columns ignored** names a column you need | Its heading matches no party column and no labeled, editable field, or it says `e-mail`. | Rename it to the field's **Label**, or to `<party> email`. To prefill a field with no label, label it in the template. |
+| **Send** stays grayed out | No template is picked, the list has no rows under the header, the red box lists a problem, or the list is longer than your plan allows. | Fix what the page points to. |
+| **The batch could not be queued.** | More than 500 rows, two parties on one row share an email, a name or envelope name is over 200 characters, or an access code is shorter than 4 or longer than 64 characters. | Fix the list, or split it into smaller batches. |
+| A batch stays **Queued** | Another batch from your organization is still sending. | Wait for it to finish. If nothing else is sending, contact support. |
+| A row **Failed** with *The plan's monthly allowance of N envelopes is used up.* | Your plan's envelope allowance ran out part way through the batch. | Send the failed rows again as a new batch once your allowance allows it. |
+| A party never received an invitation | The email switch was off, the party is in a later step, or the address is wrong. | Hand them the envelope's **Portal link**. For a wrong address, use **Correct and resend** on the envelope. |
+| Every executed copy was filed on one vendor | The template was built **From a document** or **From a contract**, so it sits on that vendor's document. | Build templates for bulk sends from **Upload** or **Write**. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Signature templates" icon="file-lines" href="/user-guides/signature-templates">
+    Build and publish the template a bulk send starts from, and label the fields you prefill.
+  </Card>
+  <Card title="Sending for signature" icon="paper-plane" href="/user-guides/signature-envelopes">
+    Track, remind, correct or void each envelope the batch made.
+  </Card>
+  <Card title="The signing experience" icon="pen-nib" href="/user-guides/signature-signing-experience">
+    What every party on the list sees when they open their link.
+  </Card>
+  <Card title="E-signature overview" icon="signature" href="/user-guides/signature-overview">
+    Envelope statuses, and the signing settings every envelope in a batch follows.
+  </Card>
+</CardGroup>
