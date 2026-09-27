@@ -29,6 +29,7 @@ The `status` field accepts exactly:
 | ----- | ------- |
 | `satisfied` | The obligation is met. |
 | `not_satisfied` | The obligation is not met (default on create). |
+| `pending_acknowledgement` | An internal control or a similar obligation matches the statement, but your organization requires a business unit to acknowledge it first. It becomes `satisfied` once that commitment is fulfilled. |
 
 Any other value returns `400 invalid_status` listing the accepted values.
 
@@ -45,7 +46,7 @@ Any other value returns `400 invalid_status` listing the accepted values.
 </ParamField>
 
 <ParamField query="obligation_status" type="string">
-  Filter by status: `satisfied` or `not_satisfied`.
+  Filter by status: `satisfied`, `not_satisfied`, or `pending_acknowledgement`.
 </ParamField>
 
 <ParamField query="limit" type="integer">
@@ -93,12 +94,12 @@ curl -X GET "https://sandbox.api.coverbase.app/v1/obligations?obligation_status=
 
 <ResponseField name="id" type="string">Obligation ID (`cboblg_...`).</ResponseField>
 <ResponseField name="statement" type="string">The obligation statement.</ResponseField>
-<ResponseField name="status" type="string">`satisfied` or `not_satisfied`.</ResponseField>
+<ResponseField name="status" type="string">`satisfied`, `not_satisfied`, or `pending_acknowledgement`.</ResponseField>
 <ResponseField name="obligation_type" type="string">Always `cuec` for obligations created via this API.</ResponseField>
 <ResponseField name="compliance_type" type="string | null">How compliance is established (`manual`, `internal_control`, or `similar_obligation`), if set.</ResponseField>
 <ResponseField name="vendor_document_id" type="string | null">Source vendor document (`cbvdoc_...`), if linked.</ResponseField>
 <ResponseField name="assignee_id" type="string | null">Assigned user (`cbuser_...`).</ResponseField>
-<ResponseField name="assignee_group_id" type="string | null">Assigned group, if assigned to a group instead of a user.</ResponseField>
+<ResponseField name="assignee_group_id" type="string | null">Assigned user group (`cbdept_...`), if assigned to a group instead of a user.</ResponseField>
 <ResponseField name="due_date" type="integer | null">Unix timestamp (seconds), if set.</ResponseField>
 <ResponseField name="is_archived" type="boolean">`true` if archived.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
@@ -121,7 +122,7 @@ Returns `201 Created`. `obligation_type` is always set to `cuec`.
 </ParamField>
 
 <ParamField body="status" type="string">
-  `satisfied` or `not_satisfied`. Defaults to `not_satisfied`.
+  `satisfied`, `not_satisfied`, or `pending_acknowledgement`. Defaults to `not_satisfied`.
 </ParamField>
 
 <ParamField body="vendor_document_id" type="string">
@@ -133,7 +134,7 @@ Returns `201 Created`. `obligation_type` is always set to `cuec`.
 </ParamField>
 
 <ParamField body="assignee_group_id" type="string">
-  Assign to a group instead of a user.
+  Assign to a user group (`cbdept_...`) instead of a user. The group's assignment rule may pick a member, in which case the response carries that user in `assignee_id`.
 </ParamField>
 
 <ParamField body="due_date" type="integer">
@@ -159,7 +160,7 @@ Returns the [obligation object](#obligation-object).
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `{"detail": {"code": "invalid_status", "message": "Invalid status '...'. Expected one of: satisfied, not_satisfied."}}` | `status` not one of the accepted values. |
+| 400 | `{"detail": {"code": "invalid_status", "message": "Invalid status '...'. Expected one of: satisfied, not_satisfied, pending_acknowledgement."}}` | `status` not one of the accepted values. |
 | 400 | `{"detail": {"code": "invalid_obligation", "message": "..."}}` | Other business-rule rejection. |
 | 422 | Standard validation error | `statement` missing or body malformed. |
 
@@ -191,9 +192,9 @@ Push status, assignment, due-date, or statement changes (or archive) back into C
 ### Request body
 
 <ParamField body="statement" type="string">Updated statement.</ParamField>
-<ParamField body="status" type="string">`satisfied` or `not_satisfied`.</ParamField>
+<ParamField body="status" type="string">`satisfied`, `not_satisfied`, or `pending_acknowledgement`.</ParamField>
 <ParamField body="assignee_id" type="string">Reassign to a user (`cbuser_...`).</ParamField>
-<ParamField body="assignee_group_id" type="string">Reassign to a group.</ParamField>
+<ParamField body="assignee_group_id" type="string">Reassign to a user group (`cbdept_...`).</ParamField>
 <ParamField body="due_date" type="integer">New due date (Unix seconds).</ParamField>
 <ParamField body="is_archived" type="boolean">Archive (`true`) or restore (`false`).</ParamField>
 
@@ -212,7 +213,7 @@ Returns the refreshed [obligation object](#obligation-object).
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `{"detail": {"code": "invalid_status", "message": "Invalid status '...'. Expected one of: satisfied, not_satisfied."}}` | `status` not accepted. |
+| 400 | `{"detail": {"code": "invalid_status", "message": "Invalid status '...'. Expected one of: satisfied, not_satisfied, pending_acknowledgement."}}` | `status` not accepted. |
 | 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | Update otherwise rejected. |
 | 404 | `{"detail": {"code": "obligation_not_found", "message": "Obligation not found."}}` | Not found / not in the API key's org. |
 | 422 | Standard validation error | Body failed schema validation. |

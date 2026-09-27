@@ -14,25 +14,31 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 The **Geography** tab under **Risk** draws every supplier location you hold. It answers a question per-vendor scoring does not: if forty of your suppliers run out of one metro area, one flood or one grid failure reaches all forty at once. You narrow the picture with the same filters you use on the vendor list.
 
-<Frame caption="The world view. Color shows where locations cluster; the pale country tints and small dots mark countries where you hold a supplier but no address.">
-  <img src="/images/user-guides/geography/world-view.png" alt="Risk geography world map showing supplier density clusters across North America, Europe and Asia" />
+<Frame caption="The world view. Each dot is a place where you hold a supplier address, a faint tint marks every country with at least one location, and the side panel ranks countries by how many suppliers sit there.">
+  <img src="/images/user-guides/geography/world-view.png" alt="Risk geography world map with small dots for supplier sites in North America, Europe, Asia and Africa, tinted countries, and a Top exposure panel listing countries with counts" />
 </Frame>
 
 ## What the map draws
 
-The map has two layers, and they answer different questions.
+The map draws three things, and they answer different questions.
 
-### Density
+### Site dots
 
-Density is the colored surface. It is built from suppliers whose address you hold and have geocoded, and it shows where those addresses pile up. A bright core means several suppliers within a short distance of each other, which is the concentration you care about. The scale in the side panel is the one the surface is drawn against, so you can read a color off the map and get a number.
+A solid dot is a place where you hold a supplier address that Coverbase has geocoded. Sites that share the same coordinates draw as one dot, so a cluster of dots is several distinct places close together. The dots stay small at every zoom level: they say where a site is, not how many sit there. Read counts from the side panel or a hover.
 
-### Country marks
+### Country tint and hollow marks
 
-Country marks are the small dots and the pale country tint. They stand for suppliers where you recorded a country but no street address. The mark sits at the country's center and stays small, because a larger mark would imply a precision the data does not have. The count is exact. Hover the mark or read the side panel to get it.
+Every country where you hold at least one location gets a faint tint, stronger where more suppliers sit, and you can click it. A tinted country with no dots holds only country-level records: suppliers where you recorded a country but no street address. When a country has nothing to place at all, a hollow dot sits at its center, and the side panel legend reads **Country recorded, no address to place**. The mark stays small, because a larger one would imply a precision the data does not have.
 
-<Frame caption="Hovering a country mark. The count is exact even though the position is only country-level.">
+Hover a tinted country to see how many suppliers it holds and which ones. The count is exact, whether the addresses are placed or not.
+
+<Frame caption="Hovering a country. The count covers every supplier recorded there, placed or not.">
   <img src="/images/user-guides/geography/country-hover.png" alt="Country popover on the world map listing suppliers recorded in India with a Show more link" />
 </Frame>
+
+### The side panel
+
+**Top exposure** ranks countries by supplier count, or world regions if you switch to **Region**. The line under it gives the totals for the current view, for example "94 vendors/services across 281 locations".
 
 <Note>
   A country-only supplier is a complete record. Plenty of suppliers have no single street address worth recording. The map keeps them visible rather than dropping them, so your country totals still include them.
@@ -49,7 +55,7 @@ The **Filter** button sits at the top left of the map and opens the same filter 
 Pick a field, pick a value, and the map redraws to the suppliers that match. Rules stack, and the bar under the button shows what is applied.
 
 <Frame caption="A rule applied. Remove it with the ✕, add another with +, or drop them all with Clear.">
-  <img src="/images/user-guides/geography/filter-active.png" alt="Map with an active filter reading Archived is Yes, plus add and clear controls" />
+  <img src="/images/user-guides/geography/filter-active.png" alt="Map with an active filter reading Inherent Risk Level is Critical, plus add and clear controls, and the side panel counts narrowed to the matching suppliers" />
 </Frame>
 
 Some things this makes easy:
@@ -61,7 +67,7 @@ Some things this makes easy:
 | Where is a single supplier? | **Vendor** is that supplier |
 | Where do my payments-tagged suppliers sit? | **Tags** any of `Payments` |
 
-Arriving from a vendor's **Locations** card drops you here with that supplier already filtered. The rule is an ordinary one, so you can widen it, add to it, or clear it to get back to the whole estate.
+Opening a location on a vendor's **Locations** card and choosing **View on the risk map** drops you here with that supplier already filtered and its country in focus. **View on map** on a vendor in the **Chain** tab does the same for that vendor. The rule is an ordinary one, so you can widen it, add to it, or clear it to get back to the whole estate.
 
 ### Archived suppliers
 
@@ -75,10 +81,10 @@ To see them, add the **Archived** filter and set it to **Yes**. That reverses th
 
 ## Zooming into a country
 
-Click any country to zoom in. The side panel switches to that country's breakdown by state or province, and the map swaps the density surface for one pin per address.
+Click any tinted country to zoom in. The side panel switches to that country's location count, its breakdown by state or province, and the suppliers there under **Vendors here**. The map swaps the world dots for one pin per place and outlines the states. Records with no state are counted as **Country-wide**, and addresses that could not be placed share a hollow pin at the country's center.
 
-<Frame caption="A focused country. Each pin is a place, and the side panel breaks the country down by state.">
-  <img src="/images/user-guides/geography/focused-country.png" alt="United States focused view with address pins and a state-by-state breakdown panel" />
+<Frame caption="A focused country. Each solid pin is a place, the hollow pin holds the records placed only at the country's center, and the side panel breaks the country down by state.">
+  <img src="/images/user-guides/geography/focused-country.png" alt="Germany focused view with address pins near Frankfurt, a hollow pin at the center, and a side panel listing Hesse and Country-wide counts" />
 </Frame>
 
 Your choice is remembered on the device, so returning to the tab reopens on the same country. **Back to world view** in the side panel returns to the full map.
@@ -87,13 +93,13 @@ Your choice is remembered on the device, so returning to the tab reopens on the 
 
 Shared campuses, office towers and colocation facilities mean several suppliers often sit on exactly the same coordinates. Drawn one mark per supplier, they stack into a single dot and you only ever see whichever drew last.
 
-Coverbase groups them instead. Hover the mark to see how many are there, with the site name and address for each.
+Coverbase groups them instead. Zoom into the country, then hover the pin to see how many are there, with the site name and address for each.
 
-<Frame caption="Thirty-four suppliers at one Ashburn address. The list expands to ten, then points you at the filter.">
-  <img src="/images/user-guides/geography/shared-address-popover.png" alt="Popover reading 34 locations here, listing suppliers with their site names and addresses, ending in 24 more" />
+<Frame caption="Three suppliers placed at the same point in New York. A longer list shows three, expands to ten, then points you at the filter.">
+  <img src="/images/user-guides/geography/shared-address-popover.png" alt="Popover on a New York pin reading 3 locations here, listing three suppliers with their site names and addresses" />
 </Frame>
 
-The list shows a few, expands to ten, and then says how many remain. To see the rest, filter to the supplier or the owner you are chasing, and the same mark will show only those.
+The list shows three, expands to ten with **Show more**, and then says how many remain. To see the rest, filter to the supplier or the owner you are chasing, and the same pin will show only those.
 
 ## What you need to see anything
 
@@ -108,7 +114,7 @@ The list shows a few, expands to ten, and then says how many remain. To see the 
     Addresses come from supplier site records. They are collected through questionnaires, added on the vendor's **Locations** card, or loaded through the API. A workspace with no sites recorded gets an empty map.
   </Step>
   <Step title="Addresses have been geocoded">
-    Coverbase resolves addresses to coordinates on a schedule rather than when you save one, so a location added minutes ago may appear as a country mark first and move to its exact spot shortly after.
+    Coverbase resolves addresses to coordinates on a schedule rather than when you save one, so a location added minutes ago counts toward its country first and gets its own pin shortly after. Until then, zooming into the country shows it in the hollow pin at the center.
   </Step>
 </Steps>
 
@@ -116,13 +122,13 @@ The list shows a few, expands to ten, and then says how many remain. To see the 
 
 Check these before you present a number off this map.
 
-### Density counts addresses, not headcount or spend
+### The map counts addresses, not headcount or spend
 
 A supplier with one office and a supplier with thirty each contribute what they have recorded. The map answers where your suppliers are, not how much of your spend is there.
 
 ### A pale country is not an empty country
 
-It usually means you hold the country but not the addresses. The country mark's count tells you how much is sitting in that state.
+The tint is deliberately faint, and a country with few suppliers or only country-level records has few dots or none. Hover the country or read the side panel for the count.
 
 ### The counts follow your filters
 

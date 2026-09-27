@@ -14,7 +14,7 @@ The most common integration question is whether an external system can start wor
 
 Most workflows are bound to object events. The cleanest integration is to bring the object into Coverbase and let the workflow engine react.
 
-Vendor and service creation is **not** part of the resource API documented here: vendors enter Coverbase through the dashboard or the [Import API](/import-api), which is a separate integration surface. Once a vendor is created, a workflow bound to the `Vendor.Created` trigger runs: conditions inspect the imported attributes, classify the vendor, and the workflow can launch an assessment, send a questionnaire, and notify the internal owner with no UI interaction.
+Create the vendor with [`POST /v1/vendors`](/api-reference/vendors) (and its services with `POST /v1/vendors/{id}/services`), or load many at once through the [Import API](/import-api). Once a vendor is created, a workflow bound to the `Vendor.Created` trigger runs: conditions inspect the imported attributes, classify the vendor, and the workflow can launch an assessment, send a portal, and notify the internal owner with no UI interaction.
 
 Use this pattern when the work maps naturally onto an object lifecycle. Use Pattern 2 or 3 when you need to start work explicitly against an existing object.
 
@@ -52,7 +52,7 @@ curl -X POST "https://api.coverbase.app/v1/workflows/quarterly-privacy-sweep/run
   }'
 ```
 
-The response includes a `workflow_run_id` you can poll with `GET /v1/workflows/runs/{id}`.
+The workflow must be enabled and have a **Direct** entrypoint (the trigger reads **Running the workflow**), whose input is the `input` you send. A disabled workflow returns `409 workflow_disabled`. The response includes a `workflow_run_id` you can poll with `GET /v1/workflows/runs/{id}`, and `GET /v1/workflows/runs` lists runs. To run it later instead of now, call `POST /v1/workflows/{name}/schedule` with a `scheduled_for` Unix timestamp.
 
 ```json
 {
@@ -68,7 +68,7 @@ See the [Workflows API](/api-reference/workflows) for the full schema.
 
 ## Idempotency
 
-`POST /v1/assessments` and `POST /v1/workflows/{name}/run` accept an `Idempotency-Key` header. If the same key is replayed within 24 hours for that endpoint, the original response body is returned and no new run is started. Full behavior is documented in [API conventions → Idempotency](/conventions#idempotency).
+`POST /v1/assessments`, `POST /v1/workflows/{name}/run` and `POST /v1/workflows/{name}/schedule` accept an `Idempotency-Key` header, as do `POST /v1/vendors`, `POST /v1/users` and `POST /v1/documents`. If the same key is replayed within 24 hours for that endpoint, the original response body is returned and no new run is started. Full behavior is documented in [API conventions → Idempotency](/conventions#idempotency).
 
 ```bash cURL
 curl -X POST "https://api.coverbase.app/v1/workflows/onboard-vendor/run" \

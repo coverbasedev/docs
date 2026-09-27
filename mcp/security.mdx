@@ -14,7 +14,7 @@ The Coverbase MCP server uses OAuth 2.0. We do not store the AI assistant provid
 
 <CardGroup cols={2}>
   <Card title="OAuth 2.0" icon="key">
-    Short-lived access tokens with refresh-token rotation.
+    Access tokens expire after 24 hours and are renewed with a refresh token. Each refresh re-checks the user's organization membership and issues a new refresh token.
   </Card>
 
   <Card title="Permission inheritance" icon="user-shield" href="/mcp/permissions">
@@ -56,7 +56,7 @@ The AI assistant provider (for example, Anthropic for Claude) is a separate cont
 
 ## Revocation
 
-You can revoke the connector at any time from your Coverbase account settings or from the assistant client's connector settings. Revocation invalidates the OAuth token immediately.
+You can disconnect the connector at any time from the assistant client's connector settings, which removes the tokens that client holds. Coverbase has no separate switch to invalidate an OAuth access token that was already issued: it stays valid until it expires (up to 24 hours). Removing the user from your organization stops the next refresh, and an MCP API key revoked under **Configuration → MCP Server** stops working immediately.
 
 ## Write-action protection
 

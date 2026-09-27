@@ -20,7 +20,7 @@ The integration model is built around three layers: inbound API calls that bring
   </Card>
 
   <Card title="Orchestration" icon="diagram-project">
-    Once data lands, the workflow engine takes over. Triggers fire on object events, schedules, or external invocation. Conditions branch the flow on risk score, tier, data class, jurisdiction, or contract value. Actions execute the work: send a questionnaire, request evidence, run Copilot, raise review gates in parallel, and wait for their outcomes.
+    Once data lands, the workflow engine takes over. Triggers fire on object events, scheduled runs, or external invocation. Conditions branch the flow on risk score, tier, data class, jurisdiction, or contract value. Actions execute the work: create an assessment, send a portal to the vendor, raise review gates in parallel, and wait for their outcomes.
   </Card>
 
   <Card title="Outbound" icon="arrow-right-from-bracket">
@@ -67,15 +67,18 @@ The public resource API covers these operations:
 
 | Resource | Operations |
 | -------- | ---------- |
-| Vendor | Create, get, update (`POST`/`GET`/`PATCH /v1/vendors`) |
+| Vendor | Create, list, get, update, read and refresh the fact sheet (`POST`/`GET`/`PATCH /v1/vendors`) |
 | Service | Create + update under a vendor (`POST`/`PATCH /v1/vendors/{id}/services`) |
 | User | Provision (create-or-get), list / look up by email, get, update role / deprovision (`POST`/`GET`/`PATCH /v1/users`) |
-| Assessment | Create, get (`POST`/`GET /v1/assessments`) |
+| Document | Upload, list, get, download, update, delete (`/v1/documents`) |
+| Assessment | Create, get, archive (`POST /v1/assessments`, `GET`/`DELETE /v1/assessments/{id}`) |
 | Finding | List, create, get, status-sync (`/v1/findings`) |
 | Obligation | List, create, get, status-sync (`/v1/obligations`) |
-| Workflow | Run, get run with steps (`POST /v1/workflows/{name}/run`, `GET /v1/workflows/runs/{id}`) |
+| Radar | List and create events, list and triage alerts, list detectors and sources (`/v1/radar`) |
+| Reassessment | Create, curate vendors, confirm, dismiss, run (`/v1/reassessments`) |
+| Workflow | Run, schedule, list runs, get run with steps (`POST /v1/workflows/{name}/run`, `POST /v1/workflows/{name}/schedule`, `GET /v1/workflows/runs`) |
 | Custom field | Discover definitions, read and write values (`/v1/custom-fields`) |
-| Webhook | Create, list, update, delete, test (`/v1/webhooks`) |
+| Webhook | Create, list, update, delete, test, delivery history (`/v1/webhooks`) |
 
 Bulk vendor/assessment loading is also available through the separate [Import API](/import-api). Control sets, statuses, tags, and scale levels are referenced **by ID** in these requests/responses; configure them in the dashboard.
 

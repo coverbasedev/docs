@@ -20,7 +20,7 @@ Insights are the field-level layer of contract intelligence. [Contract Guardian]
   </Card>
 
   <Card title="Grounded values" icon="quote-left">
-    Every value is verified against the document before it's saved. The supporting quote must appear in the source as a contiguous span, and the cited page is corrected to where the quote actually lives.
+    Every value is checked against the document. The supporting quote must appear in the source as a contiguous span, and the cited page is corrected to where the quote actually lives. An answer whose quote cannot be located is kept but marked unverified, and waits for a reviewer to accept it.
   </Card>
 
   <Card title="Scoped by document type" icon="filter">
@@ -28,21 +28,21 @@ Insights are the field-level layer of contract intelligence. [Contract Guardian]
   </Card>
 
   <Card title="Two extraction modes" icon="shuffle">
-    **Extract** copies a value verbatim from the page. **Synthesize** answers an interpretive question and cites the language that supports the answer.
+    **Extract** returns one concise, typed answer: a name, a date, a number, or Yes/No. **Synthesize** writes a short summary for a Text insight. Both cite the language that supports the answer.
   </Card>
 </CardGroup>
 
 ## Extract vs Synthesize
 
-The mode determines who composes the value: the document, or the model.
+The mode determines the shape of the answer: a single typed value, or a written summary.
 
 | Mode | Behavior | Use it for |
 | --- | --- | --- |
-| **Extract** | The value is copied verbatim from the document. Coverbase verifies that both the value and its supporting quote appear in the source. If they don't, the insight returns empty rather than guessing. | Dates, party names, jurisdictions, printed figures, named frameworks: anything you could highlight with a marker |
-| **Synthesize** | The model composes an interpreted answer and must cite a verbatim quote supporting it. Returns empty when the document can't answer. | Yes/no judgments, rollups across sections, normalized verdicts, values the contract implies but never prints |
+| **Extract** | One concise answer in the insight's type. The model prefers the document's wording and interprets only as far as the type needs, so a Yes/No insight reads the clause and answers Yes or No. It must cite a verbatim quote, which Coverbase checks. Returns empty when the document can't answer. | Dates, party names, jurisdictions, figures, named frameworks, yes/no judgments: anything you want as one value to sort and filter on |
+| **Synthesize** | The model writes a short summary that combines or explains what the document says, and must cite a verbatim quote supporting it. Available for Text insights only. Returns empty when the document can't answer. | Rollups across sections, plain-language verdicts, the gist of terms every counterparty words differently |
 
 <Note>
-  A **yes/no** insight in Extract mode only succeeds if the document literally contains "Yes", "No", "True", or "False". Contracts don't. Set boolean insights to Synthesize.
+  **Yes/No**, **Number** and **Date** insights always use Extract, because Synthesize only takes Text. A Yes/No, Number or Date insight created earlier with Synthesize now runs as Extract and needs no change.
 </Note>
 
 The [Document Insights guide](/user-guides/document-insights) covers mode selection in depth, along with a starter library of insight definitions to copy.
@@ -119,7 +119,7 @@ Link an insight to a custom field and Coverbase fills that field from the extrac
 | Text | Text |
 | Number | Number |
 | Date | Date |
-| Yes/No | Yes/No |
+| Yes/No | True/False |
 
 <Note>
   Select and multi-select fields are not promotable yet. Mapping free text onto a fixed option list needs the options fed into the prompt, not matched after the fact.
@@ -127,7 +127,7 @@ Link an insight to a custom field and Coverbase fills that field from the extrac
 
 Two gates decide what gets promoted, and one rule is absolute:
 
-- **Require verified evidence** (on by default) skips any answer whose supporting quote could not be located in the source.
+- **Require a grounded quote** (on by default) skips any answer whose supporting quote could not be located in the source.
 - **Minimum confidence** skips answers below the bar you set.
 - **A value a person typed is never overwritten.** Not by a backfill, not by a later upload, not by any conflict policy. Automated writes only ever replace other automated writes.
 
@@ -146,8 +146,8 @@ Two gates decide what gets promoted, and one rule is absolute:
     Once a field exists on every contract, portfolio-wide questions become answerable: which agreements auto-renew inside 60 days, which permit customer data in model training, which cap vendor liability below one year's fees.
   </Accordion>
 
-  <Accordion title="Human-in-the-loop correction" icon="pen">
-    Any value is editable. A corrected value is marked as manual with the user recorded, so a reviewer can see at a glance how much a document needed hand-checking.
+  <Accordion title="Human-in-the-loop review" icon="pen">
+    An answer whose quote could not be verified is flagged for review, and a reviewer can accept it with the evidence still marked unverified. A value set through the API is marked as manual with the user recorded, and automated writes never overwrite it.
   </Accordion>
 </AccordionGroup>
 

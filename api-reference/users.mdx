@@ -40,7 +40,9 @@ The `role` field uses these values:
 | `org:auxiliary_member` | Auxiliary member |
 | `org:service_account` | Service account |
 
-The aliases `member`, `basic_member`, `org:basic_member` (→ `org:member`) and `admin` (→ `org:admin`) are also accepted. Any other value is rejected with `422`.
+Only these exact values are accepted; anything else, including shorthand such as `member` or `admin`, is rejected with `422`. On read, `role` can also be `org:custom` for a member who holds a custom role defined in your organization. That value cannot be assigned through this API.
+
+If your organization uses custom roles and permissions, a caller can only assign a role whose permissions it holds itself. Assigning a role above the caller's own permissions returns `403 role_escalation`.
 
 ## Provision a user (create-or-get)
 
@@ -161,6 +163,7 @@ print(resp.status_code, resp.json())
 
 | Status | Body | When |
 | ------ | ---- | ---- |
+| 403 | `{"detail": {"code": "role_escalation", "message": "...", "offending": [...]}}` | `role` grants permissions the caller does not hold. |
 | 409 | `{"detail": {"code": "user_exists", "message": "A user with email ... already exists."}}` | The email belongs to a user in a **different** org (emails are globally unique). A same-org match now returns `200` with the existing user, not `409`. |
 | 422 | Standard validation error | `email` missing or not a valid email address, or `role` not a recognized value. |
 
@@ -170,7 +173,7 @@ print(resp.status_code, resp.json())
   `GET /v1/users`
 </ParamField>
 
-Lists the org's users, or resolves a single user by email. This is the supported way to build an **email → user ID** mapping when syncing assignments (relationship owners, watchers, risk analysts) from an external system such as ServiceNow; those fields take Coverbase user IDs, so resolve the email here first.
+Lists the org's users, newest first, or resolves a single user by email. By default the list holds invited and active members, the people the dashboard shows. This is the supported way to build an **email → user ID** mapping when syncing assignments (relationship owners, watchers, risk analysts) from an external system such as ServiceNow; those fields take Coverbase user IDs, so resolve the email here first.
 
 ### Query parameters
 
@@ -179,7 +182,7 @@ Lists the org's users, or resolves a single user by email. This is the supported
 </ParamField>
 
 <ParamField query="include_archived" type="boolean">
-  Include deprovisioned (archived) users in the list. Defaults to `false`.
+  Also include archived users and deprovisioned (`inactive`) memberships. Defaults to `false`.
 </ParamField>
 
 <ParamField query="limit" type="integer">
@@ -325,5 +328,7 @@ curl -X PATCH "https://sandbox.api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b
 
 | Status | Body | When |
 | ------ | ---- | ---- |
+| 403 | `{"detail": {"code": "role_escalation", "message": "...", "offending": [...]}}` | `role` grants permissions the caller does not hold. |
 | 404 | `{"detail": {"code": "user_not_found", "message": "User not found."}}` | No membership for this user in the API key's org. |
+| 409 | `{"detail": {"code": "role_requires_invitation", "message": "Invite this person to the organization to give them a role."}}` | The person has a Coverbase account owned by another organization and is only named on your records. Invite them from the dashboard to give them a role. |
 | 422 | Standard validation error | `role` not a recognized value. |

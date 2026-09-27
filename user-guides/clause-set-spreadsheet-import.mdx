@@ -30,7 +30,7 @@ On **Configuration → Clause Sets**, open the **Add Clause Set** menu and choos
 
 The template ships with two filled-in example rows. Delete them before you upload, or edit them in place; they exist to show the shape.
 
-One workbook can carry up to **1000 clause rows** and must be **20MB or smaller**. Over either limit the upload is refused whole rather than partly imported, so you never have to work out which rows made it.
+One workbook can carry up to **1000 clause rows** and must be **10 MB or smaller**. Over either limit the upload is refused whole rather than partly imported, so you never have to work out which rows made it.
 
 <Warning>
   Keep the header row on the **Clauses** sheet intact. Columns are matched by header name, not position, so you can reorder or add columns freely, but a renamed or deleted required header fails the upload.
@@ -109,27 +109,29 @@ Rules:
 
 ## Upload it
 
-On **Configuration → Clause Sets**, open the **Add Clause Set** menu, choose **Import from Spreadsheet**, and drop the file in. Files must be `.xlsx` or `.xlsm`.
+On **Configuration → Clause Sets**, open the **Add Clause Set** menu, choose **Import from Spreadsheet**, drop the file in, and choose **Preview import**. Files must be `.xlsx` or `.xlsm`.
 
-Coverbase reads the **Clauses** sheet only. The Instructions and Reference Values sheets are ignored, so you can annotate them freely.
+Coverbase reads the **Clauses** sheet only (or the first visible sheet, if there is no **Clauses** sheet). The Instructions and Reference Values sheets are ignored, so you can annotate them freely.
+
+Nothing is saved at the preview. Coverbase checks every row first and says what would happen, for example "28 rows: 26 to create, 0 to update, 2 won't import". Rows that will not import are listed under **Why N rows won't import** with the row number, the value given, and the problem. **Download workbook with problems marked** gives you the file back annotated. Choose **Import N rows** to import the rest, or drop in a fixed workbook to check again.
 
 ### What happens to each row
 
-The result panel reports every row by its spreadsheet row number, in one of three states.
+The preview counts every row in one of three states.
 
 <AccordionGroup>
-  <Accordion title="Created" icon="check">
-    The clause was added, with all of its variants. New clauses land at the end of their clause set, in file order.
+  <Accordion title="To create" icon="check">
+    The clause will be added, with all of its variants. New clauses land at the end of their clause set, in file order.
   </Accordion>
-  <Accordion title="Already existed" icon="circle">
-    A clause with that Identifier is already in the target clause set, so the row was skipped and **nothing about the existing clause changed**.
+  <Accordion title="To update" icon="circle">
+    A clause with that Identifier is already in the target clause set. Despite the label, the row is skipped and **nothing about the existing clause changes**.
 
     An accidental re-upload of a stale file cannot overwrite language your team negotiated. It also means the spreadsheet is not an editing tool: to change a clause that is already in Coverbase, edit it in the clause detail view, where the change is versioned and the old wording is kept.
   </Accordion>
-  <Accordion title="Error" icon="triangle-exclamation">
+  <Accordion title="Won't import" icon="triangle-exclamation">
     Something in the row could not be read: an unrecognized severity, a component type that is not in the reference list, a clause with no variants, two variants sharing a tier, or a missing required value.
 
-    Rows are independent. One bad row is reported and skipped; every other row still imports. Fix the reported rows and upload the file again. The rows that already imported come back as "already existed", so re-uploading the whole corrected file is the normal fix, not a problem.
+    Rows are independent. One bad row is reported and skipped; every other row still imports. Fix the reported rows and upload the file again. The rows that already imported are counted as "to update" and left alone, so re-uploading the whole corrected file is the normal fix, not a problem.
   </Accordion>
 </AccordionGroup>
 
@@ -184,7 +186,7 @@ The exported file is a valid import file, which lets you:
 </Steps>
 
 <Warning>
-  **Export is not an edit-and-put-back loop.** Re-importing an exported file into the *same* clause set does nothing: every Identifier already exists, so every row comes back as "already existed". That is the same rule that protects against a stale re-upload. To change a clause that is already in Coverbase, edit it in the clause detail view, where the change is versioned.
+  **Export is not an edit-and-put-back loop.** Re-importing an exported file into the *same* clause set does nothing: every Identifier already exists, so every row is counted as "to update" and left alone. That is the same rule that protects against a stale re-upload. To change a clause that is already in Coverbase, edit it in the clause detail view, where the change is versioned.
 </Warning>
 
 Two things about the file's contents:
@@ -200,13 +202,13 @@ Clause text longer than 32,000 characters is truncated in the export, marked wit
 | --- | --- |
 | "Missing required column(s)" | A required header was renamed or deleted on the Clauses sheet. Compare against a fresh template download. |
 | "Invalid file format" | The file is not `.xlsx` or `.xlsm`. Export from Excel or Sheets as `.xlsx`; a `.csv` does not work, because it cannot carry multiple sheets. |
-| "Unable to read the Excel file" | The upload is corrupt or is not a workbook. Re-export it. |
+| "The file could not be read. Check that it is a valid .xlsx workbook." | The upload is corrupt or is not a workbook. Re-export it. |
 | "The Clauses sheet has N rows, more than the 1000 supported in one import." | One workbook can carry 1000 clause rows. Nothing is imported; split the file and upload the parts. |
-| "The uploaded workbook exceeds the maximum supported size." | Files are capped at 20MB. Usually means embedded images or a stray sheet of pasted data; delete those, or split the file. |
-| Every row says "already existed" | The clause set name matched a set you had already imported into. Expected on a re-upload; check the set contents before assuming it failed. |
+| "File exceeds the 10 MB limit." | Files are capped at 10 MB. Usually means embedded images or a stray sheet of pasted data; delete those, or split the file. |
+| Every row is counted as "to update" | The clause set name matched a set you had already imported into, and every Identifier is already there. Nothing is changed. Expected on a re-upload; check the set contents before assuming it failed. |
 | Two clause sets with almost the same name | Trailing spaces or a rename. Names are matched exactly (ignoring case), so `FN Master Agreement ` and `FN Master Agreement` are different sets. |
 | A clause imported but never matches during review | Usually empty Guidance, or Applicable Component Types scoped to a component that is not in the contract. Clear the component types to let it apply everywhere and re-run. |
-| An exported file imports as all "already existed" | You imported it back into the set it came from. Change the **Clause Set** column to a new name first: export branches a set, it does not edit one. |
+| An exported file imports as all "to update" | You imported it back into the set it came from. Change the **Clause Set** column to a new name first: export branches a set, it does not edit one. |
 | An exported clause ends in `... [truncated]` | The clause text was over Excel's 32,000-character cell limit. The full text is intact in Coverbase; restore it in the file before re-importing. |
 
 ## Related

@@ -30,13 +30,13 @@ Screening appears in two places, and they are for two different jobs.
   <img src="/images/user-guides/vendor-intelligence-screening.png" alt="The Screening tab for a vendor, showing an open sanctions match, its identity confidence, and the history of scheduled screens." />
 </Frame>
 
-**In the review queue**: **Screening** in the left navigation. Every open match across every vendor, oldest first. This is the view when your job is to clear the queue rather than to look at one vendor.
+**In the review queue**: **Screening** in the left navigation. Every open match across every vendor, oldest first. This is the view when your job is to clear the queue rather than to look at one vendor. **Needs review**, **Confirmed** and **Resolved** switch between open and decided matches, and the source buttons beside them filter the list.
 
 <Frame caption="The org-wide queue. Matches from different vendors in one list, oldest first.">
-  <img src="/images/user-guides/screening-queue.png" alt="The screening review queue showing open matches across several vendors, with counts for matches needing review and the age of the oldest one." />
+  <img src="/images/user-guides/screening-queue.png" alt="The screening review queue showing open matches across several vendors, with counts for matches needing review and the age of the oldest one, the Needs review, Confirmed and Resolved buttons, source filters, and the Configuration and Ad hoc screen buttons." />
 </Frame>
 
-The queue is separate from Findings. A screening match is triaged on a different question from the rest of your work (*is this listed record this vendor?*), and mixing it into a general work queue buries the one kind of alert that carries a regulatory deadline.
+The queue is separate from Findings. A screening match is triaged on a different question from the rest of your work (*is this listed record this vendor?*), and mixing it into a general work queue buries the one kind of alert that carries a regulatory deadline. Each new match also opens a finding by default, so it has an owner and a due date while it waits. See [Deciding](#deciding).
 
 ## Identity confidence is not severity
 
@@ -55,7 +55,7 @@ Screening runs on thin identity data: a name, usually a country, sometimes a reg
 Open any match to get the full record.
 
 <Frame caption="The review drawer: what matched, field by field, with the sources behind it.">
-  <img src="/images/user-guides/screening-match-review.png" alt="The match review drawer showing the screened subject, the flagged source, country, registration number, aliases, programs, a field-level match breakdown, and the source listing." />
+  <img src="/images/user-guides/screening-match-review.png" alt="The match review drawer showing the vendor, the screened subject, the flagged source, country, registration number, aliases, programmes, a field-level match breakdown, the source listing, the advisory automated read, an optional reason box, and the Confirm match, Not a match and Allowlist for 180 days buttons." />
 </Frame>
 
 Work down it in this order:
@@ -70,19 +70,19 @@ The **automated read** is advisory. It is there for context. Coverbase never clo
 
 ## Deciding
 
-Three outcomes, and a written reason is required for all of them. The reason becomes part of the audit trail, so write it for someone reading it in a year with none of your context.
+Three outcomes. The **Reason for your decision** is optional, but anything you write becomes part of the audit trail, so write it for someone reading it in a year with none of your context.
 
 | Decision | Use it when | What happens |
 | --- | --- | --- |
-| **Confirm match** | It is your vendor, and the listing is real | The match stays open and escalated. It is now a compliance matter, not a screening question. |
-| **Not a match** | The listed record is a different party | The match closes as a false positive. |
-| **Allowlist** | It is a known, accepted match you do not want raised every cycle | Suppressed for a set period, then re-raised for a fresh look. |
+| **Confirm match** | It is your vendor, and the listing is real | The match moves to **Confirmed** and its finding stays open. It is now a compliance matter, not a screening question. |
+| **Not a match** | The listed record is a different party | The match closes as a false positive, and its finding is archived with your reason. |
+| **Allowlist for 180 days** | It is a known, accepted match you do not want raised every cycle | Suppressed for 180 days, then re-raised for a fresh look. Its finding is archived with your reason. |
 
 <Note>
   An allowlist expires so the match gets a fresh look. Circumstances change, and a permanent suppression can leave a real listing unnoticed for years.
 </Note>
 
-Confirming a match opens a finding, so it picks up an owner, a due date, SLA reminders and the rest of the findings workflow. Screening raises the alert; it does not decide what you do about it, and it never blocks a payment or an onboarding on its own.
+With **Open a finding** on in the settings (the default), every new match opens a finding the moment it is raised, assigned to the vendor's relationship owner or risk analyst. It picks up a due date, SLA reminders and the rest of the findings workflow. Confirming leaves it open; the other two decisions archive it. A match the source stops listing moves to **No longer listed** under **Resolved** on its own. Screening raises the alert; it does not decide what you do about it, and it never blocks a payment or an onboarding on its own.
 
 ## What "clear" looks like
 
@@ -96,36 +96,56 @@ A vendor with nothing to review still shows its run history.
   An empty match list and a vendor that was never screened look similar and mean opposite things. Check the run history before you write "no sanctions exposure" into an assessment.
 </Warning>
 
+## Screen a vendor now, or someone it missed
+
+**Screen now**, at the top of a vendor's Screening tab, screens everyone enrolled for that vendor straight away instead of waiting for the schedule. The page opens the result when the provider answers. If nobody is enrolled yet, it says so and nothing runs.
+
+**People not screened** lists people named in the vendor's leadership research that screening does not cover, either because their identity could not be confirmed automatically or because no registry filing names them. **Confirm & screen** enrolls one of them for continuous screening, and **Add individual** enrolls someone the research did not find. Either records that you vouched for the person's identity, so check who they are first.
+
+## Screen a name once
+
+**Ad hoc screen**, on the queue, screens one name a single time without enrolling it for monitoring. Use it for a prospective supplier, a new director, or a name someone asks about.
+
+1. Pick **Organisation** or **Person** and enter the **Legal Name** or **Full Name**.
+2. Add any identifying details you have. Each one rules candidates out; a name on its own returns the most to review.
+3. Check the **Sources**. They default to what your policy runs, and a source switched off for your organization cannot be picked.
+4. Optionally pick a **Linked Vendor**, so the screen also shows on that vendor's record. Left empty, it stands on its own and creates no vendor.
+5. Click **Run screen**. The page opens the result when the provider answers, and any match lands in the queue marked ad hoc.
+
+An ad hoc screen raises no finding. Its matches are reviewed and decided like any other.
+
 ## Settings
 
-An administrator configures screening once, under **Configuration → External integrations → Screening**. It needs the `integration` permission, not the screening one.
+An administrator configures screening once, under **Configuration → Monitoring → Screening**, or from **Configuration** on the queue. It needs the `integration` permission, not the screening one.
 
-<Frame caption="The policy: which sources, who gets screened, and which vendor tiers are monitored.">
-  <img src="/images/user-guides/screening-settings.png" alt="The screening settings page showing the connection status, source toggles, adverse media categories, subject selection, and the monitoring table by vendor tier." />
+<Frame caption="The policy: which sources, who gets screened, which risk levels are monitored, and what a new match raises.">
+  <img src="/images/user-guides/screening-settings.png" alt="The screening settings page showing the connection status, source toggles, adverse media categories, subject selection, the automation setting, the monitoring table by risk level, and the settings for a new match." />
 </Frame>
 
-Four things to decide:
+The decisions that matter:
 
 **Which sources.** Sanctions, PEP, criminal and legal are on by default. Adverse media is off, and should stay off until the rest is running cleanly. It is the highest-volume and lowest-precision source, and it will dominate your queue. When you do turn it on, keep the category list narrow.
 
-**Who gets screened.** The vendor's legal entity is screened by default. Directors, officers and beneficial owners are opt-in, because screening a person means storing watchlist assertions about a named individual. Turn them on only when you need them.
+**Who gets screened.** The vendor's legal entity is screened by default. Directors, officers and beneficial owners are opt-in, because screening a person means storing watchlist assertions about a named individual. Turn them on only when you need them. Under **Automation**, **Screen a vendor when its intelligence refresh completes** screens as soon as a refresh has established the vendor's leadership instead of waiting for the nightly sweep. It is off by default, because every refresh then costs a screen per subject.
 
-**Which tiers are monitored.** A monitored vendor is re-screened on a schedule and raises an alert when a source changes.
+**Which risk levels are monitored.** Monitoring is set per risk level: the vendor's residual risk level where your organization tracks residual risk, otherwise its inherent level. A monitored vendor is re-screened on a schedule and raises an alert when a source changes.
 
-<Frame caption="Monitoring is per vendor tier. The profile group is optional.">
-  <img src="/images/user-guides/screening-monitoring.png" alt="The monitoring table listing each vendor tier with a monitored switch and an optional provider profile group." />
+<Frame caption="Monitoring is per risk level. The profile group is optional.">
+  <img src="/images/user-guides/screening-monitoring.png" alt="The monitoring table listing each risk level, plus Not scored, with a monitored switch and a provider profile group that defaults to the workspace default." />
 </Frame>
 
-Tier 4 and untiered vendors are unmonitored by default, so switching screening on does not enroll your entire long tail. A monitored vendor is a standing subscription, not a one-off charge.
+Nothing is monitored until you switch a level on, and vendors with no risk score sit in their own **Not scored** row, so switching screening on does not enroll your entire long tail. A monitored vendor is a standing subscription, not a one-off charge. The table lists your risk scale's levels, so set up the scale under Scoring first.
 
 <Note>
-  **How often** each source is re-screened is set in your screening provider's own configuration, not in Coverbase. Coverbase decides *who* is monitored; the provider decides *how often*. If you need a tighter or looser schedule for a group of vendors, set up a profile group with your provider and name it in the table. Leaving it blank uses the provider's workspace default.
+  **How often** each source is re-screened is set by the provider profile group, not in Coverbase. Coverbase decides *who* is monitored; the group decides *how often*. If you need a tighter or looser schedule for a risk level, set up a profile group with your provider and pick it in the table. **Workspace default** uses the provider's default.
 </Note>
 
-**The match threshold.** The default is 0.80. Lower it and you will see more true matches and many more false ones; raise it and you risk missing a real listing on thin data. Change it only with a reason you would defend to an auditor.
+**What a new match raises.** Under **On a new match**, **Open a finding** and **Notify the vendor's owners** are on by default. **Assign the review to** picks the vendor's **Relationship owner** or **Risk analyst**. A vendor with nobody in the chosen role falls back to the other, so no match sits unowned.
+
+**The match threshold.** The identity match threshold is 0.80 by default and shows as **Match threshold** on each vendor's Screening tab. This page does not change it. An ad hoc screen can set its own **Match Threshold** for that one screen: lower it and you will see more true matches and many more false ones; raise it and you risk missing a real listing on thin data.
 
 <Note>
-  A source switched off at the top level never runs, whatever the monitoring table says. One switch turns a source off everywhere, rather than making you clear a row per tier.
+  A source switched off at the top level never runs, whatever the monitoring table says. One switch turns a source off everywhere, rather than making you clear a row per risk level.
 </Note>
 
 ## Who can do what
@@ -135,10 +155,20 @@ Screening has its own permission, separate from the vendor record, so the person
 | Permission | Allows |
 | --- | --- |
 | `screening_match:read` | See the queue, the vendor tab, and match detail |
-| `screening_match:update` | Confirm, dismiss or allowlist a match; re-screen a vendor now |
+| `screening_match:update` | Confirm, dismiss or allowlist a match; screen a vendor now; enroll a person; run an ad hoc screen |
 | `integration:read` / `integration:update` | See and change the screening configuration |
 
 There is no create or delete. Matches come from the provider and are closed by decision, never removed.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| The Screening tab says screening is not turned on | An administrator adds the API key and switches on **Screen vendors on a schedule** under **Configuration → Monitoring → Screening**. |
+| A vendor you expected to be monitored has no recent screens | Check the vendor's risk level, and that the level is switched on under **Who is monitored**. A vendor with no risk score is under **Not scored**. |
+| **Screen now** says nobody is enrolled | The settings screen nobody for this vendor. Check **Who we screen**. |
+| A director named on the People tab is not screened | Directors and officers are opt-in, and only people a registry filing names are enrolled automatically. Use **Confirm & screen** under **People not screened**. |
+| A dismissed match is back | An allowlist lasts 180 days, then the match is raised again for a fresh look. A match you marked **Not a match** stays closed. |
 
 ## Related
 

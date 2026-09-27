@@ -19,13 +19,13 @@ For the complete list of what you can put between the braces, see the [placehold
     An admin turns on the **Assessment report templates** toggle in **Configuration > Assessment Settings**. The upload panel appears directly below the toggle. Until this is on, the Word export option does not appear on assessments.
   </Step>
   <Step title="Author the .docx">
-    Write your report in Word exactly as you want it to look. Put placeholders wherever data should appear. Start from the sample template linked in the upload dialog if you want a working example.
+    Write your report in Word exactly as you want it to look. Put placeholders wherever data should appear. For a working example, click **Download Example** in the upload dialog. **Variables Catalog** in the same dialog lists every placeholder your organization can use, with its exact spelling.
   </Step>
   <Step title="Upload it">
     In the **Assessment report templates** panel, click **Add new template**, drop in the `.docx`, and give it a template name. The name is what analysts pick from at export time.
   </Step>
   <Step title="Export an assessment against it">
-    On any assessment, choose the Word export, pick the template, and confirm the filename. Generation runs in the background and the document appears when it is ready.
+    On any assessment, open the actions menu and choose **Export**, then **Export as Word**. Pick the template, confirm the file name, and click **Build Report**. Generation runs in the background: the dialog shows progress and offers **Download Report** when it is done, and you get a notification if you have notifications enabled. The export options stay disabled while the assessment is still collecting documents or being analyzed, and for anyone without permission to export assessments.
   </Step>
 </Steps>
 
@@ -66,6 +66,7 @@ Four rules govern how they are matched:
 | `assessment` | The assessment being exported |
 | `services` | All services in scope on the assessment, flattened into one value per field |
 | `reviews` | The whole-assessment reviews on the assessment, flattened into one value per field |
+| `intelligence` | Vendor Intelligence on the vendor (company profile, financial health, security posture, registration, people and screening) and any financial statements submitted for it |
 | `agent` | AI-written prose, generated from a prompt you write in the template |
 | `findings` | A repeating table row, one row per finding |
 
@@ -91,7 +92,7 @@ An `{{agent::...}}` placeholder is a prompt, not a field lookup. Coverbase runs 
 {{agent::Summarize the vendor's incident response commitments and note any gaps against our standard.}}
 ```
 
-The agent is given vendor fields, assessment fields, evaluation summaries, findings, reviews, and questionnaire excerpts as preloaded context, and it can call tools to fetch vendor data, assessment data, services, findings, reviews, commitments, and questionnaire responses for anything not already loaded.
+The agent is given vendor fields, assessment fields, evaluation summaries, findings, reviews, questionnaire excerpts, and the headline of each Vendor Intelligence section as preloaded context. It can call tools to fetch vendor data, assessment data, evaluation summaries, services, findings, reviews, commitments, questionnaire responses, and full Vendor Intelligence sections for anything not already loaded.
 
 **Agent output is rendered as formatted Word content**, not as raw text. The following markdown is honored:
 
@@ -129,7 +130,7 @@ When an agent cannot answer, the document gets a short marker instead of prose:
 | Marker | Meaning |
 | ------ | ------- |
 | `Not available` | The agent ran but found no data to answer the prompt |
-| `[Generation timed out]` | The prompt exceeded the per-prompt budget of 300 seconds |
+| `[Generation timed out]` | The prompt exceeded the per-prompt budget of 15 minutes |
 | `[Generation failed]` | The agent errored on that prompt |
 | `[Agent error]` | The whole agent batch failed to start |
 
@@ -201,12 +202,15 @@ Two things to know about how they are handled:
 
 - **Signature anchors are recorded at generation time.** Only `/sn1/` through `/sn5/` are scanned for and stored on the generated report. The other tab anchors are read from the document when the signature request is created, so they do not need to be recorded earlier.
 - **A missing anchor blocks sending.** Creating a signature request fails if a signer is assigned an anchor that is not present in the document. If you add a third signer, add `/sn3/` to the template first.
+- **The number ties a tab to a signer.** `/sn2/` creates the second signer, and `/title2/` or `/date_signed2/` place that signer's tabs. A tab anchor numbered for a signer with no matching `/snN/` in the document is ignored.
 
 ## What happens to unresolved placeholders
 
 <AccordionGroup>
   <Accordion title="A known field that has no value" defaultOpen icon="circle-question">
     The placeholder text stays in the document. This is deliberate: a blank space hides the problem, while a visible `{{vendor::use cases}}` tells the report author that the field is empty in Coverbase. Fill in the source data and re-export.
+
+    `{{intelligence::...}}` placeholders are the exception. An empty one renders `Not available`, because many of those fields are legitimately empty for a given vendor.
   </Accordion>
 
   <Accordion title="A field name that does not exist" icon="triangle-exclamation">

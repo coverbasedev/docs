@@ -47,6 +47,7 @@ Coverbase organization roles map to MCP access as follows.
 | **Siloed Member** | Yes | Yes | No (read-only) |
 | **Guest** | Yes | Yes | No (read-only) |
 | **Auxiliary Member** | No | - | - |
+| **Custom role** | No | - | - |
 | **Service Account** | API key only | Yes | No (read-only) |
 
 A few specifics:
@@ -54,6 +55,7 @@ A few specifics:
 - **Read access** (search vendors, pull assessment detail, list findings, run portfolio reports, and so on) is available to every role that can connect.
 - **Write access** (creating or updating vendors, assessments, findings, obligations, notes, tags, and other records) is reserved for **Members** and **Admins**.
 - **Auxiliary Members** cannot use the MCP server at all, and receive a `403` if a token for one is ever presented.
+- **Custom roles** cannot connect. The write guard cannot express a custom role's permissions, so rather than silently forcing a possibly write-capable user to read-only, the server refuses the connection. Give the user one of the default roles above.
 - **Service Accounts** are non-interactive by design, so they cannot sign in through OAuth or a dashboard session; those paths still return `403`. They *can* hold an API key, which is what makes a programmatic read-only connection possible without a human seat. A service account can never write through MCP.
 
 <Info>
@@ -74,7 +76,7 @@ Every request flows through the same gate, regardless of which client or token t
   </Step>
 
   <Step title="Enforce the connect allowlist">
-    If the resolved role is not one of the connectable roles (Guest, Siloed Member, Member, Admin, plus Service Account on an API key), the request is rejected with `403` before any tool runs.
+    If the resolved role is not one of the connectable roles (Guest, Siloed Member, Member, Admin, plus Service Account on an API key), the request is rejected with `403` before any tool runs. Auxiliary Members and custom roles are not connectable.
   </Step>
 
   <Step title="Enforce per-tool access">
@@ -161,10 +163,10 @@ The common case is a pipeline, a scheduled report, or an internal assistant that
 Because permissions are resolved from live membership, changes you make in Coverbase propagate without any re-install or token re-issuance on the user's side.
 
 - **API-key and session tokens** look up the user's membership on **every request**. If the user has been removed from the organization, the request is rejected with `403`, even if the token itself is still otherwise valid. A key's *scopes* do not follow the role: a read-only key stays read-only through any promotion, which is what makes it safe to hand to an automation.
-- **OAuth tokens** bind the role at authorization time and **re-check live membership on every refresh**. A user who is demoted (for example, Member → Guest) or removed from the organization cannot keep using a previously elevated token: the next refresh either downgrades the role baked into the new token or fails outright. Access tokens are short-lived and clients refresh silently, so a role change converges quickly.
+- **OAuth tokens** bind the role at authorization time and **re-check live membership on every refresh**. A user who is demoted (for example, Member → Guest) or removed from the organization cannot keep using a previously elevated token past its expiry: the next refresh either downgrades the role baked into the new token or fails outright. Access tokens last up to 24 hours and clients refresh silently, so a role change on an OAuth connection takes effect within a day at most.
 
 <Info>
-  This means a demotion is also a downgrade of MCP access, and a removal is a revocation, without anyone needing to touch the connector. Revoking the connection from Coverbase account settings or the client invalidates the token immediately.
+  This means a demotion is also a downgrade of MCP access, and a removal is a revocation, without anyone needing to touch the connector. For API keys it is immediate; for OAuth connections it lands at the next token refresh. Revoking an MCP API key under **Configuration → MCP Server** stops it at once. Disconnecting a client removes the tokens that client holds, but Coverbase has no separate switch to invalidate an OAuth access token that was already issued.
 </Info>
 
 ## What this means in practice
@@ -179,11 +181,11 @@ Because permissions are resolved from live membership, changes you make in Cover
   </Accordion>
 
   <Accordion title="An admin demotes a user to Guest while their session is live" icon="rotate">
-    On the user's next request (API key/session) or next token refresh (OAuth), the new Guest role takes effect. Subsequent write attempts are rejected. There is nothing to reconfigure on the user's machine.
+    On the user's next request (API key/session) or next token refresh (OAuth, within 24 hours), the new Guest role takes effect. Subsequent write attempts are rejected. There is nothing to reconfigure on the user's machine.
   </Accordion>
 
   <Accordion title="A user is removed from the organization" icon="user-xmark">
-    The next request or refresh fails with a `403` because there is no active membership to resolve a role from. The connection effectively stops working immediately.
+    An API key or session token fails with a `403` on the next request, because there is no active membership to resolve a role from. An OAuth connection keeps working until its current access token expires (up to 24 hours), and the refresh then fails.
   </Accordion>
 </AccordionGroup>
 
@@ -201,7 +203,7 @@ What you can still see for a bound key:
 
 <CardGroup cols={2}>
   <Card title="Who provisioned it" icon="user-check">
-    Creating and revoking an MCP key are recorded in **Settings → Audit log** under **Integrations**, attributed to the admin who did it, with the key's name. The key also stores that admin internally, so a key always traces back to a person even though it runs unattended.
+    Creating and revoking an MCP key are recorded in **Configuration → Audit Logs** under **Integrations**, attributed to the admin who did it, with the key's name. The key also stores that admin internally, so a key always traces back to a person even though it runs unattended.
   </Card>
 
   <Card title="What it read, and when" icon="list-check">

@@ -16,7 +16,7 @@ For the concepts behind the score, see [Zero Touch Assessments](/user-guides/zer
   Every endpoint below is behind the `zero-touch-assessments` module. If it is not enabled for your organization, these routes return `404`. Contact your Coverbase representative to have it turned on.
 </Note>
 
-All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, idempotency, and the error envelope.
+All endpoints are org-scoped. They are the endpoints the dashboard's Zero Touch pages use, so they take a signed-in user's dashboard session token (a JWT); an `ak_` API key is rejected with `401 Unauthorized role.` Most error bodies carry a free-form `error` key rather than a code. See [API conventions](/conventions) for IDs, timestamps, and the error envelope.
 
 ## Launch a run
 
@@ -44,15 +44,18 @@ Starts a Zero Touch Assessment for one vendor.
   </Warning>
 </ParamField>
 
+<ParamField body="instruction" type="string">
+  A correction in plain language, up to 2000 characters, applied to the vendor before the run starts. Use it when the vendor record points at the wrong company or website: research reads the vendor's website at launch, so a correction made afterwards does not change what the run read.
+</ParamField>
+
 ### Responses
 
 | Status | Meaning |
 | --- | --- |
 | `200` | The run was created. The body is the run summary. |
-| `400` | The vendor ID is unknown or belongs to another organization. |
-| `409` | No Zero Touch control sets are designated for your organization. |
+| `400` | The vendor ID is unknown or belongs to another organization, or `template_key` is not a shipped template. |
 | `404` | The module is not enabled. |
-| `400` | The vendor ID is unknown, or `template_key` is not a shipped template. |
+| `409` | No Zero Touch control sets are designated for your organization. |
 
 <Note>
   Organizations are provisioned the shipped templates on first use, so a `409` is unusual. It means every template has since been un-designated or archived, which is a deliberate act that provisioning will not undo.
@@ -67,7 +70,11 @@ Starts a Zero Touch Assessment for one vendor.
 Starts a run for many vendors in one call. Vendor IDs are deduplicated.
 
 <ParamField body="vendor_ids" type="string[]" required>
-  Vendor IDs to assess.
+  Vendor IDs to assess, from 1 to 200.
+</ParamField>
+
+<ParamField body="template_key" type="string">
+  Switch your organization's Zero Touch scope to this template before launching, as on a single launch.
 </ParamField>
 
 **Partial success is the normal outcome and returns `200`.** The response separates the two:
@@ -158,7 +165,7 @@ Ranking is computed across the whole organization before the page is sliced, so 
 
 The `GET` returns the shipped templates with their control counts and domains, plus `active_template_key`, the one your runs currently evaluate. It is `null` when your organization runs a control set of its own, or when more than one shipped template is designated; both are states to show rather than resolve arbitrarily.
 
-The `POST` takes `{"template_key": "..."}` and points future runs at that template. It only ever re-designates control sets this module provisioned, so a set designated for you by Coverbase is never disturbed.
+The `POST` takes `{"template_key": "..."}` and points future runs at that template. It only ever re-designates control sets this module provisioned, so a set designated for you by Coverbase is never disturbed. An unknown key returns `400`; an organization that runs a control set of its own gets `409`.
 
 ## Re-source a run's vendor profile
 
@@ -187,14 +194,18 @@ Recomputes the composite against today's inputs and re-applies the configured sc
 Records a decision against a run without changing what it was built on.
 
 <ParamField body="action" type="string" required>
-  `approved`, `escalated`, or `note`.
+  `approved`, `escalated`, `archived`, or `note`.
 </ParamField>
 
 <ParamField body="note" type="string">
   Free text, up to 4000 characters.
 </ParamField>
 
-Escalating records the judgement; it does not launch a full assessment.
+<ParamField body="vendor_status_id" type="string">
+  Optional. A vendor status (`cbst_...`) to set on the vendor along with the decision. Requires permission to update the vendor.
+</ParamField>
+
+Escalating records the judgement; it does not launch a full assessment. Archiving takes the run out of the working set and needs permission to archive assessments.
 
 ## Correct a run's inputs
 
@@ -221,7 +232,7 @@ The instruction is read into a fixed set of correctable fields (the vendor's web
 Every review action on a run, in the order taken.
 
 <ResponseField name="data[].action" type="string">
-  `approved`, `escalated`, `corrected`, `rescored`, or `note`.
+  `approved`, `escalated`, `corrected`, `rescored`, `revised`, `restored`, `rerun_requested`, `note`, or `archived`.
 </ResponseField>
 
 <ResponseField name="data[].instruction" type="string | null">
@@ -304,11 +315,15 @@ Only the axis you choose is written, so a Zero Touch run can never overwrite an 
   Whether a completed run writes its **risk tier** onto vendor inherent risk. Off by default.
 </ParamField>
 
+<ParamField body="auto_review" type="boolean">
+  Whether a finished run is checked a second time against the vendor's own pages, with the supported changes applied as a new version of the result. On by default.
+</ParamField>
+
 The tier is a triage read from public evidence, so an organization that has not asked for it never finds a vendor's inherent risk moved by one. Even when enabled, the push stands down if `score_target` is already `vendor_inherent`, because two writers on one field would let run order decide the vendor's risk, and reports why in `result.risk_tier_push_skipped_reason`.
 
 ## Listing runs
 
-There is no separate list endpoint, deliberately. A Zero Touch run is an assessment. Use the existing assessment endpoints with the `is_zero_touch` filter:
+There is no separate list endpoint, deliberately. A Zero Touch run is an assessment. Use the assessment query endpoint, `POST /v1/assessment/query`, with a rule on the `is_zero_touch` filter path (see the [field catalog](/fields/catalog#assessments)):
 
 - `is_zero_touch: true` returns triage runs only
 - `is_zero_touch: false` returns full assessments only
@@ -326,4 +341,4 @@ query_assessments(kind="zero_touch_leaderboard", limit=25)
 query_assessments(kind="zero_touch_audit", assessment_id="cbqsrw_...")
 ```
 
-Both are read-only and org-scoped to the authenticated user. See the [MCP overview](/mcp/overview).
+All three are read-only and org-scoped to the authenticated user. See the [MCP overview](/mcp/overview).

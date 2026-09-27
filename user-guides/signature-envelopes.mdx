@@ -16,17 +16,17 @@ An envelope is one agreement, out for signature, addressed to named people. It i
 
 ## Start an envelope
 
-**New Envelope** on **Contracts → Signatures** opens a four-step wizard. You can also start one from a contract's own signatures tab, which fills the vendor in for you.
+**New Envelope** on **Contracts → Signatures** opens a four-step wizard. You can also start one with **Send for signature** in the **Signature** step of a contract's **Workflow** tab, which files the envelope against that contract. Nothing is saved until you send, so leaving the wizard part way leaves nothing behind.
 
 ### Step 1: the document
 
 <Frame caption="Step 1. Name the envelope, choose its paper, file it against a vendor, and set how long it stays open.">
-  <img src="/images/user-guides/signing-wizard-document.png" alt="Send wizard step one showing envelope name, template picker, associated vendor and expiration" />
+  <img src="/images/user-guides/signing-wizard-document.png" alt="Send wizard step one showing envelope name, the five paper sources with Upload selected, associated vendor and expiration" />
 </Frame>
 
 **Envelope Name** is the subject line signers see and the name the executed copy is filed under. Make it something the counterparty will recognize.
 
-Then pick the paper. **From a template** copies a template's roles and field layout across. **From a document**, **From a contract** and **Upload** all start you with paper and no fields, which you place yourself in step 3.
+Then pick the paper. **From a template** copies a template's roles and field layout across. **From a document**, **From a contract**, **Upload** and **Write** all start you with paper and no fields, which you place yourself in step 3. **Upload** takes several files, which travel as one envelope. **Write** lets you write the agreement in Coverbase, inserting passages from your library, and renders it to a PDF.
 
 **Associated vendor** files the agreement against a counterparty. Set it even when it feels obvious: it puts the envelope on that vendor's record, and it pre-fills a **Company** field for the signer.
 
@@ -53,7 +53,7 @@ Otherwise, each party gets a card. Four kinds:
 | **Witness** | Signs as a witness to another party. Blocks like a signer. |
 | **Copied** | Receives the agreement for information. Never blocks, and never has fields. |
 
-Name and email autocomplete from contacts already on the associated vendor, so a party you have dealt with before is two keystrokes.
+Name and email autocomplete from you, your colleagues, and the people on the associated vendor (its relationship owners, risk analysts, watchers and contacts), so a party you have dealt with before is two keystrokes.
 
 **Signs in step** is the routing order, and reads **Approves in step** on an approver. Parties in step 1 are asked immediately; step 2 is notified when step 1 finishes, and so on. Give two parties the same step and they are asked at the same time. Drag a card by its handle to reorder the list.
 
@@ -97,7 +97,7 @@ Two switches decide how it goes out:
 
 | | |
 | --- | --- |
-| **Email recipients the signature link** | On by default. Turn it off and links are minted but not sent, for when you are handing them out yourself. |
+| **Email recipients the signature link** | On by default. Turn it off and links are minted but not sent, for when you are handing them out yourself. The send button then reads **Create and get links**, and the page that follows lists each party's link once, because only a digest is stored. |
 | **Authenticate signers' identity** | Whether a party must verify their email address before the document opens. Starts at your organization's setting and can be changed for this envelope alone. |
 
 **Send for signature** emails the first routing step and mints each party a permanent portal address.
@@ -127,7 +127,7 @@ The envelope's **Overview** tab is the working view. Down the middle: the source
   <Accordion title="Correct and resend">
     For when the document or the recipients were wrong. The original is voided with its trail intact and you rebuild it in the send flow with everything carried across, so you are not retyping the whole envelope. The voided original stays in the list for the record, and a banner across the rebuild says which envelope you are correcting.
 
-    Field *values* are not carried: a value belongs to the signature that was collected on the old envelope, not to the new one.
+    Field *values* are not carried: a value belongs to the signature that was collected on the old envelope, not to the new one. Access codes are not carried either. A party who had one comes back with **Identity Check** set to **None**, so set a new code if you still want one.
   </Accordion>
   <Accordion title="Void envelope">
     Closes every signing link immediately. Signatures already collected stay on the record. Voiding cancels the agreement; it does not erase what happened. A **reason** is required, and it goes into the audit trail beside the void.
@@ -142,11 +142,11 @@ The envelope's **Overview** tab is the working view. Down the middle: the source
 
 Once the last party signs, Coverbase flattens every field into the page, seals the PDF, and generates a signing certificate beside it.
 
-<Frame caption="An executed envelope. The status reads Executed, the document line names the seal level actually achieved, and Download signed copy becomes the primary action.">
+<Frame caption="An executed envelope. The status reads Executed, the document line names the seal level actually achieved, and Download signed copy takes the place of Send Reminder.">
   <img src="/images/user-guides/signing-envelope-executed.png" alt="Executed envelope detail with Download signed copy as the primary action, every field signed, and both parties green in the signing order" />
 </Frame>
 
-- **Download signed copy**: the sealed PDF, with every signature, initial and stamp burned into the page and attributed. It becomes the envelope's primary action once sealing finishes.
+- **Download signed copy**: the sealed PDF, with every signature, initial and stamp burned into the page and attributed. It appears in the envelope's header, in place of **Send Reminder**, once every party has signed.
 - **Download certificate**: the certificate of completion, under **Actions**. It only exists once every party has signed.
 - **Download full packet**: the signed copy and the certificate together, for handing to a counterparty or an auditor.
 - The document line under the file name reads **sealed at B-B** (or whatever level was achieved), so you can see what the executed copy carries rather than what was asked for.
@@ -163,16 +163,16 @@ Every event is recorded in order and hash-chained: each entry carries a sequence
 
 Events cover the whole life of the envelope: created, sent, each party notified, each portal opened, consent accepted against a specific disclosure version, each signature adopted and applied, and the final seal. Portal events carry IP, approximate location and user agent.
 
-The **Integrity** panel beside it carries the hashes:
+The **Integrity** panel beside it names the seal level applied (or **Not sealed** until every party has signed), when the seal was last verified, and the hashes:
 
 | | |
 | --- | --- |
 | **Source Document SHA-256** | The hash of the paper before anyone touched it. |
-| **Executed Document SHA-256** | The hash of the sealed copy. Recorded once the envelope completes. |
+| **Executed Document SHA-256** | The hash of the executed copy. Recorded once the envelope completes. At B-B the seal adds no bytes, so after sealing this row reads **Executed and Sealed SHA-256**; above B-B a separate **Sealed Bytes SHA-256** row sits beside it. |
 | **Audit Chain Head** | The hash covering every event so far. |
 
 <Tip>
-  **Verify now** on the Overview tab re-checks the document you are holding against these hashes. That is the answer to "is this the file that was actually signed?"
+  **Verify now** on the Overview tab re-validates the stored executed copy against its seal the way a PDF reader would, and records the verdict under **Last verification** in the Integrity panel. That is the answer to "is this the file that was actually signed?"
 </Tip>
 
 ## Common problems

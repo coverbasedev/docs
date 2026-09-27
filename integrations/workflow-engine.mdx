@@ -16,11 +16,11 @@ A trigger is the event that starts a workflow. Triggers fall into three groups.
 
 <AccordionGroup>
   <Accordion title="Object events" icon="circle-dot" defaultOpen>
-    A primary object is created, updated, or transitions state. Examples include a new vendor being created, an assessment moving to completion, a contract entering its renewal window, or an evaluation being flagged as a finding.
+    A primary object is created, updated, or transitions state. Examples include a new vendor being created, an assessment moving to completion, a contract's term running out (`Contract.Expired`), or a finding being raised. Every trigger in the picker is an event in the [event catalog](/integrations/webhooks#event-catalog).
   </Accordion>
 
   <Accordion title="Schedule events" icon="calendar-clock">
-    A workflow runs on a recurring schedule. Examples include quarterly reassessment of all critical vendors, annual SOC 2 refresh, or monthly checks for expiring contracts.
+    A workflow run is scheduled for a specific time. On a workflow's page, the **Run workflow** button offers **Schedule for later...**, and a **Run workflow** action inside another workflow can start its target now or at a later time. Pending runs are listed under **Scheduled** on the workflow's **History** tab, where each can be canceled. There is no recurring (cron-style) trigger: for a periodic review, use reassessment rules, which set each vendor's next assessment date from its risk level.
   </Accordion>
 
   <Accordion title="External events" icon="signal-stream">
@@ -34,18 +34,19 @@ A trigger is the event that starts a workflow. Triggers fall into three groups.
 
 Conditions branch the flow. They evaluate fields on the primary object or its related objects.
 
-Common patterns include:
+The condition picker offers:
 
-- IRQ score above or below a threshold
-- Data classification (PII, PHI, PCI, or none)
-- Hosting model (SaaS, on-prem, or hybrid)
-- Geographic jurisdiction
-- Vendor tier or criticality
-- Whether prior assessment evidence exists
-- Whether a specific document type is present
-- Any built-in or [custom field](/api-reference/custom-fields), through the same filter paths the dashboard uses
+- IRQ score within a threshold range
+- Vendor status, tier or tags
+- Assessment status, assignee, recommendation, plan, risk type, inherent risk level or document collection mode
+- Procurement status, reviewers and review status, and contract value
+- An answer to a questionnaire question
+- Which fields changed on the triggering record
+- Whether work queue items are complete
+- Whether the triggering record was opened by this workflow, so a chain only advances on the records it created
+- Any built-in or [custom field](/api-reference/custom-fields) on the triggering record or a related record, through the same filter paths the dashboard uses. Attributes such as data classification, hosting model or jurisdiction are usually matched here.
 
-Conditions can be composed with `AND` or `OR` logic and nested arbitrarily.
+The conditions on an automation are combined with **Match all** or **Match any**.
 
 ### Gate conditions
 
@@ -62,25 +63,23 @@ See [Reviews, approvals and gates](/user-guides/reviews-and-approvals) for how t
 
 ## Actions
 
-Actions execute work. The available actions:
+Actions execute work. The action picker groups them by the record they act on:
 
 <CardGroup cols={2}>
-  <Card title="Create or update an assessment" icon="clipboard-check" />
-  <Card title="Send a questionnaire to a vendor contact" icon="paper-plane" />
-  <Card title="Request specific evidence types" icon="file-arrow-up" />
-  <Card title="Run Copilot against uploaded evidence" icon="robot" />
-  <Card title="Run Inspect against a vendor's public surface" icon="magnifying-glass" />
-  <Card title="Run Contract Guardian against an agreement" icon="file-contract" />
-  <Card title="Transition a vendor or assessment lifecycle state" icon="arrow-right-arrow-left" />
-  <Card title="Assign a task to an internal owner" icon="user-check" />
-  <Card title="Wait for human review" icon="user-clock" />
-  <Card title="Raise a review gate, generic or scoped to a risk domain" icon="gavel" />
-  <Card title="Update a review's status, outcome or notes" icon="pen-to-square" />
+  <Card title="Create, update, begin or complete an assessment" icon="clipboard-check" />
+  <Card title="Create or send a portal, or send a custom portal, to a vendor" icon="paper-plane" />
+  <Card title="Begin or finalize an intake, or create or update an intake session" icon="inbox-in" />
+  <Card title="Create or update a vendor or service, update its status or relationship owners, or derive its tier" icon="arrow-right-arrow-left" />
+  <Card title="Enable Radar monitoring for a vendor, or update a Radar signal" icon="satellite-dish" />
+  <Card title="Create or update a review: the review gate" icon="gavel" />
   <Card title="Create or update a work queue item" icon="list-check" />
-  <Card title="Create or update a finding, obligation, contract or engagement" icon="triangle-exclamation" />
-  <Card title="Send an email, or a portal to a vendor" icon="envelope" />
-  <Card title="Create a Jira issue or a ServiceNow record" icon="ticket" />
-  <Card title="Fire a webhook to an external endpoint" icon="arrow-right-from-bracket" />
+  <Card title="Create or update a finding, risk, case, contract, engagement or procurement" icon="triangle-exclamation" />
+  <Card title="Link documents to a record" icon="file-arrow-up" />
+  <Card title="Send an email" icon="envelope" />
+  <Card title="Create a Jira ticket" icon="ticket" />
+  <Card title="Create or update ServiceNow records, send a custom ServiceNow request, or upload documents to ServiceNow" icon="server" />
+  <Card title="Send a webhook to an external endpoint" icon="arrow-right-from-bracket" />
+  <Card title="Run another workflow, now or at a scheduled time, or update this workflow run" icon="gears" />
 </CardGroup>
 
 ### Review gates and approvals
@@ -95,14 +94,15 @@ The **raise a review gate** action is how approval logic is expressed.
 
 ### `send_webhook` action
 
-The **Fire a webhook** action delivers the workflow's triggering event to subscribed [webhooks](/integrations/webhooks).
+The **Send webhook** action delivers the workflow's triggering event to [webhooks](/integrations/webhooks).
 
-- By default the event type is the workflow's triggering event; an optional **event type override** changes which subscriptions are matched and the type the delivery is labeled with.
-- An optional **`webhook_ids`** restricts delivery to an explicit subset of the org's webhooks for that event type. Omit it to fan out to every active subscription for the event type.
+- By default the event type is the workflow's triggering event; an optional **event type override** changes the type the delivery is labeled with and, when no webhooks are named, which subscriptions are matched.
+- An optional **`webhook_ids`** list names the exact webhooks to deliver to. Naming a webhook is the subscription decision: it receives the delivery whatever events it subscribes to. Omit it to fan out to every active subscription for the event type.
+- A disabled or archived webhook receives nothing either way.
 - One shared `event_id` is generated per action invocation, so a receiver can dedupe a multi-webhook fan-out, using the same idempotency model as the [domain-event fan-out](/integrations/webhooks#when-deliveries-happen).
 
-Every delivery from this action is recorded in [delivery history](/integrations/webhook-deliveries). If no active webhook is subscribed to the (possibly overridden) event type, the action is a no-op.
+Every delivery from this action is recorded in [delivery history](/integrations/webhook-deliveries). If there is no active webhook to deliver to, the step is skipped.
 
 <Note>
-  Every action that runs in the UI is also exposed as an API endpoint. Anything that can be configured as part of a workflow can also be invoked directly from outside the workflow engine.
+  To start a workflow from outside the dashboard, run it by name through the API. See [Triggering workflows from external systems](/integrations/triggering-workflows).
 </Note>

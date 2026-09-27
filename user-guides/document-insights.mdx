@@ -29,7 +29,7 @@ Every extracted value arrives with:
     Stored in its declared type: text, a parsed number, an ISO date, or a boolean. Dates normalize to `YYYY-MM-DD`; numbers strip currency symbols and separators.
   </Card>
   <Card title="A verbatim source quote" icon="quote-left">
-    The exact span from the document that supports the value. Coverbase verifies the quote appears in the document before saving. A quote that cannot be located sends the model back to try again.
+    The exact span from the document that supports the value. Coverbase checks that the quote appears in the document. An answer whose quote cannot be located is kept, marked **Supporting evidence not verified** at low confidence, and waits for a reviewer to **Accept answer**.
   </Card>
   <Card title="A page citation" icon="file-lines">
     The 1-indexed page where the quote lives. If the model cites the printed page label instead of the physical page, Coverbase corrects it to the page the quote was found on.
@@ -47,10 +47,10 @@ Every extracted value arrives with:
 
 <AccordionGroup>
   <Accordion title="On the document itself" icon="file" defaultOpen>
-    Open any document and switch to the **Insights** tab. This is the full view: every insight configured for that document type, with values, confidence, source quotes, and page links. From here you can edit a value by hand, add a one-off insight, re-extract, or export the whole set to CSV.
+    Open any document and switch to the **Insights** tab. This is the full view: every insight configured for that document type, with values, confidence, source quotes, and page links. From here you can accept an unverified answer, re-extract, export the whole set to CSV, or **Add insight**: define one, preview what it extracts from this document, and save it for every document of this type.
   </Accordion>
   <Accordion title="On the contract record" icon="file-contract">
-    The **Overview** tab of a contract rolls up insights across every linked document, grouped by field. Insights with no extracted value are hidden here to cut noise. Open the individual document to see the blanks.
+    The **Extracted insights** card on a contract's **Documents** tab rolls up insights across every linked document, grouped by field. Insights with no extracted value are hidden here to cut noise. Open the individual document to see the blanks.
   </Accordion>
   <Accordion title="Inside the contract AI summary" icon="sparkles">
     Extracted insights are fed to the model that writes the contract summary and populates the contract risk profile. Better insights produce a better summary, so the two improve together.
@@ -83,7 +83,7 @@ Go to **Configuration → Document Insights**. You need the org-settings update 
     A group is a folder that shares document-type scope with everything inside it. Set **Data protection** to apply to DPAs and MSAs once, and every insight you drag into it inherits that scope. Without groups you set document types on every insight by hand and they drift apart.
   </Step>
   <Step title="Add the insight and name it for a human">
-    **Insight name** is what reviewers see in the UI and in exports. Use the term your team uses: *Liability cap*, *Governing law*, *Termination notice period*. The name is also the first thing the AI reads, so a vague name costs you accuracy.
+    **Name** is what reviewers see in the UI and in exports. Use the term your team uses: *Liability cap*, *Governing law*, *Termination notice period*. The name is also the first thing the AI reads, so a vague name costs you accuracy.
   </Step>
   <Step title="Write the description">
     This is the instruction. See [Writing descriptions that work](#writing-descriptions-that-work) below. It matters more than every other setting.
@@ -92,13 +92,13 @@ Go to **Configuration → Document Insights**. You need the org-settings update 
     **Text**, **Number**, **Date**, or **Yes/No**. The type controls how the value is stored, validated, sorted, and displayed. Choosing Number for a monetary field also unlocks the **Currency (USD)** display format.
   </Step>
   <Step title="Pick the mode">
-    **Extract** or **Synthesize**. The next section covers this choice.
+    **Extract** or **Synthesize**. **Synthesize** is only available for a **Text** insight; choosing any other type switches the mode back to **Extract**. The next section covers this choice.
   </Step>
   <Step title="Scope it to document types">
     Choose the document types this insight applies to, or inherit them from the group. **Leaving the list empty applies the insight to every document type**, which is rarely what you want: it means Coverbase will hunt for a liability cap inside a SOC 2 report.
   </Step>
-  <Step title="Test it on real documents before you roll it out">
-    Use **Test on documents** in the insight editor. It runs your definition against up to five of your most recent matching documents and shows the value, the quote, the page, and the confidence for each, without saving anything. Iterate on the description until it holds up, then save.
+  <Step title="Try it on a real document before you roll it out">
+    Open a representative document, go to its **Insights** tab and choose **Add insight**. Define the insight there and run the preview: it extracts from that one document and shows the value, the quote, the page and the confidence before anything is saved. Iterate on the description until it holds up, then save it, which scopes it to that document's type.
 
     That is cheaper than discovering an ambiguous description after backfilling three thousand documents.
   </Step>
@@ -111,36 +111,36 @@ Go to **Configuration → Document Insights**. You need the org-settings update 
 This is the setting people get wrong most often.
 
 <CardGroup cols={2}>
-  <Card title="Extract: copy what's printed" icon="pen-line">
-    The value already exists as literal text on the page. The model's only job is to find it and copy it exactly. Coverbase then verifies that both the value and its supporting quote appear in the document, word for word. Nothing is paraphrased, and nothing is invented. If it is not there, the insight comes back empty.
+  <Card title="Extract: a single, typed answer" icon="pen-line">
+    The model returns one concise answer in the insight's type: a name, a date, a number, or Yes/No. It prefers the document's own wording, and interprets or normalizes only as far as the type needs, so a Yes/No insight reads the clause and answers Yes or No. It must cite a verbatim quote from the document, and Coverbase checks that quote. If the document does not answer, the insight comes back empty.
   </Card>
-  <Card title="Synthesize: answer a question" icon="sparkles">
-    The answer requires reading and judgment: rolling up several clauses, translating legalese into a plain verdict, or deciding what language *means*. The model writes the answer in its own words, but it still has to cite a verbatim quote from the document to support it. If the document cannot answer the question, the value comes back empty.
+  <Card title="Synthesize: a written summary" icon="sparkles">
+    The model writes a short answer in its own words that combines or explains what the document says: rolling up several clauses, or turning legalese into a plain verdict. It still has to cite a verbatim quote from the document. Because the answer is prose, Synthesize is only available for **Text** insights. If the document cannot answer, the value comes back empty.
   </Card>
 </CardGroup>
 
-Both modes are grounded. What changes between them is **who composes the value**. In Extract mode the document composes it. In Synthesize mode the model composes it and the document has to back it up.
+Both modes are grounded. What changes between them is **the shape of the answer**: a single value you can sort and filter on, or a sentence a reviewer reads.
 
 ### The decision table
 
 | What you want | Mode | Why |
 | --- | --- | --- |
-| A date, party name, jurisdiction, or figure printed on the page | **Extract** | The exact string is what you want stored |
-| A defined term lifted from the contract (*"Delaware"*, *"30 days"*, *"$1,000,000"*) | **Extract** | Verbatim copying is the whole point |
-| A yes/no that depends on reading a clause | **Synthesize** | See the Yes/No trap below |
-| A rollup across several sections or documents | **Synthesize** | No single span contains the answer |
-| A plain-language verdict (*"Mutual, capped at 12 months' fees"*) | **Synthesize** | You want an interpretation, not a quote |
-| A number the contract implies but never prints | **Synthesize** | Extract can only return what is written |
-| Anything phrased differently by every counterparty | **Synthesize** | Interpretation is what normalizes it |
+| A date, party name, jurisdiction, or figure printed on the page | **Extract** | The exact value is what you want stored |
+| A defined term lifted from the contract (*"Delaware"*, *"30 days"*, *"$1,000,000"*) | **Extract** | Copying the document's wording is the whole point |
+| A yes/no that depends on reading a clause | **Extract** | A Yes/No insight reads the clause and answers Yes or No, with the clause quoted |
+| A number or date the contract implies but never prints | **Extract** | The answer is still one typed value; say in the description how to work it out |
+| A rollup across several sections or documents | **Synthesize** | No single value contains the answer |
+| A plain-language verdict (*"Mutual, capped at 12 months' fees"*) | **Synthesize** | You want an explanation, not a value |
+| The gist of a clause every counterparty words differently | **Synthesize** | A summary is what normalizes it |
 | Anything phrased identically on every document (your own paper, invoices, certificates) | **Extract** | Highest precision, no interpretation drift |
 
-### The Yes/No trap
+### Yes/No insights
 
 <Warning>
-  A **Yes/No** insight in **Extract** mode only succeeds if the document literally contains the word "Yes", "No", "True", or "False". Contracts almost never do. Set every Yes/No insight to **Synthesize** unless you are reading a checkbox-style form or a completed questionnaire.
+  A **Yes/No** insight is always **Extract**, because Synthesize only takes Text. That works: Extract answers Yes or No even though neither word appears in the contract, and quotes the clause it relied on. Insights created earlier as Yes/No with Synthesize now run as Extract, so they need no change.
 </Warning>
 
-This is the most common misconfiguration. "Do we have audit rights?" in Extract mode will return empty on a contract that plainly grants audit rights, because the phrase *"Yes"* does not appear in Section 8.3. The same insight in Synthesize mode reads Section 8.3, answers **Yes**, and cites the clause.
+Write a Yes/No description as the question, and say what counts as Yes. "Do we have audit rights?" reads Section 8.3, answers **Yes**, and cites the clause. Where the answer turns on nuance (notice periods, conditions), the quote carries the nuance and the value stays filterable.
 
 ### The same question, both ways
 
@@ -148,38 +148,38 @@ Take one requirement (*do we have the right to run a penetration test?*) and see
 
 <Tabs>
   <Tab title="Extract">
-    **Name:** Penetration testing clause
-    **Type:** Text · **Mode:** Extract
-
-    **Description:** The verbatim sentence granting or restricting the customer's right to conduct penetration testing or security testing of the vendor's systems.
-
-    **Result:** `"Customer may, no more than once per twelve (12) month period and upon thirty (30) days' prior written notice, conduct penetration testing of the Services."` on page 14, confidence high.
-
-    Good when a lawyer needs the exact operative language for a redline. Useless for filtering, because every vendor words it differently.
-  </Tab>
-  <Tab title="Synthesize">
     **Name:** Pen test rights granted
-    **Type:** Yes/No · **Mode:** Synthesize
+    **Type:** Yes/No · **Mode:** Extract
 
     **Description:** Does the customer have a contractual right to perform penetration testing or security testing against the vendor's production environment? Answer Yes only if testing is affirmatively permitted, including where it requires notice or scheduling. Answer No if testing is prohibited, or if the contract only offers third-party test summaries in place of customer testing.
 
-    **Result:** `Yes`, quoting the same sentence on page 14, confidence high.
+    **Result:** `Yes`, quoting *"Customer may, no more than once per twelve (12) month period and upon thirty (30) days' prior written notice, conduct penetration testing of the Services."* on page 14, confidence high.
 
     Good when you want to sort your portfolio by which vendors you can test. The nuance about notice periods lives in the quote; the filterable answer lives in the value.
+  </Tab>
+  <Tab title="Synthesize">
+    **Name:** Penetration testing terms
+    **Type:** Text · **Mode:** Synthesize
+
+    **Description:** Summarize the customer's right to penetration-test the vendor's systems: whether it is permitted, how often, and on what notice. Answer "None stated" if the contract is silent.
+
+    **Result:** `Permitted once every twelve months on 30 days' written notice`, quoting the same sentence on page 14, confidence high.
+
+    Good when a reviewer wants the terms in one line. Useless for filtering, because every vendor's terms read differently.
   </Tab>
 </Tabs>
 
 <Tip>
-  Many teams run **both**: a Synthesize field for the dashboard and a companion Extract field holding the operative language. They cost one extra pass each and answer two different jobs.
+  Many teams run **both**: a Yes/No Extract field for the dashboard and a companion Synthesize field summarizing the terms. They cost one extra pass each and answer two different jobs.
 </Tip>
 
 ### Quick rules
 
-- If you could highlight the answer with a marker and be done, use **Extract**.
-- If you would have to read a paragraph and then say a sentence back, use **Synthesize**.
-- Every Yes/No is **Synthesize**.
-- A Number or Date that appears verbatim is **Extract**; one you would have to calculate is **Synthesize**.
-- When you cannot decide, start with **Synthesize**. You get an answer with a quote attached, and you can tighten to Extract later once you have seen how the language reads.
+- If you want one value you could sort or filter on (a date, a number, a name, Yes or No), use **Extract**.
+- If you would have to read a paragraph and then say a sentence back, use **Synthesize** on a Text insight.
+- Every Yes/No, Number and Date insight is **Extract**. Synthesize takes Text only.
+- A Number or Date you would have to work out is still **Extract**; put the working in the description.
+- When you cannot decide on a Text insight, start with **Synthesize**. You get an answer with a quote attached, and you can tighten to Extract later once you have seen how the language reads.
 
 <Note>
   Mixing modes across your insight set is normal and costs nothing. Coverbase groups insights by mode and runs each group as its own pass over the document.
@@ -243,7 +243,7 @@ Scope to MSA, order form, SOW, terms of service, software license agreement.
 | --- | --- | --- | --- |
 | Counterparty legal name | Text | Extract | The full legal entity name of the vendor as written in the preamble, including the corporate suffix (Inc., LLC, Ltd., GmbH). Not the trading or brand name. |
 | Effective date | Date | Extract | The date the agreement becomes effective, as stated in the preamble or signature block. If both an execution date and an effective date appear, return the effective date. |
-| Initial term end date | Date | Synthesize | The date the initial term ends. If the contract states a duration rather than an end date, calculate it from the effective date and return the resulting date. |
+| Initial term end date | Date | Extract | The date the initial term ends. If the contract states a duration rather than an end date, calculate it from the effective date and return the resulting date. |
 | Governing law | Text | Extract | The jurisdiction whose laws govern the agreement, from the Governing Law or Applicable Law clause. Return the jurisdiction only (e.g. "Delaware", "England and Wales"), not the venue or arbitration seat. |
 | Total contract value | Number | Extract | The total contract value or annual subscription fee as printed on the order form or fee schedule. Return the figure only. Display as currency. |
 | Payment terms | Text | Extract | The payment window stated in the Payment or Fees clause, e.g. "Net 30", "Net 45", "due upon receipt". |
@@ -254,10 +254,10 @@ Scope to MSA, order form, terms of service.
 
 | Insight | Type | Mode | Description to start from |
 | --- | --- | --- | --- |
-| Auto-renews | Yes/No | Synthesize | Does the agreement renew automatically at the end of the term absent notice? Answer Yes for evergreen or automatic renewal, No where renewal requires an affirmative written order or signature. |
-| Termination notice period (days) | Number | Synthesize | The number of days' advance written notice the customer must give to terminate or prevent renewal. Convert months to days (one month = 30 days). If notice periods differ for convenience and for cause, return the notice period for termination for convenience. |
-| Termination for convenience | Yes/No | Synthesize | May the customer terminate without cause? Answer Yes only where termination for convenience is available to the customer, and No where termination requires cause, breach, or vendor consent. |
-| Data return and deletion | Yes/No | Synthesize | Does the agreement obligate the vendor to return or delete customer data on termination? Answer Yes only where return or deletion is an obligation, not merely available on request at the customer's cost. |
+| Auto-renews | Yes/No | Extract | Does the agreement renew automatically at the end of the term absent notice? Answer Yes for evergreen or automatic renewal, No where renewal requires an affirmative written order or signature. |
+| Termination notice period (days) | Number | Extract | The number of days' advance written notice the customer must give to terminate or prevent renewal. Convert months to days (one month = 30 days). If notice periods differ for convenience and for cause, return the notice period for termination for convenience. |
+| Termination for convenience | Yes/No | Extract | May the customer terminate without cause? Answer Yes only where termination for convenience is available to the customer, and No where termination requires cause, breach, or vendor consent. |
+| Data return and deletion | Yes/No | Extract | Does the agreement obligate the vendor to return or delete customer data on termination? Answer Yes only where return or deletion is an obligation, not merely available on request at the customer's cost. |
 | Exit assistance | Text | Synthesize | Summarize any transition, migration, or exit-assistance obligations the vendor owes at the end of the term, including duration and whether they carry additional fees. Answer "None stated" if the contract is silent. |
 
 ### Group: Risk and liability
@@ -268,8 +268,8 @@ Scope to MSA, DPA, security addendum.
 | --- | --- | --- | --- |
 | Vendor liability cap | Text | Synthesize | The maximum aggregate amount the vendor can be liable for. If expressed as a multiple of fees, state the multiple and the lookback window. Answer "Uncapped" where the vendor's liability is not limited. Ignore any super-cap applying only to indemnification carve-outs. |
 | Liability cap carve-outs | Text | Synthesize | Which categories of claim sit outside the liability cap? List them (e.g. confidentiality breach, data breach, IP indemnity, gross negligence, willful misconduct). Answer "None" where the cap applies to all claims. |
-| Mutual indemnification | Yes/No | Synthesize | Do both parties owe indemnification obligations to each other? Answer No where only the customer indemnifies the vendor, or only the vendor indemnifies the customer. |
-| Cyber insurance required | Yes/No | Synthesize | Does the agreement require the vendor to carry cyber liability or technology errors-and-omissions insurance? Answer Yes only where it is a stated obligation with or without a coverage amount. |
+| Mutual indemnification | Yes/No | Extract | Do both parties owe indemnification obligations to each other? Answer No where only the customer indemnifies the vendor, or only the vendor indemnifies the customer. |
+| Cyber insurance required | Yes/No | Extract | Does the agreement require the vendor to carry cyber liability or technology errors-and-omissions insurance? Answer Yes only where it is a stated obligation with or without a coverage amount. |
 | Cyber insurance limit | Number | Extract | The per-occurrence or aggregate coverage limit stated for cyber liability or technology E&O insurance in the Insurance clause. Return the figure only. Display as currency. |
 
 ### Group: Data protection and security
@@ -278,9 +278,9 @@ Scope to DPA, MSA, security addendum, SCC.
 
 | Insight | Type | Mode | Description to start from |
 | --- | --- | --- | --- |
-| Breach notification window (hours) | Number | Synthesize | How many hours does the vendor have to notify the customer of a security incident or personal data breach? Convert days to hours. If the contract says only "without undue delay" with no fixed period, leave empty. |
-| Subprocessor change notice | Yes/No | Synthesize | Must the vendor give advance notice before engaging a new subprocessor? Answer Yes where notice is required, whether or not the customer can object. |
-| Audit rights | Yes/No | Synthesize | May the customer audit the vendor's security controls, whether directly or through an independent auditor? Answer No where the vendor offers only its own SOC 2 or ISO certificate in place of an audit right. |
+| Breach notification window (hours) | Number | Extract | How many hours does the vendor have to notify the customer of a security incident or personal data breach? Convert days to hours. If the contract says only "without undue delay" with no fixed period, leave empty. |
+| Subprocessor change notice | Yes/No | Extract | Must the vendor give advance notice before engaging a new subprocessor? Answer Yes where notice is required, whether or not the customer can object. |
+| Audit rights | Yes/No | Extract | May the customer audit the vendor's security controls, whether directly or through an independent auditor? Answer No where the vendor offers only its own SOC 2 or ISO certificate in place of an audit right. |
 | Data residency commitment | Text | Synthesize | Where does the vendor commit to store and process customer data? Return the countries or regions named. Answer "None stated" where the contract makes no residency commitment. |
 | Data protection framework | Text | Extract | The transfer mechanism named in the agreement, e.g. "Standard Contractual Clauses", "EU-US Data Privacy Framework", "UK Addendum". |
 
@@ -292,12 +292,12 @@ Scope to SLA, MSA, AI addendum.
 | --- | --- | --- | --- |
 | Uptime commitment | Number | Extract | The committed availability percentage from the service level agreement, e.g. 99.9. Return the number only, without the percent sign. |
 | Service credit cap | Text | Synthesize | The maximum service credits available for missed service levels, usually expressed as a percentage of fees for the affected period. Answer "None stated" where the contract commits to service levels without credits. |
-| Customer data used for model training | Yes/No | Synthesize | Does the agreement permit the vendor to use customer data or customer content to train, fine-tune, or improve its AI or machine learning models? Answer Yes where permitted by default, No where prohibited or opt-in only. Leave empty where the contract is silent on AI. |
+| Customer data used for model training | Yes/No | Extract | Does the agreement permit the vendor to use customer data or customer content to train, fine-tune, or improve its AI or machine learning models? Answer Yes where permitted by default, No where prohibited or opt-in only. Leave empty where the contract is silent on AI. |
 | AI output ownership | Text | Synthesize | Who owns the outputs generated by any AI features? Return the owning party and any conditions. Answer "None stated" where the contract does not address AI outputs. |
-| Human review of AI decisions | Yes/No | Synthesize | Does the agreement commit the vendor to human oversight or review of automated decisions affecting the customer? |
+| Human review of AI decisions | Yes/No | Extract | Does the agreement commit the vendor to human oversight or review of automated decisions affecting the customer? |
 
 <Note>
-  In this library, **Extract** appears where the contract prints a value (dates, jurisdictions, figures, named frameworks), and **Synthesize** where the answer is a judgment or a normalization. That ratio, roughly one Extract for every two Synthesize, is typical of a mature contract insight set.
+  In this library, **Extract** appears wherever the answer is a single value (dates, jurisdictions, figures, named frameworks, Yes/No), and **Synthesize** where the answer is a written judgment. Every Synthesize row is a Text insight, because that is the only type Synthesize takes.
 </Note>
 
 ---
@@ -320,9 +320,9 @@ Writing an insight is the easy half. Knowing whether it worked across your whole
   </Accordion>
 
   <Accordion title="Extractions: is this specific value right?" icon="magnifying-glass">
-    Every extraction in the org, filterable by insight, document type, confidence, whether the evidence was verified, and whether the value was AI-extracted or hand-corrected.
+    Every extraction in the org, filterable by insight, confidence, whether the quote was grounded, review state, and whether the value came from AI or was set manually.
 
-    Filter to low confidence and unverified evidence and you have a review queue. Click any row to open that document with the Insights tab already scrolled to the value in question, so you never leave the list to check a value.
+    Filter to **Needs review**, or to low confidence and **Not grounded**, and you have a review queue. Click any row to open that document with the Insights tab already scrolled to the value in question, so you never leave the list to check a value.
   </Accordion>
 </AccordionGroup>
 
@@ -332,7 +332,7 @@ A missing value means one of two opposite things:
 
 | What you see | What it means | What to do |
 | --- | --- | --- |
-| **Attempted, empty** | Extraction ran and found nothing | Read the values on the Extractions tab. Usually the description is ambiguous, or the mode is wrong, or the clause is not in the vendor's paper |
+| **Attempted, no value** | Extraction ran and found nothing | Read the values on the Extractions tab. Usually the description is ambiguous, or the mode is wrong, or the clause is not in the vendor's paper |
 | **Stale** (amber badge) | The insight was created after the document was last processed, so it has never run against it | Backfill. The badge is the button |
 
 <Tip>
@@ -350,7 +350,7 @@ A backfill re-extracts documents you already hold, so a new or reworded insight 
     Pick the insights, and optionally narrow by document type or vendor. Starting from a stale badge in the coverage matrix pre-fills the scope for you.
   </Step>
   <Step title="Choose what to re-run">
-    **Never attempted** (the default) only touches documents the insight has never run against. **Missing only** also re-runs documents that were attempted and came back empty; use this after rewording a description. **All** re-runs everything, replacing existing AI values.
+    **Only never attempted** (the default) only touches documents the insight has never run against. **Missing values** also re-runs documents that were attempted and came back empty; use this after rewording a description. **Every eligible document** re-runs everything, replacing existing AI values.
   </Step>
   <Step title="Read the estimate">
     Before you confirm, Coverbase tells you how many documents it will process and roughly how many model calls that costs. Extraction batches every matching insight into one pass per document, so adding insights to a backfill is close to free. Adding documents is what costs.
@@ -361,7 +361,7 @@ A backfill re-extracts documents you already hold, so a new or reworded insight 
 </Steps>
 
 <Note>
-  A backfill never overwrites a value someone corrected by hand, in any mode.
+  A backfill never overwrites a value someone set by hand, in any mode. A value someone cleared by hand is left alone too, unless you tick **Re-extract these too, replacing what was cleared** when the dialog offers it.
 </Note>
 
 <Warning>
@@ -381,7 +381,7 @@ Three actions, easy to confuse:
 | **Delete** | Permanently removes the definition **and every value ever extracted for it**, including hand corrections | **No** |
 
 <Warning>
-  Delete is not the safe default. It is only available on an already-archived insight, and it makes you confirm the exact number of extracted values it will destroy. Archive is almost always what you want.
+  Delete is not the safe default. It is only available on an already-archived insight, it tells you exactly how many extracted values it will destroy, and it makes you type the insight's name to confirm. Archive is almost always what you want.
 </Warning>
 
 ---
@@ -392,18 +392,18 @@ An insight lives on a document. Your team works from vendor, contract, and asses
 
 <Steps>
   <Step title="Open the insight and choose Promote to custom field">
-    Link an existing custom field of a compatible type, or create one from the insight's name and type.
+    **Link an existing field** of a compatible type, or **Create a new field** from the insight's name and type.
 
-    Text fills Text, Number fills Number, Date fills Date, Yes/No fills Yes/No. Select and multi-select are not supported yet.
+    Text fills Text, Number fills Number, Date fills Date, Yes/No fills True/False. Select and multi-select are not supported yet.
   </Step>
   <Step title="Set the gates">
-    **Require verified evidence** (on by default) skips answers whose quote could not be located in the source. **Minimum confidence** skips anything below the bar. Together these decide how conservative the promotion is.
+    **Require a grounded quote** (on by default) skips answers whose quote could not be located in the source. **Minimum confidence** skips anything below the bar. Together these decide how conservative the promotion is.
   </Step>
   <Step title="Choose what happens when the field already has a value">
     **Never overwrite** only ever fills an empty field. **Fill if empty** also refreshes a value this same insight wrote before. **Latest document wins** additionally replaces values written from older documents, which is the right choice for a vendor-level field fed by many documents.
   </Step>
   <Step title="Backfill the field">
-    Leave the backfill box checked and Coverbase populates the field across every document you already hold.
+    Leave **Backfill existing values** checked and Coverbase populates the field across every document you already hold.
   </Step>
 </Steps>
 
@@ -419,24 +419,24 @@ An insight lives on a document. Your team works from vendor, contract, and asses
 
 ## Sharing a library between orgs
 
-**Export** on the Document Insights module produces a JSON file of your definitions: names, descriptions, types, modes, and document-type scope. No values, no ids.
+Insight definitions can be exported as a JSON file (names, descriptions, types, modes, and document-type scope, with no values and no ids) and imported into another org. This runs through the Coverbase API rather than a button in the dashboard.
 
-**Import** replays that file into another org, matching on the insight's stable key. Existing definitions are skipped unless you explicitly opt into overwriting them, so reimporting a shared library never silently reverts local prompt tuning.
+An import matches on the insight's stable key. Existing definitions are skipped unless the import explicitly opts into overwriting them, so reimporting a shared library never silently reverts local prompt tuning.
 
-This is also the easiest way to review an insight library in a pull request.
+The **Export** on a single insight's page is different: it downloads that insight's extractions as a workbook (document, vendor, value, confidence, grounding, page and quote).
 
 ---
 
 ## Reviewing and correcting values
 
-The AI drafts; you decide. Every value is editable, and your edit sticks.
+The AI drafts; a reviewer checks the evidence before anyone relies on it.
 
 <AccordionGroup>
   <Accordion title="Check the quote before you trust the value" icon="quote-left" defaultOpen>
-    Use **Show details** on any insight to see the source quote, page number, confidence, and the model's reasoning. Scan low-confidence values first; they are flagged because the model was not sure.
+    Expand any insight on the document's **Insights** tab to see the source quote, page number, confidence, and the model's reasoning. Scan low-confidence values first; they are flagged because the model was not sure.
   </Accordion>
-  <Accordion title="Correct a value by hand" icon="pen">
-    Edit the value directly on the Insights tab. The record switches from AI-extracted to manual and records who changed it. Manual values survive re-extraction of other fields, and the source type shows up in the CSV export so you can see how much hand-correcting a document needed.
+  <Accordion title="Accept an answer whose evidence was not verified" icon="pen">
+    When the quote could not be located in the document, the insight reads **Supporting evidence not verified**. Check the answer against the document, then choose **Accept answer** to record that a reviewer accepted it; the evidence stays marked as unverified. The dashboard does not edit a value in place, so to change a wrong one, tighten the description and re-extract. A value set through the API is recorded as manual, is never overwritten by re-extraction or a backfill, and shows as manual in the CSV export.
   </Accordion>
   <Accordion title="Re-extract after you change a definition" icon="arrows-rotate">
     Changing a description does not retroactively update values that were already extracted. Use **Refresh all** on a document, or re-extract a single insight from its row, once you have reworded it.
@@ -455,12 +455,12 @@ The AI drafts; you decide. Every value is editable, and your edit sticks.
     Almost always one of four things:
 
     1. **It never ran on that document.** If the insight was created after the document was processed, it has never been attempted there. Check the coverage matrix: a *stale* badge means backfill, not a broken definition.
-    2. **Wrong mode.** A Yes/No or an interpreted value set to Extract will return empty rather than guess. Switch to Synthesize.
+    2. **A type that does not fit the question.** A Number or Date insight only stores a value that parses as one, and a Yes/No needs a question with a yes-or-no answer. Match the type to the question, or use a Text insight.
     3. **Wrong document-type scope.** If the insight is not scoped to the type that document was classified as, it never ran. Check the document's type on its detail panel, and check the insight's document types (or its group's).
     4. **The description names the wrong thing.** The model looked for what you described and did not find it. Add the aliases the clause hides under.
   </Accordion>
   <Accordion title="A Yes/No insight keeps failing" icon="toggle-off">
-    Set it to **Synthesize**. In Extract mode a boolean can only be populated from literal "Yes"/"No"/"True"/"False" text in the document, which contracts do not contain.
+    Yes/No insights always run as **Extract**, which reads the clause and answers Yes or No. Write the description as the question and say what counts as Yes. If it still comes back empty, the clause is usually missing from the document or the insight is not scoped to that document type.
   </Accordion>
   <Accordion title="The value is right but the page number looks wrong" icon="file-lines">
     Coverbase cites the *physical* page of the PDF, which often differs from the printed page label on long agreements with front matter or per-exhibit numbering. If the quote is correct, the citation is pointing at the right place.
@@ -469,7 +469,7 @@ The AI drafts; you decide. Every value is editable, and your edit sticks.
     A Number insight only stores a numeric value when the extracted text parses as one. Currency symbols and thousands separators are stripped automatically; ranges, footnotes, and unit suffixes are not. Tighten the description to ask for the figure alone.
   </Accordion>
   <Accordion title="Nothing extracts on a scanned or image-only PDF" icon="image">
-    Extraction is grounded against the document's text layer. A pure image scan with no recoverable text has nothing to ground against, so insights return empty. Re-upload a text-based version of the document.
+    Extraction is grounded against the document's text layer. When a file's pages are images, the document's **Insights** tab says **This file has no text to read**; choose **Run again** and the re-run reads the pages with character recognition. If that still finds nothing, re-upload a text-based version of the document.
   </Accordion>
   <Accordion title="The insight is right for one document type and noisy on another" icon="filter">
     Scope it. An insight with an empty document-type list runs against every document in your library, including SOC 2s and policies. Put it in a group with the correct scope and enable inheritance.

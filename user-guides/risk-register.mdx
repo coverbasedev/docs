@@ -130,7 +130,7 @@ The header carries **Simulate** (opens the Simulate tab with this statement as t
 - **Attach signal** opens evidence the agent found in other modules but did not attach. Attaching keeps a reference, never a copy. **Suggest more** asks the agent to look again.
 - The **x** on a signal dismisses it. The source record is untouched.
 
-**History** is the append-only journal: created, proposed, accepted, re-scored, owner changed, status changed, signal attached or closed, merged, edited, scale remapped, closed, reopened. Each row names the person or the agent and shows the scores after the change.
+**History** is the append-only journal: created, proposed, accepted, dismissed, re-scored, owner, status or treatment changed, signal attached, closed or dismissed, merged, edited, scale remapped, closed, reopened. Each row names the person or the agent and shows the scores after the change.
 
 ## Signal sources and thresholds
 
@@ -145,7 +145,7 @@ A signal is attached only when its source is enabled under **Configuration → R
 | **Contract component gaps** | A DPA, SLA, security addendum, SCC, subprocessor list or AI addendum slot is missing or expired on an active contract | The slot is present or not required |
 | **Obligations** | Not satisfied past its due date, or pending acknowledgement older than **Days** (14) | Satisfied or archived |
 | **Screening** | An unresolved or confirmed sanctions, PEP or adverse media match | Reviewed as not a match |
-| **Radar signals** and **Radar alerts** | At or above **Min severity** (High). An alert counts once a reassessment has cited it | Resolved, dismissed or archived |
+| **Radar signals** and **Radar alerts** | At or above **Min severity** (any severity for signals, High for alerts). An alert counts once a reassessment has cited it | Resolved, dismissed or archived |
 | **Vendor risk changes** | A vendor score rose within the last 30 days | The change is older than 30 days |
 | **Inspect** | An evaluation marked as an issue in the latest run | No longer an issue |
 | **Assessments** (off by default) | An SLA breach, or a domain residual above the domain's appetite | Neither holds |
@@ -191,8 +191,8 @@ Each card shows the agent's confidence, its rationale under **Why**, and the sig
 
 ## Chain
 
-<Frame caption="The Chain tab following Operations. Business units on the left, services, vendors, fourth parties and regions to the right. Red nodes are single points of failure.">
-  <img src="/images/user-guides/risk-register-chain.png" alt="Dependency chain graph with columns for business units, services, vendors, fourth parties and regions" />
+<Frame caption="The Chain tab following Data. Business units on the left, then services, vendors and fourth parties. Red nodes are single points of failure.">
+  <img src="/images/user-guides/risk-register-chain.png" alt="Dependency chain graph with columns for business units, services, vendors and fourth parties" />
 </Frame>
 
 The chain is rebuilt nightly from business unit dependencies, services, active contracts, each vendor's fourth parties (subprocessor lists where there is no entity), supplier sites and vendor risk profiles. The header names the snapshot and its date, so a scenario always says which chain it ran on.
@@ -273,7 +273,7 @@ Open **Configuration → Risk**, or click **Configuration** on the Risk page. Ea
 | **Board Pack Schedule** | The scheduled send: cadence, day of month, institution, recipients |
 
 <Warning>
-  Editing a scale re-maps existing risks by level **name**; it never re-scores them. A label you move from level 2 to level 3 takes its risks with it, and a name you remove leaves its risks at their number. Each moved risk gets a **Scale remapped** row in its history.
+  Editing a scale re-maps existing risks by level **name**; it never re-scores them. A label you move from level 2 to level 3 takes its risks with it, and a name you remove leaves its risks at their number. Each moved risk gets a history row recording the remap.
 </Warning>
 
 <Frame caption="Signal Sources in configuration. One switch and threshold per source module.">
@@ -284,7 +284,7 @@ The 5x5 here is not the vendor risk scale. Vendor and service scores (0 to 100, 
 
 ## How the other modules connect
 
-Vendor, service, contract and finding pages each carry a **Risks** card listing the register entries scoped to that record, with their residual score and appetite state, **Add risk**, and **View in register**, which opens the register filtered to that record ("Scoped to this vendor"). Proposed risks show as **Proposed by agent** on the card.
+Vendor, service, contract and finding pages each carry a **Risks** card listing the register entries scoped to that record, with their residual score and appetite state, **Add risk**, and **View in register**, which opens the register filtered to that record ("Scoped to this vendor"). Proposed risks show as **Proposed by agent** on the card. An intake request for a vendor you already hold shows the same card, as **Open risks on this vendor**, beside the intake questionnaire until the request is submitted.
 
 The reverse direction is the signal table above: [findings](/products/findings-manager) and their commitments, [Radar](/products/supplier-radar) signals and alerts, [contract components](/user-guides/contract-components) and clause reviews, obligations, [sanctions screening](/user-guides/sanctions-screening), the [financial health score](/user-guides/financial-health-score), [supplier sites](/user-guides/supplier-information), Inspect evaluations and assessments all reach the register as signals on the risks that cover them. Charts on your dashboards can slice the register by domain, status, appetite, owner and institution. Workflow automations have **Create risk** and **Update risk** actions (see [Workflow templates](/user-guides/workflow-templates)).
 
@@ -327,14 +327,14 @@ Each email carries a button that opens the risk. Delivery settings are covered i
 | **Estimate withheld** on a scenario. | An input the estimate needs is not on record. The **Improve it** line names it (usually a liability cap or ACV on the contract, or a business unit's revenue). |
 | The chain shows **Showing 40 of 180 nodes**. | Each column caps at 18 rows. Use **Depth**, **Data scope** or **Business unit** to narrow, or **Show all** on a column. |
 | **Run agent now** did nothing visible. | The toast reports what it did: signals attached, proposed, re-scored, flagged stale. Zero across the board means no source cleared its threshold since the last run. |
-| I renamed a scale level and the scores changed. | They did not; the risks followed their level **name** to its new number. Check the **Scale remapped** rows in the history. |
+| I renamed a scale level and the scores changed. | They did not; the risks followed their level **name** to its new number. Check the remap rows in each risk's history. |
 | I cannot see **Risk** at all. | The module is not enabled for your organization. Ask your Coverbase representative. |
 
 ## Related
 
 <CardGroup cols={2}>
   <Card title="Risk geography map" icon="map-location-dot" href="/user-guides/risk-geography-map">
-    The Geography tab: supplier density, country marks and the vendor filters.
+    The Geography tab: supplier sites, country counts and the vendor filters.
   </Card>
   <Card title="Admin and setup guide" icon="gear" href="/user-guides/admin-setup">
     Vendor risk scales, service roll-up and the rest of the organization setup.

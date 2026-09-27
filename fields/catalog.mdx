@@ -16,7 +16,7 @@ the columns and what the operators mean.
 
 The **Vendors** list and every vendor record header.
 
-**36 fields**, queryable at `POST /v1/vendor/query`, available in saved views, usable as the `vendor` target in workflow conditions, extendable with custom fields.
+**48 fields**, queryable at `POST /v1/vendor/query`, available in saved views, usable as the `vendor` target in workflow conditions, extendable with custom fields.
 
 Default sort: `name` asc.
 
@@ -24,6 +24,7 @@ Default sort: `name` asc.
 | --- | --- | --- | --- | --- | --- | --- |
 | Created Date | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
 | Next Assessment Date | Dates | `next_assessment_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Last Assessed | Dates | `last_assessed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
 | Document Types | Documents | `documents.document_type` | Choice | Document types in your workspace | any of, none of, all of, not all of | No |
 | Document Count | Documents | `documents.count` | Number | - | at least, at most, is, is not | Yes |
 | Uploaded Date | Documents | `documents.created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
@@ -38,15 +39,25 @@ Default sort: `name` asc.
 | Contract Created Date | Contracts | `contracts.created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Contract Updated Date | Contracts | `contracts.updated_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Contract Count | Contracts | `contracts.count` | Number | - | at least, at most, is, is not | No |
-| Assessment Count | - | `assessments.count` | Number | - | at least, at most, is, is not | Yes |
-| Assessment Outcome | - | `last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of | No |
+| Assessment Count | Assessments | `assessments.count` | Number | - | at least, at most, is, is not | Yes |
+| Assessment Status | Assessments | `assessments.status_id` | Reference | Assessment statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Assessment Outcome | Assessments | `assessments.approval_option_id` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Assessment Assignee | Assessments | `assessments.assignee_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Assessment Risk Type | Assessments | `assessments.risk_type` | Choice | `inherent_risk`, `residual_risk`, `untargeted` | is, is not, any of, none of | No |
+| Assessment Portal State | Assessments | `assessments.portal_state` | Choice | `open`, `submitted`, `closed`, `overdue` | is, is not, any of, none of, empty, not empty | No |
+| Assessment Inherent Risk | Assessments | `assessments.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Assessment Zero Touch | Assessments | `assessments.is_zero_touch` | Yes/No | - | is, is not | No |
+| Assessment Has Open Issue | Assessments | `assessments.has_open_issue` | Yes/No | - | is, is not | No |
+| Assessment Created Date | Assessments | `assessments.created_at` | Date | - | after, before, on or after, on or before, between | No |
+| Assessment Completed Date | Assessments | `assessments.completed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
+| Assessment Outcome | - | `last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Inherent Risk Level | - | `inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Inherent Risk Score | - | `raw_irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
-| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
-| Relationship Owners | - | `relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | Yes |
+| Vendor Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Relationship Owners | - | `relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | Yes |
 | Residual Risk Level | - | `residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Residual Risk Score | - | `raw_residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
-| Risk Analysts | - | `risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | Yes |
+| Risk Analysts | - | `risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | Yes |
 | Risk Domain Inherent Risk Level | - | `risk_domain_scores.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Risk Domain Inherent Risk Score | - | `risk_domain_scores.inherent_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Risk Domain Residual Risk Level | - | `risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
@@ -54,23 +65,24 @@ Default sort: `name` asc.
 | Risk Domains | - | `risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Status | - | `status_id` | Reference | Vendor statuses in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Archived | - | `is_archived` | Yes/No | - | is, is not | No |
-| Tags | - | `tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of | No |
+| Tags | - | `tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor | - | `id` | Reference | Vendors in your workspace | is, is not, any of, none of | No |
-| Watchers | - | `watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | Yes |
+| Watchers | - | `watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | Yes |
 | Website | - | `website` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
+| Tier | - | `tier` | Choice | `tier_1`, `tier_2`, `tier_3`, `tier_4` | is, is not, any of, none of, empty, not empty | No |
 
 ## Services
 
-The **Services** tab on a vendor, and service records.
+The **Services** view on the **Vendors** page, and service records.
 
-**46 fields**, queryable at `POST /v1/service/query`, available in saved views, usable as the `service` target in workflow conditions, extendable with custom fields.
+**60 fields**, queryable at `POST /v1/service/query`, available in saved views, usable as the `service` target in workflow conditions, extendable with custom fields.
 
 Default sort: `name` asc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
-| Contracts | Contracts | `contracts` | Multi-reference | - | any of, none of, all of, not all of | No |
+| Service Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Contracts | Contracts | `contracts` | Multi-reference | - | any of, none of, all of, not all of, empty, not empty | No |
 | Contract Count | Contracts | `contracts.count` | Number | - | at least, at most, is, is not | No |
 | Next Assessment Date | Dates | `next_assessment_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | Created Date | Dates | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
@@ -79,33 +91,46 @@ Default sort: `name` asc.
 | Vendor Document Types | Vendor › Documents | `vendor.documents.document_type` | Choice | Document types in your workspace | any of, none of, all of, not all of | No |
 | Vendor Document Count | Vendor › Documents | `vendor.documents.count` | Number | - | at least, at most, is, is not | No |
 | Vendor Next Assessment Date | Vendor › Dates | `vendor.next_assessment_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Vendor Last Assessed | Vendor › Dates | `vendor.last_assessed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
 | Vendor Uploaded Date | Vendor › Documents | `vendor.documents.created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
-| Vendor | Vendor | `vendor.id` | Reference | Vendors in your workspace | is, is not, any of, none of | No |
-| Vendor Assessment Count | Vendor | `vendor.assessments.count` | Number | - | at least, at most, is, is not | No |
-| Vendor Assessment Outcome | Vendor | `vendor.last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of | No |
+| Vendor | - | `vendor.id` | Reference | Vendors in your workspace | is, is not, any of, none of | No |
+| Vendor Assessment Count | Vendor › Assessments | `vendor.assessments.count` | Number | - | at least, at most, is, is not | No |
+| Vendor Assessment Status | Vendor › Assessments | `vendor.assessments.status_id` | Reference | Assessment statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Assessment Outcome | Vendor › Assessments | `vendor.assessments.approval_option_id` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Assessment Assignee | Vendor › Assessments | `vendor.assessments.assignee_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Assessment Risk Type | Vendor › Assessments | `vendor.assessments.risk_type` | Choice | `inherent_risk`, `residual_risk`, `untargeted` | is, is not, any of, none of | No |
+| Vendor Assessment Portal State | Vendor › Assessments | `vendor.assessments.portal_state` | Choice | `open`, `submitted`, `closed`, `overdue` | is, is not, any of, none of, empty, not empty | No |
+| Vendor Assessment Inherent Risk | Vendor › Assessments | `vendor.assessments.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Assessment Zero Touch | Vendor › Assessments | `vendor.assessments.is_zero_touch` | Yes/No | - | is, is not | No |
+| Vendor Assessment Has Open Issue | Vendor › Assessments | `vendor.assessments.has_open_issue` | Yes/No | - | is, is not | No |
+| Vendor Assessment Created Date | Vendor › Assessments | `vendor.assessments.created_at` | Date | - | after, before, on or after, on or before, between | No |
+| Vendor Assessment Completed Date | Vendor › Assessments | `vendor.assessments.completed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
+| Vendor Assessment Outcome | Vendor | `vendor.last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Inherent Risk Level | Vendor | `vendor.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Inherent Risk Score | Vendor | `vendor.raw_irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Name | Vendor | `vendor.name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
-| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Residual Risk Level | Vendor | `vendor.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Residual Risk Score | Vendor | `vendor.raw_residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
-| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Risk Domain Inherent Risk Level | Vendor | `vendor.risk_domain_scores.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Risk Domain Inherent Risk Score | Vendor | `vendor.risk_domain_scores.inherent_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Level | Vendor | `vendor.risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Score | Vendor | `vendor.risk_domain_scores.residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Risk Domains | Vendor | `vendor.risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Status | Vendor | `vendor.status_id` | Reference | Vendor statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of | No |
-| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Website | Vendor | `vendor.website` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
+| Vendor Archived | Vendor | `vendor.is_archived` | Yes/No | - | is, is not | No |
+| Vendor Tier | Vendor | `vendor.tier` | Choice | `tier_1`, `tier_2`, `tier_3`, `tier_4` | is, is not, any of, none of, empty, not empty | No |
 | Description | - | `description` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
 | Document Types | Documents | `vendor_documents.document_type` | Choice | Document types in your workspace | any of, none of, all of, not all of | No |
 | Uploaded Date | Documents | `vendor_documents.created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Document Count | Documents | `vendor_documents.count` | Number | - | at least, at most, is, is not | No |
 | Status | - | `status_id` | Reference | Service statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Relationship Owners | - | `relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
-| Watchers | - | `watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Relationship Owners | - | `relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Watchers | - | `watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Inherent Risk Score | - | `raw_irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Inherent Risk Level | - | `inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Residual Risk Score | - | `raw_residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
@@ -115,19 +140,20 @@ Default sort: `name` asc.
 | Risk Domain Residual Risk Level | - | `risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Risk Domain Residual Risk Score | - | `risk_domain_scores.residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Risk Domains | - | `risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Service | - | `id` | Reference | Services in your workspace | is, is not, any of, none of | No |
 
 ## Engagements
 
 The **Engagements** tab on a vendor, and engagement records.
 
-**24 fields**, queryable at `POST /v1/engagement/query`, available in saved views, usable as the `engagement` target in workflow conditions, extendable with custom fields.
+**25 fields**, queryable at `POST /v1/engagement/query`, available in saved views, usable as the `engagement` target in workflow conditions.
 
 Default sort: `created_at` desc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
-| Contracts | Contracts | `contracts` | Multi-reference | - | any of, none of, all of, not all of | No |
+| Engagement Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Contracts | Contracts | `contracts` | Multi-reference | - | any of, none of, all of, not all of, empty, not empty | No |
 | Contract Count | Contracts | `contracts.count` | Number | - | at least, at most, is, is not | No |
 | Start Date | Dates | `start_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | End Date | Dates | `end_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
@@ -135,7 +161,7 @@ Default sort: `created_at` desc.
 | End Date Mode | Dates | `end_date_mode` | Choice | `MANUAL`, `COMPUTED` | is, is not, any of, none of | No |
 | Created Date | Dates | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | Updated Date | Dates | `updated_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
-| Services | Services | `services` | Multi-reference | - | any of, none of, all of, not all of | No |
+| Services | Services | `services` | Multi-reference | - | any of, none of, all of, not all of, empty, not empty | No |
 | Service Count | Services | `services.count` | Number | - | at least, at most, is, is not | No |
 | Vendor | Vendor | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Description | - | `description` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
@@ -150,12 +176,13 @@ Default sort: `created_at` desc.
 | Risk Domain Residual Risk Level | - | `risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Risk Domain Residual Risk Score | - | `risk_domain_scores.residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Risk Domains | - | `risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Engagement | - | `id` | Reference | Engagements in your workspace | is, is not, any of, none of | No |
 
 ## Contracts
 
 The **Contracts** list and contract records, including Contract Guardian.
 
-**49 fields**, queryable at `POST /v1/contract/query`, available in saved views, usable as the `contract` target in workflow conditions, extendable with custom fields.
+**64 fields**, queryable at `POST /v1/contract/query`, available in saved views, usable as the `contract` target in workflow conditions, extendable with custom fields.
 
 Default sort: `created_at` desc.
 
@@ -164,7 +191,7 @@ Default sort: `created_at` desc.
 | Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
 | Effective Date | Dates | `effective_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | Expiration Date | Dates | `expiration_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
-| Term Start Date | Dates | `term_start_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Term Start | Dates | `term_start_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | Renewal Date | Dates | `renewal_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | Notice Due Date | Dates | `notice_due_to_vendor_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Action Date | Dates | `action_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
@@ -178,44 +205,59 @@ Default sort: `created_at` desc.
 | Vendor Document Types | Vendor › Documents | `vendor.documents.document_type` | Choice | Document types in your workspace | any of, none of, all of, not all of | No |
 | Vendor Document Count | Vendor › Documents | `vendor.documents.count` | Number | - | at least, at most, is, is not | No |
 | Vendor Next Assessment Date | Vendor › Dates | `vendor.next_assessment_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Vendor Last Assessed | Vendor › Dates | `vendor.last_assessed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
 | Vendor Uploaded Date | Vendor › Documents | `vendor.documents.created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
-| Vendor Assessment Count | Vendor | `vendor.assessments.count` | Number | - | at least, at most, is, is not | No |
-| Vendor Assessment Outcome | Vendor | `vendor.last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of | No |
+| Vendor Assessment Count | Vendor › Assessments | `vendor.assessments.count` | Number | - | at least, at most, is, is not | No |
+| Vendor Assessment Outcome | Vendor | `vendor.last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Inherent Risk Level | Vendor | `vendor.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Inherent Risk Score | Vendor | `vendor.raw_irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
-| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Residual Risk Level | Vendor | `vendor.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Residual Risk Score | Vendor | `vendor.raw_residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
-| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Risk Domain Inherent Risk Level | Vendor | `vendor.risk_domain_scores.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Risk Domain Inherent Risk Score | Vendor | `vendor.risk_domain_scores.inherent_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Level | Vendor | `vendor.risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Score | Vendor | `vendor.risk_domain_scores.residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Risk Domains | Vendor | `vendor.risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Status | Vendor | `vendor.status_id` | Reference | Vendor statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of | No |
-| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Website | Vendor | `vendor.website` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
+| Vendor Archived | Vendor | `vendor.is_archived` | Yes/No | - | is, is not | No |
+| Vendor Tier | Vendor | `vendor.tier` | Choice | `tier_1`, `tier_2`, `tier_3`, `tier_4` | is, is not, any of, none of, empty, not empty | No |
 | Description | - | `description` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
 | Document Types | Documents | `documents.document_type` | Choice | Document types in your workspace | any of, none of, all of, not all of | No |
 | Uploaded Date | Documents | `documents.created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Document Count | Documents | `documents.count` | Number | - | at least, at most, is, is not | Yes |
 | Contract Value | - | `contract_value_amount` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
 | Status | - | `status_id` | Reference | Contract statuses in your workspace | is, is not, any of, none of, empty, not empty | Yes |
-| Auto Renewal | - | `auto_renew` | Choice | `none`, `automatic`, `manual` | is, is not, any of, none of | No |
+| Auto-renews | - | `auto_renew` | Choice | `none`, `automatic`, `manual` | is, is not, any of, none of | No |
 | Renewal Term | - | `contract_renewal_duration` | Structured | - | empty, not empty | No |
 | Renewal Decision | - | `renewal_decision` | Choice | `undecided`, `renew`, `terminate`, `under_review` | is, is not, any of, none of | No |
-| Renewals Applied | - | `renewal_count` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
+| Renewals Applied | - | `renewal_count` | Number | - | is, is not, greater than, at least, less than, at most, between | Yes |
 | Held For Intake Review | - | `intake_hold` | Yes/No | - | is, is not | No |
-| Services | - | `services` | Multi-reference | - | any of, none of, all of, not all of | No |
-| Owners | - | `owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
-| Watchers | - | `watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Services | - | `services` | Multi-reference | - | any of, none of, all of, not all of, empty, not empty | No |
+| Owners | - | `owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Watchers | - | `watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Clause needs a decision | - | `clause_review_runs.matches.needs_decision` | Yes/No | - | is, is not | No |
+| Commercially Active | - | `status` | Choice | `active`, `expired` | is, is not, any of, none of | No |
+| Workflow | - | `workflow_state` | Choice | `draft`, `pending_approval`, `approved`, `sent_for_signature`, `executed`, `rejected`, `terminated` | is, is not, any of, none of | No |
+| Contract Type | - | `contract_type` | Choice | `addendum`, `appendix`, `msa`, `sow`, `order_form`, `amendment`, `nda`, `dpa`, `baa`, `subscription_agreement`, `license_agreement`, `services_agreement`, `reseller_agreement`, `statement_of_services`, `letter_of_intent`, `renewal`, `other` | is, is not, any of, none of | No |
+| Assembly | Components | `assembly_state` | Choice | `proposed`, `needs_review`, `confirmed`, `rejected` | is, is not, any of, none of | No |
+| Relevance | Components | `relevance_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
+| Grouping Confidence | Components | `family_confidence` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
+| Value Disagrees With Document | Components | `has_value_conflict` | Yes/No | - | is, is not | No |
+| Component | Components | `component_slots.component_type` | Choice | Document types in your workspace | is, is not, any of, none of | No |
+| Component Status | Components | `component_slots.gap_state` | Choice | `present`, `missing`, `expired`, `superseded_unclear`, `not_required` | is, is not, any of, none of | No |
+| Component Needs Re-reading | Components | `component_slots.recheck_requested_at` | Date | - | empty, not empty, on or after, on or before | No |
+| Component Count | Components | `component_slots.count` | Number | - | at least, at most, is, is not | No |
 
 ## Documents
 
 The **Documents** list and the document tabs on vendors, assessments, and contracts.
 
-**30 fields**, queryable at `POST /v1/vendor_document/query`, available in saved views, usable as the `vendor_document` target in workflow conditions.
+**34 fields**, queryable at `POST /v1/vendor_document/query`, available in saved views, usable as the `vendor_document` target in workflow conditions.
 
 Default sort: `created_at` desc.
 
@@ -225,38 +267,42 @@ Default sort: `created_at` desc.
 | Vendor Document Types | Vendor › Documents | `vendor.documents.document_type` | Choice | Document types in your workspace | any of, none of, all of, not all of | No |
 | Vendor Document Count | Vendor › Documents | `vendor.documents.count` | Number | - | at least, at most, is, is not | No |
 | Vendor Next Assessment Date | Vendor › Dates | `vendor.next_assessment_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Vendor Last Assessed | Vendor › Dates | `vendor.last_assessed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
 | Vendor Uploaded Date | Vendor › Documents | `vendor.documents.created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Vendor | Vendor | `vendor.id` | Reference | Vendors in your workspace | is, is not, any of, none of | No |
-| Vendor Assessment Count | Vendor | `vendor.assessments.count` | Number | - | at least, at most, is, is not | No |
-| Vendor Assessment Outcome | Vendor | `vendor.last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of | No |
+| Vendor Assessment Count | Vendor › Assessments | `vendor.assessments.count` | Number | - | at least, at most, is, is not | No |
+| Vendor Assessment Outcome | Vendor | `vendor.last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Inherent Risk Level | Vendor | `vendor.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Inherent Risk Score | Vendor | `vendor.raw_irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Name | Vendor | `vendor.name` | Text | - | is, is not, any of, none of, contains, does not contain | No |
-| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Residual Risk Level | Vendor | `vendor.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Residual Risk Score | Vendor | `vendor.raw_residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
-| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Risk Domain Inherent Risk Level | Vendor | `vendor.risk_domain_scores.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Risk Domain Inherent Risk Score | Vendor | `vendor.risk_domain_scores.inherent_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Level | Vendor | `vendor.risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Score | Vendor | `vendor.risk_domain_scores.residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Risk Domains | Vendor | `vendor.risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Status | Vendor | `vendor.status_id` | Reference | Vendor statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of | No |
-| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Website | Vendor | `vendor.website` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
+| Vendor Archived | Vendor | `vendor.is_archived` | Yes/No | - | is, is not | No |
+| Vendor Tier | Vendor | `vendor.tier` | Choice | `tier_1`, `tier_2`, `tier_3`, `tier_4` | is, is not, any of, none of, empty, not empty | No |
 | Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
-| Service | - | `services` | Multi-reference | - | any of, none of, all of, not all of | No |
+| Service | - | `services` | Multi-reference | - | any of, none of, all of, not all of, empty, not empty | No |
 | Source | - | `document_source` | Choice | `manual_upload`, `system_generated`, `bulk_upload`, `email_attachment`, `email_correspondence`, `portal`, `safebase`, `grc_scrape`, `onetrust`, `processunity`, `wss`, `document_library`, `trust_center` | is, is not, any of, none of | Yes |
 | Status | - | `status` | Choice | `created`, `unzipping`, `analyzing`, `queued_processing`, `complete`, `failed`, `locked` | is, is not, any of, none of | Yes |
-| Type | - | `document_type` | Choice | Document types in your workspace | is, is not, any of, none of | Yes |
+| Type | - | `document_type` | Choice | Document types in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Uploaded Date | - | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
+| Size | - | `size` | Number | - | greater than, less than, at least, at most, between | Yes |
 
 ## Assessments
 
 The **Assessments** list and assessment records, including zero-touch runs.
 
-**53 fields**, queryable at `POST /v1/assessment/query`, available in saved views, usable as the `assessment` target in workflow conditions, extendable with custom fields.
+**67 fields**, queryable at `POST /v1/assessment/query`, available in saved views, usable as the `assessment` target in workflow conditions, extendable with custom fields.
 
 Default sort: `created_at` desc.
 
@@ -264,7 +310,7 @@ Default sort: `created_at` desc.
 | --- | --- | --- | --- | --- | --- | --- |
 | Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
 | Created | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
-| Initiated Date | Dates | `initiated_at` | Date | - | after, before, on or after, on or before, between | No |
+| Initiated Date | Dates | `initiated_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
 | Updated Date | Dates | `updated_at` | Date | - | after, before, on or after, on or before, between | Yes |
 | Document Types | Documents | `supporting_documents.document_type` | Choice | Document types in your workspace | any of, none of, all of, not all of | No |
 | Document Count | Documents | `supporting_documents.count` | Number | - | at least, at most, is, is not | No |
@@ -274,14 +320,14 @@ Default sort: `created_at` desc.
 | Reviewer | Reviews | `reviews.assignee_ref` | Reference | Users and groups in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor | Vendor | `vendor.id` | Reference | Vendors in your workspace | is, is not, any of, none of | Yes |
 | Vendor Archived | Vendor | `vendor.is_archived` | Yes/No | - | is, is not | No |
-| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of | No |
+| Vendor Tags | Vendor | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Inherent Risk Level | Vendor | `vendor.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Vendor Inherent Risk Score | Vendor | `vendor.raw_irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Residual Risk Level | Vendor | `vendor.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Residual Risk Score | Vendor | `vendor.raw_residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
-| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
-| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
-| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Vendor Relationship Owners | Vendor | `vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Risk Analysts | Vendor | `vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Watchers | Vendor | `vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Vendor Status | Vendor | `vendor.status_id` | Reference | Vendor statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Next Assessment Date | Vendor | `vendor.next_assessment_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | Vendor Risk Domains | Vendor | `vendor.risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
@@ -289,18 +335,20 @@ Default sort: `created_at` desc.
 | Vendor Risk Domain Inherent Risk Level | Vendor | `vendor.risk_domain_scores.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Score | Vendor | `vendor.risk_domain_scores.residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
 | Vendor Risk Domain Residual Risk Level | Vendor | `vendor.risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Tier | Vendor | `vendor.tier` | Choice | `tier_1`, `tier_2`, `tier_3`, `tier_4` | is, is not, any of, none of, empty, not empty | No |
+| Vendor Last Assessed | Vendor | `vendor.last_assessed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
 | Status | - | `status_id` | Reference | Assessment statuses in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Portal State | - | `portal_state` | Choice | `open`, `submitted`, `closed`, `overdue` | is, is not, any of, none of, empty, not empty | No |
 | Risk Type | - | `risk_type` | Choice | `inherent_risk`, `residual_risk`, `untargeted` | is, is not, any of, none of | No |
 | Inherent Risk Level | - | `inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Inherent Risk Score | - | `irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
-| SLA breaches | - | `sla_breach_count` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
+| SLA Breach Count | - | `sla_breach_count` | Number | - | is, is not, greater than, at least, less than, at most, between | Yes |
 | Document submission days | - | `sla_doc_submission_elapsed_seconds` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
 | Reviewer review days | - | `sla_review_elapsed_seconds` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
 | Email Count | Emails | `emails.count` | Number | - | at least, at most, is, is not | No |
 | Follow-up response days | - | `sla_follow_up_elapsed_seconds` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
 | Finding commitments days | - | `sla_commitment_elapsed_seconds` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
-| Control Sets | - | `policy_control_sets` | Multi-reference | Control sets in your workspace | any of, none of, all of, not all of | No |
+| Control Sets | - | `policy_control_sets` | Multi-reference | Control sets in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Risk Domains | - | `risk_domain_scores.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Risk Domain Residual Risk Level | - | `risk_domain_scores.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Risk Domain Reviewer | - | `risk_domain_scores.reviewer_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
@@ -315,23 +363,35 @@ Default sort: `created_at` desc.
 | Outcome | - | `approval_option_id` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Submitted by | - | `created_by_id` | Reference | Users in your workspace | is, is not, any of, none of | No |
 | Zero Touch score | - | `zero_touch_composite_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
+| Stage | - | `lifecycle_status.key` | Choice | `created`, `collecting_documents`, `analyzing_controls`, `review_results`, `complete`, `failed`, `canceled` | is, is not, any of, none of, empty, not empty | No |
+| Awaiting Response | - | `is_awaiting_follow_up_response` | Yes/No | - | is, is not | No |
+| Has Open Issue | - | `has_open_issue` | Yes/No | - | is, is not | No |
+| Risk Domain SLA Breach Count | - | `sla_domain_breach_count` | Number | - | is, is not, greater than, at least, less than, at most, between | Yes |
+| Review Risk Domains | - | `domain_reviews.assessment_association.risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Review Status | - | `domain_reviews.status_id` | Reference | Review statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Control Outcome | Controls | `evals.outcome` | Choice | `issue`, `not_an_issue`, `mitigated`, `risk_accepted`, `resolved` | is, is not, any of, none of | No |
+| Control Is An Issue | Controls | `evals.is_issue` | Yes/No | - | is, is not | No |
+| Control Is Resolved | Controls | `evals.is_resolved` | Yes/No | - | is, is not | No |
+| Control Confidence | Controls | `evals.confidence` | Choice | `low`, `medium`, `high` | is, is not, any of, none of, empty, not empty | No |
+| Control Set | Controls | `evals.control.control_set_id` | Reference | Control sets in your workspace | is, is not, any of, none of | No |
+| Control Count | Controls | `evals.count` | Number | - | at least, at most, is, is not | No |
 
 ## Assessment responses
 
 The control-by-control response list inside an assessment.
 
-**25 fields**, queryable at `POST /v1/eval/query`, available in saved views, usable as the `eval` target in workflow conditions, extendable with custom fields.
+**27 fields**, queryable at `POST /v1/eval/query`, available in saved views, usable as the `eval` target in workflow conditions, extendable with custom fields.
 
 Default sort: `public_idx` asc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
 | AI-generated response | - | `ai_response_value` | Text | - | is, is not, any of, none of | No |
-| Category | - | `issue_category` | Choice | `incomplete_response`, `missing_document`, `violates_policy`, `inconsistency`, `subpar_practices`, `acceptable`, `needs_review`, `condition_not_met`, `unknown` | is, is not, any of, none of | No |
+| Category | - | `issue_category` | Choice | `incomplete_response`, `missing_document`, `violates_policy`, `inconsistency`, `subpar_practices`, `acceptable`, `needs_review`, `condition_not_met`, `unknown` | is, is not, any of, none of, empty, not empty | No |
 | Confidence | - | `confidence` | Choice | `low`, `medium`, `high` | is, is not, any of, none of, empty, not empty | No |
 | Control Section | - | `control.control_section_id` | Reference | - | is, is not, any of, none of, empty, not empty | Yes |
 | Control Set | - | `control.control_set_id` | Reference | Control sets in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Control Weight | - | `control.weight` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
+| Control Weight | - | `control.weight` | Number | - | is, is not, greater than, at least, less than, at most, between | No |
 | Control identifier | - | `public_idx` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
 | Current follow-up status | - | `latest_follow_up_status` | Choice | `draft`, `open`, `closed` | is, is not, any of, none of, empty, not empty | No |
 | Follow-up item status | - | `follow_up_items.status` | Choice | `draft`, `open`, `closed` | any of, none of | No |
@@ -346,11 +406,13 @@ Default sort: `public_idx` asc.
 | Response review status | - | `response_alignment` | Choice | `aligned`, `discrepancy`, `resolved` | is, is not, any of, none of | No |
 | Response text | - | `response` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
 | Review Notes | - | `review_notes` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
-| Reviewer | - | `control.control_set.reviewers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of | No |
+| Reviewer | - | `control.control_set.reviewers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 | Scale | - | `scores.scale_level.scale_id` | Reference | Scales in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Scale Level | - | `scores.scale_level_id` | Reference | Scale levels in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Score | - | `scores.scale_level.value` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | Yes |
+| Score | - | `scores.scale_level.value` | Number | - | is, is not, greater than, at least, less than, at most, between | Yes |
 | Title | - | `title` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
+| Notes | - | `has_notes` | Yes/No | - | is, is not | No |
+| Mentioned | - | `mentioned_users` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 
 ## Findings
 
@@ -369,7 +431,7 @@ Default sort: `created_at` desc.
 | Updated Date | Dates | `updated_at` | Date | - | after, before, on or after, on or before, between | Yes |
 | Assignee | - | `assigned_to_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Created By | - | `created_by_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Source Type | - | `source_type` | Choice | `assessment`, `vendor`, `org_document`, `radar_alert`, `contract`, `inspect_evaluation` | is, is not, any of, none of | No |
+| Source Type | - | `source_type` | Choice | `assessment`, `vendor`, `org_document`, `radar_alert`, `contract`, `inspect_evaluation`, `screening_match`, `risk`, `dark_web_exposure` | is, is not, any of, none of | No |
 | Source document | - | `extraction_source_document_id` | Reference | Finding source documents in your workspace | is, is not, any of, none of | No |
 | Risk Level | - | `finding_risk_level_id` | Reference | Finding risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Control Set | - | `evals.control.control_set_id` | Reference | Control sets in your workspace | is, is not, any of, none of | No |
@@ -385,7 +447,7 @@ Default sort: `due_at` asc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Vendor | - | `finding.vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of | Yes |
+| Vendor | - | `finding.vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Finding Assignee | - | `finding.assigned_to_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Assignee | - | `assigned_to_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Status | - | `commitment_status` | Choice | `pending_response`, `negotiating`, `mitigation_underway`, `declined`, `closed` | is, is not, any of, none of | Yes |
@@ -406,18 +468,19 @@ Default sort: `due_at` asc.
 
 Review steps on contracts, procurement requests, and assessments. These fields are also spliced into the parent record's filters as `reviews.*`.
 
-**4 fields**, usable as the `review` target in workflow conditions, extendable with custom fields.
+**5 fields**, usable as the `review` target in workflow conditions.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
 | Status | - | `status_id` | Reference | Review statuses in your workspace | is, is not, any of, none of, empty, not empty | Yes |
 | Reviewer | - | `assignee_ref` | Reference | Users and groups in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Review Context | - | `review_context` | Choice | `contract`, `procurement`, `assessment`, `assessment_risk_domain` | is, is not, any of, none of | No |
+| Review Context | - | `review_context` | Choice | `contract`, `procurement`, `assessment`, `assessment_risk_domain`, `radar_signal` | is, is not, any of, none of | No |
+| Decision | - | `status.key` | Choice | `queued`, `started`, `accept`, `reject` | is, is not, any of, none of, empty, not empty | No |
 
 ## Vendor intake
 
-The **Vendor intake** list of submitted intake sessions.
+The **Intake** list of intake sessions.
 
 **6 fields**, queryable at `POST /v1/intake_session/query`, available in saved views, usable as the `intake` target in workflow conditions.
 
@@ -429,7 +492,7 @@ Default sort: `created_at` desc.
 | Created Date | - | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
 | Source | - | `source` | Choice | `portal`, `api` | is, is not, any of, none of | No |
 | Status | - | `status` | Choice | `open`, `submitted`, `pending_review`, `rejected`, `accepted`, `partial` | is, is not, any of, none of | No |
-| Submitted Date | - | `submitted_at` | Date | - | after, before, on or after, on or before, between | No |
+| Submitted Date | - | `submitted_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
 | Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
 
 ## Procurement requests
@@ -458,9 +521,9 @@ Default sort: `created_at` desc.
 | Status | - | `status` | Choice | `open`, `analyzing`, `analysis_complete`, `submitted`, `closed` | is, is not, any of, none of | No |
 | Due Date | Dates | `due_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
 | Created Date | Dates | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
-| Type | - | `type` | Choice | `assessment`, `intake`, `irq`, `vendor_onboarding`, `informational`, `findings_commitment`, `obligation_commitment`, `vendor_search`, `rfp`, `case` | is, is not, any of, none of | No |
+| Type | - | `type` | Choice | `assessment`, `intake`, `irq`, `vendor_onboarding`, `informational`, `findings_commitment`, `obligation_commitment`, `vendor_search`, `rfp`, `case`, `signature` | is, is not, any of, none of | No |
 | Lifecycle | - | `lifecycle` | Choice | `ephemeral`, `persistent` | is, is not, any of, none of | No |
-| Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of | No |
+| Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Number of Asks | - | `asks.count` | Number | - | at least, at most, is, is not | No |
 | Number of Documents | - | `vendor_documents.count` | Number | - | at least, at most, is, is not | No |
 
@@ -468,37 +531,70 @@ Default sort: `created_at` desc.
 
 The **Signals** tab in Supplier Radar. One row per event your organization is exposed to.
 
-**9 fields**, queryable at `POST /v1/radar_event/query`, available in saved views.
+**14 fields**, queryable at `POST /v1/radar_signal/query`, available in saved views.
 
 Default sort: `last_alerted_at` desc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor | Vendor | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor inherent risk level | Vendor | `vendor_inherent_risk_level_id` | Reference | Risk levels in your workspace | any of, none of, is, any of, empty, not empty | No |
+| Tier | Vendor | `vendor_tier` | Choice | `tier_1`, `tier_2`, `tier_3`, `tier_4` | any of, none of, is, any of, empty, not empty | No |
 | Detector | - | `detector_id` | Reference | Radar detectors in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Status | - | `status` | Choice | `tracked`, `open`, `alerting`, `triaged`, `dismissed`, `confirmed` | is, is not, any of, none of | No |
+| Status | - | `status` | Choice | `confirmed`, `open`, `dismissed`, `tracked`, `alerting`, `triaged`, `closed` | is, is not, any of, none of | No |
 | Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
 | Risk domain | - | `risk_domain_id` | Reference | Risk domains in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Summary | - | `summary` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
 | Last alerted | Dates | `last_alerted_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
 | First seen | Dates | `first_seen_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
 | Severity | - | `severity` | Choice | `high`, `medium`, `low`, `informational` | is, is not, any of, none of, empty, not empty | Yes |
+| Status | - | `status_id` | Reference | Signal statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Nth party inherent risk level | - | `event.radar_event_entity_relationships.entity.subprocessors.inherent_risk_level_id` | Reference | Risk levels in your workspace | any of, none of, is, any of, empty, not empty | No |
+| Nth party tags | - | `event.radar_event_entity_relationships.entity.subprocessors.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 
 ### Radar signals in workflow conditions
 
 The `radar_signal` target in workflow conditions filters the same rows through a smaller field set, and its paths differ from the Signals tab: severity is `max_severity`, and detector and vendor are matched through the signal's alerts.
 
-**5 fields**, usable as the `radar_signal` target in workflow conditions.
+**33 fields**, usable as the `radar_signal` target in workflow conditions.
 
 Default sort: `created_at` desc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Status | - | `status` | Choice | `tracked`, `open`, `alerting`, `triaged`, `dismissed`, `confirmed` | is, is not, any of, none of | No |
-| Severity | - | `max_severity` | Choice | `high`, `medium`, `low`, `informational` | is, is not, any of, none of | No |
+| Status | - | `status` | Choice | `confirmed`, `open`, `dismissed`, `tracked`, `alerting`, `triaged`, `closed` | is, is not, any of, none of | No |
+| Severity | - | `max_severity` | Choice | `high`, `medium`, `low`, `informational` | is, is not, any of, none of, empty, not empty | No |
 | Detector | - | `members.detector_id` | Reference | Radar detectors in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Vendor | - | `members.vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Created date | - | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
+| Lifecycle status | - | `status_id` | Reference | Signal statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Name | - | `name` | Text | - | is, is not, contains, does not contain, empty, not empty | No |
+| Summary | - | `summary` | Text | - | is, is not, contains, does not contain, empty, not empty | No |
+| Archived | - | `is_archived` | Yes/No | - | is, is not | No |
+| Alert severity | - | `members.severity` | Choice | `high`, `medium`, `low`, `informational` | is, is not, any of, none of | No |
+| Nth party inherent risk level | - | `event.radar_event_entity_relationships.entity.subprocessors.inherent_risk_level_id` | Reference | Risk levels in your workspace | any of, none of, is, any of, empty, not empty | No |
+| Nth party tags | - | `event.radar_event_entity_relationships.entity.subprocessors.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor | Vendor | `members.vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Tags | Vendor | `members.vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Archived | Vendor | `members.vendor.is_archived` | Yes/No | - | is, is not | No |
+| Vendor Risk Analysts | Vendor | `members.vendor.risk_analysts` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Relationship Owners | Vendor | `members.vendor.relationship_owners` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Watchers | Vendor | `members.vendor.watchers` | Multi-reference | Users in your workspace | any of, none of, all of, not all of, empty, not empty | No |
+| Vendor Status | Vendor | `members.vendor.status_id` | Reference | Vendor statuses in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Tier | Vendor | `members.vendor.tier` | Choice | `tier_1`, `tier_2`, `tier_3`, `tier_4` | is, is not, any of, none of, empty, not empty | No |
+| Vendor Inherent Risk Level | Vendor | `members.vendor.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Residual Risk Level | Vendor | `members.vendor.residual_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Assessment Outcome | Vendor | `members.vendor.last_assessment_outcome` | Reference | Approval options in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Vendor Inherent Risk Score | Vendor | `members.vendor.raw_irq_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
+| Vendor Residual Risk Score | Vendor | `members.vendor.raw_residual_risk_score` | Number | - | is, is not, greater than, at least, less than, at most, between, empty, not empty | No |
+| Vendor Website | Vendor | `members.vendor.website` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
+| Created date | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
+| First seen | Dates | `first_seen_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
+| Last alerted | Dates | `last_alerted_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
+| Confirmed date | Dates | `confirmed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
+| Vendor Created Date | Vendor › Dates | `members.vendor.created_at` | Date | - | after, before, on or after, on or before, between | No |
+| Vendor Next Assessment Date | Vendor › Dates | `members.vendor.next_assessment_date` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Vendor Last Assessed | Vendor › Dates | `members.vendor.last_assessed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | No |
+| Review status | Reviews | `reviews.status_id` | Reference | Review statuses in your workspace | is, all are, is not, any of, none of, empty, not empty | No |
+| Reviewer | Reviews | `reviews.assignee_ref` | Reference | Users and groups in your workspace | is, is not, any of, none of, empty, not empty | No |
 
 ## Radar cases
 
@@ -512,8 +608,8 @@ Default sort: `created_at` desc.
 | --- | --- | --- | --- | --- | --- | --- |
 | Title | - | `title` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
 | Status | - | `status` | Choice | `open`, `closed` | is, is not, any of, none of | No |
-| Resolution | - | `resolution` | Choice | `resolved`, `false_positive`, `wont_fix` | is, is not, any of, none of | No |
-| Assignee | - | `assignee_id` | Reference | Users in your workspace | is, is not, any of, none of | No |
+| Resolution | - | `resolution` | Choice | `resolved`, `false_positive`, `wont_fix` | is, is not, any of, none of, empty, not empty | No |
+| Assignee | - | `assignee_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Created By | - | `created_by_id` | Reference | Users in your workspace | is, is not, any of, none of | No |
 | Created Date | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
 | Updated Date | Dates | `updated_at` | Date | - | after, before, on or after, on or before, between | Yes |
@@ -533,32 +629,33 @@ Default sort: `created_at` desc.
 | Due Date | - | `due_date` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
 | Inherent Risk Level | - | `vendor.inherent_risk_level_id` | Reference | Risk levels in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Status | - | `status` | Choice | `open`, `email_sent`, `response_received`, `in_review`, `assessment_triggered`, `on_hold`, `closed` | is, is not, any of, none of | Yes |
-| Tags | - | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of | No |
+| Tags | - | `vendor.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 
 ## Radar sources
 
 The **Sources** tab in Radar configuration.
 
-**2 fields**, queryable at `POST /v1/radar_source/query`.
+**3 fields**, queryable at `POST /v1/radar_source/query`.
 
 Default sort: `created_at` desc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
 | Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Active | - | `origin.is_enabled` | Yes/No | - | is, is not | No |
 | Created Date | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
 
 ## Nth-party entities
 
 The nth-party graph and the subprocessor lists on a vendor.
 
-**10 fields**, queryable at `POST /v1/nth_party/query`, available in saved views.
+**14 fields**, queryable at `POST /v1/nth_party/query`, available in saved views.
 
 Default sort: `name` asc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Nth Party Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
 | Created Date | Dates | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Updated Date | Dates | `updated_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Website | - | `website` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
@@ -566,28 +663,148 @@ Default sort: `name` asc.
 | HQ Location | - | `hq_location` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
 | Security Contact Email | - | `security_contact_email` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
 | Trust Center URL | - | `trust_center_url` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | No |
-| Company Status | - | `company_status` | Choice | `private`, `public`, `acquired/merged`, `defunct` | is, is not, any of, none of | No |
-| Scanned Facts Status | - | `scanned_facts_status` | Choice | `pending`, `completed`, `failed` | is, is not, any of, none of | No |
+| Company Status | - | `company_status` | Choice | `private`, `public`, `acquired/merged`, `defunct` | is, is not, any of, none of, empty, not empty | No |
+| Scanned Facts Status | - | `scanned_facts_status` | Choice | `pending`, `completed`, `failed` | is, is not, any of, none of, empty, not empty | No |
+| Nth Party | - | `id` | Reference | Nth-party entities in your workspace | is, is not, any of, none of | No |
+| Dependent Vendor Inherent Risk Level | - | `dependent_vendors.inherent_risk_level_id` | Reference | Risk levels in your workspace | any of, none of, all of, not all of | No |
+| Inherent Risk Level | - | `subprocessors.inherent_risk_level_id` | Reference | Risk levels in your workspace | any of, none of, all of, not all of | No |
+| Tags | - | `subprocessors.tags` | Multi-reference | Tags in your workspace | any of, none of, all of, not all of, empty, not empty | No |
 
 ## Work queue
 
-The **Work queue** list of tasks assigned to your team.
+The **Work Queue** list of tasks assigned to your team.
 
-**12 fields**, queryable at `POST /v1/work_queue_item/query`, usable as the `work_queue_item` target in workflow conditions.
+**13 fields**, queryable at `POST /v1/work_queue_item/query`, usable as the `work_queue_item` target in workflow conditions.
 
 Default sort: `created_at` desc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Type | - | `type` | Choice | `procurement_review`, `assessment_review`, `assessment_domain_review`, `contract_review`, `intake_submission_review`, `document_collection_handoff`, `intake_request_review`, `clause_review`, `assessment_control_set_review`, `questionnaire_response_review` | is, is not, any of, none of | Yes |
+| Type | - | `type` | Choice | `procurement_review`, `assessment_review`, `assessment_domain_review`, `contract_review`, `intake_submission_review`, `document_collection_handoff`, `intake_request_review`, `clause_review`, `assessment_control_set_review`, `questionnaire_response_review`, `risk_review`, `radar_signal_review`, `reassessment_scoping` | is, is not, any of, none of | Yes |
 | Status | - | `status` | Choice | `pending`, `completed`, `canceled` | is, is not, any of, none of | No |
 | Assignee | - | `assigned_user_id` | Reference | Users in your workspace | is, is not, any of, none of | Yes |
 | Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of | Yes |
 | Assessment | - | `assessment_id` | Reference | - | is, is not, any of, none of, empty, not empty | No |
-| Completed Date | Dates | `completed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
+| Resolved Date | Dates | `completed_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
 | Due Date | Dates | `due_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
 | Created Date | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
 | Updated Date | Dates | `updated_at` | Date | - | after, before, on or after, on or before, between | Yes |
 | Created By | - | `created_by_user_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
-| Completed By | - | `completed_by_user_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Resolved By | - | `completed_by_user_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
 | Title | - | `title` | Text | - | contains, does not contain, is, is not | Yes |
+| Waiting on Vendor | - | `is_waiting_on_vendor` | Yes/No | - | is, is not | No |
+
+## Questionnaire responses
+
+The **Questionnaires** tab on a vendor: the questionnaires sent to that vendor and their responses.
+
+**14 fields**, queryable at `POST /v1/questionnaire_response/query`, usable as the `questionnaire_response` target in workflow conditions.
+
+Default sort: `sent_at` desc.
+
+| Field | Group | Filter path | Type | Values | Operators | Sortable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Status | - | `status` | Choice | `pending`, `processing`, `processing_complete`, `processing_failed`, `submitted`, `ready_for_review`, `approved`, `rejected` | is, is not, any of, none of | Yes |
+| Questionnaire | Questionnaire | `questionnaire_id` | Reference | Questionnaires in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Questionnaire Name | Questionnaire | `questionnaire.name` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
+| Questionnaire Type | Questionnaire | `questionnaire.type` | Choice | `irq`, `vendor_onboarding`, `assessment`, `informational`, `follow_up`, `rfp_prequalification`, `rfp_response`, `performance`, `kys` | is, is not, any of, none of | Yes |
+| Assessment | Assessment | `assessment_id` | Reference | Assessments in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Assessment Name | Assessment | `assessment.name` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
+| Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Reviewer | - | `assignee_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Respondent | - | `respondent_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Sent By | - | `sent_by_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Sent Date | Dates | `sent_at` | Date | - | after, before, on or after, on or before, between | Yes |
+| Submitted Date | Dates | `submitted_at` | Date | - | after, before, on or after, on or before, between, empty, not empty | Yes |
+| Created Date | Dates | `created_at` | Date | - | after, before, on or after, on or before, between | Yes |
+| Updated Date | Dates | `updated_at` | Date | - | after, before, on or after, on or before, between | Yes |
+
+## Signature envelopes
+
+The **Signatures** list under Contracts.
+
+**13 fields**, queryable at `POST /v1/signature/envelope/query`.
+
+Default sort: `created_at` desc.
+
+| Field | Group | Filter path | Type | Values | Operators | Sortable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |
+| Status | - | `status` | Choice | `draft`, `sent`, `delivered`, `partially_signed`, `completed`, `declined`, `voided`, `expired`, `failed` | is, is not, any of, none of | Yes |
+| Signing Engine | - | `signing_engine` | Choice | `native`, `docusign` | is, is not, any of, none of | No |
+| Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Sender | - | `created_by_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Sent Date | Dates | `sent_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Completed Date | Dates | `completed_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Expiry Date | Dates | `expires_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Created Date | Dates | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Updated Date | Dates | `updated_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Verifies Signers | - | `require_signer_verification` | Yes/No | - | is, is not | No |
+| Party Count | Parties | `recipients.count` | Number | - | at least, at most, is, is not | No |
+| Document Count | Documents | `documents.count` | Number | - | at least, at most, is, is not | No |
+
+## Inspect identities
+
+The identities list in Agentic Inspect.
+
+**22 fields**, queryable at `POST /v1/inspect/identities/query`, available in saved views.
+
+Default sort: `display_name` asc.
+
+| Field | Group | Filter path | Type | Values | Operators | Sortable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Name | - | `display_name` | Text | - | is, is not, contains, does not contain, empty, not empty | Yes |
+| Email | - | `primary_email` | Text | - | is, is not, contains, does not contain, empty, not empty | No |
+| Identity basis | - | `association` | Choice | `directory`, `email_match`, `observed_only`, `ambiguous` | is, is not, any of, none of | No |
+| Number of accounts | - | `account_count` | Number | - | at least, at most, is, is not | Yes |
+| Accounts with admin observed | - | `admin_account_count` | Number | - | at least, at most, is, is not | Yes |
+| Accounts needing review | - | `needs_review_count` | Number | - | at least, at most, is, is not | No |
+| Latest observation | - | `latest_observed_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Added | - | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+| Identity provider | Directory | `principals.provider` | Choice | `okta`, `entra` | is, is not, any of, none of | No |
+| Directory type | Directory | `principals.member_kind` | Choice | `member`, `guest`, `unknown` | is, is not, any of, none of | No |
+| Directory account enabled | Directory | `principals.enabled` | Yes/No | - | is, is not, empty, not empty | No |
+| Number of directory records | Directory | `principals.count` | Number | - | at least, at most, is, is not | No |
+| Directory lifecycle | Directory | `principals.supported_detections.classification` | Choice | `disabled`, `inactive`, `dormant`, `guest`, `external`, `non_human`, `idp_removed_still_active` | is, is not, any of, none of | No |
+| Application | Application account | `accounts.application_id` | Reference | Applications in your workspace | is, is not, any of, none of | No |
+| Account basis | Application account | `accounts.attribution` | Choice | `provider_assignment`, `email_match`, `observed_only`, `ambiguous` | is, is not, any of, none of | No |
+| Synced account status | Application account | `accounts.status` | Choice | `enabled`, `disabled`, `unknown` | is, is not, any of, none of | No |
+| Needs review | Application account | `accounts.needs_review` | Yes/No | - | is, is not | No |
+| Attributed observations | Application account | `accounts.evidence_count` | Number | - | at least, at most, is, is not | No |
+| Last observed | Application account | `accounts.latest_observed_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Admin observed (historical) | Application account | `accounts.admin_observed_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
+| Latest observed admin state | Application account | `accounts.latest_admin_state` | Choice | `admin`, `not_admin`, `unknown` | is, is not, any of, none of | No |
+| Account lifecycle | Application account | `accounts.supported_detections.classification` | Choice | `disabled`, `inactive`, `dormant`, `guest`, `external`, `non_human`, `idp_removed_still_active` | is, is not, any of, none of | No |
+
+## Inspect inspections
+
+The inspections list in Agentic Inspect.
+
+**7 fields**, queryable at `POST /v1/inspect/inspections/query`, available in saved views.
+
+Default sort: `created_at` desc.
+
+| Field | Group | Filter path | Type | Values | Operators | Sortable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Application | - | `app_name` | Text | - | is, is not, any of, none of, contains, does not contain | No |
+| Status | - | `status` | Choice | `created`, `running`, `succeeded`, `partial`, `blocked`, `failed` | is, is not, any of, none of | No |
+| Purpose | - | `purpose` | Choice | `evaluative`, `exploratory`, `drift`, `probe` | is, is not, any of, none of | No |
+| Vendor | - | `vendor_id` | Reference | Vendors in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Probe | - | `probe_id` | Reference | Probes in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Requested By | - | `requested_by_user_id` | Reference | Users in your workspace | is, is not, any of, none of, empty, not empty | No |
+| Created Date | - | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |
+
+## Inspect probes
+
+The probes list in Agentic Inspect.
+
+**4 fields**, queryable at `POST /v1/inspect/probes/query`.
+
+Default sort: `created_at` desc.
+
+| Field | Group | Filter path | Type | Values | Operators | Sortable |
+| --- | --- | --- | --- | --- | --- | --- |
+| Probe | - | `id` | Reference | Probes in your workspace | is, is not, any of, none of | No |
+| Application | - | `target.display_name` | Text | - | is, is not, any of, none of, contains, does not contain | No |
+| Automation | - | `is_paused` | Yes/No | - | is, is not | No |
+| Created Date | - | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | Yes |

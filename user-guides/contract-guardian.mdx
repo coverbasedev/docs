@@ -53,11 +53,11 @@ They stack: insights populate the contract record and the AI summary, and clause
 
 Clause review runs against a **contract record** and the documents linked to it.
 
-1. Upload the agreement from **Contracts → Upload Documents**, or from the vendor's Documents tab.
+1. Upload the agreement from **Actions → Upload Documents** on the contracts list, from the contract's **Documents** tab, or from the vendor's Documents tab.
 2. **Confirm the document type.** Types like Master Service Agreement, Order Form, Statement of Work, NDA, DPA, Terms of Service, SLA, Software License Agreement, Contract Amendment, and Contract Addendum are what mark a document as contract paper. Type inference is good but not infallible on unusual formats, and scope decisions downstream key off the type.
 3. Link every document that makes up the agreement to the same contract record: the MSA, the order form, the DPA, the security addendum, the amendments. Guardian analyzes the set, not the file.
 
-<Frame caption="A contract record. Extracted lifecycle, value, and term dates, plus an AI summary of parties, billing, SLAs, liability, and termination.">
+<Frame caption="A contract record: the facts read from its documents, what needs attention, the AI summary, and the terms.">
   <img src="/images/user-guides/analyst-contract-overview.png" alt="Contract overview with extracted terms and AI summary" />
 </Frame>
 
@@ -79,7 +79,7 @@ Go to **Configuration → Clause Sets**. There are three ways to start, and most
   Coverbase ships 12 packaged clause standards you can copy into your org in one click, pre-written with severities, guidance, and full multi-tier variant language.
 </Note>
 
-Choose **Clause Set Library**, pick a template, name your copy, and create it. Between them the templates carry 311 reference clauses, already scoped to the right contract components and already tiered:
+Open **Add Clause Set** and choose **Clause Set Library**, pick a template, and choose **Create Clause Set**. The copy takes the template's name. Between them the templates carry 311 reference clauses, already scoped to the right contract components and already tiered:
 
 | Template | Clauses | For |
 | --- | --- | --- |
@@ -114,21 +114,23 @@ If you have a standard template (your MSA, your DPA, your preferred terms), Guar
 
 <Steps>
   <Step title="Upload the baseline">
-    On the Clause Sets page choose **Upload Baseline Contract** and submit your template as a PDF. Processing runs in the background; you can leave the page and come back.
+    On the Clause Sets page open **Add Clause Set**, choose **Import from Document**, and upload your template as a PDF, Word, or text file. Leave **Document type** on **Detect automatically**, or pick **Baseline contract (one agreement)**. Processing runs in the background; you can leave the page and come back.
   </Step>
   <Step title="Review what it extracted">
     Guardian pulls out clause candidates with exact source text from your template, plus a suggested name, category, severity, and applicable component types. Language it cannot quote verbatim from your document is dropped rather than paraphrased, so what you get back is your own paper.
   </Step>
   <Step title="Add your fallback tiers">
-    Each generated clause arrives with a single **Tier 1 "Baseline"** variant, your preferred language. That is a floor, not a playbook: it marks anything that is not your exact template as needing review. Add the tiers you would accept in negotiation before you run the set against a live contract.
+    Each generated clause arrives with a single Tier 1 variant, labeled **Preferred: baseline contract language**. That is a floor, not a playbook: it marks anything that is not your exact template as needing review. Add the tiers you would accept in negotiation before you run the set against a live contract.
   </Step>
   <Step title="Activate it">
-    Generated clause sets are created **inactive**, so a half-finished playbook cannot be run against a live contract. Flip it to active once the tiers are in.
+    Generated clause sets are created **inactive**, so a half-finished playbook cannot be run against a live contract: an inactive set is not offered when you start a review. The Clause Sets page has no switch to activate one yet, so ask your Coverbase contact once the tiers are in.
   </Step>
 </Steps>
 
+If your standard is a clause library or negotiation playbook that states a preferred and a fallback position for each clause, **Import from Document** reads that too, and the positions arrive as tiers.
+
 <Card title="Baseline contract extraction reference" icon="wand-magic-sparkles" href="/user-guides/baseline-contract-extraction">
-  What extraction proposes, why it drops language it cannot quote verbatim, and the tiering you have to finish before the set is usable.
+  What extraction proposes, why it drops language it cannot quote verbatim, how a playbook is read, and the tiering you have to finish before the set is usable.
 </Card>
 
 ### Import a clause set from a spreadsheet
@@ -137,7 +139,7 @@ If your standards already live in a spreadsheet, put them in the Coverbase templ
 
 On the Clause Sets page open **Add Clause Set**, choose **Download Import Template**, fill in the **Clauses** sheet (one row per clause, with rows sharing a **Clause Set** value grouped into one set), then come back and choose **Import from Spreadsheet**.
 
-Every row is reported back by its spreadsheet row number as created, already existing, or an error, and one bad row never blocks the rest. Clauses whose identifier is already in the target set are skipped rather than overwritten, so a stale re-upload cannot replace negotiated language.
+**Preview import** checks every row before anything is saved and lists any that will not import by spreadsheet row number, and one bad row never blocks the rest. Clauses whose identifier is already in the target set are skipped rather than overwritten, so a stale re-upload cannot replace negotiated language.
 
 <Card title="Spreadsheet import and export reference" icon="file-import" href="/user-guides/clause-set-spreadsheet-import">
   Every column explained, the variant format, what happens on re-upload, how to export a set back out, and a troubleshooting table.
@@ -145,7 +147,7 @@ Every row is reported back by its spreadsheet row number as created, already exi
 
 ### Build one by hand
 
-Choose **Add Clause Set**, name it, then add reference clauses one at a time. This suits a narrow, high-stakes set (an AI addendum standard, say), and rarely a full playbook.
+Open **Add Clause Set**, choose **Create Clause Set**, name it, then add reference clauses one at a time with **Add Clause**. This suits a narrow, high-stakes set (an AI addendum standard, say), and rarely a full playbook.
 
 ---
 
@@ -274,18 +276,18 @@ Scope decides what a *missing* clause means:
 A review runs in five steps, shown in the rail at the top of the page. You move through them in order, and the rail says where you are.
 
 <Frame caption="The five steps of a review. The rail marks the steps behind you as done.">
-  <img src="/images/user-guides/contracts-review-steps.png" alt="Review step rail: select documents, analyze, review results, decide, communicate" />
+  <img src="/images/user-guides/contracts-review-steps.png" alt="Review step rail: choose documents, analyze the contract, review results, summary, communicate" />
 </Frame>
 
 | Step | What happens |
 | --- | --- |
-| **1. Select documents** | You choose the standards to check against and the documents to read. |
+| **1. Choose documents** | You choose the standards to check against and the documents to read. |
 | **2. Analyze the contract** | Coverbase reads the documents and matches every reference clause. |
 | **3. Review results** | You see the counts and pick what to work. |
-| **4. Decide** | You record a verdict on each flagged clause. |
+| **4. Summary** | You decide each clause, one at a time. |
 | **5. Communicate** | You draft the follow-up and export the redlined Word file. |
 
-Activate the clause set before you start. An inactive set cannot be run. Then open the contract, go to the **Review** tab, and choose **Start review**.
+Only active clause sets are offered when you start a review. Sets you create by hand, copy from the library, or import from a spreadsheet are active from the start; generated sets are not. Open the contract, go to the **Review** tab, and choose **Start review**.
 
 ### Select documents
 
@@ -335,13 +337,32 @@ The last three steps of the rail are yours: read the results, decide each clause
 
 ### Review results
 
-<Frame caption="A clause review. Vendor language scored against your acceptable, fallback, and unacceptable tiers, by severity.">
-  <img src="/images/user-guides/analyst-clause-review.png" alt="Clause review showing deltas from preferred language" />
+<Frame caption="The Review results step. Four cards sort what the run found, and the table lists every clause it read.">
+  <img src="/images/user-guides/contract-guardian-review-results.png" alt="Review results step reading 4 clauses require review, with needs a decision, clause not found, clause fulfilled and not applicable cards above a table of clauses" />
 </Frame>
 
-The results list opens on **Flags**: the clauses that came back Non-conforming or Needs review and have not been triaged yet. Switch to **All** to see everything, including what conformed.
+The step opens on how many clauses need you, and four cards that sort every clause the run read:
+
+| Card | What is in it |
+| --- | --- |
+| **Needs a decision** | Clauses that came back Non-conforming or Needs review. |
+| **Clause not found** | Clauses whose component is in the contract but whose language is not (Missing). |
+| **Clause fulfilled** | Clauses that conform, or whose risk you have already accepted. |
+| **Not applicable** | Clauses whose component is not in this contract. |
+
+Click a card to filter the **Review clauses** table to it. The table gives each clause's clause set, category, status, severity, and confidence. Search it, narrow it to one clause set, or click a row to open that clause. **Review N clauses** walks the clauses that need a decision or were not found, most severe first. **Show all N** walks every clause.
+
+The contract's **Review** tab keeps the latest run as a list, for triage without the step-by-step flow.
+
+<Frame caption="A clause review on the Review tab. Vendor language scored against your acceptable, fallback, and unacceptable tiers, by severity.">
+  <img src="/images/user-guides/analyst-clause-review.png" alt="Review tab listing clauses grouped by severity, each with its state, above search, filter and follow-up draft controls" />
+</Frame>
+
+The list opens on **All N results**. Switch to **N flagged** to see only the clauses that came back Non-conforming, Needs review, or Missing and have not been triaged yet.
 
 #### What each row tells you
+
+Each row shows the clause's state and, when the vendor has a completed assessment, the suggested disposition. Click a row to open the clause in the review console, where the clause card carries the rest:
 
 | Element | What it means |
 | --- | --- |
@@ -379,11 +400,11 @@ Triaging is the review. Marking a clause removes it from the flagged list while 
   </Card>
 </CardGroup>
 
-Select several clauses at once to triage or create a single finding covering all of them, which suits a case where one negotiation thread touches liability, indemnity, and insurance together.
+Triage a clause from the menu at the end of its row (**Mark no action**, **Mark accepted risk**, **Mark false positive**, or **Create Finding**). Select several clauses at once to **Triage** them together or **Bulk Create Findings** covering all of them, which suits a case where one negotiation thread touches liability, indemnity, and insurance together.
 
 ### Decide
 
-The **Decide** step gives you one clause at a time in a three-pane console.
+The fourth step, labeled **Summary** on the rail, gives you one clause at a time in a three-pane console.
 
 <Frame caption="The decide console. Playbook positions on the left, the redline and your decision in the middle, the source document and clause facts on the right.">
   <img src="/images/user-guides/contracts-review-decide.png" alt="Three-pane decide console showing playbook positions, suggested redline, decision options, and the source document" />
@@ -406,17 +427,23 @@ Four decisions sit under the redline. Press **1** to **4** to pick one, or click
 | **3** | Accept the risk | Records the exception with an owner and an expiry date. |
 | **4** | Not applicable | Marks the standard as not relevant to this contract. |
 
-Press **Enter** to record the decision and move to the next clause. **Previous clause** and **Next clause** sit in the header with your position in the queue between them.
+**Save** (or **Enter**) records the decision and moves to the next clause. **Skip for now** moves on without recording one. **Previous clause** and **Next clause** sit in the header with your position in the queue between them, and the up and down arrow keys do the same.
 
 **Show every clause** switches the queue between the clauses that need you and all of them, including what conformed.
 
 ### Communicate
 
 <Frame caption="The Communicate step. A follow-up draft built from the flagged clauses, with the Word export beside it.">
-  <img src="/images/user-guides/contracts-review-communicate.png" alt="Communicate step showing the generated follow-up draft and the redlined Word file button" />
+  <img src="/images/user-guides/contracts-review-communicate.png" alt="Communicate step showing counts of decisions, the generated follow-up draft, and the redlined Word file button" />
 </Frame>
 
-The follow-up draft is built from the clauses you flagged, quoting your standard and the vendor's language. Nothing sends. Copy it into your own email or escalate it to a finding.
+Four counts at the top say what you decided: **Accepted as-is**, **Flagged for vendor**, **Risk accepted**, and **Not applicable**. **Back to results** returns to the queue.
+
+The follow-up draft is built from the clauses you flagged, quoting your standard and the vendor's language. Tick or untick clauses to change what it covers, then **Regenerate**. Nothing sends on its own:
+
+- **Copy to clipboard** copies the draft for your own email.
+- **Send email** opens the Coverbase email composer with the draft in it. It is addressed to the vendor's contacts, copies the contract's owners and watchers and the vendor's owners, analysts and watchers, and attaches the redlined Word file when the review has one. Check it and send it from there.
+- **Create Finding from selected** escalates the ticked clauses to a finding, when findings are on for your organization.
 
 #### Download the redlined Word file
 
@@ -479,7 +506,7 @@ Your first review is a draft of your playbook, not a verdict on the vendor.
 
 <Steps>
   <Step title="Week 1: copy and calibrate">
-    Copy the **SaaS Vendor Risk Clause Set** from the library. Run it against three executed contracts you already know well. Compare Guardian's verdicts to your own and note every disagreement.
+    Copy the **Enterprise SaaS Subscription** set from the library. Run it against three executed contracts you already know well. Compare Guardian's verdicts to your own and note every disagreement.
   </Step>
   <Step title="Week 2: tune the noisy clauses">
     Fix the five clauses that produced the most disagreement: add fallback tiers, sharpen guidance, correct component scope. Ignore the clauses that already work.

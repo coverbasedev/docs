@@ -193,7 +193,7 @@ Writes are supported on the same records that return values: `vendor`, `service`
 </ParamField>
 
 <ParamField body="values" type="object[]" required>
-  One or more `{ "config_id": "cbcfc_...", "value": ... }` entries. At least one is required, and a `config_id` may appear only once per request.
+  One to 100 `{ "config_id": "cbcfc_...", "value": ... }` entries. A `config_id` may appear only once per request.
 </ParamField>
 
 Note that you do **not** send `field_type`. The field's own definition is authoritative, which is what stops a value being written into the wrong typed column.
@@ -243,12 +243,13 @@ Send `null` to empty a field. The field then drops out of `custom_fields` entire
 
 ### Validation
 
-Every assignment in the request is checked before any of them is written, so a request naming one bad field changes nothing at all.
+Every assignment in the request is checked before any of them is written, so a request naming one bad field changes nothing at all. Errors from this endpoint return `detail` as a plain string that names the field, for example `{"detail": "'Review Date' expects an ISO date (YYYY-MM-DD)."}`.
 
 | Status | When |
 | ------ | ---- |
-| 400 | A value's type doesn't match the field (`number` into a `string` field, and so on) |
+| 400 | A value's type doesn't match the field (`number` into a `string` field, and so on), or a `date` value is not an ISO date (`YYYY-MM-DD`) |
 | 400 | A `select` or `multiselect` value isn't one of the field's configured option labels |
+| 400 | A `user` value names a user ID that doesn't exist in your organization |
 | 400 | The field doesn't apply to the given `target`, or has been disabled or archived |
 | 400 | The same `config_id` appears twice in one request |
 | 404 | The `object_id` or a `config_id` doesn't exist in your organization |

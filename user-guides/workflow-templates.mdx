@@ -1,6 +1,6 @@
 ---
 title: "Workflow templates"
-description: "The twenty-four ready-to-run automations Coverbase ships: what each one does, what you have to change before turning it on, and how to make one your own."
+description: "The nineteen ready-to-run automations Coverbase ships: what each one does, what you have to change before turning it on, and how to make one your own."
 icon: "wand-magic-sparkles"
 ---
 
@@ -12,7 +12,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
   This guide is part of the [User Guides](/user-guides/overview) collection. Read it when something in your program keeps slipping (a request nobody picks up, a renewal that passes in silence, a finding with no clock on it) and you want to know what is already built before you build an automation from scratch.
 </Info>
 
-A workflow in Coverbase watches for something happening: a request submitted, a vendor created, a contract date moved. Then it does something about it. Building one means picking a trigger, adding the gates that narrow it, and configuring the record it writes. That is an hour's work, and most of the automations a third-party program needs are the same twenty-four.
+A workflow in Coverbase watches for something happening: a request submitted, a vendor created, a contract date moved. Then it does something about it. Building one means picking a trigger, adding the gates that narrow it, and configuring the record it writes. That is an hour's work, and most of the automations a third-party program needs are the same nineteen.
 
 Open them from **Workflows** → **Browse templates**. Pick one, read what it does, apply it, work through the short list of things it says to change, then switch it on.
 
@@ -28,36 +28,33 @@ Open them from **Workflows** → **Browse templates**. Pick one, read what it do
   **An applied workflow arrives switched off.** Every template writes real records against live vendors (tasks, assessments, register entries), so applying one lands you in the editor with the steps drawn and the **Enabled** toggle off. Read the steps, work the setup list, then turn it on.
 </Warning>
 
-## The twenty-four templates
+## The nineteen templates
 
 Shelves follow the third-party lifecycle rather than the records the templates write, so the one you want is usually where the problem happens. **Routing** is the exception and sits last, because it is not a moment in that lifecycle but a rule applied across all of them.
 
 | Template | Shelf | Starts when | Steps | Needs |
 | --- | --- | --- | ---: | --- |
-| **Intake request triage** | Intake | A request is submitted | 1 | Intake |
+| **Risk-tiered intake routing** | Intake | A request is submitted | 4 | Intake |
 | **Intake to onboarding assessment** | Intake | A request is submitted | 2 | Intake |
-| **New vendor onboarding review** | Onboarding | A vendor is created | 2 | none |
-| **Enrol new vendors in monitoring** | Onboarding | A vendor is created | 1 | Radar |
+| **Purchase request approval chain** | Intake | A request is submitted | 6 | Intake, Purchase requests |
+| **New vendor onboarding, assessment to decision** | Onboarding | A vendor is created | 5 | none |
 | **High inherent risk escalation** | Risk triage | A vendor's risk score changes | 2 | Risk register |
-| **Service scope change review** | Risk triage | A service's scope changes | 1 | none |
-| **Bank detail change verification** | Risk triage | A vendor's bank details change | 1 | none |
-| **Screening match adjudication** | Risk triage | Screening raises a match | 1 | Screening |
-| **Zero-touch assessment launch** | Assessments | An assessment is created | 1 | none |
-| **Evidence collection handoff** | Assessments | Automatic collection gives up | 1 | none |
-| **Assessment result handoff** | Assessments | An assessment's status moves | 1 | none |
-| **Finding remediation clock** | Remediation | A finding is raised | 1 | none |
-| **Findings onto the risk register** | Remediation | A finding is raised | 1 | Risk register |
-| **Vendor commitment tracking** | Remediation | A vendor commitment is recorded | 1 | none |
-| **New contract review** | Contracts | A contract is added | 2 | Contracts |
-| **High-value contract legal review** | Contracts | A contract over a value threshold is added | 1 | Contracts |
-| **Contract renewal runway** | Contracts | A renewal or notice date moves | 1 | Contracts |
-| **Executed contract handoff** | Contracts | A contract is executed | 1 | Contracts |
-| **Expired contract follow-up** | Contracts | A contract's term runs out | 1 | Contracts |
-| **Contract obligation ownership** | Contracts | An obligation is raised | 1 | Contracts, Obligations |
+| **Bank detail change verification** | Risk triage | A vendor's bank details change or an account is added | 2 | none |
+| **Screening match adjudication** | Risk triage | Screening raises a match | 2 | Screening |
+| **Two-level assessment sign-off** | Assessments | An assessment reaches the Review results stage | 5 | none |
+| **Zero-touch assessment launch** | Assessments | An assessment is created | 2 | none |
+| **Evidence collection handoff** | Assessments | Automatic collection gives up | 2 | none |
+| **Reassessment scoping from the monitoring record** | Assessments | A vendor's next assessment comes due | 2 | Monitoring records |
+| **Finding remediation and vendor commitments** | Remediation | A finding is raised, or a vendor commitment recorded | 2 | none |
+| **Contract review, approval handoff and execution** | Contracts | A contract is added | 5 | Contracts |
+| **Contract renewal runway and expiry** | Contracts | A renewal or notice date moves, or a term runs out | 2 | Contracts |
+| **Contract obligation ownership** | Contracts | An obligation is raised | 2 | Contracts, Obligations |
 | **Monitoring signal triage** | Monitoring | Monitoring raises a signal | 2 | Radar |
-| **SLA measurement ownership** | Monitoring | An SLA is recorded | 1 | none |
-| **Vendor offboarding checklist** | Offboarding | A vendor record is archived | 1 | none |
-| **Route work to the vendor's owner** | Routing | Any task is raised | 1 | none |
+| **Monitoring record turned not clean** | Monitoring | A vendor's monitoring record turns Not clean | 2 | Monitoring records |
+| **Vendor offboarding with sign-off** | Offboarding | A vendor record is archived | 4 | none |
+| **Route work to the vendor's owner** | Routing | Any task is raised, or a vendor is created | 2 | none |
+
+Every template has at least two steps. A one-step rule is something you can build in a minute; what the library adds is the sequence around it: the kickoff after the assessment, the second check after the first, the sign-off after the last exit task.
 
 ### Which modules a template needs
 
@@ -68,43 +65,53 @@ A module counts as available only when both halves are true. The feature gate sa
 | Requirement | Feature gate | Permission | Templates it controls |
 | --- | --- | --- | --- |
 | Contracts | `contracts-page` | Read contracts | Every template on the Contracts shelf |
-| Radar monitoring | `radar-page` | Read Radar alerts | Enrol new vendors in monitoring, Monitoring signal triage |
-| Risk register | `risk-page` | Read risks | High inherent risk escalation, Findings onto the risk register |
+| Radar monitoring | `radar-page` | Read Radar alerts | Monitoring signal triage |
+| Risk register | `risk-page` | Read risks | High inherent risk escalation |
 | Screening | `sanctions-screening` | Read screening matches | Screening match adjudication |
 | Obligations | `obligations-page` | Read obligations | Contract obligation ownership |
-| Intake | none | Read intake sessions | Intake request triage, Intake to onboarding assessment |
+| Intake | none | Read intake sessions | Risk-tiered intake routing, Intake to onboarding assessment, Purchase request approval chain |
+| Purchase requests | `procurement-demo` | none | Purchase request approval chain |
+| Monitoring records | `monitoring-between-assessments` | Read vendors | Reassessment scoping from the monitoring record, Monitoring record turned not clean |
 
-Intake is the one module with no gate of its own, so the read permission is the whole test. That matches the left-hand navigation, which shows the **Intake** item on the same rule.
+Intake is the one module with no gate of its own, so the read permission is the whole test. That matches the left-hand navigation, which shows the **Intake** item on the same rule. Purchase requests are the reverse: there is no separate read permission for them, so the gate is the whole test.
 
-Contract obligation ownership is the only template that needs two modules at once: the obligations it assigns come out of contract paperwork, so it is offered when you have both.
+Two templates need two modules at once. Contract obligation ownership needs Contracts and Obligations, because the obligations it assigns come out of contract paperwork. Purchase request approval chain needs Intake and Purchase requests, because it turns a submitted request into a purchase request.
 
-Eleven templates require nothing beyond vendors, services, assessments, findings, SLAs and tasks, and are visible in every workspace: New vendor onboarding review, Service scope change review, Bank detail change verification, Zero-touch assessment launch, Evidence collection handoff, Assessment result handoff, Finding remediation clock, Vendor commitment tracking, SLA measurement ownership, Vendor offboarding checklist and Route work to the vendor's owner.
+Eight templates require nothing beyond vendors, services, assessments, findings and tasks, and are visible in every workspace: New vendor onboarding, assessment to decision; Bank detail change verification; Two-level assessment sign-off; Zero-touch assessment launch; Evidence collection handoff; Finding remediation and vendor commitments; Vendor offboarding with sign-off; and Route work to the vendor's owner.
 
-Three near misses are worth naming, because you might expect them to be gated and they are not.
+Two near misses are worth naming, because you might expect them to be gated and they are not.
 
-- **Finding templates are not gated on the Findings module.** A finding raised inside an assessment is exempt from that gate, so findings exist, and the templates work, in a workspace without the standalone Findings area.
+- **Finding templates are not gated on the Findings module.** A finding raised inside an assessment is exempt from that gate, so findings exist, and the template works, in a workspace without the standalone Findings area.
 - **Zero-touch assessment launch has nothing to do with the Zero Touch Assessments module.** It starts an ordinary assessment that collects no documents.
-- **SLA measurement ownership is not gated on Contracts**, even though an SLA is usually a contract term. SLAs are recorded on a service's **Performance** tab in every workspace, so gating it would hide a template that works. It sits on the **Monitoring** shelf for the same reason: putting it with the contract templates would leave an ungated template on a shelf that is meant to disappear with the Contracts module.
+
+## How a chain moves
+
+Most templates are chains: one step's decision opens the next stage, and a rejection sends the work back. Four rules hold every chain together, and each template's setup list repeats the ones that apply to it.
+
+- **A review stage advances on Accept and Reject.** The next stage opens when a review is set to the built-in **Accept** status, and the rework or rejection step fires on **Reject**. A custom decision status you added yourself does neither.
+- **Stages are told apart by review name.** Each step's gate matches the name of the review the stage before it opened. Rename a review and update the gates on the steps after it.
+- **A step acts only on what its own workflow opened.** The **Opened by this workflow** condition (under **This workflow** in the condition picker) ignores a review or task opened by hand, or by another workflow, that happens to carry the same name. Keep it if you rework a step.
+- **A handoff between people follows the task title.** Where the next step waits for a task to be completed, it recognizes the task by its title. A task renamed by hand stops the chain there.
 
 ## Every template in detail
 
-Each entry below gives the trigger the template listens for, the records it writes and their default clocks, and the short list of things to change before you switch it on. Where a template ships wide, there is a note on the gate most workspaces end up adding.
+Each entry below gives the trigger the template listens for, the records it writes and their default clocks, and the short list of things to change before you switch it on.
 
 <Note>
-  Every title below is written the way the template writes it. `{vendor}` stands for the vendor's own name, `{contract}` for the contract's, and `{value}` for its recorded value, all filled in when the workflow runs, so a real task reads "Triage intake request for Northwind Analytics".
+  Every title below is written the way the template writes it. `{vendor}` stands for the vendor's own name and `{contract}` for the contract's, both filled in when the workflow runs, so a real task reads "Kick off onboarding review for Northwind Analytics".
 </Note>
 
-### Intake request triage
+### Risk-tiered intake routing
 
-**Shelf:** Intake · **Needs:** Intake · **Steps:** 1 · **For:** intake owners and TPRM program leads
+**Shelf:** Intake · **Needs:** Intake · **Steps:** 4 · **For:** intake owners and TPRM program leads
 
-Every submitted request becomes an owned, dated triage task instead of an email somebody has to remember, so the requester gets a decision in days and the queue is visible when it is not moving.
+Sends each request down the path its inherent risk earns, so the review effort matches the exposure instead of one depth for all.
 
-**What it does.** When an intake session is submitted, it opens one task against the request's vendor. Coverbase creates and links that vendor as part of submission, including for a third party nobody has heard of before, so the task always has something to point at.
+**What it does.** Three steps listen for a request being submitted, each gated on a band of the 0 to 100 inherent risk score. Up to **30**, the request gets an approval task instead of an assessment. From 30 to **70** it opens a standard assessment, and above 70 an enhanced one. A fourth step hangs off whichever assessment opened and raises the kickoff task.
 
-**What lands in the queue.** A task titled **"Triage intake request for `{vendor}`"**, filed as an intake request review, **due in 2 days**, assigned to whoever applied the template. Its instructions ask the triager to check whether the vendor or a close substitute is already in the portfolio, confirm the requester, the business use case and the data the service would touch, and set the vendor's relationship owner and risk analyst so later steps have somewhere to route.
+**What lands in the queue.** For a low score, a task titled **"Approve low-risk request for `{vendor}`"**, filed as an intake request review, **due in 2 days**. Otherwise an assessment named **"Standard due diligence for `{vendor}`"** or **"Enhanced due diligence for `{vendor}`"**, plus a task titled **"Kick off due diligence for `{vendor}`"**, filed as an assessment review, **due in 3 days**.
 
-**Before you turn it on.** Re-point the assignee: an intake desk usually wants a shared department rather than a person. Tune the two-day clock to the intake SLA you publish.
+**Before you turn it on.** Move the 30 and 70 breaks onto your own tier boundaries. Scores carry decimals, so start each band just above where the one below ends, or a score between them opens nothing. Point the standard and enhanced steps at your own assessment plans, or each opens an empty assessment. Re-point the approval task, the assessments and the kickoff task. The score is the one the intake's inherent risk questionnaire produced; an intake without one falls back to the vendor's current score, and with neither the request matches no band.
 
 ### Intake to onboarding assessment
 
@@ -116,40 +123,35 @@ Turns an accepted request into a real assessment the same day it is submitted, w
 
 **What lands in the queue.** The assessment, plus a task titled **"Kick off onboarding review for `{vendor}`"**, filed as an assessment review, **due in 3 days**.
 
-**Before you turn it on.** Point the assessment step at one of your assessment plans, or it opens an empty ad-hoc assessment that somebody then has to scope by hand. Re-point the assessment's creator, its assignee and the task.
+**Before you turn it on.** Point the assessment step at one of your assessment plans, or it opens an empty ad-hoc assessment that somebody then has to scope by hand. Re-point the assessment's creator, its assignee and the task. If only some requests should open an assessment, gate the trigger on an inherent-risk threshold, or use the risk-tiered routing template above, which does it for you.
 
-**The gate most people add.** If only some requests should open an assessment, gate the trigger. An inherent-risk threshold is the usual choice, so a request for a low-risk tool does not open a full review.
+### Purchase request approval chain
 
-### New vendor onboarding review
+**Shelf:** Intake · **Needs:** Intake and Purchase requests · **Steps:** 6 · **For:** procurement, intake owners and approvers
 
-**Shelf:** Onboarding · **Needs:** nothing · **Steps:** 2 · **For:** TPRM program owners and assessment leads
+Turns a submitted request into a purchase request and walks it through the business owner, then risk and security, then legal and commercial, each approval opening the next. A rejection at any stage goes back to the requester instead of stalling in a queue.
 
-Any vendor added to the portfolio gets an assessment and an owner, whether it arrived by intake, by import, or by hand. Vendors that skip intake are the ones that usually go unassessed.
+**What it does.** On submission it opens a purchase request titled **"Purchase request: `{vendor}`"**, and a review for the business owner. Accepting that review opens the risk and security review; accepting that opens the legal and commercial review.
 
-**What it does.** The same two-step shape as the intake version, but triggered on vendor creation rather than intake submission, so it catches the vendors that never went through intake at all. Run both if you want intake-sourced vendors treated differently from imported ones; run this one alone if you want a single rule for everything.
+**What lands in the queue.** The three reviews in turn, then, once the last is accepted, a task titled **"Place the order with `{vendor}`"**, filed as a procurement review, **due in 5 days**. A rejection at any stage raises **"Purchase request for `{vendor}` was declined"**, **due in 3 days**, asking the owner to tell the requester what would change the answer.
 
-**What lands in the queue.** An assessment named **"Onboarding assessment for `{vendor}`"**, then a task titled **"Kick off onboarding review for `{vendor}`"**, filed as an assessment review, **due in 5 days**. The clock is longer than the intake version's because a vendor that arrived by import has nobody waiting on an answer.
+**Before you turn it on.** Re-point each review at the person or group who signs at that stage. They all land on you until you do, which defeats the chain. The chain rules in [How a chain moves](#how-a-chain-moves) apply.
 
-**Before you turn it on.** Point the assessment step at an assessment plan. Re-point the creator, assignee and task.
+### New vendor onboarding, assessment to decision
 
-**The gate most people add.** A bulk import of several hundred vendors will raise an assessment for each one. Gate the trigger on a risk threshold, or switch the workflow off for the duration of the migration and back on afterwards.
+**Shelf:** Onboarding · **Needs:** nothing · **Steps:** 5 · **For:** TPRM program owners and assessment leads
+
+Any vendor added to the portfolio, by intake, by import, or by hand, gets an assessment, a kickoff task and, once the assessment is complete, a recorded onboarding decision. Vendors that skip intake are the ones that usually go unassessed.
+
+**What it does.** On vendor creation it opens **"Onboarding assessment for `{vendor}`"** and, off that assessment, a kickoff task. Separately, when any assessment reaches the Complete stage, it opens a review named **"Onboarding decision: `{vendor}`"**. Accepting that review raises the activation task; rejecting it raises the close-out task.
+
+**What lands in the queue.** A task titled **"Kick off onboarding review for `{vendor}`"**, **due in 5 days**, then the decision review, then either **"Activate `{vendor}`"** or **"Close out declined vendor `{vendor}`"**, each **due in 3 days** and filed as an assessment review.
+
+**Before you turn it on.** Point the assessment step at an assessment plan. Re-point the creator, the assignee, the decision review and both follow-up tasks; the decision usually belongs to the TPRM lead and the follow-up to the relationship owner. The decision opens for every assessment in the workspace that reaches Complete, so gate it on a plan if only onboarding assessments should ask for one. A bulk import of several hundred vendors raises an assessment for each: gate the first step on a risk threshold, or switch the workflow off for the duration of the migration.
 
 <Frame caption="A two-step template. The detail pane spells out each step as when / if / then, and lists what to change before turning it on.">
-  <img src="/images/user-guides/workflow-template-detail.png" alt="The detail pane for High inherent risk escalation, showing two steps and three setup notes" />
+  <img src="/images/user-guides/workflow-template-detail.png" alt="The detail pane for High inherent risk escalation, showing two steps and four setup notes" />
 </Frame>
-
-
-### Enrol new vendors in monitoring
-
-**Shelf:** Onboarding · **Needs:** Radar monitoring · **Steps:** 1 · **For:** TPRM program owners and monitoring leads
-
-Switches continuous business and financial monitoring on for every vendor as it is created, so the portfolio is watched from day one rather than from whenever somebody remembers to enrol it.
-
-**What it does.** On vendor creation it turns Radar monitoring on for that vendor. It writes no task and raises no queue item: the only visible change is that the vendor starts being monitored, and any signal it later produces is what the monitoring templates below act on.
-
-**Before you turn it on.** Drop the monitoring types you do not license, so the workflow does not try to enrol a vendor in something your subscription does not cover.
-
-**The gate most people add.** Monitoring consumes subscription capacity. If you monitor only part of the portfolio, gate the trigger on an inherent-risk threshold or a tier tag rather than enrolling everything.
 
 ### High inherent risk escalation
 
@@ -165,220 +167,135 @@ Catches the vendor that was low risk at onboarding and is not any more. When the
 
 **Worth knowing.** Both steps fire on every update that moves a watched field while the score is still in the band, so a vendor whose score walks from 72 to 78 to 81 collects a task and an entry each time. Narrow the gate, or drop the register step, if you want one per escalation.
 
-### Service scope change review
-
-**Shelf:** Risk triage · **Needs:** nothing · **Steps:** 1 · **For:** risk analysts and service owners
-
-A service that quietly grows (more data, more users, a new region) is the most common way an assessed vendor stops being assessed for what it does.
-
-**What it does.** Watches a service's `description`, `raw_irq_score` and inherent risk level. When any of the three changes, it raises a re-check task.
-
-**What lands in the queue.** A task titled **"Scope changed on `{service}`: re-check the review"**, filed as an assessment review, **due in 7 days**, asking the owner to compare what changed against the scope the last assessment covered and decide whether a reassessment, an extra control set, or nothing at all is warranted.
-
-**Before you turn it on.** Trim the watched field list to the ones your organization maintains. Every field left on it is another reason the task fires, and a description your team edits for wording will raise a re-check.
-
-**The gate most people add.** Route it to the service's own relationship owner rather than a central desk, since the person who knows what changed is usually the one who changed it.
-
 ### Bank detail change verification
 
-**Shelf:** Risk triage · **Needs:** nothing · **Steps:** 1 · **For:** accounts payable, treasury and vendor managers
+**Shelf:** Risk triage · **Needs:** nothing · **Steps:** 2 · **For:** accounts payable, treasury and vendor managers
 
 Payment-instruction fraud starts with an email and a plausible letterhead, and the next invoice pays someone else. This puts a verification step between the change and the payment run.
 
-**What it does.** Listens for a vendor's bank account being updated and raises a verification task against that vendor. It fires on a change, not on the first set of details recorded.
+**What it does.** One step listens for a vendor's bank account being updated, and a second for a new account being added, since a second account is the other half of the same fraud.
 
-**What lands in the queue.** A task titled **"Verify changed bank details for `{vendor}`"**, filed as an assessment review, **due in 2 days**, whose instructions carry the control itself: call the vendor on a number you already held rather than one from the request, get a second person on their side where the amount warrants it, check whether a payment has already gone out on the new details, and record who confirmed it.
+**What lands in the queue.** A task titled **"Verify changed bank details for `{vendor}`"** or **"Verify new bank details for `{vendor}`"**, filed as an assessment review, **due in 2 days**, whose instructions carry the control itself: call the vendor on a number you already held rather than one from the request, confirm which account future invoices should pay, and record who confirmed it.
 
-**Before you turn it on.** Re-point the task at whoever is allowed to approve a payment change. The control is worth nothing if it lands on the person who made the change. Two days is short because the window that matters is the one before your next payment run. Match it to that run rather than to your usual SLA.
-
-**The gate most people add.** None, usually. This is one of the few templates where firing on everything is the point. If you want a new account verified as well as a changed one, add a second step on vendor bank account creation.
+**Before you turn it on.** Re-point the task at whoever is allowed to approve a payment change. The control is worth nothing if it lands on the person who made the change. Two days is short because the window that matters is the one before your next payment run; match it to that run. A vendor's first account raises a task too, so drop the second step if you verify first accounts during onboarding instead.
 
 ### Screening match adjudication
 
-**Shelf:** Risk triage · **Needs:** Screening · **Steps:** 1 · **For:** compliance analysts and the financial crime desk
+**Shelf:** Risk triage · **Needs:** Screening · **Steps:** 2 · **For:** compliance analysts and the financial crime desk
 
-A sanctions or adverse-media hit is only useful if somebody clears it or acts on it. This puts every new match on a desk with a clock, so the queue is adjudicated rather than accumulated.
+A sanctions or adverse-media hit is only useful if somebody clears it or acts on it. This puts every new match on a desk with a clock, then has a second person check each decision, so no one clears their own match.
 
-**What it does.** Listens for screening raising a match and opens one adjudication task.
+**What it does.** When screening raises a match it opens an adjudication task. When that task is completed, a second step raises the second-line check.
 
-**What lands in the queue.** A task titled **"Adjudicate a screening match for `{vendor}`"**, filed as an assessment review, **due in 3 days**. Its instructions ask the analyst to compare the matched record against what you hold (legal name, jurisdiction, registration, directors), decide between false positive, true match and needs-more-information, escalate a true match before any further payment or onboarding step, and record the reasoning, which is the evidence a regulator asks for.
+**What lands in the queue.** A task titled **"Adjudicate a screening match for `{vendor}`"**, **due in 3 days**, asking the analyst to compare the matched record against what you hold, decide between false positive, true match and needs-more-information, and record the reasoning. Then **"Check a screening decision for `{vendor}`"**, **due in 2 days**. Both are filed as assessment reviews.
 
-**Before you turn it on.** Re-point the task at the compliance desk that owns screening, which is rarely the TPRM queue. Three days is a starting clock; if you work to a regulatory deadline, set that instead.
+**Before you turn it on.** Re-point the adjudication at the compliance desk that owns screening, which is rarely the TPRM queue, and point the second-line check at a different person. Three days is a starting clock; if you work to a regulatory deadline, set that instead. Every match raises a task, including the false positives, which are most of them, so gate the trigger once you know your own hit rate.
 
-**The gate most people add.** Every match raising a task includes the false positives, which are most of them. Gate the trigger once you know your own hit rate.
+### Two-level assessment sign-off
+
+**Shelf:** Assessments · **Needs:** nothing · **Steps:** 5 · **For:** assessment leads, QA reviewers and second-line risk
+
+A maker-checker review for every assessment. Only a second-line approval completes the assessment, and the result is then handed to the business.
+
+**What it does.** When an assessment reaches the Review results stage it opens **"First-line review: `{vendor}`"**. Accepting it opens **"Second-line review: `{vendor}`"**. A second-line rejection reopens the first line as **"First-line review (rework): `{vendor}`"**; a second-line acceptance completes the assessment. Once the assessment is complete, the last step raises the handoff.
+
+**What lands in the queue.** The reviews in turn, then a task titled **"Assessment result for `{vendor}`"**, filed as an assessment review, **due in 3 days**, whose description links straight to the report.
+
+**Before you turn it on.** Re-point the first-line and second-line reviews at different people or groups; two reviews by the same person is not a check. Re-point the handoff task at the person who asked for the assessment, usually the vendor's relationship owner. The chain starts for every assessment that reaches Review results, so gate that step on a plan if only some assessments need two levels. The chain rules in [How a chain moves](#how-a-chain-moves) apply.
 
 ### Zero-touch assessment launch
 
-**Shelf:** Assessments · **Needs:** nothing · **Steps:** 1 · **For:** assessment team leads
+**Shelf:** Assessments · **Needs:** nothing · **Steps:** 2 · **For:** assessment team leads
 
 Assessments that need nothing from the vendor should not wait in a queue for somebody to press Start.
 
-**What it does.** On assessment creation, it checks the assessment's document collection mode. If the mode is **none**, it starts the assessment run immediately. If the assessment collects documents, manually or automatically, the step is rejected and nothing happens, so an assessment is never started behind the person who was about to collect its evidence.
+**What it does.** On assessment creation, it checks the assessment's document collection mode. If the mode is **none**, it starts the assessment run immediately. If the assessment collects documents, manually or automatically, the step is rejected and nothing happens, so an assessment is never started behind the person who was about to collect its evidence. When such an assessment reaches Review results, the second step raises a review task.
 
-**Before you turn it on.** Pair it with an assessment plan whose collection mode is **none**, or nothing will ever match: assessments default to manual collection, and a default workspace will see this workflow sit idle forever. Widen the gate only if you are sure you want assessments that expect evidence to start without it.
+**What lands in the queue.** A task titled **"Review the zero-touch result for `{vendor}`"**, filed as an assessment review, **due in 3 days**, linking the results.
+
+**Before you turn it on.** Pair it with an assessment plan whose collection mode is **none**, or nothing will ever match: assessments default to manual collection, and a default workspace will see this workflow sit idle forever. Re-point the review task at whoever signs off automated results.
 
 **Worth knowing.** Despite the name, this has no relationship to the Zero Touch Assessments module. It starts an ordinary assessment.
 
 ### Evidence collection handoff
 
-**Shelf:** Assessments · **Needs:** nothing · **Steps:** 1 · **For:** assessment analysts and evidence coordinators
+**Shelf:** Assessments · **Needs:** nothing · **Steps:** 2 · **For:** assessment analysts and evidence coordinators
 
-Automatic evidence collection gives up quietly. This catches the handoff and puts it on a named desk with a date, so an assessment does not sit blocked on documents nobody knows are missing.
+Automatic evidence collection gives up quietly. This catches the handoff and puts it on a named desk with a date, then hands the assessment back to its analyst once the documents are in.
 
-**What it does.** Listens for the event Coverbase raises when automatic collection hands an assessment back to a human, and opens a collection task against that assessment's vendor.
+**What it does.** Listens for the event Coverbase raises when automatic collection hands an assessment back to a human, and opens a collection task. When that task is completed, the second step raises the handback.
 
-**What lands in the queue.** A task titled **"Collect evidence for `{vendor}`"**, filed as a document collection handoff so it sorts with the rest of the evidence work, **due in 5 days**.
+**What lands in the queue.** A task titled **"Collect evidence for `{vendor}`"**, filed as a document collection handoff so it sorts with the rest of the evidence work, **due in 5 days**. Then **"Resume the assessment for `{vendor}`"**, filed as an assessment review, **due in 3 days**.
 
-**Before you turn it on.** Re-point the task to whoever chases vendors for documents, which is rarely the analyst who launched the assessment. Match the five-day clock to the evidence SLA you publish to vendors.
+**Before you turn it on.** Re-point the collection task to whoever chases vendors for documents, and the handback at the analyst who owns the assessment. Match the five-day clock to the evidence SLA you publish.
 
-### Assessment result handoff
+### Reassessment scoping from the monitoring record
 
-**Shelf:** Assessments · **Needs:** nothing · **Steps:** 1 · **For:** assessment leads and vendor relationship owners
+**Shelf:** Assessments · **Needs:** Monitoring records · **Steps:** 2 · **For:** assessment leads and the analysts who plan reassessments
 
-An assessment that finishes and then sits in the risk team's records has not changed anybody's decision. This hands the result back to the business as soon as the assessment reaches a conclusion.
+When a vendor's next assessment comes due, the monitoring record already says what happened since the last one. This hands that record to an analyst while there is still time to scope the reassessment on it.
 
-**What it does.** Watches an assessment's status field and raises a handoff task when it moves.
+**What it does.** Fires once per record, when the reassessment reminder goes out. A record that is **Not clean** or **Unmonitored** raises a scoping task; a **Clean** one raises a short task to confirm the lighter approach still fits. A record still pending its first verdict raises neither.
 
-**What lands in the queue.** A task titled **"Assessment result for `{vendor}`"**, filed as an assessment review, **due in 3 days**, whose description carries the status the assessment reached and a link straight to the report. Its instructions ask the owner to read the recommendation and residual risk before the conversation rather than during it, tell the requester what it means for the thing they wanted to buy or keep, and agree who owns any conditions attached to the approval.
+**What lands in the queue.** **"Scope the reassessment for `{vendor}`"** or **"Confirm the reassessment approach for `{vendor}`"**, filed as an assessment review, **due in 5 days**, linking the record.
 
-**Before you turn it on.** Narrow the trigger to your own completed status, or this fires on every status move. Re-point the task at the person who asked for the assessment, which is usually the vendor's relationship owner, and the routing template below does that for you.
+**Before you turn it on.** Re-point both tasks at whoever scopes reassessments, usually the vendor's risk analyst. If the reminder leaves too little time to scope, move it earlier in your reassessment settings.
 
-<Note>
-  The task links the report rather than quoting its recommendation. A status can move before a recommendation exists, and a placeholder that resolves to nothing stops the task being raised at all, so the link is the reliable form.
-</Note>
+### Finding remediation and vendor commitments
 
-### Finding remediation clock
+**Shelf:** Remediation · **Needs:** nothing · **Steps:** 2 · **For:** findings owners and vendor relationship owners
 
-**Shelf:** Remediation · **Needs:** nothing · **Steps:** 1 · **For:** findings owners and compliance leads
+A finding with no owner and no date tends to stay open until the next audit asks about it, and a vendor's promise to fix it is where tracking usually stops.
 
-A finding with no owner and no date tends to stay open until the next audit asks about it.
+**What it does.** Two independent steps. One opens a dated remediation task for every new finding, whatever raised it. The other raises a chase task when a vendor commitment is recorded.
 
-**What it does.** Opens one dated remediation task for every new finding, whatever raised it.
+**What lands in the queue.** A task titled **"Remediate finding on `{vendor}`"**, **due in 30 days**, and a task titled **"Check the commitment from `{vendor}`"**, **due in 14 days**, both filed as assessment reviews.
 
-**What lands in the queue.** A task titled **"Remediate finding on `{vendor}`"**, filed as an assessment review, **due in 30 days**, with instructions to confirm the finding is real, agree a remediation or an accepted-risk position with the vendor, and record the commitment.
+**Before you turn it on.** Re-point both tasks: findings usually belong to the vendor's risk analyst, and chasing a commitment to whoever holds the relationship. Thirty days is one clock for every finding; if your policy varies by severity, duplicate the first step and gate each copy with a filter. Fourteen days on the commitment is a check-in, not the commitment's own deadline.
 
-**Before you turn it on.** Re-point the task: findings usually belong to the vendor's risk analyst rather than whoever applied the template.
+### Contract review, approval handoff and execution
 
-**The gate most people add.** Thirty days is one clock for every finding regardless of severity. If your policy varies, apply the template twice and gate each copy on a severity band, with a shorter clock on the critical one.
+**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 5 · **For:** legal, security, procurement and contract owners
 
-### Findings onto the risk register
+Every new contract is read by legal, then by security and privacy, before anyone is asked to approve it. Signature then raises the handover, so the obligations get owners while the negotiation is still fresh.
 
-**Shelf:** Remediation · **Needs:** Risk register · **Steps:** 1 · **For:** risk managers and the risk committee
+**What it does.** A new contract opens **"Legal review: `{contract}`"**. Accepting it opens **"Security and privacy review: `{contract}`"**, and accepting that raises the approval handoff. A rejection at either review raises the rework task. Separately, when the contract reaches **Executed**, the last step raises the handover.
 
-Control gaps live in assessments; the risk committee reads the register. This carries every new finding across so the register reflects what the program actually found.
+**What lands in the queue.** The two reviews in turn, then **"Submit `{contract}` for approval"**, **due in 3 days**, or on a rejection **"Renegotiate `{contract}`"**, **due in 7 days**. On execution, **"Hand over `{contract}`"**, **due in 5 days**. All three tasks are filed as contract reviews and link the contract.
 
-**What it does.** Opens a risk register entry for each new finding, described as **"Control gap identified on `{vendor}`"**, at **likelihood 3, impact 4**, with no risk domain set.
+**Before you turn it on.** Re-point both reviews and the tasks. Value-based sign-off belongs to the contract approval policies in your settings, not to this workflow; the approval task only says the reviews are done. Imports create contracts too, so switch the workflow off during a bulk import, or gate the first step on value or type. The chain rules in [How a chain moves](#how-a-chain-moves) apply.
 
-**Before you turn it on.** Set the risk domain so entries roll into the right appetite tolerance. The likelihood and impact are a starting position for a human to correct before the next committee, not a score.
+### Contract renewal runway and expiry
 
-**The gate most people add.** Every finding becoming an entry is a lot of entries for a busy findings queue. Add a severity gate if your register is meant to hold only the material ones.
+**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 2 · **For:** procurement and vendor managers
 
-### Vendor commitment tracking
+Auto-renewal deadlines pass in silence and cost a year of spend. Whenever a renewal, expiry or notice date is set or changed, this raises a decision task with a month of runway on it, and if a term still runs out, a follow-up the day it expires.
 
-**Shelf:** Remediation · **Needs:** nothing · **Steps:** 1 · **For:** findings owners and vendor relationship owners
+**What it does.** One step watches four fields on a contract: `renewal_date`, `expiration_date`, `notice_due_to_vendor_date` and `auto_renew`. When any of them moves, it raises the decision task. The other fires when Coverbase's daily lifecycle job marks a contract expired, which is the day after its term ends.
 
-A vendor promising to fix something is where most remediation stops being tracked. This puts a dated task behind every commitment as soon as it is recorded, so the promise has an owner on your side as well as theirs.
+**What lands in the queue.** A task titled **"Renewal decision: `{contract}`"**, **due in 30 days**, and on expiry **"`{contract}` has expired"**, **due in 7 days**, whose description warns that the service it covers is running uncontracted. Both are filed as contract reviews and link the contract.
 
-**What it does.** Listens for a vendor commitment being recorded and raises the chase task against that vendor.
-
-**What lands in the queue.** A task titled **"Check the commitment from `{vendor}`"**, filed as an assessment review, **due in 14 days**, instructing the owner to confirm whether the commitment was delivered, ask for evidence rather than confirmation where the finding warrants it, and agree and record a new date if it has slipped rather than letting the original lapse.
-
-**Before you turn it on.** Re-point the task at whoever holds the vendor relationship, since chasing a commitment is a relationship conversation. Fourteen days is a check-in, not the commitment's own deadline: set it to however long before the due date you want to start chasing.
-
-### New contract review
-
-**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 2 · **For:** legal, procurement and contract owners
-
-Every contract that lands gets a review record and a dated task, so legal and risk see it before it is signed rather than at renewal.
-
-**What it does.** Two independent steps on contract creation. One opens a review record named **"Contract review: `{contract}`"**, bound to the contract that triggered it. The other raises the task that gives the review a clock.
-
-**What lands in the queue.** The review, plus a task titled **"Review `{contract}` for `{vendor}`"**, filed as a contract review, **due in 7 days**, whose body names the kind of agreement and links straight to it.
-
-**Before you turn it on.** Re-point both steps. Set the review's status so it starts in your own review pipeline rather than at its default.
-
-**The gate most people add.** Gate the trigger on contract type if only some contracts need legal. For a value threshold, use the next template rather than building the gate yourself.
-
-### High-value contract legal review
-
-**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 1 · **For:** legal counsel and procurement leads
-
-Most contracts do not need a lawyer and the ones that do are the expensive ones. This sends only contracts over a value threshold to legal, so the queue that reaches them is the queue worth their time.
-
-**What it does.** Fires on contract creation like the template above, but with a gate on the contract's own value: only a contract whose recorded value is over **100,000** raises the task.
-
-**What lands in the queue.** A task titled **"Legal review: `{contract}` (`{value}`)"**, filed as a contract review, **due in 10 days**. Its instructions point the reviewer at liability, indemnity and termination, at whether the signature authority matches the size, and at whether the payment and renewal terms are the negotiated ones rather than the vendor's paper.
-
-**Before you turn it on.** Move the threshold onto whatever your delegation of authority says. It reads the contract's own value amount, in the contract's own currency, with **no conversion**: a threshold of 100,000 matches a 100,001 EUR contract and a 100,001 JPY one alike, so set it per currency if you operate in several.
-
-<Warning>
-  A contract whose value has not been filled in yet does not match. If your contracts are created first and priced later, this template never sees them. Trigger on the value being set instead of on creation.
-</Warning>
-
-### Contract renewal runway
-
-**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 1 · **For:** procurement and vendor managers
-
-Auto-renewal deadlines pass in silence and cost a year of spend. Whenever a renewal, expiry or notice date is set or changed, this raises a decision task with a month of runway on it.
-
-**What it does.** Watches four fields on a contract: `renewal_date`, `expiration_date`, `notice_due_to_vendor_date` and `auto_renew`. When any of them moves, it raises the decision task.
-
-**What lands in the queue.** A task titled **"Renewal decision: `{contract}`"**, filed as a contract review, **due in 30 days**, linking the contract.
-
-**Before you turn it on.** Understand what triggers it: this fires when a date **moves**, not when one **approaches**. It is the workflow for "somebody just told us the renewal is in March", not the countdown to March itself. Pair it with [contract date reminders](/user-guides/contract-dates-and-reminders) for the countdown. Re-point the task to the contract's owner, and trim the watched date list to the ones your contracts actually carry.
+**Before you turn it on.** Understand what triggers it: the first step fires when a date **moves**, not when one **approaches**. It is the workflow for "somebody just told us the renewal is in March", not the countdown to March itself; pair it with [contract date reminders](/user-guides/contract-dates-and-reminders) for the countdown. Re-point both tasks to the contract's owner, and trim the watched date list to the ones your contracts carry. The expiry step fires on every expiry, including ones already replaced, so gate it if your renewals supersede rather than extend. A bulk import that brings contracts in already expired does not raise a task for each, because only the daily job marking a term expired fires it.
 
 <Note>
-  The dates themselves are available as `{contract:renewal_date}` and `{contract:notice_due_date}` if you want them in the body, and the template leaves them out on purpose. `auto_renew` is one of the watched fields, so this can fire on a contract that has no renewal date on file yet, and a placeholder with nothing behind it stops the task being raised at all.
+  The dates themselves are available as `{contract:renewal_date}` and `{contract:notice_due_date}` if you want them in the body, and the template leaves them out on purpose. A contract with that date still empty would stop the task being raised at all.
 </Note>
 
 <Frame caption="Search spans the whole library, not just the shelf you are on, and matches the job labels as well as the names.">
-  <img src="/images/user-guides/workflow-template-search.png" alt="Searching the workflow template gallery for 'renewal', showing the two contract templates" />
+  <img src="/images/user-guides/workflow-template-search.png" alt="Searching the workflow template gallery for 'segregation', showing three templates from different shelves that carry the Segregation of duties label" />
 </Frame>
-
-
-### Executed contract handoff
-
-**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 1 · **For:** contract owners, procurement and the TPRM desk
-
-After signature, the contract's obligations belong to the business rather than to legal. This raises the handoff when a contract is executed, so the obligations it creates get owners while the negotiation is still fresh.
-
-**What it does.** Watches the contract's approval state and its execution date, and raises the handoff task only once the contract reaches **Executed**. Earlier moves through the approval pipeline raise nothing.
-
-**What lands in the queue.** A task titled **"Hand over `{contract}`"**, filed as a contract review, **due in 5 days**, whose body names the state the contract reached and links it. Its instructions cover recording the obligations with owners and dates, getting the renewal and notice dates onto the record rather than leaving them in the paper, linking the services and spend it covers, and telling the requester it is signed.
-
-**Before you turn it on.** Re-point the task at whoever owns the relationship after signature, which is rarely the person who negotiated it.
-
-<Note>
-  A contract that goes back to draft and forward again hands over once each time it is signed, which is usually what you want for a re-executed amendment.
-</Note>
-
-### Expired contract follow-up
-
-**Shelf:** Contracts · **Needs:** Contracts · **Steps:** 1 · **For:** procurement, vendor managers and the TPRM desk
-
-A contract whose term ran out is either a renewal nobody actioned or a relationship nobody closed, and both are worth knowing about.
-
-**What it does.** Fires when Coverbase's daily lifecycle job marks a contract expired, which is the day after its term ends.
-
-**What lands in the queue.** A task titled **"`{contract}` has expired"**, filed as a contract review, **due in 7 days**. Its instructions start with the urgent case: establish whether the service is still being used, because an expired contract on a live service is an uncontracted service.
-
-**Before you turn it on.** Re-point the task at the contract's owner. It fires on every expiry, including the ones that expire because a replacement was already signed, so gate it if your renewals supersede rather than extend.
-
-<Note>
-  This is the daily job, not somebody editing a status by hand. A bulk import that back-dates a hundred historical contracts to expired does not raise a hundred tasks.
-</Note>
 
 ### Contract obligation ownership
 
-**Shelf:** Contracts · **Needs:** Contracts **and** Obligations · **Steps:** 1 · **For:** contract owners, compliance and control owners
+**Shelf:** Contracts · **Needs:** Contracts **and** Obligations · **Steps:** 2 · **For:** contract owners, compliance and control owners
 
-An obligation extracted from a contract and left unassigned is a commitment the org has made and nobody has read. This puts an owner and a date behind each one as it is raised.
+An obligation extracted from a contract and left unassigned is a commitment the org has made and nobody has read. This puts an owner and a date behind each one as it is raised, then has that owner tie it to the control that satisfies it.
 
-**What it does.** Fires when an obligation is raised against a vendor's document, which is usually when contract analysis finishes.
+**What it does.** Fires when an obligation is raised against a vendor's document, which is usually when contract analysis finishes. When that task is completed, the second step raises the evidence task.
 
-**What lands in the queue.** A task titled **"Assign a contract obligation for `{vendor}`"**, filed as a contract review, **due in 14 days**. Its instructions ask the triager to read the obligation against what the business does, assign it to whoever can satisfy it rather than to the contract owner by default, link the internal control that already satisfies it where one exists, and set a due date matching the contract's own deadline.
+**What lands in the queue.** A task titled **"Assign a contract obligation for `{vendor}`"**, **due in 14 days**, then **"Evidence a contract obligation for `{vendor}`"**, **due in 30 days**, both filed as contract reviews.
 
-**Before you turn it on.** Contract analysis raises obligations in batches, so a freshly analyzed contract can produce a dozen tasks at once. Run it on one contract before turning it on across the workspace.
+**Before you turn it on.** Contract analysis raises obligations in batches, so a freshly analyzed contract can produce a dozen tasks at once. Run it on one contract before turning it on across the workspace. Re-point the first task at whoever triages obligations, and reassign the second to the control owner the triage named.
 
 <Note>
   An obligation typed in by hand with no source document has no vendor behind it, so no task is raised for it. The alternative would be a task filed against the wrong vendor.
@@ -392,52 +309,50 @@ A monitoring program is only worth the alerts somebody reads. This turns each ne
 
 **What it does.** Two independent steps on signal creation. One opens a review named **"Signal review: `{signal}`"**, bound to the signal itself so the adjudication has a record from the start. The other raises the task that gives it a clock.
 
-**What lands in the queue.** The review, plus a task titled **"Triage monitoring signal for `{vendor}`"**, filed as an assessment review, **due in 3 days**, carrying the signal's name and severity in its description and instructing the analyst to read the underlying sources before deciding, since monitoring surfaces reports rather than verdicts.
+**What lands in the queue.** The review, plus a task titled **"Triage monitoring signal for `{vendor}`"**, filed as an assessment review, **due in 3 days**, carrying the signal's name and severity in its description.
 
-**Before you turn it on.** Re-point both steps to whoever works the alert queue. Set the review's status.
+**Before you turn it on.** Re-point both steps to whoever works the alert queue. Set the review's status so signals start in your adjudication pipeline. Every signal raising a task is a lot of tasks, so gate the trigger on severity once you know your own volume.
 
-**The gate most people add.** Every signal raising a task is a lot of tasks. Gate the trigger on severity once you know your own volume, so only the signals worth a person's time reach the queue.
+### Monitoring record turned not clean
 
-### SLA measurement ownership
+**Shelf:** Monitoring · **Needs:** Monitoring records · **Steps:** 2 · **For:** monitoring analysts and relationship owners
 
-**Shelf:** Monitoring · **Needs:** nothing · **Steps:** 1 · **For:** vendor managers and service owners
+A vendor that was clean at its last assessment has something on its record now. This puts the record in front of an analyst the day the verdict turns, and then has the business owner hear about it from you.
 
-An SLA recorded and never measured is a number in a document. This raises a task whenever one is added, so somebody owns collecting the measurement before the first review asks for it.
+**What it does.** When a record's verdict turns **Not clean**, it raises a review task. When that task is completed, the second step raises the briefing task.
 
-**What it does.** Fires when an SLA is recorded against a vendor, from the service's **Performance** tab or from a contract review that captured one.
+**What lands in the queue.** **"Review the monitoring record for `{vendor}`"**, then **"Brief the business on `{vendor}`"**, each filed as an assessment review and **due in 3 days**.
 
-**What lands in the queue.** A task titled **"Set up SLA measurement for `{vendor}`"**, filed as an assessment review, **due in 14 days**. Its instructions cover checking the target and window against what the contract says rather than what the vendor markets, agreeing who reads the vendor's reporting and how often, and finding out what the contract entitles you to when the SLA is missed and whether anybody ever claims it.
+**Before you turn it on.** Re-point the review task at whoever works the monitoring queue, and the briefing at the vendor's relationship owner. If it fires too often, tighten what counts toward the verdict in the monitoring records policy rather than here.
 
-**Before you turn it on.** Re-point the task at the service owner who can read the vendor's performance reporting. Fourteen days is a setup window, not the SLA's own measurement period.
+### Vendor offboarding with sign-off
 
-### Vendor offboarding checklist
+**Shelf:** Offboarding · **Needs:** nothing · **Steps:** 4 · **For:** TPRM program owners, security operations and legal
 
-**Shelf:** Offboarding · **Needs:** nothing · **Steps:** 1 · **For:** TPRM program owners and security operations
+Archiving a vendor record is not offboarding it. This splits the exit into the three jobs different teams own, and raises a final sign-off only once every open task on the vendor is closed.
 
-Archiving a vendor record is not offboarding it. This raises the checklist when the record is retired, while somebody still remembers the relationship.
+**What it does.** When a vendor record is archived, three steps raise the exit tasks in parallel. A fourth waits for the last open task on that vendor to be completed, then raises the sign-off.
 
-**What it does.** Listens for a vendor record being archived and opens the checklist task against it.
+**What lands in the queue.** **"Offboarding: revoke access for `{vendor}`"** (**due in 7 days**), **"Offboarding: confirm data return or destruction by `{vendor}`"** (**30 days**) and **"Offboarding: terminate contracts with `{vendor}`"** (**14 days**), then **"Sign off the exit of `{vendor}`"** (**5 days**), all filed as assessment reviews.
 
-**What lands in the queue.** A task titled **"Offboarding checklist for `{vendor}`"**, filed as an assessment review, **due in 14 days**, whose instructions carry the checklist itself: access revoked, data returned or destroyed, the contract terminated rather than left to auto-renew, and open findings closed or moved.
-
-**Before you turn it on.** Re-point the task, which usually belongs to security operations rather than the TPRM desk. Edit the checklist in the task's instructions to match your own exit procedure, since this is the one template whose value is almost entirely in its copy.
+**Before you turn it on.** Re-point each exit task at the team that owns it: access to security operations, data to privacy, contracts to legal. The sign-off waits for every open task on the vendor, not only these three, so close or move anything unrelated. The exit tasks are recognized by their **Offboarding:** title prefix; keep it if you reword them, and keep it out of the sign-off's title.
 
 ### Route work to the vendor's owner
 
-**Shelf:** Routing · **Needs:** nothing · **Steps:** 1 · **For:** TPRM program owners running a shared queue
+**Shelf:** Routing · **Needs:** nothing · **Steps:** 2 · **For:** TPRM program owners running a shared queue
 
 Work that lands on a central desk gets triaged twice: once to work out whose vendor it is, and once to do the thing. This template removes the first pass.
 
-**What it does.** When any task is raised, it re-points the assignee onto the relationship owner recorded against that task's vendor, so the queue arrives sorted.
+**What it does.** When any task is raised, it re-points the assignee onto the relationship owner recorded against that task's vendor, so the queue arrives sorted. When a vendor is created with no relationship owner, a second step raises a task asking for one.
 
-**What lands in the queue.** Nothing new. This is the one template that writes no record of its own; it changes who an existing task belongs to.
+**What lands in the queue.** No new record for the routing itself; it changes who an existing task belongs to. For an ownerless new vendor, a task titled **"Name an owner for `{vendor}`"**, **due in 5 days**.
 
-**Before you turn it on.** Understand its reach: this moves the assignee on every task the workspace raises, not only the ones a workflow raised. Gate the trigger on task type if you only want it for some of them.
+**Before you turn it on.** Understand its reach: this moves the assignee on every task the workspace raises, not only the ones a workflow raised. Gate the trigger on task type if you only want it for some of them. Fill in the owners of the vendors you already hold before turning it on. Vendors created by a process that names the owner afterwards, such as a bulk import, raise the ownership task anyway; close those by hand or turn the second step off during the import.
 
 **Who it routes to.** The vendor's first relationship owner, which can be a person **or a group**, so this is how a template routes to a team without naming one. Swap the step to risk analysts if that is who owns your queue.
 
 <Note>
-  A vendor with no relationship owner is left alone. The task keeps the assignee it already had rather than being unassigned, which means this template quietly does nothing until ownership is filled in. Pair it with the intake triage template, whose instructions ask the triager to set the relationship owner.
+  A vendor with no relationship owner is left alone. The task keeps the assignee it already had rather than being unassigned.
 </Note>
 
 ## Applying one
@@ -446,21 +361,21 @@ Selecting a card shows what the template does, step by step, as **when** somethi
 
 **Use template** copies it into your workspace and opens it in the editor, switched off.
 
-<Frame caption="The applied workflow, open in the editor. Both steps are drawn, the second hangs off the event the first one emits, and Enabled is off until you turn it on.">
-  <img src="/images/user-guides/workflow-template-applied.png" alt="New vendor onboarding review open in the Coverbase workflow editor, with two connected steps and the Enabled toggle off" />
+<Frame caption="The applied workflow, open in the editor. Every step is drawn, a child hangs off the event its parent emits, and Enabled is off until you turn it on.">
+  <img src="/images/user-guides/workflow-template-applied.png" alt="New vendor onboarding, assessment to decision open in the Coverbase workflow editor, with five steps in two connected groups and the Enabled toggle off" />
 </Frame>
 
 It is now an ordinary workflow, and it appears in the list alongside the ones you built by hand.
 
-<Frame caption="An applied template in the workflows list, with its shape previewed on the card.">
-  <img src="/images/user-guides/workflow-templates-list.png" alt="The Coverbase workflows list showing an applied template alongside hand-built workflows" />
+<Frame caption="An applied template in the workflows list, found by searching its name, with its shape previewed on the card.">
+  <img src="/images/user-guides/workflow-templates-list.png" alt="The Coverbase workflows list searched for 'onboarding', showing the applied template beside a hand-built workflow" />
 </Frame>
 
 ## The two things every template leaves for you
 
 ### Who the work goes to
 
-A task with nobody on it does nothing, and a template cannot know your people, so **every task, review and assessment a template creates is assigned to whoever applied it.** This means the workflow runs as soon as you switch it on, rather than skipping. It is also the first thing to change on almost every template. Open the step, change the assignee to the person, department or role that should own the work, and save.
+A task with nobody on it does nothing, and a template cannot know your people, so **every task, review, assessment and register entry a template creates is assigned to whoever applied it.** This means the workflow runs as soon as you switch it on, rather than skipping. It is also the first thing to change on almost every template. Open the step, change the assignee to the person, department or role that should own the work, and save.
 
 ### What is org-specific
 

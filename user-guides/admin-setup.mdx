@@ -44,14 +44,18 @@ Each item below is a step in this guide.
 
 This step gets your team into the platform and makes everything vendor-facing and stakeholder-facing carry your brand.
 
-1. Go to **Configuration → Organization** and add your users. Assign a role to each one as you go:
-   - Admin has full platform access.
-   - Reviewer can assess vendors and manage workflows.
-   - Requester can submit vendor requests only.
-2. For a broader rollout, configure a verified domain so anyone from your email domain is provisioned automatically on first login. That saves you from creating accounts by hand while you pilot.
-3. Under **Branding**, upload two logos. The Simple Logo shows up in the app header, navigation, and emails (around 200x50px works well). The Large Logo goes on generated reports and vendor-facing documents, including the portal (around 400x100px).
+1. Go to **Configuration → Organization**, open **Members**, and choose **Invite**. Everyone in one batch of invitations gets the same role, so invite in groups:
+   - **Admin** has full platform access, including members, roles, integrations and organization settings.
+   - **Member** creates and edits vendors, assessments, findings and intake requests across the organization. Most of the risk team starts here.
+   - **Auxiliary Member** answers inherent-risk questionnaires, completes tasks assigned to them, and comments on records they are assigned to.
 
-<Frame caption="Organization branding. Your Simple and Large logos flow into the app, reports, emails, and the vendor portal.">
+   The other default roles (Siloed Member, Guest and Service Account) are described in [Permissions and roles](/user-guides/permissions-and-roles).
+2. For a broader rollout, add your email domain under **Verified domains** on **General**, so people with that domain can join automatically or request to join. That saves you from creating accounts by hand while you pilot.
+3. On **Branding**, set your brand. The **Logo** is a square icon shown in the app and the vendor portal header. The **Full Logo** is a wordmark or logotype used in reports and emails. **Brand color** sets the accent for the vendor portal background.
+
+   Organizations on the redesigned Organization settings find members under **People** (choose **Invite people**) and the brand on **General**, where the square mark is the **Icon** and the logotype is the **Wordmark**.
+
+<Frame caption="Configuration → Organization → Branding. Your logo and full logo flow into the app, reports, emails, and the vendor portal.">
   <img src="/images/user-guides/admin-branding.png" alt="Coverbase organization and branding settings" />
 </Frame>
 
@@ -69,8 +73,8 @@ Loading your existing vendor inventory gives assessments, monitoring, and redund
 
 You need your vendor list with attributes like name, website, description, relationship owner, and contract dates. Your Coverbase contact can hand you the bulk-upload template, along with an enrichment workflow that fills in missing fields.
 
-1. Go to **Actions → Bulk Create Vendors**.
-2. Download the template to see the required fields, then map your existing data into it.
+1. On the **Vendors** page, open **Actions → Bulk Create Vendors**.
+2. Choose **Download template** to see the fields, then map your existing data into it. The first sheet (vendor intake) is required and the second (service intake) is optional.
 3. Upload your file.
 4. Validate the result. Confirm the vendor count matches your source file, and spot-check a few records to make sure the field values populated correctly.
 
@@ -111,9 +115,9 @@ Design the taxonomy before the IRQ, because the IRQ is what fills it in. The str
   </Card>
 </CardGroup>
 
-To set this up, go to **Configuration → Tags**, create a tag group for each category, and add the individual tags within each group.
+To set this up, go to **Configuration → Tags**, create a tag section for each category, and add the individual tags within each section with **New tag**.
 
-<Frame caption="The Tags configuration screen, with grouped tags for Access, Criticality, Data, Geography, Infrastructure, Size, and Vendor Profile.">
+<Frame caption="The Tags configuration screen. One card per tag section, and a search box across every tag.">
   <img src="/images/user-guides/admin-tags.png" alt="Tag structure configuration grouped by category" />
 </Frame>
 
@@ -127,19 +131,19 @@ To set this up, go to **Configuration → Tags**, create a tag group for each ca
 
 The inherent risk questionnaire is what business requesters, and Coverbase's research agent, answer at intake. Its weights produce the inherent risk score, and its response mapping applies your tags. Aim for 15 to 25 concise questions.
 
-1. Go to **Configuration → Questionnaires** and create your Inherent Risk Questionnaire. Use **Actions → Bulk Create Questions** to import an existing IRQ from the spreadsheet template instead of building it question by question.
-2. Weight every answer with a risk score on a 0 to 20 scale, where higher means more risk. The sum of all maximum answer scores is the risk ceiling, and a vendor's actual answers as a percentage of that ceiling is their inherent risk score.
-3. Open **Response Mapping** (the gear icon) and map answers to tags. Data handled outside the US applies "Foreign", card data applies "PCI", and so on.
+1. Go to **Configuration → Questionnaires**, stay on the **Inherent Risk** tab, and choose **Create Questionnaire**, or start from a packaged template with **IRQ Library** (see [The IRQ library](/user-guides/irq-library)). Use **Actions → Bulk Import Questions** to import an existing IRQ from a spreadsheet instead of building it question by question.
+2. Give every answer a **Value**: its risk weight, where higher means more risk. The sum of all maximum answer values is the risk ceiling, and a vendor's actual answers as a percentage of that ceiling is their inherent risk score.
+3. Hover a question and choose **Configure write-back** to map answers to tags. Data handled outside the US applies "Foreign", card data applies "PCI", and so on. Questions built before write-back existed show **Configure Response Mapping** instead.
 4. Add conditional logic where a follow-on question should only appear based on a prior answer, like asking for data-flow details only if data is exchanged.
 5. Set per-question AI guidance to control what the research agent may use when it auto-answers. For example, "only source from the vendor's trust center, exclude blogs and CVE chatter."
 6. Mark judgment questions as Required so the AI never auto-answers them without human input.
 
-<Frame caption="The IRQ builder. Each answer carries a weight (right column), and Configure Response Mapping links answers to the tags that route the vendor.">
+<Frame caption="The IRQ builder. Each answer carries a value (right column), and Configure write-back links answers to the tags that route the vendor.">
   <img src="/images/user-guides/admin-irq-builder.png" alt="Inherent Risk Questionnaire builder with weighted answers" />
 </Frame>
 
 <Warning>
-  Weight the template before your first real intake. The default IRQ ships with dozens of zero-value answer scores. Left unweighted, inherent risk reads artificially low across your whole portfolio, and an API vendor can score like a stationery supplier.
+  Weight the template before your first real intake. An answer left at zero adds nothing to the score, so an unweighted IRQ makes inherent risk read artificially low across your whole portfolio, and an API vendor can score like a stationery supplier.
 </Warning>
 
 ### Example: mapping answers to tags
@@ -155,9 +159,10 @@ The mapping is what powers automated routing. When someone answers "This vendor 
 
 ### Pattern: auto-escalating vendors to Critical
 
-A common requirement is that if a vendor answers "yes" to two or three specific questions, they should land in the strictest track regardless of overall score. Use two mechanisms together for redundancy:
+A common requirement is that if a vendor answers "yes" to two or three specific questions, they should land in the strictest track regardless of overall score. Use these mechanisms together for redundancy:
 
-- Weight those questions heavily, so any "yes" pushes the score into your critical band on its own.
+- Set a **Score override** on those answers (the menu beside the option). While the answer is selected, the questionnaire's overall score cannot fall below the percentage you enter, so a single "yes" can hold the vendor in your critical band.
+- Weight those questions heavily, so any "yes" pushes the score up on its own.
 - Map those answers to a tag that routes the vendor to the stricter due-diligence track, with control sets and document requirements keyed to that tag.
 
 Scored multi-select questions with precedence logic also work here. A data-elements question can max the weight the moment someone selects PAN, for instance.
@@ -168,16 +173,17 @@ Scored multi-select questions with precedence logic also work here. A data-eleme
 
 Scales define the bands your program scores against. There are two: the vendor-level risk scale and the per-control compliance scale.
 
-1. Go to **Configuration → Scales → Risk Scale**. The default bands are 0 to 25 low, 25 to 50 medium, 50 to 75 high, and 75 to 100 critical. Every threshold is adjustable, and you can add or remove tiers, collapse to three, or lower the critical threshold.
-2. Review the compliance scale used on controls. The default runs from 4 (fully compliant) down to 1 (not compliant). You can rename levels, add or remove them, or make it boolean.
+1. Go to **Configuration → Scoring** and open the **Risk Scoring** tab. The default bands are 0 to 25 low, 25 to 50 medium, 50 to 75 high, and 75 to 100 critical. Every threshold is adjustable, and you can add or remove tiers, collapse to three, or lower the critical threshold.
+2. On the **Control Scoring** tab, review the compliance scale used on controls. The default runs from 4 (fully compliant) down to 1 (not compliant). You can rename levels, add or remove them, or make it boolean.
 3. Write criteria into each level, not only labels. The criteria text is used when scores are assigned, so "one or more failing conditions met" is more useful than a bare "low."
-4. Add custom assessment scales if your program rates other dimensions, like RFP alignment, ESG alignment, or contractual protection.
+4. Add custom assessment scales with **New Scale** on the **Control Scoring** tab if your program rates other dimensions, like RFP alignment, ESG alignment, or contractual protection.
+5. Under **Risk Display** on the **Risk Scoring** tab, choose whether residual risk is shown at all (**Track residual risk**) and whether numeric scores appear next to risk levels (**Display numerical scores**). Scores are still calculated and stored either way.
 
-<Frame caption="The risk scale. Adjustable bands from low through critical, each with real scoring criteria.">
+<Frame caption="The risk scale on the Risk Scoring tab. Adjustable bands from low through critical.">
   <img src="/images/user-guides/admin-risk-scale.png" alt="Risk scale configuration with adjustable bands" />
 </Frame>
 
-<Frame caption="The compliance scale used on individual controls. Rename, add, remove, or make it boolean.">
+<Frame caption="The compliance scale on the Control Scoring tab, used on individual controls. Rename, add, remove, or make it boolean.">
   <img src="/images/user-guides/admin-compliance-scale.png" alt="Compliance scale configuration" />
 </Frame>
 
@@ -222,15 +228,15 @@ Individual vendors can override this setting. See [Where a vendor's score comes 
 
 Control sets are what assessments measure against. They define what "good" looks like. Coverbase ships with SIG, NIST (CSF and AI RMF), ISO 27001, NYDFS, FFIEC, PCI DSS, DORA, and more out of the box, and your own frameworks import from a spreadsheet.
 
-If you buy physical goods rather than software, look under **Operations & supply chain** in the library. Those templates ask a supplier whether it can keep your production line fed (continuity testing, alternate sourcing, batch traceability, chain of custody, restricted substances) rather than how it secures a network. The [Control Set library](/control-library) lists all of them.
+If you buy physical goods rather than software, look under **Operations & Supply Chain** in the **Vendor Controls Library**. Those templates ask a supplier whether it can keep your production line fed (continuity testing, alternate sourcing, batch traceability, chain of custody, restricted substances) rather than how it secures a network. The [Control Set library](/control-library) lists all of them.
 
-<Frame caption="The control set library. Built-in frameworks plus your own, each with its controls, versions, and applicable vendors.">
-  <img src="/images/user-guides/admin-control-sets.png" alt="Control sets library showing NIST AI RMF and other frameworks" />
+<Frame caption="The Controls page. Your control sets on the left, each with its controls, versions, and applicable vendors. Vendor Controls Library opens the packaged frameworks, and New Control Set offers Upload Spreadsheet.">
+  <img src="/images/user-guides/admin-control-sets.png" alt="Controls page with a control set open and the New Control Set menu showing Upload Spreadsheet" />
 </Frame>
 
 ### Importing your own controls
 
-1. Go to **Control Sets** and click **+ New Control Set → Upload Spreadsheet**. Download the template workbook and the tips document from that dialog, which always holds the current version. In the workbook, the **Controls** tab is the one that gets imported; the **Instructions** tab carries the tips, and the **Document Types** and **Risk Domains** tabs are there for reference.
+1. Go to **Configuration → Controls** and click **New Control Set → Upload Spreadsheet**. Download the template workbook and the tips document from that dialog, which always holds the current version. In the workbook, the **Controls** tab is the one that gets imported; the **Instructions** tab carries the tips, and the **Document Types** and **Risk Domains** tabs are there for reference.
 2. Use an LLM to convert your existing framework (from your GRC tool, a spreadsheet, wherever it lives) into the template format. Paste your controls plus the tips doc and ask for the conversion.
 3. Upload one control set at a time and verify the import. Start with your two or three most critical frameworks.
 
@@ -273,15 +279,15 @@ Open any control to edit its expectation, weight, and guidance. Guidance is wher
 This step decides which assessment a vendor gets, and when they get looked at again.
 
 - Build assessment plans that bundle control sets by tier, so high and critical vendors get the fuller plan. Plans can be assigned statically or dynamically off tags and inherent risk.
-- Set the reassessment cadence in assessment settings. It defaults off residual risk (low might be every three years), but it can key off inherent risk instead, and it is fully overridable per vendor.
+- Set the reassessment cadence under **Periodic Re-assessment Settings** in **Configuration → Assessment Settings**. The **Timeline** sets how many days before the reassessment date stakeholder reminders go out, document collection starts, and the assessment should be ready for review. Each **Reassessment rule** names an assessment plan, the risk levels it covers, and the **Months between reassessments**. Rules match suppliers on inherent risk level by default; set **Match suppliers on** to residual risk level to key off residual instead (a supplier with no residual level yet falls back to inherent). A vendor's next reassessment date can still be changed by hand.
 - Layer on trigger-based reassessments so a Radar event or a risk-score change can open an off-cycle review automatically.
 
-<Frame caption="Assessment plans bundle control sets by tier and assign automatically from tags and inherent risk.">
+<Frame caption="Assessment plans on Configuration → Assessment Settings. Each plan bundles control sets and questionnaires with its scope, collection mode and assignee.">
   <img src="/images/user-guides/admin-assessment-plans.png" alt="Assessment plans configuration" />
 </Frame>
 
-<Frame caption="Reassessment cadence. A default per risk tier, fully overridable per vendor, with trigger-based off-cycle reviews.">
-  <img src="/images/user-guides/admin-reassessment.png" alt="Reassessment cadence settings" />
+<Frame caption="Editing an assessment plan. Default control sets and questionnaires, conditional rules that add control sets by risk score, and Configure reassessment rules to set this plan's cadence.">
+  <img src="/images/user-guides/admin-reassessment.png" alt="Edit assessment plan dialog with default control sets, conditional rules and the Configure reassessment rules link" />
 </Frame>
 
 <Accordion title="A sensible starting cadence" icon="calendar-days">
@@ -299,7 +305,7 @@ This step decides which assessment a vendor gets, and when they get looked at ag
 
 This step makes every output, whether an assessment readout or a vendor email, land in your organization's format and voice.
 
-For report templates, go to **Configuration → Assessment Settings → Assessment Report Templates**. Build a branded template using tokens (fields from the assessment and vendor record) plus custom AI prompts for freeform sections, like "give a meaningful analysis of the limitation of liability as it relates to their DPA." If you do not have a house format yet, start from the Coverbase best-practice template with your branding.
+For report templates, go to **Configuration → Assessment Settings** and turn on **Assessment report templates**. Build a branded template using tokens (fields from the assessment and vendor record) plus custom AI prompts for freeform sections, like "give a meaningful analysis of the limitation of liability as it relates to their DPA." If you do not have a house format yet, start from the Coverbase best-practice template with your branding.
 
 <Frame caption="The report template builder. Tokens pull structured fields, and custom AI prompts fill freeform sections in your voice.">
   <img src="/images/user-guides/admin-report-template.png" alt="Assessment report template builder" />
@@ -320,17 +326,17 @@ Whoever writes the `.docx` will want the full reference open alongside it. Token
   Three exports come built in: Standard PDF, Executive Summary, and Full (every control with all evidence, the one examiners like).
 </Note>
 
-For email templates, configure the vendor emails used for portal invitations and follow-ups. You control the sender identity, instructions, reminder cadence (every two days, for example), and whether the internal requester is CC'd automatically. Attach a pre-signed MNDA to invitations so legal back-and-forth does not stall document sharing.
+For vendor email, go to **Configuration → Communications**. **Organization identity** at the top sets the sender name, the sender address and the inbound contact vendors should reach. The **Templates** list holds the wording of portal invitations and follow-ups: each template carries AI instructions, default CC and BCC recipients (add the internal requester here), and attachments. Attach a pre-signed MNDA to invitations so legal back-and-forth does not stall document sharing. The reminder cadence (every two days, for example) lives on the portal template under **Configuration → Portals**.
 
-<Frame caption="Vendor email templates. Sender identity, instructions, reminder cadence, and an attached pre-signed MNDA.">
-  <img src="/images/user-guides/admin-email-template.png" alt="Vendor email template configuration" />
+<Frame caption="Configuration → Communications. Organization identity sets who vendor email comes from; the Templates list below holds the wording.">
+  <img src="/images/user-guides/admin-email-template.png" alt="Communications settings with the organization identity and the email templates list" />
 </Frame>
 
 ---
 
 ## Step 9: Configure Radar (continuous monitoring)
 
-Radar is the external intelligence layer. Sources feed detectors, and detectors fire on the events that matter, which reach your analysts as signals. Sources and detectors live under **Configuration → Radar**. The **Configurations** button on the Radar page takes you there.
+Radar is the external intelligence layer. Sources feed detectors, and detectors fire on the events that matter, which reach your analysts as signals. Sources and detectors live under **Configuration → Radar**. The **Configurations** menu on the Radar page opens its **Detectors**, **Sources** and **Reassessments** tabs.
 
 1. Review the out-of-the-box sources: SEC filings, CVE feeds, CISA advisories, and security and financial news, all pulled several times a day. Add any public RSS feed at no extra cost, or connect a ratings platform like Black Kite as an API source.
 2. Create detectors around what you act on, such as breaches and vulnerabilities, supply-chain disruption, or SEC and regulatory actions. Each detector takes plain-language guidance, example events to focus on, impacted risk domains, and a severity threshold. Switch on its risk impact, and set the point range, if acting on its signals should move residual risk (see [risk propagation](/products/supplier-radar#risk-propagation)).
@@ -354,16 +360,16 @@ Radar is the external intelligence layer. Sources feed detectors, and detectors 
 
 This step turns on extraction of what vendors require of you: CUECs from SOC reports (pulled verbatim) and shared responsibilities from contracts, DPAs, and terms.
 
-1. In settings, enable auto-create for CUECs and obligations from uploaded documents, and confirm which document types trigger extraction (SOC 1 Type 2, SOC 2 Type 2, contracts).
+1. Go to **Configuration → Obligations** and turn on **Auto-create obligations from vendor CUECs** (from SOC reports) and **Auto-create obligations from contract shared responsibilities** (from contracts).
 2. Re-trigger analysis on documents you uploaded before you enabled this. Extraction only runs on documents processed after the setting is on.
-3. Optionally, upload your internal control set so extracted obligations can be checked automatically against controls you already have in place.
+3. Optionally, upload your internal control set so extracted obligations can be checked automatically against controls you already have in place. If a matched obligation should wait for a business unit to confirm it before it counts as satisfied, also turn on **Require business-unit acknowledgement**.
 
-<Frame caption="Obligations extraction settings. Auto-create CUECs and shared responsibilities from the document types you choose.">
-  <img src="/images/user-guides/admin-obligations.png" alt="Obligations extraction settings" />
+<Frame caption="Configuration → Obligations. One switch each for CUECs and contract shared responsibilities, and one for business-unit acknowledgement.">
+  <img src="/images/user-guides/admin-obligations.png" alt="Obligations settings with the two auto-create switches and the business-unit acknowledgement switch" />
 </Frame>
 
 <Note>
-  The full obligations workflow (validation, ownership, and stakeholder attestations) has its own dedicated guide, which we will add to this collection.
+  The full obligations workflow (validation, ownership, and business-unit acknowledgement) is in the [Obligations guide](/user-guides/obligations).
 </Note>
 
 ---
@@ -372,8 +378,8 @@ This step turns on extraction of what vendors require of you: CUECs from SOC rep
 
 This step exposes Coverbase data to external systems like GRC platforms, ticketing, and data warehouses.
 
-1. Go to **Organization → API Keys → Add new key**, name it, set an expiration, and store the bearer token securely.
-2. Go to **Configuration → Export API** and map which Coverbase objects and fields to expose. Note the source schema and GET endpoint shown on screen.
+1. Go to **Configuration → Organization → API keys** and choose **Add new key**. Name it, set an expiration, and store the bearer token securely: a key is shown once, when it is created.
+2. Go to **Configuration → Coverbase API**, stay on the **Export API** tab, and choose **New Export Report**. Pick the object the report returns and map which fields to expose. Note the GET endpoint shown on screen.
 3. For GRC integrations (findings out to your audit platform, controls back in), scope what needs to flow with your Coverbase contact, whether that is findings, residual-risk ratings, or control-environment scores.
 
 <Frame caption="The Export API configuration. Map objects and fields, then read the source schema and GET endpoint right on screen.">

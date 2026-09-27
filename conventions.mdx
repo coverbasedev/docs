@@ -29,8 +29,8 @@ Authorization: Bearer ak_...
 
 Two credential types are accepted:
 
-- **Service-account API key** (`ak_...`): the primary credential for integrations. A Coverbase admin mints it from the dashboard (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account. By default a key carries no scopes and can only call ordinary `/v1/*` routes; an admin can additionally grant it elevated [scopes](#api-key-scopes).
-- **Logged-in user JWT**: the dashboard session token, useful for first-party scripts running as a specific user.
+- **Service-account API key** (`ak_...`): the primary credential for integrations. An admin in your organization mints it on the dashboard's **API keys** page (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account. By default a key carries no scopes and can only call ordinary `/v1/*` routes; an admin can additionally grant it elevated [scopes](#api-key-scopes).
+- **Logged-in user JWT**: the dashboard session token, useful for first-party scripts running as a specific user. A few endpoint families in this reference accept only this credential and reject `ak_` keys: the [Bill of Materials API](/api-reference/bill-of-materials), the [Zero Touch Assessments API](/api-reference/zero-touch-assessments), the org update and `whoami` endpoints below, and the `POST /v1/<resource>/query` routes in the [field reference](/fields/overview). The [Import API](/import) is the reverse: it accepts only `ak_` keys.
 
 Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/api-reference/api-keys). No support ticket required.
 
@@ -49,15 +49,15 @@ Most `ak_*` keys carry **no scopes**: they authenticate ordinary `/v1/*` calls b
   `banking:read` and `review:sensitive_changes` are the two scopes worth pausing on. The first lets a key read account numbers in full; the second lets a key bypass the human review that a bank-detail change would otherwise wait for. Both are deliberate, admin-minted and revocable, and neither is granted by default. Leave them off unless a specific integration genuinely needs them, and see [Data protection](/security/data-protection#role-based-masking) for what is masked without them.
 </Warning>
 
-These admin endpoints accept **either** an admin dashboard JWT **or** an `ak_*` key carrying the required scope, so you can run them headlessly without a short-lived session token. The JWT path is unchanged: key management requires the org `admin` role; audit-log reads accept the same dashboard roles as before (member, siloed-member, admin, guest).
+The key-management and audit-log endpoints accept **either** a dashboard JWT **or** an `ak_*` key carrying the required scope, so you can run them headlessly without a short-lived session token. Key management requires the org `admin` role; audit-log reads accept member, siloed member, and admin sessions.
 
 Scopes can only be granted from an **admin dashboard session (JWT)**. A scoped key cannot grant scopes, not to itself and not to another key, so a leaked integration key can never escalate its own access. A request that passes `scopes` without an admin JWT is rejected with `403 scope_grant_forbidden`; a call to a scoped endpoint with a key that lacks the required scope returns `403 insufficient_scope`.
 
-There is no unauthenticated surface. An invalid/expired/revoked key returns `401 "Invalid or expired API key."`. A credential whose role is not allowed on the public API returns `401 "Unauthorized role."`.
+There is no unauthenticated surface. A request with no `Authorization` header returns `403 "Not authenticated"`. An invalid/expired/revoked key returns `401 "Invalid or expired API key."`. A credential whose role is not allowed on the endpoint returns `401 "Unauthorized role."`.
 
 ### Public API audit log
 
-Every authenticated call that lands on a `/v1/*` public-API route is recorded in the org's activity log as `type=external_api_call` with `target_type=external_api_request`. Each record captures:
+Every call made with an `ak_*` key to a public API resource endpoint (vendors, documents, users, assessments, findings, obligations, radar, reassessments, custom fields, workflows, webhooks, and the Import API) is recorded in the org's activity log as `type=external_api_call` with `target_type=external_api_request`. Each record captures:
 
 - the HTTP method, request path, and matched route template
 - the response status code and duration in milliseconds
@@ -65,7 +65,7 @@ Every authenticated call that lands on a `/v1/*` public-API route is recorded in
 - the `ak_*` key ID and human-readable name that authenticated the request
 - the client IP and a per-request correlation ID
 
-Bodies are never persisted. The records surface in the dashboard under **Settings → Audit log** (filtered to the **Integrations** group) and through `GET /v1/system_audit_log` (and `GET /v1/system_audit_log/metadata`). Both read endpoints accept **either** a dashboard session JWT (member, siloed-member, admin, or guest role, unchanged from before) **or** an `ak_*` key that carries the [`audit:read` scope](#api-key-scopes).
+Request and response bodies are not stored, with one exception: a call to a custom [Import API](/import) report stores both bodies, redacted and capped at 1 MB, and shows them on that report's **Request history** tab. The records surface in the dashboard under **Configuration → Audit Logs** (in the **Integrations** group) and through `GET /v1/system_audit_log` (and `GET /v1/system_audit_log/metadata`). Both read endpoints accept **either** a dashboard session JWT (member, siloed member, or admin) **or** an `ak_*` key that carries the [`audit:read` scope](#api-key-scopes).
 
 Requests that fail authentication before the `ak_*` key resolves (e.g. an unknown or revoked key returning `401`) are not stored in the activity log; they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
 
@@ -90,12 +90,12 @@ An organization can optionally restrict **all public API (`ak_...` key) requests
   ```
 
 - **Fail-closed.** If an allowlist is configured but the client IP cannot be determined, the request is denied.
-- **Scope.** The allowlist applies to every `/v1/*` public API route. It does **not** affect dashboard sign-in.
+- **Scope.** The allowlist applies to the public API resource endpoints: vendors (including bank accounts, sites, and other supplier profile data), documents, users, assessments, findings, obligations, radar, reassessments, custom fields, workflows, and webhooks. It does **not** apply to the API Keys, Intake, Import, and Export endpoints, and it does not affect dashboard sign-in.
 - **Client IP source.** The connecting IP is the value the Coverbase load balancer appends to `X-Forwarded-For`. Clients cannot spoof it by sending their own `X-Forwarded-For` header.
 
 ### Configure the allowlist
 
-Set the allowlist from the dashboard (**Configuration → Coverbase API → "API IP allowlist"**) or via the org update API. Your organization ID is the `id` field on the org object (also visible in the dashboard).
+Set the allowlist from the dashboard (**Configuration → Coverbase API → API IP allowlist**) or via the org update API. The org update endpoint takes an admin's dashboard session token; an `ak_` key can read the org object but cannot change it. Your organization ID is the `id` field on the org object (also visible in the dashboard).
 
 <ParamField body="api_ip_allowlist" type="string[]">
   A list of CIDR strings (IPv4 or IPv6). Each entry is validated server-side; an invalid CIDR rejects the whole request with `422`. An empty list clears the allowlist (unrestricted).
@@ -103,7 +103,7 @@ Set the allowlist from the dashboard (**Configuration → Coverbase API → "API
 
 ```bash Set the allowlist
 curl -X POST "https://api.coverbase.app/v1/org/cborg_xxx" \
-  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Authorization: Bearer <admin-jwt>" \
   -H "Content-Type: application/json" \
   -d '{ "api_ip_allowlist": ["203.0.113.0/24", "198.51.100.7/32"] }'
 ```
@@ -115,7 +115,7 @@ curl "https://api.coverbase.app/v1/org/cborg_xxx" \
 
 ```bash Clear it (unrestricted again)
 curl -X POST "https://api.coverbase.app/v1/org/cborg_xxx" \
-  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Authorization: Bearer <admin-jwt>" \
   -H "Content-Type: application/json" \
   -d '{ "api_ip_allowlist": [] }'
 ```
@@ -136,11 +136,11 @@ The org object (`GET`/`POST /v1/org/{id}`) now includes `api_ip_allowlist` (a st
   `GET /v1/whoami/ip`
 </ParamField>
 
-A convenience endpoint (authenticated) that returns the caller's source IP as the API sees it: the load-balancer-appended, unspoofable value. This is the **same value** evaluated by the org `api_ip_allowlist` check, so use it to confirm which IP to allowlist (it backs the dashboard editor's "Add my current IP" helper).
+A convenience endpoint that returns the caller's source IP as the API sees it: the load-balancer-appended, unspoofable value. It takes a dashboard session token; `ak_` keys are rejected with `401 Unauthorized role.` This is the **same value** evaluated by the org `api_ip_allowlist` check, so use it to confirm which IP to allowlist (it backs the dashboard editor's "Add my current IP" helper).
 
 ```bash cURL
 curl -sS "https://api.coverbase.app/v1/whoami/ip" \
-  -H "Authorization: Bearer ak_live_xxx"   # → {"client_ip":"203.0.113.42"}
+  -H "Authorization: Bearer <user-jwt>"   # → {"client_ip":"203.0.113.42"}
 ```
 
 <ResponseField name="client_ip" type="string | null">
@@ -190,13 +190,15 @@ State-changing `POST`s that support safe retries accept an optional `Idempotency
 | `POST /v1/users` | Yes |
 | `POST /v1/vendors` | Yes |
 | `POST /v1/assessments` | Yes |
+| `POST /v1/documents` | Yes |
 | `POST /v1/workflows/{workflow_name}/run` | Yes |
+| `POST /v1/workflows/{workflow_name}/schedule` | Yes |
 | `POST /v1/vendors/{vendor_id}/services` | **No** (header ignored) |
 | `POST /v1/findings`, `POST /v1/obligations` | **No** (header ignored) |
 | `POST /v1/webhooks` and other webhook writes | **No** (header ignored) |
 | `PATCH` endpoints | **No** |
 
-Behavior on supported endpoints: keys are scoped to **(org, endpoint, key)** and expire **24 hours** after first use. A replay within the window returns the **original response body verbatim** (same status) and creates nothing new. A replay is never rejected; there is no conflict error. Sending the header to an endpoint that does not support it is harmless but has no effect.
+Behavior on supported endpoints: keys are scoped to **(org, endpoint, key)** and expire **24 hours** after first use. The endpoint is the route template, so on the workflow endpoints one key covers every `workflow_name`: reusing a key for a different workflow within 24 hours replays the first response. A replay within the window returns the **original response body verbatim** (same status) and creates nothing new. A replay is never rejected; there is no conflict error. Sending the header to an endpoint that does not support it is harmless but has no effect.
 
 <Tip>
   Use a stable identifier from the source system (a procurement request ID, a ticket number) as the idempotency key so source-side retries deduplicate naturally.
@@ -204,7 +206,7 @@ Behavior on supported endpoints: keys are scoped to **(org, endpoint, key)** and
 
 ## Pagination
 
-List endpoints (`GET /v1/findings`, `GET /v1/obligations`) use `limit`/`offset` query parameters:
+List endpoints (`GET /v1/vendors`, `GET /v1/users`, `GET /v1/findings`, `GET /v1/obligations`, and the Radar lists) use `limit`/`offset` query parameters:
 
 | Param | Default | Range |
 | ----- | ------- | ----- |
@@ -213,19 +215,25 @@ List endpoints (`GET /v1/findings`, `GET /v1/obligations`) use `limit`/`offset` 
 
 List responses wrap results as `{ "items": [...], "total": <int>, "limit": <int>, "offset": <int> }`. `total` is the full filtered count (ignoring `limit`/`offset`); page until `offset + len(items) >= total`.
 
+A few lists differ. `GET /v1/documents` and `GET /v1/webhooks/{webhook_id}/deliveries` return the page under `data` instead of `items`. `GET /v1/workflows/runs` also uses `data`, with `limit` defaulting to `100` and allowed up to `500`. `GET /v1/reassessments` returns every match in one page.
+
 ## Errors
 
 Application errors use FastAPI's `detail` envelope. Most endpoints return a coded object:
 
 ```json
-{ "detail": { "code": "vendor_not_found", "message": "Vendor not found." } }
+{ "detail": { "code": "vendor_not_found", "message": "Vendor not found." }, "request_id": "41ff4305-740d-4181-bed9-1fbe21bd69ab" }
 ```
 
-`POST /v1/assessments` is the one exception. Creation failures use a free-form `error` key:
+Every error body carries a `request_id`, also sent as the `x-coverbase-request-id` response header. Quote it when you contact support.
+
+Some endpoints do not use the coded object. `POST /v1/assessments` creation failures use a free-form `error` key:
 
 ```json
 { "detail": { "error": "..." } }
 ```
+
+`POST /v1/custom-fields/values`, the Bill of Materials, Intake, Import, and Export endpoints, and authentication failures return `detail` as a plain string.
 
 ### Validation errors
 
@@ -243,10 +251,10 @@ Bodies/params that fail schema validation return `422` with FastAPI's standard a
 
 | Status | Meaning |
 | ------ | ------- |
-| `400` | Rejected by a business rule (bad reference ID, weak secret, non-HTTPS URL, missing vendor/assessment on a finding). |
-| `401` | Missing/invalid credential, or a role not allowed on the public API. |
-| `403` | Authenticated but not authorized: the key lacks a required scope (`insufficient_scope`), a non-admin tried to grant scopes (`scope_grant_forbidden`), or the client IP is outside the org allowlist (`ip_not_allowed`). |
+| `400` | Rejected by a business rule (bad reference ID, weak secret, non-HTTPS URL). |
+| `401` | Invalid, expired, or revoked credential, or a role not allowed on the endpoint. |
+| `403` | No `Authorization` header (`Not authenticated`), or authenticated but not authorized: the key lacks a required scope (`insufficient_scope`), a non-admin tried to grant scopes (`scope_grant_forbidden`), or the client IP is outside the org allowlist (`ip_not_allowed`). |
 | `404` | Resource not found or not in the API key's org. |
 | `409` | Conflict: e.g. `user_exists`, or running a disabled workflow (`workflow_disabled`). |
 | `422` | Request body/query failed schema validation. |
-| `502` | A downstream dispatch failed (e.g. `workflow_dispatch_failed`); safe to retry. |
+| `502` | An upstream provider failed (e.g. `clerk_upstream_error` on the API Keys API); safe to retry. |

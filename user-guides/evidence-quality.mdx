@@ -74,8 +74,8 @@ The dropdown shows three options, each with its definition inline:
 
 | Option | Stored value | Effect |
 | --- | --- | --- |
-| **No minimum** | `unreliable` | Nothing is filtered on credibility. Pages are still graded and the grade is still recorded. |
-| **Reputable** | `reputable` | The default. Drops pages with no accountable publisher. |
+| **No minimum** | `unreliable` | The default. Nothing is filtered on credibility. Pages are still graded and the grade is still recorded. |
+| **Reputable** | `reputable` | Drops pages with no accountable publisher. |
 | **Authoritative** | `authoritative` | Only official and attesting publishers survive. |
 
 ### Set-level and control-level
@@ -83,7 +83,7 @@ The dropdown shows three options, each with its definition inline:
 You configure evidence sources in two places, and the relationship between them matters:
 
 1. **Control set → Evidence sources.** The default for every control in that set. Set this once and your whole framework inherits it.
-2. **Individual control → Evidence sources.** When a control has its own evidence sources, they **fully replace** the set's sources, including the credibility bar. A control-level source list is not merged with the set's, so if you override a control, restate the minimum you want there.
+2. **Individual control → Evidence sources.** A control inherits the set's sources until you click **Customize sources**, which starts from a copy of the set's list. From then on the control's sources **fully replace** the set's, including the credibility bar. A control-level source list is not merged with the set's, so if you override a control, check the minimum there. **Use control set sources** returns the control to inheriting.
 
 <Tip>
   Configure at the set level first and override individual controls only where the evidence bar differs. It is easier to defend "this framework requires Reputable, these four attestation controls require Authoritative" than a per-control patchwork.
@@ -141,13 +141,13 @@ The same protection runs the other way. Page content and vendor-supplied text ar
 
 ## Reading the result
 
-Open any evaluation and look at the evidence cards. Web-sourced evidence carries a colored badge next to the source:
+Open any evaluation and look at the evidence cards. Web-sourced evidence has a **Details** button next to the source name. It opens the page's **Publisher accountability** grade as a colored badge:
 
 - **Authoritative**: green
 - **Reputable**: blue
 - **Unreliable**: gray (you only see these if the source is set to **No minimum**)
 
-Hover the badge to see the one-sentence reason the grader gave for that page. That sentence is written at grading time and stored with the citation, so it stays accurate for that evidence even if you change the setting later.
+Beneath the badge is the one-sentence reason the grader gave for that page. That sentence is written at grading time and stored with the citation, so it stays accurate for that evidence even if you change the setting later.
 
 <Note>
   Evidence gathered from uploaded documents and from Vendor Intelligence has no credibility badge. Its provenance is the document or the Vendor Intelligence record itself, which is already shown on the card.
@@ -164,6 +164,10 @@ Credibility says who is accountable for a page. It does not say how old the page
 | **Accessed** | The absolute date Coverbase fetched the page. |
 
 Undated evidence shows only **Accessed**. Coverbase reports what the page declared and does not guess.
+
+<Note>
+  Evidence dating is turned on per organization. Without it, web evidence cards show only when the page was **Fetched**, and the Excel export leaves out the two date columns below. Ask your Coverbase contact if you need it.
+</Note>
 
 <AccordionGroup>
   <Accordion title="Where the dates come from" icon="calendar">
@@ -197,7 +201,7 @@ For each cited page a reviewer can see who published it, what standard of accoun
 
 ## Choosing a threshold
 
-**Reputable** is the default and is the right answer for most of a framework. Reserve the extremes for the controls that earn them.
+New web-search sources start at **No minimum**. **Reputable** is the right answer for most of a framework, so set it deliberately, and reserve the extremes for the controls that earn them.
 
 | Set it to | For controls like | Why |
 | --- | --- | --- |
@@ -220,7 +224,7 @@ To apply a new bar to an existing assessment, re-run the affected evaluations. R
 If the grading pass fails (a model or provider error mid-assessment), Coverbase never invents a grade:
 
 - With a minimum of **Reputable** or **Authoritative**, no web evidence is used for that control. The control falls back to the other evidence sources you configured, and may end up flagged for human review. An ungraded page must not slip past a bar you set.
-- With **No minimum**, a fallback set of results may still be used, and those citations carry no badge, because no grade was ever established.
+- With **No minimum**, a fallback set of results from the vendor's own domain may still be used, and those citations carry no badge, because no grade was ever established.
 
 The failure is recorded either way, so the gap is visible rather than silent.
 
@@ -244,7 +248,7 @@ Source credibility governs **web evidence gathered while evaluating controls in 
 
 <AccordionGroup>
   <Accordion title="Does raising the bar make the AI stricter about compliance?" defaultOpen icon="circle-question">
-    No. It makes the AI **more selective about what it reads**, not harsher about what it concludes. Evaluation strictness is a separate setting (lenient, standard, strict) on the control set. Credibility changes the inputs; strictness changes the judgment.
+    No. It makes the AI **more selective about what it reads**, not harsher about what it concludes. **Evaluation Strictness** is a separate setting on the control set, from **Accepting** to **Exacting**. Credibility changes the inputs; strictness changes the judgment.
   </Accordion>
 
   <Accordion title="Will Authoritative-only stop the AI hallucinating?" icon="circle-question">
@@ -264,7 +268,7 @@ Source credibility governs **web evidence gathered while evaluating controls in 
   </Accordion>
 
   <Accordion title="Can I set the minimum through the API?" icon="circle-question">
-    Yes. Evidence sources carry a `minimum_credibility` field (`unreliable`, `reputable`, or `authoritative`, defaulting to `reputable`) on both control sets and individual controls, so you can manage the bar as configuration alongside the rest of your control-set definition.
+    Yes. Evidence sources carry a `minimum_credibility` field (`unreliable`, `reputable`, or `authoritative`, defaulting to `unreliable`) on both control sets and individual controls, so you can manage the bar as configuration alongside the rest of your control-set definition.
   </Accordion>
 </AccordionGroup>
 

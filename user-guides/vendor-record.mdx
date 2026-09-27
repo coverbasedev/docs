@@ -24,7 +24,7 @@ Click **Vendors** in the left navigation. The page opens on the vendor list, wit
 | --- | --- |
 | **Vendors** | One row per vendor. This is the default. |
 | **Services** | Every service across every vendor, with its own risk and assessment columns. Shown when your role can read services. |
-| **Engagements** | Every engagement, with start and end dates, status, and the services and contracts it links. |
+| **Engagements** | Every engagement, with start and end dates, status, and the services and contracts it links. Shown when your role can read services. |
 | **Nth Parties** | The companies your vendors depend on, with a relationship graph beside the table. |
 | **Discovered** | Records found by a connected integration, waiting to be approved or dismissed. Only appears when an integration has reported something. |
 
@@ -56,7 +56,7 @@ Custom fields that apply to vendors appear as extra columns. Use **Display optio
 
 ### Search, filters and saved views
 
-The search box matches on vendor name. The filter button opens the unified filter builder, where the fields are grouped: **Dates** (Created Date, Next Assessment Date, Last Assessed), **Documents** (Document Types, Document Count, Uploaded Date), **Assessments** (Assessment Count, Status, Outcome, Assignee, Zero Touch, Has Open Issue, and more), **Contracts** (Auto Renewal, Contract Count), plus Tags, Status, Tier, the three people fields, Website, the inherent and residual risk levels and scores, Risk Domains, and **Archived**.
+The search box matches on vendor name. The filter button opens the unified filter builder, where the fields are grouped: **Dates** (Created Date, Next Assessment Date, Last Assessed), **Documents** (Document Types, Document Count, Uploaded Date), **Assessments** (Assessment Count, Status, Outcome, Assignee, Zero Touch, Has Open Issue, and more), **Contracts** (Auto Renewal, Expiration Date, Renewal Date, Notice Due Date, the other contract dates, and Contract Count), plus Tags, Status, Tier, the three people fields, Website, the inherent and residual risk levels and scores, Risk Domains, and **Archived**.
 
 Filters, sort, search and column layout can be saved as a view. **All vendors** is the built-in view. Use **New view** to save the current state, choose **Personal**, **Shared** or **Organization** under **View access**, and switch between views with **Change view**. Views are also where you get a stable link: `/vendors/view/<id>` opens the list with that view applied.
 
@@ -103,7 +103,7 @@ Some directory rows have product lines. Press the right arrow key on the row to 
   **Pick the directory entry when there is one.** A vendor created against a directory entry is backed by shared company data. That is what feeds **Coverbase library documents** on the Documents tab, the prefilled company fields with a **Refreshed** date, and the subprocessor suggestions described in [Nth parties and subprocessors](#nth-parties-and-subprocessors). A vendor added manually gets none of that until Coverbase staff link it to an entity later.
 </Warning>
 
-After the picker, the wizard continues with **Modify Vendor Details** and **Fill in additional fields**. Fields the directory prefilled are collapsed under **Prefilled from the directory**; the ones you still have to fill sit under **Needs your input**, with required ones marked **Required by your organization**. The field-by-field walkthrough is in [Running an assessment, Path 2](/user-guides/running-an-assessment#path-2-alternative-creating-the-vendor-manually).
+After the picker, the wizard continues with **Modify Vendor Details** and, when your organization has vendor custom fields, **Fill in additional fields**. Fields the directory prefilled are collapsed under **Prefilled from the directory**; the ones you still have to fill sit under **Needs your input**, with required ones marked **Required by your organization**. The field-by-field walkthrough is in [Running an assessment, Path 2](/user-guides/running-an-assessment#path-2-alternative-creating-the-vendor-manually).
 
 <Note>
   Organizations that have not been switched to the directory picker see the older search field, *Select from existing vendors or create new...*, with a **Create vendor from scratch** option at the bottom. The steps after that are the same.
@@ -134,7 +134,7 @@ Open a vendor and you land on **Overview**. The header carries the name (editabl
 
 ### Main cards
 
-The main column is a card grid you can rearrange; what appears depends on your modules and your role. **Lifecycle** shows the status and moves it. **Quick actions** holds **Launch assessment**, **Send IRQ**, **Send vendor questionnaire**, **Create new engagement** and **Upload contract**, plus a **Needs Attention** list of Radar alerts and IRQs still waiting on someone. An IRQ the vendor has not submitted offers **Close request** to anyone who can edit portals; it closes the portal and drops the IRQ from the list. **Risk Profile** shows overall risk and a row per risk domain; **Inherent risk** shows the current level and the IRQs sent, with **New IRQ** to send another. **Recommendation**, **Assessments**, **Documents**, **Engagements**, **Contracts**, **Tasks** (open findings, soonest due first), **Radar** and **Notes** each summarize their tab.
+The main column is a card grid you can rearrange; what appears depends on your modules and your role. **Lifecycle** shows the status and moves it. **Quick actions** holds **Launch assessment**, **Launch zero-touch assessment** (with Zero Touch Assessments), **Send IRQ** and **Send vendor questionnaire** (with Know Your Vendor); its menu holds **Create new engagement** and **Upload contract**. Below them, a **Needs Attention** list shows IRQs still waiting on someone, open assessments, Radar alerts and recent emails. An IRQ the vendor has not submitted offers **Close request** to anyone who can edit portals; it closes the portal and drops the IRQ from the list. **Risk Profile** shows overall risk and a row per risk domain; **Inherent risk** shows the current level and the IRQs sent, with **Send IRQ** to send another. **Recommendation**, **Assessments**, **Documents**, **Engagements**, **Contracts**, **Tasks** (open findings: yours first, then those in progress, then soonest due), **Radar** and **Notes** each summarize their tab.
 
 ### Tabs
 
@@ -152,7 +152,7 @@ The main column is a card grid you can rearrange; what appears depends on your m
 | **Properties** | **Risk Profile**, **Risks**, **Business unit dependencies** and **Subprocessors / fourth parties**. |
 | **Bill of Materials**, **Performance**, **Portals**, **Emails**, **Radar**, **Notes** | Uploaded SBOM files (see [Bills of materials](/user-guides/bill-of-materials)); scorecards and SLAs; the portals created for this vendor; email exchanged with the vendor; Radar alerts and detectors; the notes feed. |
 
-Tabs that belong to another module (Contracts, Obligations, Radar, Assessments, Questionnaires) only appear when your role can read that resource.
+Tabs that belong to another module (Contracts, Obligations, Radar, Assessments, Questionnaires) only appear when your role can read that resource. **Engagements** appears when your role can read services.
 
 ## Team and owners
 
@@ -218,14 +218,15 @@ The **Actions** menu on a service page offers:
 
 | Action | What it does |
 | --- | --- |
-| **Merge service** | Merges another service of the same vendor into this one. |
-| **Relink Vendor** | Moves the service under a different vendor. It keeps its id, history and everything recorded on it. Only its vendor changes. |
+| **Build report**, **Export as Excel** | The same PDF report and workbook as on the vendor page, for this service. |
+| **Merge service** | Merges another service of the same vendor into this one. Shown when the vendor has another active service. |
+| **Relink Vendor** | Moves the service under a different vendor, keeping its id and history. If records are attached, **Confirm move** first lists them: records linked only to this service move with it, and records shared with other services stay with the original vendor. |
 | **Promote to Vendor** | Creates a standalone vendor from the service and archives the service. Risk scores, SLAs, performance scores and comments come across. Assessments, documents and contracts belong to the current vendor and stay with it, reachable from the archived service. |
 | **Archive** | Archives the service. |
 
 ### Engagements
 
-Create one from **Quick actions → Create new engagement** on the Overview tab, from **New Engagement** on the Engagements tab, or from the **Engagements** view of the list. The form asks for a name (the placeholder suggests *2026 Annual Review*), a status, a **Start Date** and an **End Date**.
+Create one from **Create new engagement** in the **Quick actions** card's menu on the Overview tab, from **New Engagement** on the Engagements tab, or from the **Engagements** view of the list. The form asks for a name (the placeholder suggests *2026 Annual Review*), a status, a description, a **Start Date** and an **End Date**, and lets you link **Services** and **Contracts** and name **Relationship Owners** and **Third-Party Contacts** up front.
 
 
 An engagement's page lives at `/vendors/<vendor>/engagement/<engagement>`. The **About Engagement** card is where you link the vendor's **Services** and **Contracts** to it, so a renewal or a project points at the exact products and agreements it covers. **Engagement Term** holds the dates. The main column has its own **Lifecycle**, **Risk Profile** and **Inherent risk** cards, so an engagement can carry an IRQ of its own. Tabs are **Overview**, **Activity** and **Notes**. Engagements have their own statuses under **Configuration**, separate from vendor statuses, and are archived from their page or from the row menu on the **Engagements** view.
@@ -259,7 +260,7 @@ Two badges matter:
 
 The **Suggested Subprocessors** panel lists what the shared research knows that your record does not: a new dependency, a change to one you have (**Updated**), or one that has ended (**Dependency ended**). **Check for new** runs the comparison for this vendor on demand; it also runs when a vendor first gains its directory entry and nightly for every vendor. Accept or reject rows singly, or **Accept all** / **Reject all**. Rejecting is durable: the suggestion does not come back.
 
-Whether suggestions wait for you at all is an organization setting under **Settings → Subprocessors**, **When Coverbase Finds a New Subprocessor**:
+Whether suggestions wait for you at all is an organization setting, **When Coverbase Finds a New Subprocessor**, in the **Subprocessors** section of **Configuration → Know Your Vendor Settings**. That page appears only when Know Your Vendor is turned on for your organization; if you do not see it, ask your Coverbase representative.
 
 | Setting | Behavior |
 | --- | --- |
@@ -331,7 +332,7 @@ The **Vendor Intelligence** tab is where Coverbase's outside-in research on the 
 | "I cannot find a vendor that used to be here." | It was archived, or merged into another vendor. Add the **Archived** filter on the list; a merged vendor's activity names the record it was merged into. |
 | "**Archive** is grayed out." | Your role lacks the vendor archive permission. Hover the item for the tooltip. |
 | "A subprocessor I removed is missing from the suggestions." | Removal is permanent by design. Add it back by hand from the search box. |
-| "Suggestions are being added without anyone approving them." | The organization setting is **Add it automatically**. Change it to **Queue it for review under Vendor changes** in **Settings → Subprocessors**. |
+| "Suggestions are being added without anyone approving them." | The organization setting is **Add it automatically**. Change it to **Queue it for review under Vendor changes** in the **Subprocessors** section of **Configuration → Know Your Vendor Settings**. |
 | "I set a vendor to **Inactive** but it still appears everywhere." | Status does not hide a record. Archive it if you want it out of lists and pickers. |
 | "I added a relationship owner but they never got an email." | The in-app notification is on by default; the email is off until that person turns it on in their settings. Directory contacts are the exception and are always emailed. |
 

@@ -24,8 +24,8 @@ The mistake people make most often is switching a workflow on before it is finis
 
 Open **Workflows** in the left navigation. Each workflow is a card with a status badge, an **Enabled** switch, a preview of its shape, its name and description, and an **Edit** button. The badge reads **Enabled**, **Disabled** or **Archived**. Search matches names and descriptions. Two buttons sit above the cards: **Browse templates** opens the library, and **New workflow** creates an empty one.
 
-<Frame caption="The workflows list. Each card carries the Enabled switch, so you can stop a workflow without opening it.">
-  <img src="/images/user-guides/building-a-workflow-list.png" alt="The Coverbase workflows list showing workflow cards with status badges, enabled switches and previews" />
+<Frame caption="The workflows list, searched for 'vendor'. Each card carries the Enabled switch, so you can stop a workflow without opening it.">
+  <img src="/images/user-guides/building-a-workflow-list.png" alt="The Coverbase workflows list searched for 'vendor', showing workflow cards with status badges, enabled switches and previews" />
 </Frame>
 
 Two tabs run across the top of the page: **Workflows** and **Workflow Runs**. The second one is where you read what your automations did.
@@ -56,7 +56,7 @@ Two tabs run across the top of the page: **Workflows** and **Workflow Runs**. Th
 The editor has two panes. The canvas on the left draws each automation as a node. The inspector on the right shows the workflow's settings, or the automation you are editing.
 
 <Frame caption="The editor. Nodes are automations, arrows are the events that link them, and the right pane edits whatever is selected.">
-  <img src="/images/user-guides/building-a-workflow-editor.png" alt="The Coverbase workflow editor with three connected automation nodes on the canvas and the inspector pane on the right" />
+  <img src="/images/user-guides/building-a-workflow-editor.png" alt="The Coverbase workflow editor with five automation nodes in two connected groups on the canvas and the workflow settings in the inspector pane on the right" />
 </Frame>
 
 ### Nodes
@@ -104,6 +104,9 @@ Click **Select trigger...**. The menu groups events by record (Vendor, Assessmen
 | Finding | Created, Updated, Deleted |
 | Commitment | Created, Updated, Deleted |
 | Contract | Created, Updated, Deleted, Expired |
+| Dark Web Exposure | Created, Updated, Deleted |
+| Monitoring Record | Created, Updated, Deleted, Scoping Due |
+| Monitoring Record Entry | Created, Updated, Deleted |
 | Obligation | Created, Updated, Deleted |
 | Sla | Created, Updated, Deleted |
 | Risk Register Entry | Created, Updated, Deleted |
@@ -112,6 +115,7 @@ Click **Select trigger...**. The menu groups events by record (Vendor, Assessmen
 | Screening Match | Created, Updated, Deleted |
 | Vendor Bank Account | Created, Updated, Retired |
 | Vendor Contact | Updated |
+| Vendor Document | Created, Updated, Deleted |
 | Supplier Site | Created, Updated, Deleted |
 | Supplier Tax Registration, Supplier Diversity Record | Updated |
 | Supplier Update Request | Submitted |
@@ -136,9 +140,12 @@ Conditions are optional. Click the **+** next to **If** to add one. Each conditi
 | Procurement | Filter, Contains reviewer |
 | Questionnaire | Filter, Answer |
 | Work queue | Items complete |
-| Engagement, Evaluated control, Finding, Service, Document, Intake session, Review, Radar signal | Filter |
+| Engagement, Evaluated control, Finding, Service, Document, Intake session, Review, Radar signal, Monitoring record | Filter |
+| This workflow | Opened by this workflow |
 
 **Filter** is the one you will use most. It opens the same **Add filter** menu as the list pages, so any field you can filter a list by, including custom fields, is a field a workflow can branch on. The field names and operators are documented in the [field reference](/fields/overview).
+
+**Opened by this workflow** makes an automation act only on a review or task that an earlier step of the same workflow created. One opened by hand, or by another workflow, with the same name is ignored. The chained [workflow templates](/user-guides/workflow-templates#how-a-chain-moves) rely on it.
 
 **Items complete** is the gate for human approval: it holds until **all** or **any** work items **related to this automation**, **for this vendor**, or **created during this workflow run** are complete. How to compose that into all-of, any-of and sequential approvals is in [Reviews, approvals and gates](/user-guides/reviews-and-approvals).
 
@@ -154,6 +161,7 @@ Click **Select action...**. Actions are grouped by the record they touch, and th
 | Service | Update, Update service status |
 | Engagement, Contract, Finding, Procurement, Review, Risk, Case, Intake session | Create, Update |
 | Assessment | Create, Update, Begin, Complete |
+| Documents | Link (attach documents already on the vendor, such as those a questionnaire respondent uploaded, to the triggering assessment or service) |
 | Intake | Begin, Finalize |
 | Radar signal | Update |
 | Work queue item | Create, Update |
@@ -207,7 +215,7 @@ The most common action is **Create work queue item**: a task on a named person's
 | **Vendor** | Leave empty to use the vendor behind the triggering event. If no vendor can be resolved, the step is **Skipped**. |
 | **Due date** or **Due in days** | Set one, not both. **Due in days** counts from when the automation runs. |
 
-Creating the item sends the assignee a **Work queue item assigned** email, which is on by default and can be turned off per person under [email notifications](/user-guides/email-notifications). Completing the item raises a **Work Queue Item Completed** event, which is how a later automation waits for a human.
+Creating the item sends the assignee a **Work queue item assigned** email, which is on by default and can be turned off per person under [email notifications](/user-guides/email-notifications). Resolving the item raises a **Work Queue Item Completed** event, which is how a later automation waits for a human.
 
 ## Testing and enabling
 
@@ -259,7 +267,7 @@ Columns are **Workflow Name**, **Status**, **Started At**, **Completed At**, **D
 
 ### A single run
 
-The run page shows the status card on the left and a read-only copy of the workflow's diagram on the right. The status card is a timeline, newest step first and **Started** at the bottom. Each step names its action and shows its **Input** (the record the trigger supplied) and **Output** (the records it wrote, as links). A step that did not write anything carries a badge:
+The run page shows the run's ID under its title, with **Copy run ID**, then the status card on the left and a read-only copy of the workflow's diagram on the right. The status card is a timeline, newest step first and **Started** at the bottom. Each step names its action and shows its **Input** (the record the trigger supplied) and **Output** (the records it wrote, as links). A step that did not write anything carries a badge:
 
 | Badge | What happened |
 | --- | --- |
@@ -268,8 +276,8 @@ The run page shows the status card on the left and a read-only copy of the workf
 
 An automation whose conditions did not match writes no step at all.
 
-<Frame caption="A run with a skipped step. The message under the badge explains why nothing was written.">
-  <img src="/images/user-guides/building-a-workflow-run-detail.png" alt="A Coverbase workflow run page showing the status card timeline with a Skipped step and the read-only diagram" />
+<Frame caption="A failed run. The status card lists each step newest first, beside a read-only copy of the diagram.">
+  <img src="/images/user-guides/building-a-workflow-run-detail.png" alt="A Coverbase workflow run page showing the run ID, a Failed status card with its step timeline, and the read-only diagram" />
 </Frame>
 
 **Loops.** If automations keep triggering each other, Coverbase stops the run and marks it **Failed**. The run page opens with an **Automation loop detected** callout that lists the chain (each automation linked to the editor, with "ran 3 times" where it repeated) and marks the step where it stopped with **Loop stopped here**. The breaker trips when a chain of automations is sixteen deep, when the same automation fires three times in one chain, or when the same record is changed twice by the same automation. Fix the trigger or add a condition, then cause the trigger again.
@@ -278,9 +286,9 @@ There is no retry button on a run. To run the automation again, cause its trigge
 
 ## Working the work queue
 
-A work queue item lands in two places. The assignee sees it in the **Work queue** button in the top bar, which shows a count and lists **My Work Queue**. Selecting an item opens a panel with the title, description, instructions and a **Mark as complete** button, with **Back** and **Next** to move through the queue. Completing it stamps the time and the person, and fires the **Work Queue Item Completed** event that a waiting automation listens for.
+A work queue item lands in two places. The assignee sees it in the **Work queue** button in the top bar, which shows a count and lists **My Work Queue**. Selecting an item opens a panel with the title, description, instructions and a **Mark as resolved** button, with **Back** and **Next** to move through the queue, and **Go to item** when you are on another page. Resolving it stamps the time and the person, and fires the **Work Queue Item Completed** event that a waiting automation listens for.
 
-Administrators also get **See All**, which opens the **Work Queue Items** page for the whole workspace. Its **Items** tab is a table with an **Add filter** menu and search; the **Activity** tab is the change log across every item.
+Administrators also get **See All**, which opens the **Work Queue Items** page for the whole workspace. Its **Items** tab is a table with a **Filter** menu, search, and four views: **All**, **Open**, **Waiting on vendor** and **Resolved**. **Waiting on vendor** holds pending items whose assessment has a follow-up round out with the vendor; they return to **Open** when the vendor answers. On **Open** and **Waiting on vendor**, **Resolve all** resolves every item in the view, with an undo. The **Activity** tab is the change log across every item.
 
 <Frame caption="Work Queue Items. Expanding a row shows the instructions and the conditions that created it.">
   <img src="/images/user-guides/building-a-workflow-work-queue.png" alt="The Coverbase Work Queue Items page with one row expanded to show its instructions and the conditions that raised it" />
@@ -290,12 +298,12 @@ Administrators also get **See All**, which opens the **Work Queue Items** page f
 | --- | --- |
 | **Vendor** | The vendor the item is tied to. |
 | **Title**, **Description** | What the automation wrote, with placeholders filled in. |
-| **Status** | **Pending**, **Completed** or **Canceled**. |
+| **Status** | **Pending**, **Resolved** or **Canceled**. |
 | **Assignee** | The person whose queue it sits on. |
 | **Due Date** | The due date the automation set, as a badge. |
 | **Completed At**, **Created** | When it was closed and when it was raised. |
 
-Click a row to expand it. The panel shows the **Instructions** and, for an item a workflow raised, "Work queue item created as a result of the following conditions being met" with the conditions listed. The row's menu offers **Mark as complete**, **Mark as incomplete** (on a completed item), **Mark as canceled** and **Archive**. Cancel an item that is no longer needed rather than completing it, so nobody is credited with work they did not do; a canceled item cannot be reopened.
+Click a row to expand it. The panel shows the **Instructions** and, for an item a workflow raised, "Work queue item created as a result of the following conditions being met" with the conditions listed. The row's menu offers **Mark as resolved**, **Reopen** (on a resolved item), **Mark as canceled** and **Archive**. Cancel an item that is no longer needed rather than resolving it, so nobody is credited with work they did not do; a canceled item cannot be reopened.
 
 Reassignment and routing to a group instead of a person are covered in [Assignment, delegation and out of office](/user-guides/assignment-and-delegation).
 
@@ -306,7 +314,7 @@ Reassignment and routing to a group instead of a person are covered in [Assignme
 | See the workflows list, the editor and the runs pages | Anyone with read access to workflows |
 | Create a workflow, apply a template, edit automations, switch **Enabled** on or off | A role with the workflow create and update permissions |
 | Delete (archive) a workflow | A role with the workflow archive permission |
-| Complete or reopen a work queue item | Its assignee, or an administrator |
+| Resolve or reopen a work queue item | Its assignee, or an administrator |
 | Cancel or archive a work queue item, open the **Work Queue Items** page | Administrators |
 
 How roles are assigned is in [Permissions and roles](/user-guides/permissions-and-roles). A template only appears in the library when your role can read the records its trigger uses; the rule is spelled out in [Workflow templates](/user-guides/workflow-templates#which-modules-a-template-needs).
@@ -332,7 +340,7 @@ How roles are assigned is in [Permissions and roles](/user-guides/permissions-an
 
 <CardGroup cols={2}>
   <Card title="Workflow templates" icon="wand-magic-sparkles" href="/user-guides/workflow-templates">
-    The twenty-four ready-made automations, and what to change before switching one on.
+    The nineteen ready-made automations, and what to change before switching one on.
   </Card>
   <Card title="Reviews, approvals and gates" icon="gavel" href="/user-guides/reviews-and-approvals">
     Using the Items complete condition to build all-of, any-of and sequential approvals.

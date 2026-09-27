@@ -37,7 +37,7 @@ Follow-up questionnaires (`follow_up`) have no tab. They are generated from asse
 
 ## Creating a template
 
-Click **Create Inherent Risk Questionnaire** (the label changes with the tab) above the list. The new template opens with no questions. On the **Inherent Risk** tab you can instead click **IRQ Library** and copy a packaged template. On the **Assessment** tab the button is a menu with a second choice, **Create Questionnaire from Control Set**, which derives a questionnaire from a control set of type policy or questionnaire.
+Click **Create Questionnaire** above the list. The new template opens with no questions. On the **Inherent Risk** tab you can instead click **IRQ Library** and copy a packaged template. On the **Assessment** tab the button is a menu: **Create Assessment Questionnaire**, or **Create Questionnaire from Control Set**, which derives a questionnaire from a control set of type policy or questionnaire. On the **Know-Your-Vendor** tab the menu also offers **Use default Know-Your-Vendor Template**.
 
 <Note>
   A derived questionnaire is owned by its control set. A blue banner at the top says which one, with **Go to control set**. You cannot edit its questions, reviewers, or comment settings here; change the control set and the questionnaire follows. Controls that are not questions are filtered out, and an orange banner tells you when that has happened.
@@ -53,7 +53,7 @@ The **Template** tab is an editor with a **Save** and **Cancel** bar. Nothing re
 
 The fields at the top are **Questionnaire title** and **Questionnaire description**. Both are shown to the respondent.
 
-Click **New Section** to add a section. A section has a **Section Name**, an optional description, a **Section Index**, and a **Risk Domain**. The risk domain matters on an IRQ: it decides which domain a section's questions score into, and it is what [domain weighting](/user-guides/irq-library#how-the-score-works) and per-domain review are keyed on. Drag sections and questions to reorder them. **Actions → Number Questions** fills in a question index for every question, either **Sequential (1, 2, 3)** or **By section (1.1, 1.2, 2.1)**, and can leave questions that already have an index alone.
+Click **New Section** to add a section. A section has a **Section Name**, an optional description, a **Section Index**, and a **Risk Domain**. The risk domain matters on an IRQ: it decides which domain a section's questions score into, and it is what [domain weighting](/user-guides/irq-library#weighting-risk-domains) and per-domain review are keyed on. Drag sections and questions to reorder them. **Actions → Number Questions** fills in a question index for every question, either **Sequential (1, 2, 3)** or **By section (1.1, 1.2, 2.1)**, and can leave questions that already have an index alone.
 
 ### Adding a question
 
@@ -63,12 +63,12 @@ Click **Add** and choose a response type. When the template has sections, the me
 | --- | --- | --- |
 | **Single Select** | One option | Can score, can trigger conditional logic, can drive fixed write-back rules. |
 | **Multi Select** | Several options | Same as single select. Scoring mode is **Cumulative** (sum of selected values) or **Highest score** (the top selected value). |
-| **Text** | Free text | Cannot trigger conditions. Write-back is AI only. |
-| **Contacts** | One or more people | Feeds the vendor's contact list through the older response mapping. |
-| **Country** | A country | Can trigger conditions. |
+| **Text** | Free text | Cannot trigger conditions. Write-back copies the answer into a field or asks AI. |
+| **Contacts** | One or more people | Write-back can copy the people it names into a user custom field. |
+| **Country** | One country, or several | Choose **One country** or **Several countries** in the question's settings. Can trigger conditions, and write-back can add each country as a location. |
 | **Currency** | An amount | |
 | **Document Upload** | A file | Know-Your-Vendor only. |
-| **Bank Account**, **Site / Address**, **Tax Registration**, **Diversity Record** | A supplier profile record | Know-Your-Vendor only. The answer is a reference to the vendor's profile, not a copy of the values. |
+| **Bank Account**, **Site / Address**, **Tax Registration**, **Diversity Record** | A supplier profile record | Know-Your-Vendor only, except that an inherent risk questionnaire can also ask **Site / Address** when the Know-Your-Vendor module is on. The answer is a reference to the vendor's profile, not a copy of the values. |
 
 Every question has a **Question title** and optional **Additional instructions**. Select questions have options, each with a **Value**: the weight that feeds the score. Options start at `0`, so weight them before the first send. An option's **Score override** sets a **Minimum score override**: when that option is selected, the questionnaire's overall score cannot fall below the percentage you enter, and the highest override among the selected answers wins.
 
@@ -78,13 +78,14 @@ Every question has a **Question title** and optional **Additional instructions**
 
 ### Question settings
 
-Open a question's settings to find these switches. Select several questions and use the bulk actions bar to set the first five at once.
+Open a question's settings to find these switches. Select several questions and use the bulk actions bar to set **Required question** and the comment and attachment switches at once.
 
 | Setting | What it does |
 | --- | --- |
 | **Required question** | The respondent cannot submit until it is answered. On an internal-only question the label changes to **Required before accepting or denying**, because it gates the reviewer instead. |
 | **Internal only** | Hidden from whoever fills in the questionnaire. Autofill still answers it, and your team sees it when reviewing the submission. |
 | **Allow comments** / **Require comment** | Adds a comment box. Required means the vendor must explain their answer before the question counts as answered. |
+| **Allow respondents to add their own** | Select questions, when your organization uses the [centralized supplier portal](/user-guides/centralized-supplier-portal). The respondent can answer with a value you did not list. A custom answer scores nothing and satisfies no conditional logic. |
 | **Allow document attachments** / **Require document attachments** | Lets or makes the respondent attach supporting documents to this question. |
 | **Require user review** | Intake only. The requester must confirm the AI answer to this question. |
 | **Require user input** | Intake only. The question is always put to the requester as a follow-up rather than answered from web search. Use it for facts only the business owner knows. |
@@ -122,15 +123,15 @@ On the submission, a section or question a rule hid is listed under **Skipped be
 
 ### Write-back: answers that update the record
 
-**Configure write-back** on a question makes its answer write a value onto the vendor, or onto the assessment for an assessment questionnaire. The panel asks for:
+**Configure write-back** on a question makes its answer write a value onto the vendor, onto its services, or, for an assessment questionnaire, onto the assessment. The panel asks for:
 
 | Field | Choices |
 | --- | --- |
-| **Record** | **Vendor** or **Assessment** |
-| **Target** | **Tags**, **Custom field**, or **Record field** (a built-in column such as description or website) |
-| **How** | **Fixed rules** for select questions: one rule per answer, each setting a tag or a literal value. **Ask AI** for text, country, and currency: an instruction the model follows, and its reason is recorded. |
+| **Record** | **Vendor**, **Service**, or **Assessment**. **Service** is offered on every type except assessment questionnaires, and writes to every service on the intake (including ones created on acceptance) or to the services the questionnaire was sent for. **Assessment** is offered only on assessment questionnaires. |
+| **Target** | **Tags**, **Custom field**, **Record field** (a built-in column such as description or website), or, on a country question, **Locations**: each country in the answer becomes a location on the record, and a country the record already lists is left alone. An assessment takes custom fields only. |
+| **How** | **Fixed rules** for select questions: one rule per answer, each setting a tag or a literal value. **Copy the answer** for text and contacts questions: the answer is written as given into a text, number, or user custom field, or a text answer into a record field. **Ask AI** for any question: an instruction the model follows, and its reason is recorded. Country and currency answers use it for every target except **Locations**. |
 | **Review before applying** | On by default. The reviewer confirms the suggestion on the submission. Off, it is applied on approval and still shown in the review panel. |
-| **Prefill this answer from the record** | Custom field and record field only. Answers the question from the value already on the record when the questionnaire is sent, so the vendor is not asked for something you already hold. An answer already given is never replaced. |
+| **Prefill this answer from the record** | Vendor custom fields and record fields only. Answers the question from the value already on the record when the questionnaire is sent, so the vendor is not asked for something you already hold. An answer already given is never replaced. |
 
 Three rules hold regardless of the settings. A write that would overwrite a value someone typed always asks. A built-in column is only ever filled when it is empty. Nothing lands on the record until the submission is approved.
 
@@ -208,7 +209,8 @@ Open a template and its **Submissions** tab lists every send. The tab is the def
 
 | Column | What it shows |
 | --- | --- |
-| **Vendor** | The vendor, with a **Scope** badge when the IRQ was sent for a service or engagement. |
+| **Vendor** | The vendor the questionnaire was sent to. |
+| **Scope** | IRQ only. The engagement or services the IRQ covers, or a dash when it covers the vendor alone. |
 | **Respondent** | Who answered. **Self-reported** means the email was typed by the respondent and not verified by sign-in. |
 | **Reviewer** | The submission reviewer, or **Unassigned**. |
 | **Sent**, **Due date** | When the portal was created and when it is due. |
@@ -233,9 +235,9 @@ Open a template and its **Submissions** tab lists every send. The tab is the def
 
 ## Reviewing a submission
 
-Click a row to open it. The header carries the **Assign reviewer** picker, the **Accept** and **Deny** buttons while the status is **Ready for review**, and an actions menu. Two tabs do the work.
+Click a row to open it. The header carries the **Assign reviewer** picker, the **Accept** and **Deny** buttons while the status is **Ready for review**, and an actions menu. On an intake request, **Request Clarification** sits beside them and emails the requester with a subject of **Clarification for Intake Request**. The tabs are **Summary**, **Review Questionnaire**, **Documents**, **Vendor Intelligence** and **Activity**, and the first two do the work.
 
-<Frame caption="A submission on its Summary tab: the Suggested Inherent Risk Profile, the Suggested updates panel, and the decision buttons.">
+<Frame caption="A submission on its Summary tab: the Suggested Inherent Risk Profile, the tags panel, and the decision buttons.">
   <img src="/images/user-guides/questionnaires-submission-review.png" alt="A questionnaire submission open on the Summary tab with the reviewer picker, Accept and Deny buttons, and the suggested risk profile card" />
 </Frame>
 
@@ -261,7 +263,6 @@ The actions menu on a submission:
 | --- | --- |
 | **Reopen Submission** | Reopens the portal and puts the submission back to **Pending**, so the vendor can answer new questions that were added. Shown on **Ready for review** and **Accepted** submissions that came through a portal. Needs `portal:update`. |
 | **Mark as Pending Review** | Reverts an **Accepted** or **Rejected** decision to **Ready for review** so it can be decided again. |
-| **Request Clarification** | Intake submissions only. Emails the requester with a subject of **Clarification for Intake Request**. |
 | **View template** | Opens the template in a new tab. |
 | **Export as XLSX** | Downloads this submission's answers. |
 | **Configure Portal**, **Go to Portal**, **Copy Portal URL** | Portal actions for the send that carried the submission. |

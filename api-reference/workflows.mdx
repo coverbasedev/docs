@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The Workflows API lets external systems start a workflow by name with an arbitrary input payload, and read the state of a run.
+The Workflows API lets external systems start a workflow by name with an input payload, schedule one for later, and read the state of a run.
 
 All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, idempotency, and the error envelope.
 
@@ -20,7 +20,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 
 Starts a new run of the named workflow. Returns `201 Created`. The `workflow_name` path segment is matched against the workflow definition's `name` for your org.
 
-The run row is created and committed, then a `Workflow.RunRequested` event is dispatched to the workflow engine, which executes the definition's entrypoint components. The response returns as soon as the run is created and the event is enqueued; poll [Get a workflow run](#get-a-workflow-run) for progress.
+The run row is created and committed, and the commit emits a `WorkflowRun.Created` event to the workflow engine. The engine runs the definition's entrypoint components that subscribe to that event, which is how a directly runnable workflow starts; an event-driven workflow starts from its own domain events instead. The response returns as soon as the run is created; poll [Get a workflow run](#get-a-workflow-run) for progress.
 
 ### Path parameters
 
@@ -31,7 +31,7 @@ The run row is created and committed, then a `Workflow.RunRequested` event is di
 ### Request body
 
 <ParamField body="input" type="object">
-  Workflow input parameters. Optional; defaults to `{}`. The value is stored and echoed back on the response; its schema is workflow-specific and is not validated by this endpoint.
+  Workflow input parameters. Optional; defaults to `{}`. The value is stored and echoed back on the response. Record IDs under the well-known keys (`vendor_id`, `service_id`, `assessment_id`, `engagement_id`, `contract_id`, `finding_id`, `vendor_document_id`, `questionnaire_response_id`, `intake_session_id`, `procurement_id`, `review_id`, `eval_id`, `portal_id`, `work_queue_item_id`, `radar_event_id`, `radar_case_id`) tell the workflow's actions which record to act on, and `custom_fields` passes custom field values to them. Any other key is stored as given. A number under a well-known key is converted to a string, and `null` values are dropped.
 </ParamField>
 
 ### Headers
@@ -129,8 +129,50 @@ print(resp.json())
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "workflow_not_found", "message": "Workflow '...' not found."}}` | No workflow with that name exists for the org. |
 | 409 | `{"detail": {"code": "workflow_disabled", "message": "Workflow '...' is disabled."}}` | The workflow exists but is not enabled. |
-| 502 | `{"detail": {"code": "workflow_dispatch_failed", "message": "Workflow run was created but could not be dispatched. Retry with the same workflow run id (...)."}}` | The run row was created but the dispatch event failed. The run ID is in the message; safe to retry. |
 | 422 | Standard validation error | The request body failed schema validation. See [API conventions](/conventions#validation-errors). |
+
+## Schedule a workflow run
+
+<ParamField path="method" type="POST">
+  `POST /v1/workflows/{workflow_name}/schedule`
+</ParamField>
+
+Schedules a run of a directly runnable workflow for a future time instead of starting it now. Returns `201 Created` with the schedule. When the time comes, the run starts as if you had called [Run a workflow](#run-a-workflow) with the same `input`.
+
+### Request body
+
+<ParamField body="scheduled_for" type="integer" required>
+  When to run, as a Unix timestamp in seconds. Must be in the future.
+</ParamField>
+
+<ParamField body="input" type="object">
+  Workflow input, as for [Run a workflow](#run-a-workflow). Defaults to `{}`.
+</ParamField>
+
+The endpoint honors `Idempotency-Key`. See [Idempotency](/conventions#idempotency).
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/workflows/quarterly-privacy-sweep/schedule" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "scheduled_for": 1767225600, "input": { "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162" } }'
+```
+
+### Response fields
+
+The schedule carries `id`, `workflow_definition_id` (`cbwd_...`), `scheduled_for`, `fired_at` and `canceled_at` (both `null` until the schedule fires or is canceled), `cancel_reason`, `payload` (the input pinned at schedule time), and `updated_at`. The `scheduling_*` fields are `null` for schedules created through this endpoint.
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "workflow_not_direct_runnable", "message": "..."}}` | The workflow starts from domain events, not a direct run. |
+| 400 | `{"detail": {"code": "scheduled_for_in_past", "message": "..."}}` | `scheduled_for` is not in the future. |
+| 404 | `{"detail": {"code": "workflow_not_found", "message": "Workflow '...' not found."}}` | No workflow with that name exists for the org. |
+| 409 | `{"detail": {"code": "workflow_archived", "message": "Workflow '...' is archived."}}` | The workflow is archived. |
+| 409 | `{"detail": {"code": "workflow_disabled", "message": "Workflow '...' is disabled."}}` | The workflow is not enabled. |
 
 ## Get a workflow run
 

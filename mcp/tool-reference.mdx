@@ -39,17 +39,22 @@ Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_ter
 | `risk_summary` | Risk tier and open finding counts. |
 | `financial_health` | The Coverbase Financial Health Score: 0-100 score, risk band, confidence tier, pillar breakdown, financial vitals, peer percentile, adverse events, and the source behind each figure. Never compare scores across confidence tiers. |
 | `company_registration` | Validated corporate identity from GLEIF, OpenCorporates, and SEC EDGAR: official name, status, jurisdiction, addresses, and LEI / DUNS / company number / CIK, each with a citation. Prefer this over a web search when a corporate fact is in question. |
+| `leadership` | The vendor's [People Intelligence](/products/people-intelligence) dossier: executives, board and key people, who reports to whom, registry filings that name them, and adverse-media and sanctions screening. Separates confirmed names from unconfirmed research candidates. |
+| `security_posture` | The outside-in [security posture](/products/security-intelligence) measured against the vendor's own infrastructure: rating and grade, per-factor findings, actively exploited vulnerabilities, and lookalike domains. Requires Advanced company intelligence for your organization. |
 | `bill_of_materials` | The currently applied SBOM, AIBOM, HBOM, or SaaSBOM and its components. |
 | `bill_of_materials_history` | Every BOM received from this vendor, newest first. |
 | `uses_nth_party` | Which of your vendors depend on a named nth-party. |
 
 ### `query_assessments`
 
-Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, `query`, `control_set_id`, `issues_only`, `unresolved_only`, `limit`, `full_text`, `analysis_offset`, `summary_offset`.
+Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, `query`, `control_set_id`, `issues_only`, `unresolved_only`, `limit`, `full_text`, `analysis_offset`, `summary_offset`, `recommendation_offset`.
 
 | `kind` | Returns |
 | ------ | ------- |
 | `search` | Assessments by vendor, status, or assignee. Each row carries the outcome and the residual risk, so a whole portfolio maps in one call per page. |
+| `zero_touch` | One [Zero Touch](/products/zero-touch-assessments) run: its composite Zero Touch Score, the components behind it, whether the score was applied, and every source cited. |
+| `zero_touch_leaderboard` | Vendors ranked by their latest Zero Touch Score, worst first, one row per vendor. |
+| `zero_touch_audit` | Every review action on a Zero Touch run (approvals, escalations, corrections to its inputs) and what each did to the score. |
 | `detail` | Full assessment: outcome, residual risk, control evaluations, findings with titles, people, documents, and the scope columns (date created, initiated by, run counter, products, services, control sets, parsed control counts). Carries the opening 500 characters of the AI summary as a preview. |
 | `summary` | The complete AI-generated summary report: every section the summary prompt produced, plus the recommendation, the residual risk, and any notices. This is the **Summary** column of the Consolidated Assessment Report export. |
 | `details_legacy` | The previous detail shape, for compatibility. Carries the outcome and residual risk too. |
@@ -64,7 +69,7 @@ Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, 
 
 Reading a long AI analysis: `eval_detail` renders the AI's reasoning whole up to a generous cap. If an analysis is longer than that, the response says so and names the follow-up call that returns the rest: pass `full_text=true` for every section at maximum length, or `analysis_offset` to page through the analysis from a given character. A capped response always announces itself, so a partial analysis is never presented as the complete reasoning.
 
-Reading a long summary report: `summary` works the same way. Pass `full_text=true` or `summary_offset` to page through a report longer than one response can carry. The truncation notice names the exact call that returns the next window.
+Reading a long summary report: `summary` works the same way. Pass `full_text=true`, or `summary_offset` (and `recommendation_offset` for the recommendation section), to page through a report longer than one response can carry. The truncation notice names the exact call that returns the next window.
 
 ### Risk scores and your scoring settings
 
@@ -89,13 +94,13 @@ Accepted parameters: `kind`, `finding_id`, `vendor_id`, `assessment_id`, `commit
 
 ### `query_engagements_contracts`
 
-Accepted parameters: `kind`, `vendor_id`, `engagement_id`, `contract_id`, `vendor_document_id`, `status`, `limit`.
+Accepted parameters: `kind`, `vendor_id`, `engagement_id`, `contract_id`, `vendor_document_id`, `status`, `status_id`, `limit`.
 
 | `kind` | Returns |
 | ------ | ------- |
 | `engagements` | Engagements, optionally scoped to a vendor. |
 | `engagement_detail` | One engagement in full. |
-| `contracts` | Contracts by vendor or status. |
+| `contracts` | Contracts by vendor or status. `status_id` filters by one of your custom contract workflow statuses, from `query_platform(kind="statuses", target_type="contract")`. |
 | `contract_detail` | One contract in full. |
 | `services` | Services on a vendor. |
 | `obligations` | Obligations extracted from vendor documents. |
@@ -185,6 +190,8 @@ Accepted parameters: `kind`, `object_type`, `object_id`, `target_type`, `target_
 | `control_flag_rates` | Controls ranked by how often they flag an issue. The data-driven way to find false-positive-prone controls to tune. | `days`, `top_n`, `min_volume`, `format` |
 | `assessment_report` | An executive-ready writeup for one assessment. | `assessment_id` |
 | `findings_by_vendor` | Vendors ranked by open finding count. | `top_n` |
+| `risk_register` | Risks on your [risk register](/user-guides/risk-register), highest residual first. Every status except closed unless you pass `status` (`proposed`, `open`, `mitigating`, `accepted` or `closed`). | `status`, `domain`, `vendor_id`, `top_n` |
+| `risk_simulation` | A what-if scenario over your dependency chain from a plain-English `prompt` (an outage, breach, insolvency, sanction, exit, change, or offboarding). Nothing is saved; the loss estimate is withheld when its inputs are missing. | `prompt` |
 
 <Tip>
   `control_flag_rates` accepts `format='csv'` for a spreadsheet-ready export.
@@ -238,7 +245,7 @@ A few of these carry behaviour worth knowing:
   </Accordion>
 
   <Accordion title="eval / update triages one control evaluation" icon="check-double">
-    Clear a false positive with `is_issue=false`, resolve an issue, or attach review notes. This is the per-control correction, distinct from the whole-assessment sign-off in `review / create`.
+    Set `outcome` to `not_an_issue` to clear a false positive, `issue` to flag or reopen one, `mitigated` for a real gap the vendor fixed, or `risk_accepted` for one your organization chose to live with, and attach `review_notes`. Closing an issue does not change the score. This is the per-control correction, distinct from the whole-assessment sign-off in `review / create`.
   </Accordion>
 
   <Accordion title="engagement / archive is terminal" icon="box-archive">

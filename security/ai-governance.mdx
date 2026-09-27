@@ -14,13 +14,20 @@ Coverbase uses AI to read evidence, draft assessments, extract contract clauses,
 
 <CardGroup cols={2}>
   <Card title="Enterprise-grade models" icon="microchip">
-    We run leading foundation models through enterprise model hosting (AWS Bedrock), keeping inference inside our trusted cloud boundary rather than calling consumer endpoints.
+    We run Anthropic Claude models (the Sonnet, Haiku and Opus families) and Amazon Titan embeddings through enterprise model hosting (AWS Bedrock) in our own AWS account, rather than calling consumer endpoints.
   </Card>
 
   <Card title="No training on your data" icon="shield-halved">
     Customer data sent to the models we use is not used to train those foundation models. Your data is used to serve your requests, not to improve a third party's model.
   </Card>
 </CardGroup>
+
+Two details worth knowing when you map this to a residency or data-flow review:
+
+- **Cross-region inference.** Most Claude calls use Bedrock's global cross-region inference profiles, so AWS can serve an individual inference request from capacity in an AWS region other than the one Coverbase runs in (see [Data residency](/security/data-protection#data-residency)).
+- **Web research.** Features that research a vendor on the public web, such as control evaluations with web search and company and financial lookups, send search queries built from what they are looking up (for example the vendor's name and the topic) to external web search providers, Tavily and Perplexity.
+
+Bedrock model-invocation logging is configured for metadata only (model, timing, token counts), so prompt and response text is not written to those logs.
 
 ## Testing and evaluation
 
