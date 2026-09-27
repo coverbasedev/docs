@@ -89,7 +89,7 @@ Creates the account + org membership (`invited`), or returns the existing user. 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "https://sandbox.api.coverbase.app/v1/users" \
+curl -X POST "https://api.coverbase.app/v1/users" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Idempotency-Key: acme-user-jordanlee" \
   -H "Content-Type: application/json" \
@@ -106,7 +106,7 @@ import os
 import requests
 
 API_KEY = os.environ["COVERBASE_API_KEY"]
-BASE_URL = "https://sandbox.api.coverbase.app"
+BASE_URL = "https://api.coverbase.app"
 
 resp = requests.post(
     f"{BASE_URL}/v1/users",
@@ -204,7 +204,7 @@ Lists the org's users, newest first, or resolves a single user by email. By defa
 <CodeGroup>
 
 ```bash cURL
-curl -X GET "https://sandbox.api.coverbase.app/v1/users?email=jordan.lee@example.com" \
+curl -X GET "https://api.coverbase.app/v1/users?email=jordan.lee@example.com" \
   -H "Authorization: Bearer ak_live_xxx"
 ```
 
@@ -213,7 +213,7 @@ import os
 import requests
 
 API_KEY = os.environ["COVERBASE_API_KEY"]
-BASE_URL = "https://sandbox.api.coverbase.app"
+BASE_URL = "https://api.coverbase.app"
 
 resp = requests.get(
     f"{BASE_URL}/v1/users",
@@ -273,7 +273,7 @@ user_id = items[0]["id"] if items else None  # resolve email -> cbuser_ id
 Returns the user. The user must have a membership in the API key's org.
 
 ```bash cURL
-curl -X GET "https://sandbox.api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
+curl -X GET "https://api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
   -H "Authorization: Bearer ak_live_xxx"
 ```
 
@@ -304,14 +304,14 @@ Changes a user's org role and/or (de)provisions them. Returns the refreshed [use
 ### Examples
 
 ```bash Change role
-curl -X PATCH "https://sandbox.api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
+curl -X PATCH "https://api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{ "role": "org:member" }'
 ```
 
 ```bash Deprovision
-curl -X PATCH "https://sandbox.api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
+curl -X PATCH "https://api.coverbase.app/v1/users/cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{ "is_archived": true }'
