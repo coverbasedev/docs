@@ -33,17 +33,18 @@ The mistake people make most often is expecting the import to create contracts. 
 
 A proposed contract is marked **Ready** only when its vendor is settled, nothing is left to decide, and confidence is at least 90%. Confidence is only as high as the weakest link in the group. A group can reach 90% only when its main agreement is signed and every link in it rests on at least two independent kinds of evidence, for example what the documents say and how the files were filed. File names alone never get there.
 
-If the vendor-matching model is unavailable, Coverbase ranks your vendors by how closely their names match instead, and more proposed contracts wait for you to choose. **Re-analyze** on a batch of 500 files or fewer uses that name ranking too, so its matches can differ from the first analysis. Neither way ever creates a vendor on its own.
+If the vendor-matching model is unavailable, Coverbase ranks your vendors by how closely their names match instead, and more proposed contracts wait for you to choose. Neither way ever creates a vendor on its own.
 
 ## Before you start
 
 - **Permissions.** Importing and confirming need permission to create contracts. Changing a batch (re-analyzing it, regrouping documents, answering its questions) needs permission to edit contracts across your organization.
 - **File types.** PDF, DOC, DOCX, RTF and ODT, up to 100 MB each.
 - **Keep the folder structure.** The folder a file sits in is used as evidence for grouping, so drop the export as it came out of the old system rather than flattening it.
-- **Unzip archives first.** The wizard accepts a single zip and previews what is inside it, but the import reads the archive as one file that it cannot open, and it ends up unmatched. Drop the unzipped folder instead.
-- **Make sure scans have text.** A file with no text on the page, such as a scan of a printout, cannot be read and is left out of every group. Run it through OCR before you import it.
-- **Take out duplicate copies.** A copy with the same name and size as another file is skipped, but a copy saved under a different name is imported as a separate document.
+- **Zip archives are fine.** Drop the zip as it is. Your browser opens it, step 2 lists what is inside, and each document is uploaded and read on its own with the folders it sat in. Nested archives, system files such as `__MACOSX`, and anything other than the supported file types are left out and listed. An archive over 8 GB uncompressed, or with more than 5,000 documents, is refused: split it into several imports.
+- **Scans are fine too.** A PDF with no text on the page, such as a scan of a printout, is left out of every group until you run OCR on it from the review. See [Files that were not grouped](#files-that-were-not-grouped).
+- **Duplicate copies.** A copy with the same name and size as another file is skipped on step 1. A copy saved under another name is recognized when the files are read: the first one uploaded is kept, and the others are listed under **Unmatched** as exact duplicates.
 - **Vendors.** Nothing to set up. The import matches the vendors you have and proposes the ones you do not.
+- **A manifest, if your old system exports one.** A CSV listing each file with the vendor and the agreement it belongs to can be attached on step 2. See [Attaching a manifest](#attaching-a-manifest).
 
 ## Import the files
 
@@ -65,7 +66,7 @@ Open **Contracts → Assembly** and click **Import contracts**. On the contracts
   <img src="/images/user-guides/contract-assembly-upload.png" alt="Upload contract documents step with a drop zone, choose files and choose folder buttons, and a list of seven staged files" />
 </Frame>
 
-Drag a folder or a set of files onto **Drop contracts here**, or use **Choose files** or **Choose folder**. Nothing is uploaded yet: the files are only staged in your browser. The list is headed with the count and total size, and **From Contract export/** when every file came from one folder. Remove a file with the **×** on its row, or all of them with **Remove all**.
+Drag a folder, a set of files or a zip onto **Drop contracts here**, or use **Choose files** or **Choose folder**. Nothing is uploaded yet: the files are only staged in your browser. The list is headed with the count and total size, and **From Contract export/** when every file came from one folder. Remove a file with the **×** on its row, or all of them with **Remove all**.
 
 Above 500 files, a warning asks you to check this is the set you meant to drop. It is not a limit.
 
@@ -87,6 +88,25 @@ Click **Review import**.
 
 Skipped files are left behind entirely. If one of them matters, fix it and add it in a later import.
 
+A zip gets a card of its own, **Inside** and the zip's name. It counts the documents that will be imported from it, the entries left out and why, and the uncompressed size, and lists the first documents by the path they have in the archive. A zip that cannot be read, or that is over the limits, says so there; click **Remove archive** to import the rest without it.
+
+#### Attaching a manifest
+
+If the system you are leaving can export a list of its files, attach it with **Add manifest** on the **Manifest** card. It is optional. It must be a CSV with a header row and one row per file:
+
+| Column | Accepted headers | What it does |
+| --- | --- | --- |
+| File name (required) | `filename`, `file name`, `file`, `document`, `document name`, `name` | Says which file the row is about. A path works too, with or without the folders around it. |
+| Vendor | `vendor`, `vendor name`, `counterparty`, `supplier` | Files the file's contract under this vendor instead of the one Coverbase would match. A vendor you do not have yet is proposed for you to approve, like any new vendor. |
+| Agreement | `agreement`, `agreement id`, `agreement number`, `contract id`, `contract number`, `family` | Files with the same agreement become one proposed contract, and are never grouped with files under another agreement. |
+| Folder | `source path`, `path`, `folder`, `source folder` | Where the file sat, when the file name column holds only the name. |
+
+The manifest is your own statement about your files, so where it names a vendor or an agreement it wins over what Coverbase reads from the documents. Coverbase still reads each document's role and still asks the questions it cannot answer inside a contract. Files the manifest does not mention are grouped from their contents as usual.
+
+The card checks the file straight away and says how many rows it read, how many agreements and vendors they name, which columns it did not use, and which rows it skipped and why, such as a row that names no file. A file it cannot use at all, for example one with no file name column, says why, and **Upload and analyze** waits until you fix it or click **Remove manifest**.
+
+A row that names a file missing from the import, or a name two files share, is not dropped silently: after analysis it is listed in the batch's **Details** as a manifest row that names no file in this import, with its line number.
+
 **Batch Name** starts as the folder the files came from, or "Contract import" and today's date. Rename it to something your team will recognize in the list of batches.
 
 Click **Upload and analyze**. This is the point where files leave your browser.
@@ -95,8 +115,10 @@ Click **Upload and analyze**. This is the point where files leave your browser.
 
 The step shows two separate waits.
 
-- **Uploading files** counts the files as they upload, with a mark beside each one. A file that fails is marked in red with the reason, and **Retry failed files** sends the failed ones again.
+- **Uploading files** counts the files as they upload, with a mark beside each one. The documents inside a zip are listed and uploaded one by one. A file that fails is marked in red with the reason, and **Retry failed files** sends the failed ones again.
 - **Reading documents** starts once every file has uploaded. It counts the documents read, and moves through **Ingesting files**, **Analyzing documents** and **Ready for review**.
+
+A file that fails holds the reading back, so the batch is never proposed over part of what you dropped. Retry it, or take it out: click **Upload contract documents** in the step list, remove the file with the **×** on its row, then click **Review import** and **Upload and analyze** again. The files that did upload are then read.
 
 Stay on the page until every file has uploaded, because the upload runs in your browser. Once reading has started you can leave: analysis runs on the server and keeps going. If no file uploads at all, no batch is created.
 
@@ -113,7 +135,7 @@ Open **Contracts → Assembly** and click **Open** beside a batch. Each row show
 The review page has three parts:
 
 - **The header**: the batch name and state, **Owner**, **Re-analyze**, and **Confirm N ready**.
-- **The summary strip**: six figures, **Files**, **Proposed**, **Confirmed**, **Ready**, **Need a Decision** and **Unmatched**. **Details** opens how many files were received, parsed and OCRed, and why files went unmatched.
+- **The summary strip**: six figures, **Files**, **Proposed**, **Confirmed**, **Ready**, **Need a Decision** and **Unmatched**. **Details** opens how many files were received, parsed and OCRed, why files went unmatched, and any manifest rows that name no file in the import.
 - **Two columns**: the proposed contracts on the left, and the one you select on the right.
 
 ### The list of proposed contracts
@@ -127,17 +149,17 @@ The list is ordered by what needs you: proposed contracts with open questions fi
 | **New vendor** | No vendor on file matches, and the documents name one Coverbase can create once you approve it. |
 | **No vendor** | No vendor is settled: several fit, or the documents name nobody. You choose. |
 | **Review** | The vendor is settled, but confidence is under 90%, or you have edited the group. Check it and confirm it yourself. |
-| **Added** | Its documents were added to a contract that already existed. |
+| **Added** | Confirmed: its documents are on a contract now. **Open contract** opens it. |
 
 Use the arrow keys to move through the list.
 
 ### What a proposed contract shows
 
-The right column opens with the proposed contract's name, status and facts, with **Reject grouping** and **Confirm contract** beside them. Below, in order:
+The right column opens with the proposed contract's name, status and facts, with **Reject grouping** and **Confirm contract** beside them. Once it is confirmed, **Open contract** takes their place and the documents can no longer be changed here. Below, in order:
 
 1. **Needs a decision**: the questions to settle, when there are any.
 2. **Contract**: what the documents become. See [Choosing what the documents become](#choosing-what-the-documents-become).
-3. **Documents**: each document, its role, and its effective date. Click a file name to preview it.
+3. **Documents**: each document, its role, and its effective date. Click a file name to open it: once its proposed contract is confirmed it opens in the document viewer, and before that the file you uploaded opens in a new tab.
 4. **What the documents say**: a preview of the components the contract would carry, worked out from the documents' roles. The full reading happens after you confirm.
 5. **Evidence**, closed by default: why these documents were grouped. **Grouping** says it in sentences, such as how many documents name the same counterparty, and the rows below list the **Counterparty**, **Back reference**, **Agreement number**, **Defined terms similarity**, **Effective dates**, **Source folder**, **Filename tokens** and **File metadata** it relied on.
 
@@ -164,18 +186,17 @@ A vendor created here is a record with a name and nothing else: no intake and no
 
 ### Settling what needs a decision
 
-Each question states what depends on it. The buttons under a question record your answer with the proposed contract and clear the question. **Except for the conformed copy, they do not change the documents.** Make the change the answer describes yourself, then answer.
+Each question states what depends on it, and each button under it makes the change its label names. An answer applies to that question only: a proposed contract with three statements of work asks about each pair separately.
 
-Answering one question also clears any other question of the same kind on the same proposed contract, so read them all before you answer the first.
-
-| Question | Buttons | What to do |
+| Question | Buttons | What each one does |
 | --- | --- | --- |
-| **"SOW 04.pdf could be additive or superseding."** | **SOW 04.pdf replaces SOW 03.pdf**, **Both are in force**, **Open both side by side** | Read both documents first by clicking their names under **Documents**. **Open both side by side** does not open them; it clears the question like the other two. Both documents keep their role, and money from a statement of work adds to the contract. If the later one replaces the earlier, check the contract value on the new contract's **Terms** card after confirming. |
-| **"Two master agreements with different dates and no link between them."** | **Split into two contracts**, **Keep as one** | Nothing is split. Tick the second agreement and the documents that go with it, and click **Split N out**. |
-| **"An amendment with no parent agreement in the system."** | **Upload the parent agreement**, **Confirm as standalone** | Nothing is uploaded. If the parent agreement is already a contract in Coverbase, choose **Add to an existing contract** instead. |
-| **"… already incorporates 2 earlier amendment(s)."** | **Mark the earlier amendments as incorporated**, **Keep each amendment as separate terms** | The first does act: the amendments stay with the contract, struck through and marked **Contributes nothing**, and the conformed copy carries their terms. Choose the second only if the "conformed" copy is really a draft. |
-| **"32 documents in one family."** | **Review document by document**, **Split the family** | A group of more than 25 documents always needs a person. Neither button splits it. Check the documents and split out what does not belong. |
-| **"No vendor in the system matches …"**, **"More than one vendor could be …"**, **"These documents never name a counterparty."** | Vendor names, **Create** and a name, or **Pick an existing vendor** | These buttons do not choose a vendor. Choose it in the **Contract** card; that answers the question. |
+| **"SOW 04.pdf could be additive or superseding."** | **SOW 04.pdf replaces SOW 03.pdf**, **Both are in force** | The first records that the later document replaces the earlier one, and the earlier one is shown struck through. The second records that both stand. To read them first, click their names under **Documents**. |
+| **"Two documents look like the same agreement."** | **Keep the signed one, set the other aside**, **Keep both on the contract** | The first takes the unsigned copy out of the proposed contract and lists it under **Unmatched** as **Set aside**, so it is never added to a contract. The second keeps both, the unsigned copy contributing nothing. |
+| **"Two master agreements with different dates and no link between them."** | **Split into separate contracts**, **Keep as one contract** | The first gives every master agreement after the earliest a proposed contract of its own, and moves the amendments and orders that hang off it along with it. |
+| **"An amendment with no parent agreement in the system."** | **Upload the parent agreement**, **Add to a contract on file**, **Confirm as standalone** | **Upload the parent agreement** opens the import on this batch. Add the parent's file: once it is read, the batch is analyzed again and the amendment is grouped with it. **Add to a contract on file** switches the **Contract** card to **Add to an existing contract**; picking the contract answers the question. **Confirm as standalone** keeps the amendment as a contract of its own. |
+| **"… already incorporates 2 earlier amendment(s)."** | **Mark the earlier amendments as incorporated**, **Keep each amendment as separate terms** | The first keeps the amendments with the contract, struck through and marked **Contributes nothing**, and the conformed copy carries their terms. Choose the second only if the "conformed" copy is really a draft. |
+| **"32 documents in one family."** | **Split the family**, **Keep as one contract** | A group of more than 25 documents always needs a person. **Split the family** takes you to **Documents** and asks you to tick what belongs to a separate contract, then **Split N out** moves it. |
+| **"No vendor in the system matches …"**, **"More than one vendor could be …"**, **"These documents never name a counterparty."** | **Use** and a vendor, **Create** and a name, **Pick another vendor** | Each one fills in the **Contract** card: **Use** files the contract under that vendor, **Create** proposes a new vendor with that name, and **Pick another vendor** opens the vendor picker. A complete **Contract** card answers the question. |
 
 ### Fixing the grouping
 
@@ -189,15 +210,21 @@ Every change is available at any time before you confirm.
 
 A proposed contract you edit drops below 90% confidence, so it leaves **Confirm N ready**. Confirm it on its own, or tick it and confirm it from the selection bar.
 
-<Warning>
-  **Re-analyze rebuilds every proposal from the files.** Splits, moves, merges, role changes and answered questions you have not confirmed are lost, rejected groups come back, and vendor matches can change. **Run OCR** re-analyzes too when it finishes. Confirm what you have settled before you use either.
+### Re-analyzing a batch
 
-  Contracts you already confirmed are kept, but their files are read again with the rest, so a group you confirmed can reappear in the list. Reject it rather than confirming it again, including through **Confirm N ready**: a second confirmation creates a second contract with the same documents.
-</Warning>
+**Re-analyze** regroups only the files nobody has worked on yet. What you have done stays as you left it:
+
+- A proposed contract you confirmed stays confirmed, and its files are never proposed again.
+- A proposed contract you split, merged, moved documents in or out of, changed a role in, or answered a question on is kept exactly as it is.
+- A file you set aside stays under **Unmatched**.
+
+Rejected groups are proposed again, because rejecting one only drops the grouping. Re-analyzing runs on the server: the button reads **Analyzing**, the page cannot be edited until it finishes, and it fills in on its own when it does. **Run OCR** re-analyzes the same way when it finishes.
 
 ### Confirming one proposed contract
 
-Click **Confirm contract**, or **Add to contract** when you chose an existing contract. The button stays unavailable until the **Contract** card is complete and no question is open; hover it for the reason. Confirming creates the contract, or adds the documents, and opens that contract. To carry on with the batch, go back to **Contracts → Assembly** and click **Open**.
+Click **Confirm contract**, or **Add to contract** when you chose an existing contract. The button stays unavailable until the **Contract** card is complete and no question is open; hover it for the reason. Confirming creates the contract, or adds the documents, and opens that contract. To carry on with the batch, go back to **Contracts → Assembly** and click **Open**: the proposed contract now reads **Added**.
+
+Confirming is done once. Confirming the same proposed contract again, after a double click or a retry, opens the contract it already created rather than making a second one, and **Confirm N ready** never includes a proposed contract that is already confirmed.
 
 ### Confirming many at once
 
@@ -220,17 +247,16 @@ A file that could not be put in any group is listed under **Unmatched**, with th
 
 | Reason | What it means | What to do |
 | --- | --- | --- |
-| **No text layer** | Nothing on the page could be read: a scan, or a file the import could not open, such as a zip. | OCR it, or unzip it, and import it again. |
+| **No text layer** | A PDF with nothing readable on the page, such as a scan. | Click **Run OCR**. |
+| **Parse failed** | The file could not be opened or read at all. OCR cannot help. | Save it again in another supported format and add it in a later import. |
+| **Exact duplicate** | The same file as another in the batch, saved under another name. The first one uploaded is kept. | Nothing. The copy it duplicates is in the batch. |
+| **Not an agreement** | A tax form such as a W-9, an invoice, an insurance certificate, a certification or a SOC report. | Upload it to the vendor's documents if you want to keep it. |
 | **No counterparty found** | The document names no other party, and nothing else in the batch links to it. | If it belongs to a contract, upload it on that contract's **Documents** tab. |
-| **Not an agreement** | A tax form such as a W-9, or an invoice. | Upload it to the vendor's documents if you want to keep it. |
-
-Two copies of one document under different file names are not recognized as copies. They can land in one group with both contributing, or become two proposed contracts. Remove copies from the folder before you import. In the review, set an extra copy's role to **Duplicate** so it contributes nothing, or reject a proposed contract that repeats another.
-
-Other paperwork that names the vendor, such as an insurance certificate or an audit report, can be proposed as a contract of its own. Reject it with **Reject grouping**.
+| **Set aside** | You kept the signed copy of a document, and this is the unsigned one. | Nothing. It is kept out of every contract. |
 
 Unmatched files are not kept anywhere else in Coverbase. Only documents in a confirmed group become documents on a vendor and a contract.
 
-When the batch holds scans, the summary strip says how many files need a person and offers **Run OCR**, which OCRs the scans and then re-analyzes the batch. If a file is still listed as a scan after that, OCR it outside Coverbase and import it again.
+When the batch holds scans, the summary strip says how many files need a person and offers **Run OCR**. It OCRs every scan in the batch, reads the text it recovered, and re-analyzes, so a scan that becomes readable joins the group it belongs to. A scan OCR could not read stays under **Unmatched**, and once every scan has been through OCR the button is no longer offered, because a second pass would change nothing.
 
 ## What a confirmed contract gets
 
@@ -248,17 +274,15 @@ The batch counts each confirmation. When every proposed contract is confirmed or
 | --- | --- | --- |
 | **Assembly** is not under **Contracts**. | It is not turned on for your organization. | Ask your Coverbase account team. |
 | A file I dropped is not in the list. | It was set aside as an unsupported format, an empty file, or a duplicate name and size. | Check the skipped list on step 2. Convert or rename the file and import it later. |
-| A file keeps failing to upload. | The upload did not reach storage. A file over 100 MB always fails. | Click **Retry failed files**. If it still fails, go back, remove it, and continue. |
-| The batch stays at **Ingesting**. | Reading starts only after every file has uploaded, and a file was removed after it failed. | Open the batch and click **Re-analyze**. |
-| The zip became one unmatched file. | The import does not open archives. | Unzip it and import the folder. |
-| "Nothing proposed yet. Run analysis." | Analysis is still running, or every file went to **Unmatched**. | If the state reads **Analyzing**, wait: the page fills in when it finishes. Otherwise check the reasons under **Unmatched**. |
+| A file keeps failing to upload. | The upload did not reach storage. A file over 100 MB always fails. | Click **Retry failed files**. If it still fails, take it out on step 1 as described in [Step 3](#step-3-upload-and-analyze-documents). |
+| **Continue** stays unavailable on step 3. | A file failed, so reading is held back until it is retried or removed. | Retry it, or remove it as above. |
+| A zip is refused on step 2. | It could not be read, or it is over 8 GB uncompressed or 5,000 documents. | Click **Remove archive** to import the rest, and split the archive into smaller ones. |
+| The review page says it is reading the documents. | Analysis is running on the server. | Wait. The page fills in when it finishes. |
 | Every proposed contract is **New vendor** or **No vendor**. | Your organization has few vendors yet, or they are named differently from the documents. | Approve the new vendors with **Create N new vendors**, or file groups under existing vendors with **File all under…**. |
 | **Confirm contract** is unavailable. | A question is open, or the **Contract** card is incomplete. | Hover the button, answer the questions, and choose a vendor and a name. |
 | **Confirm N ready** confirmed fewer than expected. | The rest have open questions, are under 90%, or were edited. | Work through them one at a time, or tick them and use the selection bar. |
-| My splits and role changes disappeared. | **Re-analyze** or **Run OCR** rebuilt the proposals. | Make the changes again and confirm before re-analyzing. |
-| A group I already confirmed is back in the list. | Re-analyzing reads every file in the batch again, including files on contracts you confirmed. | Click **Reject grouping** on it. Do not confirm it again. |
 | The same deal is now two contracts. | A group was confirmed as new when the deal was already on file. | Archive the new contract from its **Actions** menu, then add its documents to the existing contract with **Link Existing Contract Documents** on that contract's **Documents** tab. |
-| A statement of work that replaces another is counted as well. | Answering the question does not change either document. | Correct the contract value on the contract's **Terms** card. |
+| A statement of work that replaces another is counted as well. | The question was answered **Both are in force**, or was never raised. | On the contract, check the document's role on the **Documents** tab and the figures on its [Spend tab](/user-guides/contract-spend). |
 
 ## Related
 
