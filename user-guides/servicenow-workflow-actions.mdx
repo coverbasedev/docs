@@ -65,6 +65,8 @@ Open an automation, click the action under **Then**, and hover **ServiceNow reco
 
 **Field mappings.** Each row pairs a **ServiceNow field** with a **Value**. The field picker suggests the standard columns of a suggested table. For any other column, including your instance's own `u_` columns, type the column name and choose **Use custom name**. A value can be fixed text, a variable from the **Insert variable** button beside it, or both, as in `{{vendor:name}} renewal`. **Add mapping** adds a row. Each column can appear once, and a step needs at least one row.
 
+**Translating a value.** The arrows button on a row opens its **Coverbase value** to **ServiceNow value** pairs. After the value's variables resolve, a value listed on the left is sent as the one on the right, so a finding status label can land as your instance's `state` choice. **Add translation** adds a pair, and a value not listed is sent unchanged. Editing the row's field or value keeps its translations. Click the arrows button again to remove them.
+
 **Reformatting a date.** The calendar button at the end of a row opens a date format for that value. Type a Python strftime pattern, such as `%m-%d-%Y`, and a value that resolves to a date is sent in that shape: `2027-01-31` becomes `01-31-2027`. An empty date stays empty. The pattern must name at least one date part, such as `%Y` or `%d`. The locale formats `%c`, `%x` and `%X`, and a few rarer codes such as `%f` and `%Z`, are not accepted. If the value is not a date when the step runs, the step is skipped with a message that names the value. Click the calendar button again to remove the format.
 
 **Apply table template** fills in suggested rows when Coverbase has a template for the table and action. If the rows already hold something, it asks **Replace field mappings?** first.
@@ -78,7 +80,7 @@ Open an automation, click the action under **Then**, and hover **ServiceNow reco
 | **Create one per issue or finding**, for findings | Third-party Risk Issue | `short_description`, `description`, `explanation`, `due_date`, `vendor`, `assessment`, `assigned_to`, `state` and `applies_to` |
 
 <Warning>
-  **Values are sent as written.** A choice column stores your instance's choice value, and a reference column stores a `sys_id`, so a label or an email address in either lands as text that your forms may not recognize. Check template rows against your instance before you switch the workflow on: the findings template sends the finding's status label to `state` and the assignee's email address to `assigned_to`. When a value needs translating, use **Send custom request**, whose **Value Translations** rewrite a value before it is sent.
+  **Values are sent as written.** A choice column stores your instance's choice value, and a reference column stores a `sys_id`, so a label or an email address in either lands as text that your forms may not recognize. Check template rows against your instance before you switch the workflow on: the findings template sends the finding's status label to `state` and the assignee's email address to `assigned_to`. When a value needs translating, open the row's translations with the arrows button (see **Translating a value** above).
 </Warning>
 
 A variable with nothing behind it skips the whole step rather than sending a blank, exactly as described in [Placeholders in action text](/user-guides/building-a-workflow#placeholders-in-action-text).
@@ -217,9 +219,9 @@ The **Insert variable** menu adds a **Document** group for these fields: **Name*
 
 The action manages a few columns itself and refuses a mapping for them: `state`, `default_version` and `external_file_url` on the document record, and `document` on the version. `external_file_url` holds the document's Coverbase link, which the action uses to find its own work again.
 
-<Warning>
-  **Editing the default type row drops its translation.** The default `type` row translates Coverbase document types into the choice values a third-party risk instance usually uses (a SOC 2 report becomes `soc`, a master services agreement `msa`). Editing either side of that row removes the translation, and the raw Coverbase type is sent instead. To get it back, delete the document record rows and click **Apply default mappings**, which appears when the section is empty.
-</Warning>
+<Note>
+  **The default type row translates document types.** It sends Coverbase document types as the choice values a third-party risk instance usually uses (a SOC 2 report becomes `soc`, a master services agreement `msa`). Open the row's translations with the arrows button to change them for your instance.
+</Note>
 
 Uploads run in the background. The step itself reads "Queued N document upload(s) to ServiceNow", and each file is linked when its upload finishes, which raises **Service Now Record Created**. A document that is already in ServiceNow is not sent again, and a step with nothing new to send is **Skipped** with "Every document is already in ServiceNow". An interrupted upload picks up the document it already created instead of making a second one. Files of 1 GB or more are not uploaded.
 

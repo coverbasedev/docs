@@ -12,6 +12,8 @@ The Webhooks API manages webhook subscription records and can send a manual test
 
 All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication and the error envelope.
 
+An API key can call every endpoint here. With a dashboard session, only an **Admin** can register, update, test or delete a webhook; anyone else gets `403 forbidden`. Listing webhooks and reading delivery history stay open to Members.
+
 ## Register a webhook
 
 <ParamField path="method" type="POST">
@@ -137,7 +139,7 @@ print(resp.json())
 </ResponseField>
 
 <ResponseField name="last_delivery_status" type="string | null">
-  Status of the most recent recorded delivery attempt (one of `delivered`, `timeout`, `error`, `skipped`), or `null` if there are no recorded deliveries yet.
+  Status of the most recent recorded delivery attempt (one of `delivered`, `timeout`, `error`), or `null` if there are no recorded deliveries yet.
 </ResponseField>
 
 <ResponseField name="delivery_success_rate" type="number | null">
@@ -197,7 +199,7 @@ Each item has the same shape as the [create response](#response-fields), includi
   `PATCH /v1/webhooks/{webhook_id}`
 </ParamField>
 
-Updates a webhook subscription. Only the fields you include are changed; omitted or `null` fields are left unchanged. Returns the updated webhook (same shape as the create response).
+Updates a webhook subscription. Only the fields you include are changed; omitted fields, and `null` for any field except `description`, are left unchanged. Returns the updated webhook (same shape as the create response).
 
 ### Request body
 
@@ -213,8 +215,8 @@ Updates a webhook subscription. Only the fields you include are changed; omitted
   Rotate the signing secret. If provided, must be at least 16 characters.
 </ParamField>
 
-<ParamField body="description" type="string">
-  Update the label.
+<ParamField body="description" type="string | null">
+  Update the label. Send `null` to clear it.
 </ParamField>
 
 <ParamField body="enabled" type="boolean">
