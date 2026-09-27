@@ -20,7 +20,7 @@ Dark web monitoring checks your organization and your vendors against services t
 
 Each source is an outside service that already follows one kind of criminal activity and makes it searchable. Coverbase asks each source about the names and domains on your watchlist. It keeps the facts the source returns: who listed the company, when, how many records, which kinds of data. The leaked content itself, such as passwords or personal data, is never stored.
 
-The mistake people make most often is reading an empty queue, or a vendor tab marked **Clear**, as proof that nothing was found. Out of the box only the vendors Radar monitors are watched, and **Clear** means only that nothing is open for that vendor. Before you record a vendor as clean, check that it has values under **Monitored Assets** and that a sweep has run. See [The vendor's Dark Web tab](#the-vendors-dark-web-tab).
+The mistake people make most often is reading an empty queue, or a vendor tab marked **Clear**, as proof that nothing was found. Out of the box only the vendors Radar monitors are watched. A vendor tab shows **Clear** only when the vendor has watched values, a sweep has checked them, and nothing is open. Otherwise it shows **Not watched** or **Not checked yet**. See [The vendor's Dark Web tab](#the-vendors-dark-web-tab).
 
 ## Where it lives
 
@@ -78,12 +78,12 @@ Lookalike checks cover your organization's own domains. Vendor domains are added
 
 ### Large portfolios
 
-Each sweep searches the ransomware trackers' older listings for at most 150 names and domains, and checks at most 25 domains for lookalikes. Your organization's values go first in both. Recent leak-site listings are matched against the whole watchlist. Each source also has a few minutes per sweep, and one that runs out of time keeps what it found. Its badge in **Sweep History** still shows green. With **All vendors** on a large portfolio, keep this in mind before you read a quiet queue as full coverage.
+Each sweep searches the ransomware trackers' older listings for at most 150 names and domains, and checks at most 25 domains for lookalikes. Your organization's values go first in both. Recent leak-site listings are matched against the whole watchlist. Each source also has a few minutes per sweep, and one that runs out of time keeps what it found. Its badge in **Sweep History** turns amber, and the values it did not reach keep their earlier **Last Checked** time. Lookalike checks work through the vendors' domains over the following days, 25 domains per sweep, your own first. With **All vendors** on a large portfolio, keep this in mind before you read a quiet queue as full coverage.
 
 ### What no source reads yet
 
 <Warning>
-  **Add asset** offers seven types of value, but today's sources read only three of them: **Company name**, **Domain** and **Email domain**. A **Person name**, **Email address**, **Card BIN** or **Keyword** row is accepted and stamped **Last Checked** after every sweep, but no source searches for it, so it never raises an exposure. The same goes for three category filters on the queue: no current source raises **Credential leak**, **Dark web mention** or **Payment card exposure**.
+  The sources read three types of value: **Company name**, **Domain** and **Email domain**, so those are the types **Add asset** offers. An older **Person name**, **Email address**, **Card BIN** or **Keyword** row stays on the watchlist and reads **Not searched**, as does a company name too short or generic to match on its own, such as "SAP". The queue's category filters list only the categories a current source raises.
 </Warning>
 
 ## Switching it on
@@ -236,7 +236,7 @@ Each row shows its **Subject**, **Type**, **Value**, **Source** (**Derived** fro
   <img src="/images/user-guides/dark-web-monitoring-add-asset.png" alt="The Add Monitored Asset dialog with Belongs To set to Organization, Type set to Domain, an empty Value field with example.com as its placeholder, a note that spelling, case and punctuation are normalized, and the Cancel and Add asset buttons." />
 </Frame>
 
-**Last Checked** is the time of the last sweep that included the row, whether or not a source that reads that type of value answered. Read it together with **Sweep History**.
+**Last Checked** is the time of the last sweep in which a source that reads that value finished checking it. A value whose only sources failed, or ran out of time, keeps its earlier time. **Not searched** means no current source can check the value.
 
 ## Sweep history
 
@@ -264,14 +264,14 @@ See one vendor's exposures without the rest of the queue. Open a vendor, choose 
 </Frame>
 
 - **Last checked**, at the top right, is the oldest check across the vendor's watched values, or **Not checked yet**.
-- **Open Exposures** lists everything open for the vendor, with a count per severity, or **Clear** when nothing is open.
-- **Monitored Assets** lists the values watched for this vendor, each with its type, **Derived** or **Manual**, **Disabled** when switched off, and when it was last checked. For how many exposures are open against each value, use **Monitored Assets** on the **Dark Web** page.
+- **Open Exposures** lists everything open for the vendor, with a count per severity. With nothing open it shows **Clear** once a sweep has checked the vendor's watched values, **Not checked yet** before that, and **Not watched** when nothing searchable is watched for the vendor.
+- **Monitored Assets** lists the values watched for this vendor, each with its type, **Derived** or **Manual**, **Disabled** when switched off, and when it was last checked. A value with open exposures shows how many are open.
 - **Resolved** lists closed exposures, and appears only when there are some.
 
 Click an exposure to open the same panel as on the queue, with the same triage and escalation. The tab lists up to 50 open exposures, 50 resolved ones and 50 watched values; for more, search the vendor's name on the **Dark Web** page. To add or switch off a vendor's values, use **Monitored Assets** on the **Dark Web** page.
 
 <Warning>
-  **Clear** means only that nothing is open. It also shows for a vendor that has never been checked, and for one that is not watched at all. Before you write "no dark web exposure" into an assessment, check that **Monitored Assets** lists values and that **Last checked** shows a date.
+  **Clear** means a sweep checked the vendor's watched values and nothing is open. It is still only as wide as the sources: before you write "no dark web exposure" into an assessment, check what **Monitored Assets** lists and when **Last checked** ran.
 </Warning>
 
 <Frame caption="A vendor outside the watched scope. The Clear badge only means nothing is open: nothing is being watched for this vendor.">
@@ -336,18 +336,20 @@ Exposures follow vendor access. A role that can read only some vendors sees thos
 | --- | --- | --- |
 | **Dark Web** is missing from the left navigation | The module is off for your organization, or your role has no dark web permission | Ask your Coverbase account team to turn it on. If colleagues can see it, ask an admin for `dark_web_exposure:read`. |
 | The queue is empty and **Last sweep** reads **Never** | No sweep has run since monitoring was switched on | Wait for the 06:20 UTC sweep, or click **Sweep now**. |
-| A vendor's tab shows **Clear** and *Nothing is being watched for this vendor.* | The vendor is outside the vendor scope | Turn on Radar monitoring for it, choose **All vendors**, or add a value for it with **Add asset**. |
+| A vendor's tab shows **Not watched** | The vendor is outside the vendor scope | Turn on Radar monitoring for it, choose **All vendors**, or add a value for it with **Add asset**. |
 | The settings page reads **0 vendors currently watched.** | The scope is **Vendors monitored in Radar** and no vendor has Radar monitoring on, or no setting has been saved yet | Switch monitoring on, which builds the watchlist. If the count stays at 0, choose **All vendors** or turn on Radar monitoring for your vendors. |
 | Your organization's **Domains** reads *None on the organization record.* | Your organization record has no website | Add the website under **Organization settings**. |
 | **Sweep now** is grayed out on the settings page | Monitoring is off, or a sweep is running | Switch on **Enable dark web monitoring**, or wait until **Last sweep** stops reading **Running**. |
 | **Sweep now** reports that a sweep is already running | One sweep runs at a time per organization | Wait for it to finish. The tables refresh on their own. |
+| **Sweep now** is grayed out on the queue, under a *Dark web monitoring is off* notice | Monitoring is off | Switch it on in **Configuration**. |
+| **Sweep now** says the sweep was requested | The background worker did not confirm the start | Nothing to do. The sweep starts when the worker picks it up. |
 | ransomware.live is off and shows **Needs a platform key** | It needs a commercial license that Coverbase holds for the platform | Nothing to set on your side. Ask your account team if you need it. |
 | **The last sweep reported an error** on the settings page | Every source failed on the last sweep | Open **Sweep History** and hover the red badges. The message clears after the next sweep in which a source works. |
 | A badge in **Sweep History** is red | That source failed on that sweep | Hover it for the error. The other sources' results count, and the next sweep retries it. |
 | A resolved exposure's **Last Seen** keeps moving | The source still reports it, and your decision is kept | If the new sightings matter, set it back to **Investigating**. |
 | An exposure is about a different company with the same name | A leak-site listing matched your watched company name, not the domain | Mark it **False positive**. If the name is an ordinary word, switch that **Company name** row off and rely on the domain. |
 | **Add asset** confirmed the value, but its row is still switched off | The value was already on the watchlist, and adding it again leaves that row as it was | Switch the existing row on. |
-| The **Credential leak**, **Dark web mention** or **Payment card exposure** filter never shows anything | No current source raises those categories | Expected. See [What no source reads yet](#what-no-source-reads-yet). |
+| A watchlist row reads **Not searched** | No current source reads that type of value, or the name is too short or generic to match | Add the vendor's or your own domain instead. See [What no source reads yet](#what-no-source-reads-yet). |
 | The **Triage** section and **Save review** are missing | Your role can read exposures but not update them | Ask an admin. Members have read access by default. |
 | The counters show more exposures than the table | The counters cover the whole organization; the table shows only the vendors your role can read | Expected. |
 
