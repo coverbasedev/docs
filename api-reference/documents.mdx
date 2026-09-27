@@ -89,7 +89,7 @@ state; poll `GET /v1/documents/{document_id}` to observe it settle.
 <CodeGroup>
 
 ```bash cURL
-curl -X POST "https://sandbox.api.coverbase.app/v1/documents" \
+curl -X POST "https://api.coverbase.app/v1/documents" \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Idempotency-Key: acme-soc2-2026q1" \
   -F "file=@./acme_soc2.pdf;type=application/pdf" \
@@ -105,7 +105,7 @@ import os
 import requests
 
 API_KEY = os.environ["COVERBASE_API_KEY"]
-BASE_URL = "https://sandbox.api.coverbase.app"
+BASE_URL = "https://api.coverbase.app"
 
 with open("acme_soc2.pdf", "rb") as fh:
     resp = requests.post(
@@ -179,7 +179,7 @@ Returns a paginated list of documents. Combine the filters to narrow the result.
 <ParamField query="offset" type="integer">Pagination offset (default 0).</ParamField>
 
 ```bash cURL
-curl "https://sandbox.api.coverbase.app/v1/documents?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&limit=50" \
+curl "https://api.coverbase.app/v1/documents?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&limit=50" \
   -H "Authorization: Bearer ak_live_xxx"
 ```
 
@@ -201,7 +201,7 @@ curl "https://sandbox.api.coverbase.app/v1/documents?vendor_id=cbvndr_e448ba6288
 Returns a single document's metadata and links, or `404 document_not_found`.
 
 ```bash cURL
-curl "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c9a7b6d5e4f3a2b1c0d9e8f7a6b5c" \
+curl "https://api.coverbase.app/v1/documents/cbvdoc_2f1c9a7b6d5e4f3a2b1c0d9e8f7a6b5c" \
   -H "Authorization: Bearer ak_live_xxx"
 ```
 
@@ -217,7 +217,7 @@ bytes; it serves the file as an attachment with the original filename.
 
 ```bash cURL
 # 1. Get the presigned URL
-curl "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c.../download" \
+curl "https://api.coverbase.app/v1/documents/cbvdoc_2f1c.../download" \
   -H "Authorization: Bearer ak_live_xxx"
 
 # 2. Follow it to download the file
@@ -248,7 +248,7 @@ left unchanged. Supplying a list for `service_ids` / `assessment_ids`
 <ParamField body="assessment_ids" type="string[]">Replaces the set of attached assessments.</ParamField>
 
 ```bash cURL
-curl -X PATCH "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
+curl -X PATCH "https://api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
   -H "Authorization: Bearer ak_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{ "service_ids": ["cbsvc_1a2b", "cbsvc_3c4d"], "assessment_ids": ["cbqsrw_9f8e"] }'
@@ -264,7 +264,7 @@ Archives (soft-deletes) the document. The underlying record is retained for
 audit but no longer appears in list results.
 
 ```bash cURL
-curl -X DELETE "https://sandbox.api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
+curl -X DELETE "https://api.coverbase.app/v1/documents/cbvdoc_2f1c..." \
   -H "Authorization: Bearer ak_live_xxx"
 ```
 
