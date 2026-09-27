@@ -65,7 +65,7 @@ Open an automation, click the action under **Then**, and hover **ServiceNow reco
 
 **Field mappings.** Each row pairs a **ServiceNow field** with a **Value**. The field picker suggests the standard columns of a suggested table. For any other column, including your instance's own `u_` columns, type the column name and choose **Use custom name**. A value can be fixed text, a variable from the **Insert variable** button beside it, or both, as in `{{vendor:name}} renewal`. **Add mapping** adds a row. Each column can appear once, and a step needs at least one row.
 
-**Translating a value.** The arrows button on a row opens its **Coverbase value** to **ServiceNow value** pairs. After the value's variables resolve, a value listed on the left is sent as the one on the right, so a finding status label can land as your instance's `state` choice. **Add translation** adds a pair, and a value not listed is sent unchanged. Editing the row's field or value keeps its translations. Click the arrows button again to remove them.
+**Translating a value.** A row's **Coverbase value** to **ServiceNow value** pairs are listed under it, and the arrows button adds them to a row that has none. After the value's variables resolve, a value listed on the left is sent as the one on the right, so a finding status label can land as your instance's `state` choice. **Add translation** adds a pair, and a value not listed is sent unchanged. Editing the row's field or value keeps its translations. Clicking the arrows button on a row that has translations removes them.
 
 **Reformatting a date.** The calendar button at the end of a row opens a date format for that value. Type a Python strftime pattern, such as `%m-%d-%Y`, and a value that resolves to a date is sent in that shape: `2027-01-31` becomes `01-31-2027`. An empty date stays empty. The pattern must name at least one date part, such as `%Y` or `%d`. The locale formats `%c`, `%x` and `%X`, and a few rarer codes such as `%f` and `%Z`, are not accepted. If the value is not a date when the step runs, the step is skipped with a message that names the value. Click the calendar button again to remove the format.
 
@@ -80,7 +80,7 @@ Open an automation, click the action under **Then**, and hover **ServiceNow reco
 | **Create one per issue or finding**, for findings | Third-party Risk Issue | `short_description`, `description`, `explanation`, `due_date`, `vendor`, `assessment`, `assigned_to`, `state` and `applies_to` |
 
 <Warning>
-  **Values are sent as written.** A choice column stores your instance's choice value, and a reference column stores a `sys_id`, so a label or an email address in either lands as text that your forms may not recognize. Check template rows against your instance before you switch the workflow on: the findings template sends the finding's status label to `state` and the assignee's email address to `assigned_to`. When a value needs translating, open the row's translations with the arrows button (see **Translating a value** above).
+  **Values are sent as written.** A choice column stores your instance's choice value, and a reference column stores a `sys_id`, so a label or an email address in either lands as text that your forms may not recognize. Check template rows against your instance before you switch the workflow on: the findings template sends the finding's status label to `state` and the assignee's email address to `assigned_to`. When a value needs translating, add translations to its row with the arrows button (see **Translating a value** above).
 </Warning>
 
 A variable with nothing behind it skips the whole step rather than sending a blank, exactly as described in [Placeholders in action text](/user-guides/building-a-workflow#placeholders-in-action-text).
@@ -205,7 +205,7 @@ The request links nothing in Coverbase and raises no events, so a later **Update
 **Upload documents** copies files from Coverbase into ServiceNow Document Management. Each document becomes a document record (`ds_document`) with a published version (`ds_document_version`) that holds the file.
 
 <Frame caption="Upload documents to ServiceNow with its default document record fields.">
-  <img src="/images/user-guides/servicenow-workflow-actions-upload-documents.png" alt="The Coverbase automation inspector with the Upload documents to ServiceNow action, Documents to upload set to assessment supporting documents, All document types, three document record field mappings and an empty Document version fields section" />
+  <img src="/images/user-guides/servicenow-workflow-actions-upload-documents.png" alt="The Coverbase automation inspector with the Upload documents to ServiceNow action, Documents to upload set to assessment supporting documents, All document types, and the document record field mappings, with the type row's value translations open and each SOC report type sent as soc" />
 </Frame>
 
 | Field | What it does |
@@ -220,7 +220,7 @@ The **Insert variable** menu adds a **Document** group for these fields: **Name*
 The action manages a few columns itself and refuses a mapping for them: `state`, `default_version` and `external_file_url` on the document record, and `document` on the version. `external_file_url` holds the document's Coverbase link, which the action uses to find its own work again.
 
 <Note>
-  **The default type row translates document types.** It sends Coverbase document types as the choice values a third-party risk instance usually uses (a SOC 2 report becomes `soc`, a master services agreement `msa`). Open the row's translations with the arrows button to change them for your instance.
+  **The default type row translates document types.** It sends Coverbase document types as the choice values a third-party risk instance usually uses (a SOC 2 report becomes `soc`, a master services agreement `msa`). Its translations are listed under the row, so change them there to match your instance. The row's arrows button removes them.
 </Note>
 
 Uploads run in the background. The step itself reads "Queued N document upload(s) to ServiceNow", and each file is linked when its upload finishes, which raises **Service Now Record Created**. A document that is already in ServiceNow is not sent again, and a step with nothing new to send is **Skipped** with "Every document is already in ServiceNow". An interrupted upload picks up the document it already created instead of making a second one. Files of 1 GB or more are not uploaded.
@@ -245,12 +245,12 @@ For **Upload documents**, the uploads finish after the step, and each attempt is
 | **Failed** with a ServiceNow error such as a 403 | The connection's account lacks write access to that table. | Ask your ServiceNow administrator to grant it, then cause the trigger again. |
 | **Failed**: "... records in ... already match" | **Match Existing Records On** found more than one record. | Remove the duplicates in ServiceNow, or match on more columns. |
 | **Failed** partway, "after creating N of M records" | ServiceNow rejected one record in the batch. | Fix the cause in the error, then cause the trigger again. The step resumes with the item that failed. |
-| A choice or reference field is blank or shows raw text in ServiceNow | The mapped value is a label or an email, not a choice value or `sys_id`. | Map a value your instance stores, or use **Send custom request** with **Value Translations** or `sysparm_input_display_value`. |
+| A choice or reference field is blank or shows raw text in ServiceNow | The mapped value is a label or an email, not a choice value or `sys_id`. | Map a value your instance stores, add translations to the row (see **Translating a value**), or use **Send custom request** with **Value Translations** or `sysparm_input_display_value`. |
 | "Enter an instance-relative path beginning with /api/" | The **Endpoint path** is a full URL or does not start with `/api/`. | Enter only the path; the connection supplies the instance. |
 | A translation row shows an error and the automation will not save | The **Payload field** is missing from the payload, or is not plain text there. | Name a top-level text field from the **JSON payload**. |
 | A date format shows "Use a strftime pattern with at least one date part" | The pattern names no date part, or uses a code Coverbase does not accept, such as `%c`, `%x` or `%X`. | Use a pattern such as `%m-%d-%Y` or `%Y/%m/%d`. |
 | **Skipped**: "... is not an ISO date, so the date format ... cannot apply" | The mapped value is not a date, so the format cannot apply. | Remove the format from that row, or map a date variable. |
-| The document `type` in ServiceNow is a raw Coverbase type | The default `type` row was edited, which removed its translation. | Delete the document record rows and click **Apply default mappings**. |
+| The document `type` in ServiceNow is a raw Coverbase type | The default `type` row's translations were removed, or the row was deleted. | Delete the document record rows and click **Apply default mappings**. |
 | The step after **Service Now Sync Completed** runs several times for one assessment | The per-item step ran again with nothing new to send, and each run ends with the event. | Narrow the per-item step's trigger, for example to the assessment's status changing, and make the closing step safe to repeat. |
 | **Test connection** cannot be clicked | The connection has not been saved, or the form has unsaved changes. | Click **Save ServiceNow Configuration**, then test. |
 
