@@ -36,7 +36,7 @@ This part of Coverbase is built around one idea: the country decides the questio
     A new or changed bank account waits in a queue. The supplier's live account is untouched until someone approves the change.
   </Step>
   <Step title="Your finance system hears about it">
-    Approval fires a webhook and the record shows up in the API feed your integration polls. Rejection does not, because from your finance system's point of view the change never happened.
+    Approval fires a webhook. Rejection fires none, because from your finance system's point of view the change never happened. The change feed your integration polls records both, as `approved` and `rejected` events, so filter on the action before you apply anything.
   </Step>
 </Steps>
 
@@ -261,7 +261,7 @@ Two ways, and most integrations use both.
 
 <CardGroup cols={2}>
   <Card title="Webhooks" icon="broadcast-tower">
-    Fired when a record is created, changed, approved or rejected. Payloads carry masked identifiers and an idempotency key drawn from the change event, so a redelivery cannot double apply.
+    Fired when a record is created, changed or approved, and when a legal entity assignment is rejected. A rejected bank change fires nothing. Payloads carry masked identifiers and an idempotency key drawn from the change event, so a redelivery cannot double apply.
   </Card>
   <Card title="The changes feed" icon="arrows-rotate">
     A polling endpoint that returns everything that changed since a cursor you hold. Use it to reconcile after an outage, or as your primary path if you would rather poll than receive.
