@@ -32,9 +32,9 @@ Open a contract and choose the **Spend** tab, between **Workflow** and **Activit
 
 | Card | What it shows | Where the number comes from |
 | --- | --- | --- |
-| **Annual spend from priced lines** | The yearly cost of every line still in force. Underneath: how many lines that is, how many documents they come from, and any **one-off charges**. | The priced lines on this tab. Lines added by hand are counted there as one document. |
+| **Annual spend from priced lines** | The yearly cost of every line still in force. Underneath: how many lines that is, how many were added by hand and how many documents the rest come from, and any **one-off charges**. | The priced lines on this tab. |
 | **Contract value (from Terms)** | The value recorded for the whole contract. When it was entered as a yearly breakdown, the card shows the sum of the years. | The **Terms** card on the **Overview**. **Add in Terms** or **Edit in Terms** takes you there. |
-| **Also buying** | The contract's spend category, how many other contracts share it, and their combined value. **see them** jumps to the list further down the tab. | See [Also buying](#also-buying). |
+| **Also buying** | The contract's spend category, how many other contracts share it, and their combined value. **see them** jumps to the list further down the tab. When no other contract shares the category, the card names the category and reads **No other contracts in this category**. | See [Also buying](#also-buying). |
 
 A dash in the first card means there is nothing to total: the contract has no lines in force, or its lines are in more than one currency.
 
@@ -54,10 +54,11 @@ What the reading counts, and what it leaves out:
 - It skips liability caps, insurance limits, not-to-exceed ceilings, and penalties. They limit what may be owed; they are not charges.
 - It keeps discounts and credits as negative lines, so they reduce the total.
 - It drops any figure over one billion, which is a limit rather than a price.
-- It reads every document on the contract, quotes and drafts included. A line from an offer nobody accepted, or from a superseded draft, is yours to remove.
+- It skips documents filed on the contract as a quote, a redline draft or a duplicate, and an amendment already incorporated into a conformed copy. Reading them would count an offer nobody accepted, or the same charge twice. A quote or draft filed as the agreement itself is still read, so remove its lines by hand.
+- Each line read from a document takes the effective date filed for that document, when it has one.
 - A price stated with a bare `$` is read as US dollars unless the document names another currency. If the contract is priced in Canadian, Australian or another dollar, check the currency on each line.
 
-**Reading prices again replaces the previous reading.** Every line read from the documents is replaced by the new one. Lines you added or corrected by hand stay as they are, and a document line you removed is not read back in.
+**Reading prices again replaces the previous reading.** Every line read from the documents is replaced by the new one. Lines you added or corrected by hand stay as they are, and a line you removed is not read back in from the document it came from. The same charge read from a different document still appears.
 
 The reading runs in the background and usually takes a minute or two. A message confirms it has started, and the tab refreshes on its own for the next two minutes. A long contract can take longer, so reload the tab if nothing has changed.
 
@@ -65,7 +66,7 @@ The reading runs in the background and usually takes a minute or two. A message 
 
 The list has four columns: **Line**, **Frequency**, **Amount**, and **Yearly**. Lines are grouped under the document that states them, the largest yearly contributor first, and each group header shows what that document adds a year. Click a document's name to open it on the **Documents** tab. Lines added by hand sit together under **Not from a document**.
 
-Under each description you may see **Page 4**, the page the figure was read from, or **Added by hand** on a line a person added or corrected.
+Under each description you may see **Page 4**, the page the figure was read from, **Effective** and the date the line took effect, or **Added by hand** on a line a person added or corrected.
 
 The **Yearly** column turns each line into a cost per year:
 
@@ -85,18 +86,24 @@ The **Yearly** column turns each line into a cost per year:
 
 A charge is often priced more than once: an order form sets a subscription, and an amendment re-prices it at a new tier. Coverbase counts such a charge once. Lines that name the same charge, with tier and size words set aside ("Tier 2", "(250 seats)"), are treated as one charge restated. One of them counts. The others move to **Superseded** at the foot of the list, struck through and marked **Replaced by a later line**. Click **Show** to open the section.
 
+Which line counts is decided in this order:
+
+1. The line with the latest effective date. A line with no date counts as older than any dated line.
+2. At the same date, or with no dates, a line added or corrected by hand, ahead of a line read from a document.
+3. After that, the line added most recently. For lines read from documents, that is the line from the document added to Coverbase last.
+
 <Frame caption="The superseded section, opened. The struck-through line stays on record and does not count toward the total.">
   <img src="/images/user-guides/contract-spend-superseded.png" alt="Priced lines with the superseded section expanded, showing a struck-through line marked replaced by a later line" />
 </Frame>
 
-A line added or corrected by hand counts ahead of a line read from a document. Between two lines read from documents, Coverbase cannot always tell which document is later, so check that the line counting is the current price.
+The document added last is not always the later agreement, for example when an old contract is uploaded after its renewal. When the order matters, give the current line an **Effective date**.
 
 Lines that describe one charge in different words ("Platform fee" and "Annual subscription") both count, because nothing ties them together. Remove the one that is no longer in force.
 
 ### Adding, correcting and removing a line
 
 <Frame caption="Adding a line by hand. Correcting a line opens the same form with its values filled in.">
-  <img src="/images/user-guides/contract-spend-add-line.png" alt="Add a line dialog with fields for what is being charged, amount, currency and frequency" />
+  <img src="/images/user-guides/contract-spend-add-line.png" alt="Add a line dialog with fields for what is being charged, amount, currency, frequency and effective date" />
 </Frame>
 
 <Steps>
@@ -104,7 +111,7 @@ Lines that describe one charge in different words ("Platform fee" and "Annual su
     Click **Add a line**. To fix an existing line, hover it and click the pencil, **Correct this line**.
   </Step>
   <Step title="Describe the charge">
-    **What is being charged** names it. **Amount** accepts a negative figure for a discount or credit. **Currency** takes a three-letter code such as `USD`, `EUR` or `GBP`, and starts at `USD`. **Frequency** is **One-off**, **Monthly**, **Quarterly**, **Annual**, or **Metered**.
+    **What is being charged** names it. **Amount** accepts a negative figure for a discount or credit. **Currency** is picked from the list of currency codes, such as `USD`, `EUR` or `GBP`, and starts at `USD`. **Frequency** is **One-off**, **Monthly**, **Quarterly**, **Annual**, or **Metered**. **Effective date** is optional: when two lines price the same charge, the one with the later date counts. **Clear date** removes it.
   </Step>
   <Step title="Save">
     Click **Save line**. The line is marked **Added by hand**, and reading the documents again will not overwrite it.
@@ -113,7 +120,7 @@ Lines that describe one charge in different words ("Platform fee" and "Annual su
 
 To take a line out of the total, hover it and click the bin, **Remove this line**. There is no confirmation and no undo. To bring a removed line back, add it again by hand.
 
-A correction changes the description a line is matched on, so it can change which lines count as the same charge. After you correct a line, check the total and the **Superseded** section. If an older version of the charge now counts beside your correction, remove the older one.
+Correcting a line's amount, currency, frequency or date never changes which charge it is matched to, and neither does rewording a line the reading named. Rewording a line you typed yourself matches it on the new description, so it can join or leave another line; check the total and the **Superseded** section afterwards.
 
 Adding, correcting, and removing lines needs permission to edit the contract.
 
@@ -126,8 +133,8 @@ Coverbase does not convert currencies anywhere on this tab. Every figure stays i
 | **Annual spend from priced lines**, **one-off charges**, and each document's yearly figure | Totalled in that currency. | Not totalled. The card shows a dash, and the list says **Lines are stated in more than one currency, so they are not totalled.** |
 | Each priced line | Shown in its own currency. | Shown in its own currency. |
 | **Contract value (from Terms)** | Shown in the currency recorded on the **Terms** card. | Not applicable. A contract value has one currency. |
-| **Spend over time** | Bars in that currency, with a growth rate and a forecast. | Bars drawn as plain numbers with no currency symbol, and no growth rate or forecast. |
-| **Also buying** | A combined value for the listed contracts. | No combined value. The header reads **totals span currencies**. |
+| **Spend over time** | Bars in that currency, with a growth rate and a forecast. | Each bar in its own currency, drawn to scale only against bars in the same currency, with a note under the chart. No growth rate or forecast. |
+| **Also buying** | A combined value for every other contract in the category. | No combined value. The header reads **totals span currencies**. |
 
 Only lines in force decide whether a total is shown. A superseded line in another currency does not stop it.
 
@@ -191,19 +198,21 @@ The last bar, drawn pale, forecasts the year after the last priced year. The not
 | Observed growth | "the 5% the chain has grown at" | No escalator, and at least two priced years. |
 | Inflation | the index and its rate, "not from anything the contract says" | Neither of the above. The weakest basis. |
 
+The growth rate is spread over the years that passed between the first and the last priced year, not over the number of bars. A chain with a gap, such as a year between two contracts that nothing covered, is not made to look steeper.
+
 <Note>
-  The growth rate treats each bar as one year. If the chain has a gap, such as a year between two contracts that nothing covered, the rate is spread over fewer years than actually passed and reads steeper than the true yearly rate. And if the yearly breakdown was filled in with **Estimate with CPI average** on the **Terms** card, the growth and the forecast repeat that estimate rather than anything the contract says.
+  If the yearly breakdown was filled in with **Estimate with CPI average** on the **Terms** card, the growth and the forecast repeat that estimate rather than anything the contract says.
 </Note>
 
 ## Also buying
 
 When Coverbase summarizes a contract, it assigns a spend category from a fixed list, such as **Cloud & infrastructure** or **Identity & access**. The category is the first tag on the **Summary** card. The **Also buying** card lists the other contracts in the same category, so you can see whether you pay several vendors for the same thing.
 
-- It lists up to ten other contracts that are not archived, canceled or expired, the most valuable first. Each shows its vendor, **Renews** and a date (or **Auto-renews**), and its contract value, or **Not recorded**.
-- The header gives how many contracts share the category and their combined value. The combined value covers the contracts listed on the card, so with more than ten it leaves the rest out.
-- The combined value is withheld, and the header reads **totals span currencies**, when the listed contracts use different currencies or any of them has no value recorded.
-- With more than ten, a link at the foot of the card counts the rest.
-- The card does not appear when the contract has no category, or when no other contract shares it. The top card reads **No spend category yet** in both cases.
+- It lists the other contracts that are not archived, canceled or expired, the most valuable first. Each shows its vendor, **Renews** and a date (or **Auto-renews**), and its contract value, or **Not recorded**.
+- The first ten are shown. With more, the foot of the card reads, for example, **4 more contracts in this category**; click it to open the rest on the card. The card lists up to 50, and says how many more there are beyond that.
+- The header gives how many contracts share the category and their combined value, across every one of them, not only those shown.
+- The combined value is withheld when the contracts use different currencies, and the header reads **totals span currencies**. It is also withheld when any of them has no value recorded, and the header says how many have none.
+- The card does not appear when the contract has no category, or when no other contract shares it. The top card reads **No spend category yet** in the first case. In the second, it names the category and reads **No other contracts in this category**.
 
 There is no control for changing a contract's category on the page. If a category is wrong, ask your Coverbase account team.
 
@@ -215,17 +224,15 @@ The priced lines are only on this tab. The contracts list and the [dashboards](/
 | --- | --- | --- |
 | **Annual spend from priced lines** shows a dash. | No lines are in force, or the lines in force use more than one currency. | Add or read lines. If a line has the wrong currency code, correct it. |
 | One charge is counted twice. | Two lines describe it in words different enough to count as two charges, or a quote or duplicate document was read. | Remove the line that is no longer in force. |
-| The old price counts and the new one is under **Superseded**. | Both lines describe the same charge, and Coverbase could not tell which document is later. | Correct the counting line to the current price. If the other line then counts too, remove it. |
+| The old price counts and the new one is under **Superseded**. | Both lines describe the same charge, and the old one has the later effective date, or neither has a date and the old one was added later. | Give the current line an **Effective date**, or remove the old line. |
 | Nothing appeared after **Read prices from documents**. | The reading is still running, or the documents state no charge it recognized. | Reload the tab after a few minutes. Add missing charges by hand. |
 | **Read prices from documents** is missing. | The contract has no documents. | Attach one on the **Documents** tab, or add lines by hand. |
 | The lines changed after someone uploaded a document. | Adding a document reads the prices again and replaces every line read from the documents. | Check the total and **Superseded**. Lines added or corrected by hand were kept. |
-| A line I removed came back. | It was read again under a different description. | Remove it again, or correct it if the figure is right but described differently. |
+| A line I removed came back. | It was read again under a different description, or from another document on the contract. | Remove it again, or correct it if the figure is right but described differently. |
 | **Spend over time** shows only **Link the previous contract**. | The contract has no yearly breakdown and no linked contract with values. | Add a yearly breakdown on the **Terms** card, or link the previous contract. |
 | "Could not link that contract". | The contract you picked is already renewed by another contract, or the link would loop. | Unlink it from the contract that renews it, or pick a different one. |
-| The bars have no currency symbol and there is no growth rate. | The contracts in the chain use different currencies. | Read each bar on its own; hover it to see which contract it is. |
-| **Also buying** reads **totals span currencies** though every contract uses one currency. | A listed contract has no value recorded. | Record the value on that contract's **Terms** card. |
-| **No spend category yet** on a contract whose **Summary** shows a category. | No other live contract shares the category. | Nothing to fix. The card appears when a second contract in the category exists. |
-| The **more contracts in this category** link opens every contract. | The contracts list has no spend category filter. | Work from the ten contracts on the card. |
+| **Spend over time** shows bars in two currencies and no growth rate. | The contracts in the chain use different currencies, and nothing is converted. | Read each bar in its own currency; hover it to see which contract it is. |
+| **Also buying** says some contracts have no value recorded. | Those contracts have no value on their **Terms** card, so any combined figure would be too low. | Record the value on each contract's **Terms** card. |
 
 ## Related
 
