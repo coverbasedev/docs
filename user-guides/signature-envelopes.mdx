@@ -24,7 +24,7 @@ An envelope is one agreement, out for signature, addressed to named people. It i
   <img src="/images/user-guides/signing-wizard-document.png" alt="Send wizard step one showing envelope name, the five paper sources with Upload selected, associated vendor and expiration" />
 </Frame>
 
-**Envelope Name** is the subject line signers see and the name the executed copy is filed under. Make it something the counterparty will recognize.
+**Envelope Name** names the agreement in every email Coverbase sends about it, and is the name the executed copy is filed under. Make it something the counterparty will recognize.
 
 Then pick the paper. **From a template** copies a template's roles and field layout across. **From a document**, **From a contract**, **Upload** and **Write** all start you with paper and no fields, which you place yourself in step 3. **Upload** takes several files, which travel as one envelope. **Write** lets you write the agreement in Coverbase, inserting passages from your library, and renders it to a PDF.
 
@@ -58,7 +58,7 @@ Name and email autocomplete from you, your colleagues, and the people on the ass
 **Signs in step** is the routing order, and reads **Approves in step** on an approver. Parties in step 1 are asked immediately; step 2 is notified when step 1 finishes, and so on. Give two parties the same step and they are asked at the same time. Drag a card by its handle to reorder the list.
 
 <Warning>
-  A copied party has no step number, because copies go out as soon as the envelope is sent, regardless of routing. Their card reads **Delivery: emailed a copy when the envelope is sent**. If you need someone to receive the agreement only after it is executed, a copied party is not that.
+  A copied party has no step number, because copies go out as soon as the envelope is sent, regardless of routing. Their card reads **Delivery: emailed a copy when the envelope is sent**. That email says who sent the agreement and carries the document as a PDF attachment, with no signing link. When every party has signed, they also get the executed copy. If you need someone to receive the agreement only after it is executed, a copied party is not that.
 </Warning>
 
 **Private Note** is a line only that one recipient sees. It is the place for "this is the revised schedule we discussed" without putting it in front of everybody else on the envelope.
@@ -89,7 +89,7 @@ Everything in [the field types](/user-guides/signature-templates#what-the-field-
 
 **Signing Order** at the top is the last look at who is asked, in what order, and how many fields each one owns. The step numbers are still editable here and the rows still drag, so a routing mistake spotted at the end does not send you back a step.
 
-**Signing Emails** is the invitation. **Subject** and **Opening line** both fall back to Coverbase's built-in wording if you leave them blank, and **Rewrite** drafts both from the document itself, which is usually a better starting point than a blank box.
+**Signing Emails** is the invitation. **Subject** is the invitation's subject line for this envelope. Leave it blank and the invitation uses your organization's own invitation subject from Signing Settings, or, without one, Coverbase's built-in *Jordan Lee sent you Mutual NDA*. **Opening line** is added to every party's invitation. **Rewrite** drafts both from the document itself, which is usually a better starting point than a blank box.
 
 **What does signing mean?** is recorded with every signature on the envelope. Most agreements do not need it. Regulated workflows do, and some organizations require it on every envelope. The step says so if yours does.
 
@@ -100,7 +100,7 @@ Two switches decide how it goes out:
 | **Email recipients the signature link** | On by default. Turn it off and links are minted but not sent, for when you are handing them out yourself. The send button then reads **Create and get links**, and the page that follows lists each party's link once, because only a digest is stored. |
 | **Authenticate signers' identity** | Whether a party must verify their email address before the document opens. Starts at your organization's setting and can be changed for this envelope alone. |
 
-**Send for signature** emails the first routing step and mints each party a permanent portal address.
+**Send for signature** emails the first routing step, emails each copied party their copy, and gives the agreement one permanent portal address.
 
 ## Track what is out
 
@@ -114,9 +114,9 @@ The envelope's **Overview** tab is the working view. Down the middle: the source
 
 **Details** carries the vendor the agreement is filed against, when it was sent, when it expires, when it completed, and how many documents it holds. The vendor can be changed from here if it was set wrong.
 
-<Warning>
-  The **portal link** is a permanent address for the agreement, and anyone holding it can open the document. It is there for handing an agreement over out of band. Treat it like the document itself, not like an internal reference.
-</Warning>
+<Note>
+  The **portal link** is a permanent address for the agreement, for handing it over out of band or back to a party whose invitation link has expired. Holding the link is not enough to open it. The visitor enters their email address, and Coverbase emails a one-time code only to a party on the envelope whose turn it is, or to any party once the envelope is executed. Nothing is shown until that code is entered.
+</Note>
 
 ### Nudging, correcting, cancelling
 
@@ -151,7 +151,11 @@ Once the last party signs, Coverbase flattens every field into the page, seals t
 - **Download full packet**: the signed copy and the certificate together, for handing to a counterparty or an auditor.
 - The document line under the file name reads **sealed at B-B** (or whatever level was achieved), so you can see what the executed copy carries rather than what was asked for.
 
-The executed copy is also filed as a document on the associated vendor and contract, so it is where you would look for it even if you never open the envelope again.
+Where the executed copy and the certificate are filed depends on where the paper came from:
+
+- **Paper from a vendor's documents.** When the paper was picked **From a document** or **From a contract**, or came from a template built on one, both are added to the documents of the vendor that owns that document.
+- **An envelope sent for a contract.** When the envelope was started from a contract's **Workflow** tab, or its paper was picked **From a contract**, the executed copy is also added to that contract's documents. Signed from one of the contract's own documents, it takes that document's role, and the unsigned version stays on the contract as a **Redline** of it. So signing the contract's **Root** document makes the signed copy the new **Root**. Paper the contract never held becomes its **Root** if it has none, and otherwise joins its documents as **Unmatched**, for you to set its role. Uploaded or written paper is filed on the contract's vendor.
+- **Anything else.** Uploaded or written paper on an envelope that is not for a contract stays on the envelope, where **Download signed copy** and **Download certificate** fetch it. The **Associated vendor** does not file it.
 
 ## The audit trail
 
@@ -183,6 +187,9 @@ The **Integrity** panel beside it names the seal level applied (or **Not sealed*
   </Accordion>
   <Accordion title="Nobody after the first person has been emailed">
     That is how routing works. Later steps are notified as the envelope advances. If the first step has not finished, nobody after it has been asked.
+  </Accordion>
+  <Accordion title="A copied party says they never got a copy">
+    Their copy goes out when the envelope is sent, as an email with the document attached. Nothing is emailed to anyone, copied parties included, when **Email recipients the signature link** was off. Check their address on the envelope, and look for **Party notified** against their name on the audit trail.
   </Accordion>
   <Accordion title="The envelope sat at Preparing this document">
     Word files convert to PDF before they can be shown. The portal polls and resolves itself when the conversion lands, so a signer does not need to refresh.
