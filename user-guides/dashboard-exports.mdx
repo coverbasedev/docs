@@ -27,7 +27,7 @@ Open **Dashboards** in the left navigation. Each dashboard's row ends with an ac
   <img src="/images/user-guides/dashboard-exports-menu.png" alt="The Dashboards list with the actions menu open on the Strategic Sourcing Overview row, showing Export with Export as PDF and Export as Excel, then Schedule export, Default and Delete" />
 </Frame>
 
-The open dashboard has no export button of its own. If you can edit the dashboard, each chart's menu there offers **Download as PNG**, which saves that one chart as an image.
+The open dashboard has no export button of its own. If you can export dashboards, each chart's menu there offers **Export data as CSV**, which downloads that chart's figures, and **Download as PNG**, which saves the chart as an image.
 
 ## Exporting to PDF or Excel
 
@@ -50,20 +50,23 @@ Use a file for a one-off copy: a board pack, an attachment to a ticket, a spread
 
 If the dialog says "Encountered an error while generating the file", close it and try again.
 
-Anyone who can open **Dashboards** can export any dashboard on it.
+Exporting needs the dashboard export permission, which Admins have. Without it, the **Export** submenu and the chart export items do not appear.
 
 ### What the PDF contains
 
 - A title block: the dashboard's name, its description if it has one, and the date and time the file was generated, in your time zone.
 - One section per chart: the chart's name as a heading, then the chart drawn across the full width of a US Letter page.
 
-Charts come out one after another, not in their grid positions. The order follows when each chart was last edited, most recent first, so it rarely matches the layout on screen. The PDF draws charts in its own style, so a color theme or density picked on the dashboard does not carry over.
+Charts come out one after another in the order you read the grid: top to bottom, and left to right within a row. A chart not yet placed on the grid comes last. Interactive filter widgets are left out, since they hold no data. The PDF draws charts in its own style, so a color theme or density picked on the dashboard does not carry over.
+
+Values read as they do on the dashboard. Supplier tiers, statuses and other groupings show their names, such as **Tier 1 (Critical)**, never an internal key. Money shows with its currency sign: a KPI reads **$130.7M**, and a table cell gives the full amount, such as **$1,249,936**. Cycle times (median, average and 95th percentile) are in hours, as on screen, and the column heading says so.
 
 ### What the Excel workbook contains
 
 - One sheet per chart, named after the chart. Excel allows 31 characters and no `\ / * ? : [ ]` in a sheet name, so long names are shortened, those characters are dropped, and a repeated name gets a number added.
 - On each sheet, a header row, then one row per data point, with a column for each grouping and each value. A chart split two ways (by owner and by tier, say) comes out as one row per combination rather than a grid, which is the shape a pivot table wants.
 - A KPI's sheet holds a label and a single value.
+- Money cells are numbers in a currency format and cycle times are numbers of hours, so the sheet can still add them up.
 
 The workbook has no title page. It does not record the dashboard's date range or when it was generated, so put the period in the file name.
 
@@ -79,7 +82,7 @@ The workbook carries the numbers behind every chart. The PDF, and the copy of th
 | **Horizontal Bar**, **Stacked Horizontal Bar** | Horizontal bars | One row per bar or segment | An image of the bars |
 | **Line Chart** | A line | One row per point | An image of the line |
 | **Scatter Plot** | A scatter plot | One row per point | An image of the plot |
-| **Donut Chart**, **Area Chart**, **Sparkline**, **Treemap**, **Funnel**, **Waterfall**, **Radar**, **Heatmap**, **Timeline** | A one-line note that the chart type is not supported in PDF | The chart's data | "Open the dashboard to see this chart." |
+| **Donut Chart**, **Area Chart**, **Sparkline**, **Treemap**, **Funnel**, **Waterfall**, **Radar**, **Heatmap**, **Timeline** | A one-line note, such as "Donut charts are not drawn in PDF exports yet. Open the dashboard to see this one." | The chart's data | "Open the dashboard to see this chart." |
 
 Bar and line charts in the PDF and in the email cut category labels at 20 characters, so a long vendor name ends in an ellipsis. The workbook keeps it whole.
 
@@ -115,7 +118,7 @@ A schedule emails the dashboard to a list of addresses on the days you pick. Eac
     Under **Attachments**, turn on **Attach PDF**, **Attach Excel**, or both. **Attach PDF** is on to start with. Tick **Include a copy of the dashboard in the email** to draw the charts into the message itself. You need at least one of the three.
   </Step>
   <Step title="Add the recipients">
-    In **Recipients**, type an address and press Enter, then type the next. An address shown in red is not valid and blocks saving.
+    In **Recipients**, type an address and press Enter, then type the next. An address shown in red is not valid and blocks saving. A schedule takes up to 50 addresses.
   </Step>
   <Step title="Write the email, if you want to">
     **Subject**, **Email Title** and **Message** under **Email Copy** are optional. Left blank, each uses the default wording.
@@ -141,13 +144,13 @@ A dashboard has one schedule. To send it on two cadences, or to two audiences wi
 - Scheduled emails go out once a day at about 14:00 UTC: 10:00 in New York in summer and 9:00 in winter. You cannot choose the hour.
 - Days are counted in US Eastern time, and a schedule has no time zone setting. At UTC+10 or further east, the email lands just after midnight on the following local day.
 - The dashboard's date range is worked out in US Eastern time at the moment of sending, so **Last 7 days** means the seven days up to that send.
-- **Next export** shows the next matching day in your own time zone. If you save after that day's send has gone out, the first email arrives on the next matching day.
+- **Next export** shows the date of the next send in your own time zone. Once today's send has gone out, it shows the next matching day.
 - **Days of the month** runs from 1 to 28 so every chosen day exists in every month. There is no option for the last day of the month.
 
 ### Recipients
 
 - Any address works. Recipients do not need a Coverbase account, and Coverbase does not check them against your members.
-- Every recipient is on the To line of a single message, so each one sees the whole list. For a wide or changing audience, send to a mailing list that your email team maintains.
+- Each recipient gets a message of their own, so nobody sees who else is on the list. A schedule takes up to 50 addresses. For a wider or changing audience, send to a mailing list that your email team maintains.
 - The email has no unsubscribe link. It tells the reader that someone in your organization subscribed their address, so anyone who wants to stop receiving it has to ask you.
 - The **Open dashboard** button in the email needs a Coverbase sign-in to your organization. Recipients without one can read the attachments and the copy in the email, not the live dashboard.
 
@@ -202,7 +205,7 @@ Each send is one email from `noreply@coverbase.ai`, wrapped in the same layout a
 All three start from **Schedule export** on the dashboard's row.
 
 - **Change it.** Edit anything and click **Save**. The next send uses the new settings.
-- **Pause it.** Clear **Enable scheduled export** and click **Save**. Nothing sends, and every setting is kept for when you tick it again. A paused schedule still has to be complete: at least one valid recipient, something to send, and a day for a weekly or monthly schedule. If it is not, saving fails with "Failed to update report".
+- **Pause it.** Clear **Enable scheduled export** and click **Save**. Nothing sends, and every setting is kept for when you tick it again. A paused schedule can be unfinished: it saves without recipients, attachments or a day. Only an address that is not valid blocks saving it.
 - **Delete it.** Click **Delete schedule**. It takes effect at once, with no confirmation, and the recipients and email copy go with it. The button appears only once a schedule has been saved.
 
 Deleting the dashboard stops its schedule too, and a chart removed from the dashboard drops out of the next email.
@@ -234,8 +237,8 @@ When someone leaves your team, check the schedules on the dashboards they receiv
 
 | Task | Who |
 | --- | --- |
-| Export a dashboard to PDF or Excel | Anyone who can open **Dashboards** |
-| Create, change, pause or delete a schedule, or send a test | People who can edit dashboards, which is an Admin permission (see [What custom roles do not restrict](/user-guides/permissions-and-roles#what-custom-roles-do-not-restrict)) |
+| Export a dashboard to PDF, Excel or CSV, or download a chart image | People with the dashboard export permission, which Admins have |
+| Create, change, pause or delete a schedule, or send a test | People who can both edit and export dashboards, which Admins can (see [What custom roles do not restrict](/user-guides/permissions-and-roles#what-custom-roles-do-not-restrict)) |
 | Pause every schedule on the dashboards they created | The dashboard's creator, from their notification settings |
 | Receive the email | Any email address |
 
@@ -253,6 +256,7 @@ Anyone else sees **Schedule export** grayed out, with "Your user role doesn't ha
 | **Message** | 4,000 characters |
 | Chart images in the copy of the dashboard | 12, and 3 MB in all |
 | Table rows in the copy of the dashboard | 8 |
+| Recipients per schedule | 50 |
 | One email, attachments included | 10 MB |
 | Category labels on PDF bar and line charts | 20 characters |
 | Excel sheet names | 31 characters |
@@ -264,15 +268,13 @@ Anyone else sees **Schedule export** grayed out, with "Your user role doesn't ha
 | **Schedule export** is grayed out | Your role cannot edit dashboards | Ask an Admin to set up or change the schedule. |
 | The dialog says the schedule will not send | You created the dashboard, and your **Dashboard scheduled exports** switch is off | Turn it back on under **Account → Notifications**, in the **Export** group. |
 | A schedule has stopped sending | It was paused, the creator turned off **Dashboard scheduled exports**, the dashboard was deleted, or the email grew past 10 MB | Reopen **Schedule export** and check **Enable scheduled export**. Ask the creator to check their setting. On a large dashboard, drop an attachment. |
-| The email arrives a day after the day you picked | You are at UTC+10 or further east, where the 14:00 UTC send lands after midnight, or you saved after that day's send had gone out | Pick the previous day in the schedule. A first send that missed today goes out on the next matching day. |
-| Saving fails with "Failed to update report" | The schedule is paused but incomplete: no valid recipient, nothing to send, or no day picked | Complete the form, clear **Enable scheduled export**, then save. |
+| The email arrives a day after the day you picked | You are at UTC+10 or further east, where the 14:00 UTC send lands after midnight | **Next export** shows the date in your time zone. Pick the previous day in the schedule to receive it on the day you want. |
 | A chart in the PDF is a one-line note | Its chart type is not drawn in PDF (see [the chart type table](#how-each-chart-type-comes-out)) | Switch the chart to a bar chart or a table, or read its numbers in the workbook. |
 | A chart says "The data for this chart is not available." | It reads Radar or Inspect, and the module is off or the person the export runs as cannot see it: you for a file, the creator for an email | Export as someone with access, or ask the dashboard's creator about their access. |
 | The export ignores a filter you set | Filters added in the dashboard toolbar are not saved | Add the filter to each chart in the chart editor. |
 | The figures cover a different period than you expected | The export uses the saved date range, worked out when it runs, and a chart with its own range keeps it | Check the **Date Range** control and each chart's own range before you export. |
 | A former colleague still receives the email | Recipients are addresses, not accounts | Remove their address in **Schedule export** and save. |
 | A recipient cannot open the dashboard from the email | **Open dashboard** needs a Coverbase sign-in to your organization | Rely on the attachments, or give them an account. |
-| **Export data as CSV** on a chart opens the chart in a new tab and nothing downloads | That menu item does not produce a file | Use **Export as Excel** on the **Dashboards** list. Each chart's data is on its own sheet. |
 | The export dialog shows "Encountered an error while generating the file" | The file failed to build | Close the dialog and try again. If it keeps failing, contact support. |
 
 ## Related
