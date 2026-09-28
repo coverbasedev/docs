@@ -20,6 +20,10 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
   To upload evidence documents (SOC 2 reports, policies, contracts, questionnaires) for a vendor and link them to its services and assessments, see the [Documents API](/api-reference/documents).
 </Note>
 
+<Note>
+  To read and write a vendor's bank accounts, sites, tax registrations and legal entity assignments, see the [Supplier Profile API](/api-reference/supplier-profile).
+</Note>
+
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `POST` | `/v1/vendors` | Yes (`Idempotency-Key`) |
@@ -183,7 +187,7 @@ print(resp.json())
   "watcher_ids": [],
   "inherent_risk_level_id": null,
   "residual_risk_level_id": null,
-  "engagement_type": null,
+  "engagement_type": "vendor",
   "use_case": "Demo supplier for Acme Inc",
   "tier": null,
   "primary_contact": null,
@@ -482,7 +486,7 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
   "watcher_ids": ["cbuser_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"],
   "inherent_risk_level_id": "cbsclvl_7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d",
   "residual_risk_level_id": "cbsclvl_3f4e5d6c7b8a9b0c1d2e3f4a5b6c7d8e",
-  "engagement_type": "saas_platform",
+  "engagement_type": "vendor",
   "use_case": "Customer support ticketing",
   "tier": "tier_2",
   "primary_contact": {
@@ -535,7 +539,7 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
 <ResponseField name="watcher_ids" type="string[]">Watcher user IDs (`cbuser_...`).</ResponseField>
 <ResponseField name="inherent_risk_level_id" type="string | null">Scale level ID (`cbsclvl_...`) for inherent risk.</ResponseField>
 <ResponseField name="residual_risk_level_id" type="string | null">Scale level ID (`cbsclvl_...`) for residual risk.</ResponseField>
-<ResponseField name="engagement_type" type="string | null">Type of engagement with this vendor.</ResponseField>
+<ResponseField name="engagement_type" type="string | null">How this vendor engages with your organization: `vendor` or `product`.</ResponseField>
 <ResponseField name="use_case" type="string | null">How the vendor is used.</ResponseField>
 <ResponseField name="tier" type="string | null">Derived vendor tier (e.g. `tier_1`, `tier_2`). Set by workflow tiering actions; `null` until derived.</ResponseField>
 <ResponseField name="primary_contact" type="object | null">The vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)), or `null`.</ResponseField>
@@ -576,10 +580,11 @@ Updates one or more fields. Only included fields change; omitted fields are unto
 <ParamField body="inherent_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for inherent risk.</ParamField>
 <ParamField body="residual_risk_level_id" type="string">Scale level ID (`cbsclvl_...`) for residual risk.</ParamField>
 <ParamField body="use_case" type="string">How the vendor is used.</ParamField>
+<ParamField body="engagement_type" type="string">How this vendor engages with your organization: `vendor` or `product`. Any other value returns `422`.</ParamField>
 <ParamField body="primary_contact" type="object">Replace the vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)). When supplied, `email` is required and validated.</ParamField>
 
 <Note>
-  `external_id`, `tier`, and `engagement_type` are **not** updatable through this endpoint (`external_id` is set only at creation; `tier` is derived by workflows). The request schema accepts `engagement_type`, but the value is ignored.
+  `external_id` and `tier` are **not** updatable through this endpoint (`external_id` is set only at creation; `tier` is derived by workflows).
 </Note>
 
 ### Example request

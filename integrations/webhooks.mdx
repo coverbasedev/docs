@@ -10,7 +10,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Webhooks are the outbound half of an integration. This page documents how events are delivered, how to verify signatures, retry behavior, and the event catalog. To register, list, update, delete, test, or inspect the delivery history of a subscription, see the [Webhooks API](/api-reference/webhooks). For the audit trail of every attempt, see [Webhook delivery history](/integrations/webhook-deliveries).
 
-Admins can do the same from the dashboard under **Configuration → Webhooks**. **Add webhook** takes an **Endpoint URL**, a **Signing secret** of at least 16 characters (shown only once), the **Events** to subscribe to, an optional **Description**, and an **Enabled** switch. Each row has **Send test**, **Delivery history**, **Edit** and **Delete** buttons, and the **Health** column shows the last delivery's status and the share of recorded deliveries that got a response.
+Admins can do the same from the dashboard under **Configuration → Webhooks** (see the [Webhooks guide](/user-guides/webhooks)). Members see the list and the delivery history but cannot add, change, test or delete a webhook, in the dashboard or through the API. **Add webhook** takes an **Endpoint URL**, a **Signing secret** of at least 16 characters (shown only once), the **Events** to subscribe to, an optional **Description**, and an **Enabled** switch. Each row has **Send test**, **Delivery history**, **Edit** and **Delete** buttons, and the **Health** column shows the last delivery's status and the share of recorded attempts that got a `2xx` response.
 
 ## When deliveries happen
 
@@ -124,12 +124,12 @@ app.post(
 | -------- | ----- |
 | HTTP method | `POST` |
 | Connection timeout | 10 seconds per attempt |
-| Retries | None for a failed attempt. A timeout, a connection error or a non-`2xx` response is recorded in [delivery history](/integrations/webhook-deliveries) and is not sent again |
+| Retries | Up to 5 retries (6 attempts) after a timeout, a connection error, or a `408`, `429` or `5xx` response, waiting about 4 s, 16 s, 64 s, 4 min and 4 min between attempts. Any other non-`2xx` response, a blocked URL and a test event are not retried. Every attempt is recorded in [delivery history](/integrations/webhook-deliveries) |
 | Ordering | Not guaranteed; deliveries are unordered |
-| Duplicates | Rare but possible: if a Coverbase worker fails partway through a delivery, the delivery task can run again with the same `event_id` |
+| Duplicates | Possible: delivery is at-least-once. A retry after a timeout, or a worker that fails partway through a delivery, can send an event your receiver already processed. Every attempt carries the same `event_id` |
 | Endpoint requirement | Public HTTPS endpoint (see [URL restrictions](#url-restrictions)) |
 
-`occurred_at` and `event_id` are generated at send time. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` within 10 seconds. Because a failed attempt is not retried, events sent while your receiver is down or returning errors are not redelivered: after an outage, use [delivery history](/integrations/webhook-deliveries) to see which events you missed and read the affected records back through the API.
+`event_id` is fixed when the event is raised and stays the same on every attempt. `occurred_at` and the `Coverbase-Timestamp` header are set again for each attempt, so a retry passes a receiver's replay window. Make your receiver **idempotent**: dedupe on `X-Coverbase-Event-Id` and process the same event id at most once. Respond with a `2xx` within 10 seconds. Retries cover a short outage, about 10 minutes from the first attempt. After a longer one, use [delivery history](/integrations/webhook-deliveries) to see which events never reached you and read the affected records back through the API.
 
 ### Source IP
 
@@ -145,7 +145,7 @@ Every delivery attempt is recorded in [delivery history](/integrations/webhook-d
 
 Webhook URLs must be **public HTTPS endpoints**. A URL is rejected at create/update time (`400 invalid_url`) if it is not HTTPS, carries credentials, uses a non-standard port, or resolves to a private, loopback, link-local, or metadata address (e.g. `169.254.169.254`).
 
-The same check is **re-applied with DNS resolution at delivery time**, so a hostname that is repointed to an internal address after registration (DNS rebinding) is still blocked. A delivery blocked this way is recorded with status `error` in [delivery history](/integrations/webhook-deliveries).
+The same check is **re-applied with DNS resolution at delivery time**, and the delivery connects only to an address that check approved, with TLS still verifying the endpoint's own hostname. A hostname repointed to an internal address after registration, or one that answers the check and the connection differently (DNS rebinding), is still blocked. A delivery blocked this way is recorded with status `error` in [delivery history](/integrations/webhook-deliveries).
 
 ## Event catalog
 
@@ -175,6 +175,9 @@ These are the **only** values valid in a subscription's `events` array and the o
 | `RiskRegisterEntry.Created`, `RiskRegisterEntry.Updated`, `RiskRegisterEntry.Deleted` | `risk_id`; `.Updated` adds `field_diffs` |
 | `ScreeningMatch.Created`, `ScreeningMatch.Updated`, `ScreeningMatch.Deleted` | `screening_match_id`; `.Updated` adds `field_diffs` |
 | `Service.Created`, `Service.Updated`, `Service.Deleted` | `service_id`; `.Updated` adds `field_diffs` |
+| `MonitoringRecord.Created`, `MonitoringRecord.Updated`, `MonitoringRecord.Deleted` | `monitoring_record_id`; `.Updated` adds `field_diffs` |
+| `MonitoringRecord.ScopingDue` | `monitoring_record_id`, `vendor_id`, `verdict`, `closes_at_planned` (nullable) |
+| `MonitoringRecordEntry.Created`, `MonitoringRecordEntry.Updated`, `MonitoringRecordEntry.Deleted` | `monitoring_record_entry_id`; `.Updated` adds `field_diffs` |
 | `ServiceNowRecord.Created`, `ServiceNowRecord.Updated`, `ServiceNowRecord.Deleted` | `servicenow_record_link_id`; `.Updated` adds `field_diffs` |
 | `ServiceNowSync.Completed` | `assessment_id`, `servicenow_table`, `created_record_count` |
 | `Sla.Created`, `Sla.Updated`, `Sla.Deleted` | `sla_id`; `.Updated` adds `field_diffs` |
@@ -204,12 +207,15 @@ The `VendorBankAccount`, `VendorContact`, `SupplierSite`, `SupplierTaxRegistrati
 | Field | Notes |
 | ----- | ----- |
 | `change_event_id` | The profile change this event reports. Every webhook that receives the change gets the same value, so use it as your idempotency key. Nullable. |
-| `vendor_id`, `entity_id` | The supplier the change belongs to. Nullable. |
+| `vendor_id` | The supplier the change belongs to. Nullable. |
+| `entity_id` | The ID of the record that changed, such as the bank account or site. Nullable. |
 | `sensitivity` | `normal`, or `sensitive` for a fraud-relevant change. Bank account changes are always `sensitive`. |
 | `actor_type` | Where the change came from: `supplier_portal`, `internal_user`, `api` or `system`. |
 | `diff`, `snapshot` | What changed, and the saved record. Account and tax numbers appear only as their last four characters. |
 
 A `sensitive` change fires its event only after a reviewer approves it, not when it is requested.
+
+`SupplierUpdateRequest.Submitted` and `VendorContact.Updated` can be subscribed to, but nothing sends them yet. What a supplier changes in answer to an update request arrives as the record events above.
 
 All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
 

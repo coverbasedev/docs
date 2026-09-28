@@ -1,0 +1,1468 @@
+---
+title: "Supplier Profile API"
+description: "Read and write a vendor's bank accounts, sites, tax registrations and legal entity assignments, send update requests, and follow every change to them."
+icon: "id-card"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A vendor's **supplier profile** is what your organization holds about how to pay and reach that supplier: its bank accounts, its sites (addresses and other locations), its tax and company registrations, its diversity records, and the legal entities of yours it is assigned to. In the dashboard these are the records on the vendor's **Know-Your-Vendor** tab; see [Supplier information](/user-guides/supplier-information). This API is how a finance system or middleware reads those records, writes them, and keeps up with changes to them.
+
+The profile is not an object with an ID of its own. Every record in it belongs to a vendor (`cbvndr_...`) and lives under `/v1/vendors/{vendor_id}/`. The one exception is the list of your own legal entities, at `/v1/legal_entities`.
+
+<Note>
+  Know Your Vendor is not on for every organization. While it is off, every endpoint on this page returns `404` with the code `not_enabled`. If you get that response, ask your Coverbase account team to turn it on.
+</Note>
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps and the error envelope. None of them honor `Idempotency-Key`. A tax registration write is an upsert and safe to repeat; the other writes are not, so list the records before you retry one that timed out.
+
+No endpoint needs a scope: a standard integration key can call all of them. The scopes in the last column change what a call returns or does; see [masking and scopes](#masking-and-scopes).
+
+| Method | Path | Scope that changes the result |
+| ------ | ---- | ----------------------------- |
+| `GET` | `/v1/vendors/{vendor_id}/bank_accounts` | `banking:read` |
+| `POST` | `/v1/vendors/{vendor_id}/bank_accounts` | `review:sensitive_changes` |
+| `PATCH` | `/v1/vendors/{vendor_id}/bank_accounts/{bank_account_id}` | `review:sensitive_changes` |
+| `POST` | `/v1/vendors/{vendor_id}/bank_accounts/{bank_account_id}/retire` | - |
+| `GET` | `/v1/vendors/{vendor_id}/sites` | - |
+| `POST` | `/v1/vendors/{vendor_id}/sites` | - |
+| `PATCH` | `/v1/vendors/{vendor_id}/sites/{site_id}` | - |
+| `DELETE` | `/v1/vendors/{vendor_id}/sites/{site_id}` | - |
+| `GET` | `/v1/vendors/{vendor_id}/tax_registrations` | `banking:read` |
+| `POST` | `/v1/vendors/{vendor_id}/tax_registrations` | - |
+| `GET` | `/v1/vendors/{vendor_id}/diversity_records` | - |
+| `GET` | `/v1/legal_entities` | - |
+| `GET` | `/v1/vendors/{vendor_id}/legal_entity_assignments` | - |
+| `POST` | `/v1/vendors/{vendor_id}/legal_entity_assignments` | - |
+| `GET` | `/v1/vendors/{vendor_id}/update_requests` | - |
+| `POST` | `/v1/vendors/{vendor_id}/update_requests` | - |
+| `GET` | `/v1/vendors/changes` | - |
+
+<Warning>
+  A successful bank write is not a changed bank account. By default a new or changed account waits for a reviewer, and the call answers `202 Accepted` with a review ID. Update your finance system only when the account goes live: the `VendorBankAccount` webhook fires on approval, and the change feed records an `approved` event.
+</Warning>
+
+## How the profile fits together
+
+### What a profile holds
+
+| Record | ID prefix | Through this API |
+| ------ | --------- | ---------------- |
+| Bank account | `cbvba_` | List, add, update, retire |
+| Site | `cbsite_` | List, add, update, delete |
+| Tax registration | `cbtaxreg_` | List, add or update |
+| Diversity record | `cbdiv_` | List only |
+| Legal entity assignment | `cblea_` | List, add |
+| Update request | `cbupdreq_` | List, send |
+| Change event | `cbpce_` | List (Coverbase writes them) |
+
+Two more IDs appear in responses: a **legal entity** (`cble_...`) is one of your own contracting entities, set up under **Configuration → Legal entities**, and a **bank change review** (`cbbarev_...`) is a bank write waiting for a reviewer.
+
+Sites are also the vendor's locations: the sites you read and write here are the ones on the vendor's **Locations** card and on the [Risk geography map](/user-guides/risk-geography-map).
+
+### Who changes what
+
+| Who | How | What they can change |
+| --- | --- | -------------------- |
+| The supplier | A **Know-Your-Vendor** questionnaire, or the **Profile** page of the [centralized supplier portal](/user-guides/centralized-supplier-portal) when you have turned that section on | Bank accounts, sites, tax registrations and diversity records: in a questionnaire, through the questions you ask; on the portal, within the sections you open |
+| Your staff | The vendor's **Know-Your-Vendor** tab, with the supplier banking and supplier profile [permissions](/user-guides/supplier-information#who-can-see-and-do-what) | Every section, and they decide queued changes |
+| Your integration | This API | Bank accounts, sites, tax registrations and legal entity assignments, plus update requests. Not diversity records, not approvals, and not your list of legal entities |
+| Coverbase | Automatically, on save or in the background | Registry results on tax registrations, map coordinates on sites, the tax region of each site and the payment method of each bank account |
+
+Changes to these records, whoever makes them, are appended to the vendor's change history. The same history drives the **Know-Your-Vendor** tab, the [supplier profile webhooks](/integrations/webhooks#supplier-profile-events) and the [change feed](#the-change-feed). A change made with an API key is recorded with `actor_type` `api` and `actor_label` `API`, and the records it creates carry `source` `api`.
+
+### What waits for approval
+
+| Change | Waits when | Until then |
+| ------ | ---------- | ---------- |
+| A new bank account, or a change to an account's details (its `values`) | **Bank changes need a reviewer** is on. It is on by default. | The live account is untouched, the call answers `202`, and no webhook fires. |
+| A legal entity assignment | **Legal entity assignments need approval** is on. It is off by default. | The assignment has status `requested` and no webhook fires. |
+| Everything else | Never | Saved immediately if the country's rules pass. |
+
+Both settings are in **Configuration → Know Your Vendor Settings**; see [Configuring it for your organization](/user-guides/supplier-information#configuring-it-for-your-organization). A reviewer decides a queued bank change on the vendor's **Know-Your-Vendor** tab or on the **Vendor changes** page. The API has no call to approve or reject one. Retiring a bank account never waits.
+
+### Masking and scopes
+
+An API key authenticates as a service account. With a standard key, an account number, IBAN or tax identifier comes back as its last four characters (`****6789`), a bank account's other fields are not returned apart from its SWIFT/BIC, and every bank write queues for review. An admin can grant a key two scopes that change this, under **Admin scopes (optional)** on the **API keys** page:
+
+| Scope | Label on the **API keys** page | Effect on this API |
+| ----- | ------------------------------ | ------------------ |
+| `banking:read` | **Read full bank and tax identifiers** | [List bank accounts](#list-bank-accounts) adds `values`, every field in full, and [list tax registrations](#list-tax-registrations) adds `value`. Nothing else unmasks: write responses, change events and webhooks stay masked. |
+| `review:sensitive_changes` | **Write bank details without review** | A bank write from this key skips the review queue and takes effect at once. It is still recorded in the change history, and its webhook fires immediately. The key cannot approve or reject changes that others queued: no endpoint does that, and a reviewer decides them in the dashboard. |
+
+Grant either only to a key that needs it. See [API key scopes](/conventions#api-key-scopes) and [role-based masking](/security/data-protection#role-based-masking). A dashboard session token also works on these endpoints, but it never unmasks values and never skips review.
+
+### Country rules and validation
+
+Bank accounts, sites and tax registrations are checked against the rules for their country, which [Supplier countries](/user-guides/supplier-countries/overview) lists field by field. Values are normalized first, and the normalized value is what Coverbase stores: spaces come out of an IBAN, and a United Kingdom sort code shorter than six digits is padded with leading zeros.
+
+- An **error** rejects the write with `422` and the code `validation_failed`, and nothing is saved.
+- A **warning** lets the write through. The warning is kept on the record's `validation_results`.
+
+A country Coverbase has no rules for is not refused: the values are stored unchecked, and `config_version` reads `unconfigured`.
+
+Every record that was validated carries the outcome in `validation_results`:
+
+```json
+{
+  "status": "passed_with_warnings",
+  "results": [
+    {
+      "field": "po_emails",
+      "rule_id": "email.missing",
+      "level": "warning",
+      "message": "A PO email address is how the finance system reaches this supplier. Add at least one address.",
+      "params": { "label": "A PO email address" }
+    }
+  ],
+  "config_version": "2026.09.1"
+}
+```
+
+| Field | Notes |
+| ----- | ----- |
+| `status` | `passed`, `passed_with_warnings` or `failed`. A saved record is never `failed`. |
+| `results[].field` | The field key the result is about, such as `branch_code` or `postal_code`. |
+| `results[].rule_id` | A stable rule identifier, such as `checksum.failed`, `field.required` or `iban.mod97`. Branch on this, not on `message`. |
+| `results[].level` | `error` or `warning`. |
+| `results[].message` | A sentence you can show a person. |
+| `results[].params` | The values the message was built from, such as the field `label`. |
+| `config_version` | The version of the country rules that ran, or `unconfigured`. |
+
+A write that fails validation returns the same results in the error body. It uses an `error` key rather than the usual `code`:
+
+```json
+{
+  "detail": {
+    "error": "validation_failed",
+    "results": [
+      {
+        "field": "branch_code",
+        "rule_id": "checksum.failed",
+        "level": "error",
+        "message": "Routing Transit Number failed its check-digit validation. Check for a typo.",
+        "params": { "label": "Routing Transit Number", "field": "branch_code", "algorithm": "us_aba_mod10" }
+      }
+    ],
+    "config_version": "2026.09.1"
+  },
+  "request_id": "41ff4305-740d-4181-bed9-1fbe21bd69ab"
+}
+```
+
+### Errors every endpoint can return
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "not_enabled", "message": "Know Your Vendor is not enabled for this organization."}}` | Know Your Vendor is off for your organization. It is checked before the vendor. |
+| 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` does not exist or is not in the API key's org. |
+| 404 | `{"detail": "Not Found"}` | A bank account or site that does not exist or belongs to a different vendor, a site that was deleted, or, on an update, a retired bank account. |
+| 422 | Standard validation error | The body failed schema validation. Request bodies are strict: a field this page does not list is rejected. |
+
+Authentication failures and the IP allowlist behave as on every public endpoint; see [API conventions](/conventions#errors). Calls made with an `ak_` key are recorded in the [public API audit log](/conventions#public-api-audit-log).
+
+## Bank accounts
+
+### The bank account object
+
+<ResponseField name="id" type="string">Bank account ID (`cbvba_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor the account belongs to.</ResponseField>
+<ResponseField name="bank_country" type="string | null">Two-letter country code of the bank that holds the account. `null` on an account recorded before country validation existed.</ResponseField>
+<ResponseField name="currency" type="string | null">Three-letter currency code, upper case.</ResponseField>
+<ResponseField name="bank_account_name" type="string | null">A label for the account, such as `Operating account`. It is not the account holder's name.</ResponseField>
+<ResponseField name="account_number_masked" type="string | null">The last four characters of the account number, as `****6789`.</ResponseField>
+<ResponseField name="iban_masked" type="string | null">The last four characters of the IBAN.</ResponseField>
+<ResponseField name="swift_bic" type="string | null">The SWIFT/BIC in full. It identifies the bank, not the account, so it is never masked.</ResponseField>
+<ResponseField name="is_primary" type="boolean">Whether this is the vendor's primary account. A vendor has at most one.</ResponseField>
+<ResponseField name="status" type="string">`active`, or `retired` on the response to a retire call.</ResponseField>
+<ResponseField name="validation_status" type="string">`passed`, `passed_with_warnings`, or `not_validated` for an account recorded before country validation existed.</ResponseField>
+<ResponseField name="validation_results" type="object">The [validation outcome](#country-rules-and-validation).</ResponseField>
+<ResponseField name="config_version" type="string | null">The country rules version the account was validated against.</ResponseField>
+<ResponseField name="payment_method" type="string | null">`domestic` or `wire`, derived when the account was saved. It is `wire` when the bank's country is not one your assigned legal entities pay from, and `null` when the vendor had no active [legal entity assignment](#legal-entities-and-assignments) with a country at the time.</ResponseField>
+<ResponseField name="statement_document_id" type="string | null">A vendor document (`cbvdoc_...`) attached as proof the account belongs to the supplier.</ResponseField>
+<ResponseField name="source" type="string | null">Where the account came from: `questionnaire`, `portal`, `api`, `internal` or `migration`.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="values" type="object | null">Every field of the account in full, keyed by [field key](#bank-account-values). A field the account does not use is an empty string. Present only on [list bank accounts](#list-bank-accounts) for a key with `banking:read`; `null` everywhere else.</ResponseField>
+
+### List bank accounts
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/bank_accounts`
+</ParamField>
+
+Returns the vendor's active bank accounts as a plain array, primary first, then oldest first. Retired accounts and changes still waiting for review are not included. The list is not paginated.
+
+**Auth:** any `ak_` key. With `banking:read`, each account also carries `values`.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/bank_accounts" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`, for a key with `banking:read`. Without the scope, `values` is `null`.
+
+```json
+[
+  {
+    "id": "cbvba_472ae9b13b64f2ad9217d12be653dbb2",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "bank_country": "US",
+    "currency": "USD",
+    "bank_account_name": "Operating account",
+    "account_number_masked": "****6789",
+    "iban_masked": null,
+    "swift_bic": null,
+    "is_primary": true,
+    "status": "active",
+    "validation_status": "passed",
+    "validation_results": { "status": "passed", "results": [], "config_version": "2026.09.1" },
+    "config_version": "2026.09.1",
+    "payment_method": "domestic",
+    "statement_document_id": null,
+    "source": "api",
+    "created_at": 1790467305,
+    "updated_at": 1790467305,
+    "values": {
+      "account_number": "000123456789",
+      "account_type": "checking",
+      "bank_code": "",
+      "bank_name": "First Example Bank",
+      "branch_code": "076401251",
+      "check_digit": "",
+      "iban": "",
+      "swift_bic": ""
+    }
+  }
+]
+```
+
+### Add a bank account
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/bank_accounts`
+</ParamField>
+
+Validates the account against its country's rules, then either queues it for a reviewer or saves it.
+
+**Auth:** any `ak_` key. A key with `review:sensitive_changes` skips the review queue.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Request body
+
+<ParamField body="bank_country" type="string" required>
+  Two-letter country code of the bank that holds the account, which is not always the supplier's own country. It decides which fields are asked for and which rules apply.
+</ParamField>
+
+<ParamField body="values" type="object" required>
+  The account's fields, keyed by [field key](#bank-account-values), for example `{"branch_code": "076401251", "account_number": "000123456789", "account_type": "checking"}`. Keys the country does not define are dropped. Values can be `null`.
+</ParamField>
+
+<ParamField body="currency" type="string">
+  Three-letter currency code. `BRL` is refused when the supplier's own address is outside Brazil, judged by its primary site (or its first site, if none is primary). A supplier with no sites is not checked.
+</ParamField>
+
+<ParamField body="bank_account_name" type="string">
+  A label for the account. On a write that is queued for review, it takes effect when the change is approved.
+</ParamField>
+
+<ParamField body="is_primary" type="boolean">
+  `true` makes this the vendor's primary account and demotes the current one. Omit it or send `false` for a secondary account.
+</ParamField>
+
+<ParamField body="statement_document_id" type="string">
+  A document already uploaded for this vendor with the [Documents API](/api-reference/documents) (`cbvdoc_...`), such as a bank statement showing the account belongs to the supplier. A document of another vendor is refused with `422` and the code `invalid_document`. On a write that is queued for review, it is attached when the change is approved.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/bank_accounts" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bank_country": "US",
+    "currency": "USD",
+    "is_primary": true,
+    "values": {
+      "bank_name": "First Example Bank",
+      "branch_code": "076401251",
+      "account_number": "000123456789",
+      "account_type": "checking"
+    }
+  }'
+```
+
+#### Example responses
+
+`202 Accepted`: the account is queued for review. This is the default outcome.
+
+```json
+{
+  "status": "pending_review",
+  "review_id": "cbbarev_6f1085b71efca801572074863961a938",
+  "message": "Bank details are held for review before taking effect."
+}
+```
+
+Coverbase tells the people named in **Notify these people**, or, when nobody is named, the vendor's relationship owners (its risk analysts if it has none). The change feed records a `submitted` event whose `entity_id` is the `review_id`. See [following a queued bank change](#following-a-queued-bank-change).
+
+`201 Created`: the account is saved, because your organization has turned off **Bank changes need a reviewer** or the key carries `review:sensitive_changes`. The body is the [bank account object](#the-bank-account-object), with `values` always `null`. The `VendorBankAccount.Created` webhook fires.
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 409 | `{"detail": {"code": "bank_account_limit", "message": "This supplier already has 10 bank accounts."}}` | The vendor's active accounts, together with its new accounts waiting for review, already reach the most your organization allows (**Bank accounts per supplier**, 10 by default). Retire one, or wait for a queued one to be decided. |
+| 422 | `{"detail": {"code": "invalid_document", "message": "statement_document_id must be one of this supplier's documents.", "field": "statement_document_id"}}` | `statement_document_id` is not a document of this vendor. |
+| 422 | `{"detail": {"error": "validation_failed", ...}}` | An error-level country rule failed. See [country rules and validation](#country-rules-and-validation). |
+
+### Update a bank account
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/vendors/{vendor_id}/bank_accounts/{bank_account_id}`
+</ParamField>
+
+Replaces an account's details. It takes the same body as [add a bank account](#add-a-bank-account), and `bank_country` and `values` are required. `values` replaces the whole set, so send every field the account should keep, not only the one that changed.
+
+**Auth:** any `ak_` key. A key with `review:sensitive_changes` skips the review queue.
+
+The outcomes match the add call: `202 Accepted` with a `review_id` while the change waits for a reviewer, or `200 OK` with the updated [bank account object](#the-bank-account-object) when it is applied at once. The live account keeps serving its current details until a reviewer approves.
+
+<Note>
+  A PATCH whose `values` match what the account already holds is not a bank change. Its `currency`, `bank_account_name`, `is_primary` and `statement_document_id` are applied at once, without review, and when one of them changes, the change feed records an `updated` event and `VendorBankAccount.Updated` fires. Sending back exactly what is stored records nothing. Any difference in `values`, including a new `swift_bic`, `bank_name` or `account_type` on the same account number, is a bank change and waits for review like any other.
+</Note>
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+<ParamField path="bank_account_id" type="string" required>
+  The bank account ID (`cbvba_...`). It must belong to `vendor_id`.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/bank_accounts/cbvba_472ae9b13b64f2ad9217d12be653dbb2" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "bank_country": "US",
+    "currency": "USD",
+    "values": {
+      "bank_name": "First Example Bank",
+      "branch_code": "076401251",
+      "account_number": "000987654321",
+      "account_type": "checking"
+    }
+  }'
+```
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": "Not Found"}` | The account does not exist, was retired, or belongs to a different vendor. |
+| 422 | `{"detail": {"code": "invalid_document", ...}}` | `statement_document_id` is not a document of this vendor. |
+| 422 | `{"detail": {"error": "validation_failed", ...}}` | An error-level country rule failed. |
+
+### Retire a bank account
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/bank_accounts/{bank_account_id}/retire`
+</ParamField>
+
+Retires an account at once; retiring never waits for review. The account stops being primary, drops out of [list bank accounts](#list-bank-accounts), and the `VendorBankAccount.Retired` webhook fires. The call takes no body and returns `200 OK` with the [bank account object](#the-bank-account-object), `status` set to `retired`. Calling it again on a retired account returns the account unchanged and records nothing, so a retry is safe.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+<ParamField path="bank_account_id" type="string" required>
+  The bank account ID (`cbvba_...`). It must belong to `vendor_id`.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/bank_accounts/cbvba_472ae9b13b64f2ad9217d12be653dbb2/retire" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": "Not Found"}` | The account does not exist or belongs to a different vendor. |
+
+### Following a queued bank change
+
+The review ID is the only handle a queued change has, and the API has no endpoint that reads a review. Follow it through the [change feed](#the-change-feed):
+
+- A `rejected` event on `bank_account` whose `entity_id` is your `review_id` means the reviewer turned it down, and its `snapshot` carries the `rejection_reason`. The live account never changed.
+- An `approved` event on `bank_account` means it went live. Its `entity_id` is the bank account ID, not the review ID: for a change to an existing account it is the account you patched, and for a new account it is the account the approval created, which then appears in [list bank accounts](#list-bank-accounts). Nothing in the event names the review, so match a new account to your request by vendor, `bank_country` and `account_number_masked`.
+
+## Sites
+
+A site is one place the supplier operates, at whatever precision is known: a full street address, a city, or a country on its own. Only the country is required. Sites carry the addresses your finance system pays and orders against, and they are the vendor's locations on the [Risk geography map](/user-guides/risk-geography-map).
+
+### The site object
+
+<ResponseField name="id" type="string">Site ID (`cbsite_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor the site belongs to.</ResponseField>
+<ResponseField name="service_id" type="string | null">The service this location belongs to, when someone scoped it to one on the vendor page. The API does not set it.</ResponseField>
+<ResponseField name="address_line1" type="string | null">First address line.</ResponseField>
+<ResponseField name="address_line2" type="string | null">Second address line.</ResponseField>
+<ResponseField name="address_line3" type="string | null">Third address line.</ResponseField>
+<ResponseField name="address_line4" type="string | null">Fourth address line.</ResponseField>
+<ResponseField name="city" type="string | null">City or town.</ResponseField>
+<ResponseField name="state_province" type="string | null">State, province or region, as given: an ISO 3166-2 code such as `NY`, or free text.</ResponseField>
+<ResponseField name="county" type="string | null">County, where the country files one separately from the state.</ResponseField>
+<ResponseField name="postal_code" type="string | null">Postal code.</ResponseField>
+<ResponseField name="country_code" type="string">Two-letter country code. Always present.</ResponseField>
+<ResponseField name="site_name" type="string | null">A short label for the location, such as `Global HQ`.</ResponseField>
+<ResponseField name="description" type="string">What happens at this location, in your words. An empty string when there is none.</ResponseField>
+<ResponseField name="site_context" type="string | null">`ordering`, `billing`, `service_delivery`, `hq` or `other`. A label set on the vendor page; nothing derives it.</ResponseField>
+<ResponseField name="address_purpose" type="string | null">What the address is for in your finance system: `primary` or `remittance`. An address is a registration address by carrying a tax registration, not by its purpose.</ResponseField>
+<ResponseField name="location_code" type="string | null">Your finance system's code for this address.</ResponseField>
+<ResponseField name="csp_remit_to_id" type="string | null">Your finance system's identifier for this address as a remit-to site.</ResponseField>
+<ResponseField name="tax_region" type="string | null">Derived from the address unless the API sets it: the country code, or the country and subdivision (`US-NY`) in the United States, Canada, India and Brazil. The supplier is never asked for it.</ResponseField>
+<ResponseField name="po_emails" type="string[]">Where purchase orders for this address are emailed.</ResponseField>
+<ResponseField name="remittance_emails" type="string[]">Where remittance advice for this address is emailed.</ResponseField>
+<ResponseField name="is_primary" type="boolean">Whether this is the vendor's primary site. A vendor has at most one.</ResponseField>
+<ResponseField name="latitude" type="number | null">Filled in by Coverbase after the site is saved, from the address. `null` until then, and always `null` for a country-only site.</ResponseField>
+<ResponseField name="longitude" type="number | null">As `latitude`.</ResponseField>
+<ResponseField name="status" type="string">`active`. Deleted sites are not returned.</ResponseField>
+<ResponseField name="source" type="string">Where the site came from: `questionnaire`, `portal`, `api`, `internal` or `migration`.</ResponseField>
+<ResponseField name="validation_results" type="object">The [validation outcome](#country-rules-and-validation). Postal-code format problems, over-long address lines and a missing PO email address are warnings, never errors.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### List sites
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/sites`
+</ParamField>
+
+Returns the vendor's sites as a plain array, primary first, then oldest first. The list is not paginated.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/sites" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`:
+
+```json
+[
+  {
+    "id": "cbsite_f4f317ab5908a1a38899c0559f3ef3c1",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "service_id": null,
+    "address_line1": "45 Harbour Road",
+    "address_line2": null,
+    "address_line3": null,
+    "address_line4": null,
+    "city": "New York",
+    "state_province": "NY",
+    "county": null,
+    "postal_code": "10001",
+    "country_code": "US",
+    "site_name": "Global HQ",
+    "description": "",
+    "site_context": null,
+    "address_purpose": "primary",
+    "location_code": "NY-HQ-01",
+    "csp_remit_to_id": null,
+    "tax_region": "US-NY",
+    "po_emails": [],
+    "remittance_emails": [],
+    "is_primary": true,
+    "latitude": 40.7128,
+    "longitude": -73.956,
+    "status": "active",
+    "source": "api",
+    "validation_results": {
+      "status": "passed_with_warnings",
+      "results": [
+        {
+          "field": "po_emails",
+          "rule_id": "email.missing",
+          "level": "warning",
+          "message": "A PO email address is how the finance system reaches this supplier. Add at least one address.",
+          "params": { "label": "A PO email address" }
+        }
+      ],
+      "config_version": "2026.09.1"
+    },
+    "created_at": 1790467305,
+    "updated_at": 1790467305
+  },
+  {
+    "id": "cbsite_545527c53afc0a5f3ac414241da92cc6",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "service_id": null,
+    "address_line1": null,
+    "address_line2": null,
+    "address_line3": null,
+    "address_line4": null,
+    "city": null,
+    "state_province": null,
+    "county": null,
+    "postal_code": null,
+    "country_code": "BR",
+    "site_name": "São Paulo office",
+    "description": "Brazil operations / data processing",
+    "site_context": null,
+    "address_purpose": null,
+    "location_code": null,
+    "csp_remit_to_id": null,
+    "tax_region": "BR",
+    "po_emails": [],
+    "remittance_emails": [],
+    "is_primary": false,
+    "latitude": null,
+    "longitude": null,
+    "status": "active",
+    "source": "internal",
+    "validation_results": {},
+    "created_at": 1790380800,
+    "updated_at": 1790380800
+  }
+]
+```
+
+### Add a site
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/sites`
+</ParamField>
+
+Adds a site and returns `201 Created` with the [site object](#the-site-object). The `SupplierSite.Created` webhook fires.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Request body
+
+<ParamField body="country_code" type="string" required>
+  Two-letter country code. A site with only a country is a complete answer.
+</ParamField>
+
+<ParamField body="address_line1" type="string">Up to 255 characters. So are `address_line2`, `address_line3` and `address_line4`.</ParamField>
+<ParamField body="city" type="string">Up to 120 characters.</ParamField>
+<ParamField body="state_province" type="string">Up to 120 characters. Send the ISO 3166-2 subdivision code (`NY` or `US-NY`) where you have it: in the United States, Canada, India and Brazil the tax region is built from it, and a name such as `New York` gives the country-level region.</ParamField>
+<ParamField body="county" type="string">Up to 120 characters.</ParamField>
+<ParamField body="postal_code" type="string">Up to 32 characters. Checked against the country's format, as a warning only.</ParamField>
+<ParamField body="site_name" type="string">Up to 120 characters.</ParamField>
+<ParamField body="description" type="string">Up to 500 characters.</ParamField>
+<ParamField body="site_context" type="string">`ordering`, `billing`, `service_delivery`, `hq` or `other`.</ParamField>
+<ParamField body="address_purpose" type="string">`primary` or `remittance`.</ParamField>
+<ParamField body="location_code" type="string">Up to 60 characters.</ParamField>
+<ParamField body="csp_remit_to_id" type="string">Up to 60 characters.</ParamField>
+<ParamField body="tax_region" type="string">Up to 60 characters. Your finance system's own tax region for this address. Omit it and Coverbase derives one from the address.</ParamField>
+<ParamField body="po_emails" type="string[]">Up to 20 addresses where purchase orders for this address are emailed. A malformed address is refused with `422`. A primary site with an address line and no PO email saves with an `email.missing` warning, except in China, where no PO email is asked for.</ParamField>
+<ParamField body="remittance_emails" type="string[]">Up to 20 addresses where remittance advice for this address is emailed. A site whose `address_purpose` is `remittance` and has none saves with an `email.missing` warning.</ParamField>
+<ParamField body="is_primary" type="boolean" default="false">`true` makes this the vendor's primary site and demotes the current one.</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/sites" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "country_code": "US",
+    "address_line1": "45 Harbour Road",
+    "city": "New York",
+    "state_province": "NY",
+    "postal_code": "10001",
+    "site_name": "Global HQ",
+    "address_purpose": "primary",
+    "location_code": "NY-HQ-01",
+    "is_primary": true
+  }'
+```
+
+The response is the new [site object](#the-site-object), like the first site in the [list example](#list-sites) with `latitude` and `longitude` still `null`.
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 409 | `{"detail": {"code": "site_limit", "message": "This supplier already has 25 sites."}}` | The vendor already holds the most sites your organization allows (**Sites per supplier**, 25 by default). |
+| 422 | `{"detail": {"error": "validation_failed", ...}}` | The site breaks an error-level rule: a PO box as the primary address in Australia (`address.po_box`), or a malformed email address (`email.invalid`). Nothing is saved. |
+
+### Update a site
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/vendors/{vendor_id}/sites/{site_id}`
+</ParamField>
+
+Takes the same body as [add a site](#add-a-site) and returns `200 OK` with the updated [site object](#the-site-object). The `SupplierSite.Updated` webhook fires.
+
+**Auth:** any `ak_` key.
+
+Treat it as a replacement of the address rather than a partial update:
+
+- `country_code` is required.
+- Omitting an address line, `city`, `state_province`, `county`, `postal_code`, `location_code`, `csp_remit_to_id` or `description` clears it. Send every value you want to keep.
+- Omitting `site_name`, `site_context` or `address_purpose` keeps the stored value. An empty `site_name` clears it; the other two cannot be cleared here.
+- Omitting `po_emails` or `remittance_emails` keeps the stored list. Send `[]` to clear one.
+- Omitting `tax_region` derives it from the address again.
+- `is_primary: true` makes the site primary. `false` does not demote it; mark another site primary instead.
+- Changing the address (other than `address_line2`) clears `latitude` and `longitude` until Coverbase places the new one.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+<ParamField path="site_id" type="string" required>
+  The site ID (`cbsite_...`). It must belong to `vendor_id`.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/sites/cbsite_f4f317ab5908a1a38899c0559f3ef3c1" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "country_code": "US",
+    "address_line1": "200 Park Avenue",
+    "address_line2": "Floor 12",
+    "city": "New York",
+    "state_province": "NY",
+    "postal_code": "10166",
+    "location_code": "NY-HQ-01"
+  }'
+```
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": "Not Found"}` | The site does not exist, was deleted, or belongs to a different vendor. |
+| 422 | `{"detail": {"error": "validation_failed", ...}}` | The same rules as [add a site](#add-a-site). A primary site is checked against the email lists it will hold after the update. |
+
+### Delete a site
+
+<ParamField path="method" type="DELETE">
+  `DELETE /v1/vendors/{vendor_id}/sites/{site_id}`
+</ParamField>
+
+Removes the site and returns `204 No Content`. It no longer appears in [list sites](#list-sites), on the vendor's **Locations** card or on the map. The change history keeps the record of it, and the `SupplierSite.Deleted` webhook fires.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+<ParamField path="site_id" type="string" required>
+  The site ID (`cbsite_...`). It must belong to `vendor_id`.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X DELETE "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/sites/cbsite_545527c53afc0a5f3ac414241da92cc6" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": "Not Found"}` | The site does not exist, was already deleted, or belongs to a different vendor. |
+
+## Tax registrations
+
+A tax registration is one tax or company identifier the supplier holds in one country, such as a US EIN or a UK VAT number, or a declared exemption in place of one. A registration can belong to the supplier as a whole or to one of its sites.
+
+After a registration is saved, Coverbase checks it against the public register for that country where one exists, in the background. The check never blocks a write; it updates `registry_status` when it completes.
+
+### The tax registration object
+
+<ResponseField name="id" type="string">Tax registration ID (`cbtaxreg_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor the registration belongs to.</ResponseField>
+<ResponseField name="country_code" type="string">Two-letter country code.</ResponseField>
+<ResponseField name="tax_id_type" type="string">Which identifier this is, as a [tax ID type key](#tax-id-types) such as `ein` or `vat`.</ResponseField>
+<ResponseField name="value_masked" type="string | null">The last four characters of the identifier. `null` for an exemption.</ResponseField>
+<ResponseField name="validation_tier_reached" type="string">How far verification got: `format`, `checksum` (its check digits are valid) or `registry` (the public register confirmed it). The schema also defines `document`, which nothing sets.</ResponseField>
+<ResponseField name="format_status" type="string">`passed`, `passed_with_warnings`, or `not_validated` for an exemption.</ResponseField>
+<ResponseField name="registry_status" type="string | null">`pending`, `verified`, `not_found` or `unavailable`. `unavailable` means the register could not be reached and says nothing about the supplier. `null` when the country has no register Coverbase checks.</ResponseField>
+<ResponseField name="registry_provider" type="string | null">The register that answered.</ResponseField>
+<ResponseField name="registry_checked_at" type="integer | null">Unix timestamp (seconds) of the last register check.</ResponseField>
+<ResponseField name="site_id" type="string | null">The site the registration belongs to.</ResponseField>
+<ResponseField name="is_exempt" type="boolean">Whether this records an exemption rather than a number.</ResponseField>
+<ResponseField name="exemption_reason" type="string | null">Why the supplier is exempt.</ResponseField>
+<ResponseField name="evidence_document_id" type="string | null">A vendor document (`cbvdoc_...`), such as the registration certificate.</ResponseField>
+<ResponseField name="validation_results" type="object">The [validation outcome](#country-rules-and-validation).</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="value" type="string | null">The identifier in full. Present only on [list tax registrations](#list-tax-registrations) for a key with `banking:read`; `null` everywhere else.</ResponseField>
+
+### List tax registrations
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/tax_registrations`
+</ParamField>
+
+Returns the vendor's tax registrations as a plain array, ordered by country and then by type. The list is not paginated.
+
+**Auth:** any `ak_` key. With `banking:read`, each registration also carries `value`.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/tax_registrations" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`, for a key without `banking:read`:
+
+```json
+[
+  {
+    "id": "cbtaxreg_46718f0c9e091bd5e227e13030bfa2b2",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "country_code": "US",
+    "tax_id_type": "ein",
+    "value_masked": "****6789",
+    "validation_tier_reached": "format",
+    "format_status": "passed",
+    "registry_status": "pending",
+    "registry_provider": null,
+    "registry_checked_at": null,
+    "site_id": null,
+    "is_exempt": false,
+    "exemption_reason": null,
+    "evidence_document_id": null,
+    "validation_results": { "status": "passed", "results": [], "config_version": "2026.09.1" },
+    "created_at": 1790467305,
+    "updated_at": 1790467305,
+    "value": null
+  }
+]
+```
+
+### Add or update a tax registration
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/tax_registrations`
+</ParamField>
+
+Saves a registration and returns `201 Created` with the [tax registration object](#the-tax-registration-object), whether it created a registration or updated one. A vendor holds one registration per country and type, and separately one per site, country and type: posting the same `country_code` and `tax_id_type` again (with the same `site_id`, or none) updates that registration. A new number restarts the register check. The `SupplierTaxRegistration.Updated` webhook fires in both cases.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Request body
+
+<ParamField body="country_code" type="string" required>
+  Two-letter country code of the registration.
+</ParamField>
+
+<ParamField body="tax_id_type" type="string" required>
+  The [tax ID type key](#tax-id-types) for that country, such as `ein`, `vat` or `tax_id`. Keys are case-sensitive. A key the country does not define is stored without any format or checksum check, so check the spelling.
+</ParamField>
+
+<ParamField body="value" type="string">
+  The identifier, 1 to 64 characters. Required unless `is_exempt` is `true`, and refused when it is.
+</ParamField>
+
+<ParamField body="site_id" type="string">
+  One of this vendor's active sites (`cbsite_...`), for a registration held at that address. Omit it for the supplier's own registration.
+</ParamField>
+
+<ParamField body="is_exempt" type="boolean" default="false">
+  `true` records that the supplier is exempt from this registration instead of giving a number.
+</ParamField>
+
+<ParamField body="exemption_reason" type="string">
+  Why the supplier is exempt, up to 500 characters. Required when `is_exempt` is `true`.
+</ParamField>
+
+<ParamField body="evidence_document_id" type="string">
+  A document already uploaded for this vendor with the [Documents API](/api-reference/documents) (`cbvdoc_...`), such as the registration certificate. A document of another vendor is refused with `422` and the code `invalid_document`. Omitting it on an update keeps the one already attached. In Argentina, Brazil, Chile, Colombia, Costa Rica, the Dominican Republic, Ecuador, Guatemala, Mexico, Panama, Paraguay, Peru and Uruguay, a registration without a certificate saves with a `tax_certificate.expected` warning.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/tax_registrations" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "country_code": "US",
+    "tax_id_type": "ein",
+    "value": "12-3456789"
+  }'
+```
+
+The response is the saved registration, as in the [list example](#list-tax-registrations). The EIN is stored normalized, as `123456789`.
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 422 | `{"detail": {"code": "invalid_site", "message": "site_id must be one of this supplier's sites."}}` | `site_id` is not an active site of this vendor. |
+| 422 | `{"detail": {"code": "invalid_document", ...}}` | `evidence_document_id` is not a document of this vendor. |
+| 422 | `{"detail": {"error": "validation_failed", ...}}` | An error-level country rule failed, such as a required identifier in the wrong format. |
+| 422 | Standard validation error | `value` missing without an exemption, `value` sent with one, or `is_exempt` without an `exemption_reason`. |
+
+## Diversity records
+
+A diversity record is the supplier's declaration for one inclusion category, optionally backed by a certificate. Suppliers submit them through a questionnaire or the portal, and your staff can enter them on the **Know-Your-Vendor** tab. The API reads them but does not write them.
+
+### List diversity records
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/diversity_records`
+</ParamField>
+
+Returns the vendor's diversity records as a plain array, ordered by category. The list is not paginated.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/diversity_records" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`:
+
+```json
+[
+  {
+    "id": "cbdiv_a74e6a5bbc1ec1e2674eb5293c06e349",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "category": "women_owned",
+    "declared": true,
+    "jurisdiction": "US",
+    "business_size": "small",
+    "certification_type": "WBENC",
+    "certification_level": null,
+    "certificate_document_id": "cbvdoc_a490bd7dc71569f295096963d6e8f1d6",
+    "valid_from": 1767225600,
+    "valid_until": 1798761600,
+    "created_at": 1790467305,
+    "updated_at": 1790467305
+  }
+]
+```
+
+#### Diversity record object
+
+<ResponseField name="id" type="string">Diversity record ID (`cbdiv_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor the record belongs to.</ResponseField>
+<ResponseField name="category" type="string">`minority_owned`, `women_owned`, `veteran_owned`, `service_disabled_veteran_owned`, `disability_owned`, `lgbtq_owned`, `small_business`, `small_disadvantaged_business`, `hubzone`, `historically_black_college`, `indigenous_owned`, `aboriginal_owned`, `other`, or `none_declared`. `none_declared` is the supplier stating it holds none of the others, which is a different answer from never having been asked.</ResponseField>
+<ResponseField name="declared" type="boolean">Whether the supplier claims the category.</ResponseField>
+<ResponseField name="jurisdiction" type="string | null">Two-letter country code the certification applies in.</ResponseField>
+<ResponseField name="business_size" type="string | null">`large`, `medium` or `small`, as certified. It is not worked out from headcount.</ResponseField>
+<ResponseField name="certification_type" type="string | null">The certifying body or program.</ResponseField>
+<ResponseField name="certification_level" type="string | null">The level of certification, where the program has levels.</ResponseField>
+<ResponseField name="certificate_document_id" type="string | null">The certificate, as a vendor document (`cbvdoc_...`).</ResponseField>
+<ResponseField name="valid_from" type="integer | null">Unix timestamp (seconds) the certificate is valid from.</ResponseField>
+<ResponseField name="valid_until" type="integer | null">Unix timestamp (seconds) the certificate expires.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## Legal entities and assignments
+
+Your **legal entities** are your own contracting entities, maintained under **Configuration → Legal entities**. An **assignment** says a supplier trades with one of them. The entity's `entity_code` is what your finance system matches on, and its country decides whether a payment to a supplier's bank account is `domestic` or `wire`.
+
+### List your legal entities
+
+<ParamField path="method" type="GET">
+  `GET /v1/legal_entities`
+</ParamField>
+
+Returns your organization's active legal entities as a plain array, ordered by name. Deactivated entities are left out. The list is not paginated.
+
+**Auth:** any `ak_` key.
+
+#### Query parameters
+
+<ParamField query="search" type="string">
+  Case-insensitive substring match on the entity's name or entity code.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/legal_entities?search=US01" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`:
+
+```json
+[
+  {
+    "id": "cble_868dadcadf7b5162e3b103ac479e2d76",
+    "name": "Example Holdings US Inc.",
+    "entity_code": "US01",
+    "country_code": "US",
+    "description": null,
+    "active": true,
+    "created_at": 1788912000,
+    "updated_at": 1788912000
+  }
+]
+```
+
+<ResponseField name="id" type="string">Legal entity ID (`cble_...`).</ResponseField>
+<ResponseField name="name" type="string">The entity's name.</ResponseField>
+<ResponseField name="entity_code" type="string">The code your finance system knows the entity by.</ResponseField>
+<ResponseField name="country_code" type="string | null">The country the entity pays from.</ResponseField>
+<ResponseField name="description" type="string | null">A free-text description.</ResponseField>
+<ResponseField name="active" type="boolean">Always `true` here.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### List a vendor's legal entity assignments
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/legal_entity_assignments`
+</ParamField>
+
+Returns every assignment for the vendor, newest first, including requested and rejected ones. The list is not paginated.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/legal_entity_assignments" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`:
+
+```json
+[
+  {
+    "id": "cblea_bef2b5d73bc7e1bf253213acd076badb",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "legal_entity_id": "cble_868dadcadf7b5162e3b103ac479e2d76",
+    "legal_entity_name": "Example Holdings US Inc.",
+    "entity_code": "US01",
+    "site_id": "cbsite_f4f317ab5908a1a38899c0559f3ef3c1",
+    "status": "active",
+    "requested_by_id": "cbuser_c7a4e1e7349b2c82f050e4e948a1ed56",
+    "decided_at": 1790467305,
+    "rejection_reason": null,
+    "created_at": 1790467305
+  }
+]
+```
+
+#### Legal entity assignment object
+
+<ResponseField name="id" type="string">Assignment ID (`cblea_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor.</ResponseField>
+<ResponseField name="legal_entity_id" type="string">The legal entity (`cble_...`).</ResponseField>
+<ResponseField name="legal_entity_name" type="string | null">The entity's name.</ResponseField>
+<ResponseField name="entity_code" type="string | null">The entity's code.</ResponseField>
+<ResponseField name="site_id" type="string | null">The supplier site the assignment is for, if one was given.</ResponseField>
+<ResponseField name="status" type="string">`requested` (waiting for approval), `active` or `rejected`.</ResponseField>
+<ResponseField name="requested_by_id" type="string | null">The user who requested it (`cbuser_...`). For an assignment made through the API, this is your organization's API service account.</ResponseField>
+<ResponseField name="decided_at" type="integer | null">Unix timestamp (seconds) of the decision. Set at creation when no approval is needed.</ResponseField>
+<ResponseField name="rejection_reason" type="string | null">The reviewer's reason, for a rejected assignment.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### Assign legal entities
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/legal_entity_assignments`
+</ParamField>
+
+Assigns the vendor to one or more of your legal entities and returns `201 Created` with an array of the new [assignments](#legal-entity-assignment-object). The call is all or nothing: if any entity in the batch is already assigned, nothing is created.
+
+Each assignment is `active` at once, and fires the `SupplierLegalEntityAssignment.Assigned` webhook with the entity code, unless **Legal entity assignments need approval** is on. Then it is `requested` until someone decides it in the dashboard. An active assignment's country feeds the payment method of bank accounts saved after it; an account already on file keeps its method until it is next saved.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Request body
+
+<ParamField body="legal_entity_ids" type="string[]" required>
+  One to five legal entity IDs (`cble_...`) from [list your legal entities](#list-your-legal-entities). Each must be one of your active legal entities: an ID that is not, including a deactivated entity, fails the whole call and nothing is created.
+</ParamField>
+
+<ParamField body="site_id" type="string">
+  One of this vendor's sites (`cbsite_...`) that the assignments are for.
+</ParamField>
+
+<ParamField body="purchase_requisition_age_days" type="integer">
+  The age in days, 0 to 3650, of the purchase requisition behind the request. Above 30 days, a `justification` is required. Omit it when no requisition is quoted.
+</ParamField>
+
+<ParamField body="justification" type="string">
+  Why a requisition older than 30 days should still be honored. Up to 500 characters.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/legal_entity_assignments" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "legal_entity_ids": ["cble_868dadcadf7b5162e3b103ac479e2d76"],
+    "site_id": "cbsite_f4f317ab5908a1a38899c0559f3ef3c1",
+    "purchase_requisition_age_days": 12
+  }'
+```
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 400 | `{"detail": {"code": "invalid_site", "message": "site_id must be one of this supplier's sites."}}` | `site_id` is not one of this vendor's sites. |
+| 409 | `{"detail": {"code": "duplicate_assignment", "message": "This supplier is already assigned to that legal entity.", "legal_entity_id": "cble_..."}}` | The vendor already has a requested or active assignment to that entity. A rejected one does not count. |
+| 422 | `{"detail": {"code": "too_many_legal_entities", "message": "Select at most 5 legal entities at a time; 6 were sent.", "limit": 5}}` | More than five entities in one call. |
+| 422 | `{"detail": {"code": "justification_required", "message": "...", "limit_days": 30}}` | `purchase_requisition_age_days` is over 30 and `justification` is empty. |
+| 422 | `{"detail": {"code": "invalid_legal_entity", "message": "legal_entity_ids must name your organization's active legal entities.", "legal_entity_id": "cble_..."}}` | An ID in `legal_entity_ids` is not one of your organization's active legal entities. |
+| 422 | Standard validation error | `legal_entity_ids` is empty or the body is malformed. |
+
+## Update requests
+
+An update request asks a supplier to review and update named sections of their profile. Coverbase sends the supplier no email: the request opens those sections on the **Profile** page of the [centralized supplier portal](/user-guides/centralized-supplier-portal#saying-which-part-needs-updating), where each is marked as one you asked about. It therefore reaches only a supplier who has a portal, in an organization that has turned the **Profile** section on. The sections stay open until the request expires, alongside any sections your organization leaves open all the time.
+
+While a request is open, Coverbase reminds the vendor's relationship owners (or, if it has none, its risk analysts) 3 and 7 days after it was sent. When its expiry date passes, the request becomes `expired`.
+
+### The update request object
+
+<ResponseField name="id" type="string">Update request ID (`cbupdreq_...`).</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor.</ResponseField>
+<ResponseField name="field_scope" type="string[]">The sections the request covers. See [send an update request](#send-an-update-request) for the values.</ResponseField>
+<ResponseField name="message" type="string | null">The message stored with the request.</ResponseField>
+<ResponseField name="recipient_email" type="string | null">The contact email you gave.</ResponseField>
+<ResponseField name="recipient_name" type="string | null">The contact name you gave.</ResponseField>
+<ResponseField name="status" type="string">`sent` while open, `draft` if created with `send: false`, and `expired` once past `expires_at`. The schema also lists `in_progress`, `submitted`, `reviewed` and `closed`; no current workflow moves a request into those.</ResponseField>
+<ResponseField name="sent_at" type="integer | null">Unix timestamp (seconds) the request was sent.</ResponseField>
+<ResponseField name="submitted_at" type="integer | null">Unix timestamp (seconds) the supplier submitted.</ResponseField>
+<ResponseField name="expires_at" type="integer | null">Unix timestamp (seconds) the request expires.</ResponseField>
+<ResponseField name="reminders_sent" type="integer[]">The reminders already sent, by day: `3`, `7`.</ResponseField>
+<ResponseField name="portal_id" type="string | null">`null` for a request sent through the API.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### List update requests
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/update_requests`
+</ParamField>
+
+Returns the vendor's update requests as a plain array, newest first. The list is not paginated.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/update_requests" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Send an update request
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/update_requests`
+</ParamField>
+
+Creates a request and, unless `send` is `false`, sends it. Returns `201 Created` with the [update request object](#the-update-request-object). The dashboard has no button for this; the API is the only way to send one.
+
+**Auth:** any `ak_` key.
+
+#### Path parameters
+
+<ParamField path="vendor_id" type="string" required>
+  The vendor ID (`cbvndr_...`).
+</ParamField>
+
+#### Request body
+
+<ParamField body="field_scope" type="string[]">
+  The sections to open, from the values in the table below. Omit it or send `[]` to use **Sections to request by default** from **Know Your Vendor Settings**, which is `po_email`, `addresses` and `bank_accounts` unless your organization changed it.
+</ParamField>
+
+| `field_scope` value | Section it opens |
+| ------------------- | ---------------- |
+| `po_email` | Where purchase orders and remittance advice are emailed |
+| `addresses` | Sites |
+| `bank_accounts` | Bank accounts. Changes still wait for review. |
+| `tax_registrations` | Tax registrations and exemptions |
+| `diversity` | Diversity records |
+| `contacts` | Contact details. Only a request can open this section. |
+| `legal_entities` | The supplier's legal entities. Only a request can open this section. |
+
+<ParamField body="message" type="string">
+  A message stored with the request, up to 2000 characters.
+</ParamField>
+
+<ParamField body="contact_email" type="string">
+  The supplier contact the request is for. Stored and returned as `recipient_email`; Coverbase does not email it.
+</ParamField>
+
+<ParamField body="contact_name" type="string">
+  The contact's name, returned as `recipient_name`.
+</ParamField>
+
+<ParamField body="send" type="boolean" default="true">
+  `false` saves the request as a `draft`, which opens nothing. No endpoint sends a draft later.
+</ParamField>
+
+The request expires after **Request expires after (days)** in **Know Your Vendor Settings**, 30 days by default.
+
+#### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/update_requests" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "field_scope": ["bank_accounts", "po_email"],
+    "message": "Please confirm your remittance details before the Q4 payment run.",
+    "contact_email": "ap@supplier1.example.com",
+    "contact_name": "Jordan Lee"
+  }'
+```
+
+## The change feed
+
+Changes to your vendors' supplier profiles are appended to one org-wide history of **change events** (`cbpce_...`), and nothing edits or deletes an event once written. The feed returns that history oldest first. Use it to reconcile after missed webhooks, or poll it instead of receiving webhooks at all.
+
+### The change event object
+
+<ResponseField name="id" type="string">Change event ID (`cbpce_...`). Webhooks for the same change carry it as `change_event_id`, so use it to deduplicate across the two.</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor the change belongs to.</ResponseField>
+<ResponseField name="entity_type" type="string">What changed: `bank_account`, `site`, `tax_registration`, `diversity_record` or `legal_entity_assignment`.</ResponseField>
+<ResponseField name="entity_id" type="string | null">The ID of the record that changed. For a queued or rejected bank change, it is the review ID (`cbbarev_...`).</ResponseField>
+<ResponseField name="action" type="string">`created`, `updated`, `deleted`, `retired`, `submitted`, `approved`, `rejected` or `revealed`. See [what the feed records](#what-the-feed-records).</ResponseField>
+<ResponseField name="actor_type" type="string">`supplier_portal`, `internal_user`, `api` or `system`.</ResponseField>
+<ResponseField name="actor_label" type="string | null">Who made the change, for display: `API`, `Supplier portal` (a questionnaire answer), a portal user's email address, a staff member's name, or `null`.</ResponseField>
+<ResponseField name="sensitivity" type="string">`sensitive` for every bank account event, `normal` otherwise.</ResponseField>
+<ResponseField name="diff" type="object">The fields that changed, each as `{ "old_value", "new_value" }`. Account and tax numbers appear only as their last four characters.</ResponseField>
+<ResponseField name="snapshot" type="object">The record as saved after the change, masked the same way. A legal entity assignment's snapshot includes the entity's `entity_code` and the site.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### What the feed records
+
+The feed is the audit trail, so it holds more than the webhooks send. Filter on `action` before you apply anything to your finance system.
+
+| What happened | Feed event (`entity_type`, `action`) | Webhook |
+| ------------- | ------------------------------------ | ------- |
+| A bank change is queued for review | `bank_account`, `submitted`; `entity_id` is the review | None |
+| A reviewer approves it | `bank_account`, `approved`; `entity_id` is the account | `VendorBankAccount.Updated`, also for a new account |
+| A reviewer rejects it | `bank_account`, `rejected`; `entity_id` is the review | None |
+| A bank account is saved without review | `bank_account`, `created` or `updated` | `VendorBankAccount.Created` or `.Updated` |
+| A bank account is retired | `bank_account`, `retired` | `VendorBankAccount.Retired` |
+| Someone reveals a full account number in the dashboard | `bank_account`, `revealed` | None |
+| A site is added, changed or deleted | `site`, `created`, `updated` or `deleted` | `SupplierSite.Created`, `.Updated` or `.Deleted` |
+| A tax registration is saved | `tax_registration`, `updated` | `SupplierTaxRegistration.Updated` |
+| A diversity record is saved | `diversity_record`, `updated` | `SupplierDiversityRecord.Updated` |
+| An assignment is requested and needs approval | `legal_entity_assignment`, `created`; snapshot `status` is `requested` | None |
+| An assignment takes effect on request | `legal_entity_assignment`, `created` | `SupplierLegalEntityAssignment.Assigned` |
+| An assignment is approved or rejected | `legal_entity_assignment`, `approved` or `rejected` | `SupplierLegalEntityAssignment.Assigned` or `.Rejected` |
+
+### List changes
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/changes`
+</ParamField>
+
+Returns one page of change events across all vendors, oldest first.
+
+**Auth:** any `ak_` key.
+
+#### Query parameters
+
+<ParamField query="since" type="integer">
+  Unix timestamp (seconds). Returns events at or after this time. Omit it to start from the first event.
+</ParamField>
+
+<ParamField query="types" type="string[]">
+  Only these `entity_type` values, from the five above. Repeat the parameter for more than one: `types=bank_account&types=site`. Any other value is rejected with `422`.
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  The `next_cursor` from the previous page. Treat it as opaque. A cursor Coverbase cannot read is ignored, and the feed starts again from `since`, or from the first event without one.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Page size, 1 to 500.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/vendors/changes?since=1790467200&types=bank_account&types=site&limit=100" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+#### Example response
+
+`200 OK`:
+
+```json
+{
+  "data": [
+    {
+      "id": "cbpce_db06d169f2a31db2c958c00245da9791",
+      "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "entity_type": "bank_account",
+      "entity_id": "cbbarev_6f1085b71efca801572074863961a938",
+      "action": "submitted",
+      "actor_type": "api",
+      "actor_label": "API",
+      "sensitivity": "sensitive",
+      "diff": {
+        "account_number": { "old_value": null, "new_value": "****6789" },
+        "account_type": { "old_value": null, "new_value": "checking" },
+        "bank_code": { "old_value": null, "new_value": "" },
+        "bank_name": { "old_value": null, "new_value": "First Example Bank" },
+        "branch_code": { "old_value": null, "new_value": "076401251" },
+        "swift_bic": { "old_value": null, "new_value": "" }
+      },
+      "snapshot": {
+        "id": "cbbarev_6f1085b71efca801572074863961a938",
+        "bank_account_id": null,
+        "bank_country": "US",
+        "currency": "USD",
+        "account_number_masked": "****6789",
+        "iban_masked": null,
+        "is_primary": true,
+        "status": "pending_review",
+        "validation_status": "passed"
+      },
+      "created_at": 1790467305
+    },
+    {
+      "id": "cbpce_4bba10d3fe8712d8b69fbb6074fd2456",
+      "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "entity_type": "site",
+      "entity_id": "cbsite_f4f317ab5908a1a38899c0559f3ef3c1",
+      "action": "updated",
+      "actor_type": "api",
+      "actor_label": "API",
+      "sensitivity": "normal",
+      "diff": {
+        "address_line1": { "old_value": "45 Harbour Road", "new_value": "200 Park Avenue" },
+        "address_line2": { "old_value": null, "new_value": "Floor 12" },
+        "postal_code": { "old_value": "10001", "new_value": "10166" }
+      },
+      "snapshot": {
+        "id": "cbsite_f4f317ab5908a1a38899c0559f3ef3c1",
+        "address_line1": "200 Park Avenue",
+        "address_line2": "Floor 12",
+        "address_line3": null,
+        "address_line4": null,
+        "city": "New York",
+        "state_province": "NY",
+        "county": null,
+        "postal_code": "10166",
+        "country_code": "US",
+        "site_name": "Global HQ",
+        "description": "",
+        "address_purpose": "primary",
+        "location_code": "NY-HQ-01",
+        "csp_remit_to_id": null,
+        "tax_region": "US-NY",
+        "po_emails": [],
+        "remittance_emails": [],
+        "is_primary": true,
+        "status": "active"
+      },
+      "created_at": 1790467305
+    }
+  ],
+  "next_cursor": "eyJ0IjogMTc5MDQ2NzMwNSwgImkiOiAiY2JwY2VfNGJiYTEwZDNmZTg3MTJkOGI2OWZiYjYwNzRmZDI0NTYifQ==",
+  "has_more": true
+}
+```
+
+<ResponseField name="data" type="object[]">The page of [change events](#the-change-event-object), oldest first.</ResponseField>
+<ResponseField name="next_cursor" type="string | null">Pass it as `cursor` to get the next page. `null` on the last page.</ResponseField>
+<ResponseField name="has_more" type="boolean">Whether another page follows.</ResponseField>
+
+#### Keeping up with the feed
+
+Page with `cursor` until `has_more` is `false`. The last page carries no cursor, so remember the `created_at` of the last event you applied and pass it as `since` on your next poll. Events from that same second come back again, so skip any `id` you have already applied.
+
+## Field keys
+
+The API names each field by a key, while the dashboard and the supplier's form show a label that differs by country. These keys come from the rules Coverbase ships for each country. If Coverbase has overridden a country's rules for your organization, ask your account team which keys changed.
+
+### Bank account values
+
+Every country uses the same keys for the common fields, whatever the form calls them:
+
+| Key | Holds | Labels it appears under |
+| --- | ----- | ----------------------- |
+| `account_number` | The account number | Account number |
+| `branch_code` | The branch or routing code | Sort Code (United Kingdom), Routing Transit Number (United States), BSB (Australia), Transit number (Canada), IFSC Code (India), Agência (Brazil) |
+| `bank_code` | The bank's own code | Bank code, Institution number (Canada), Bankleitzahl (Germany), CNAPS code (China) |
+| `bank_name` | The bank's name | Bank name |
+| `iban` | The IBAN | IBAN |
+| `swift_bic` | The SWIFT/BIC | SWIFT/BIC |
+| `check_digit` | Check digits, where the country uses them | Check digit |
+| `account_type` | `checking` or `savings`. Required in Brazil, China, Hong Kong and the United States; not used in Japan. | Account type |
+
+Nine countries add their own:
+
+| Country | Extra keys |
+| ------- | ---------- |
+| Australia, China | `intermediary_bank_name`, `intermediary_swift_bic`, `intermediary_account_number` |
+| Brazil | `company_code` |
+| Colombia | `branch_name`, `tax_payer_id` (the bank's taxpayer ID) |
+| Japan | `beneficiary_name` (account holder, in half-width katakana), `bank_name_local`, `branch_name_local`, and `deposit_type` (`futsu`, `toza` or `chochiku`) in place of `account_type` |
+| Mexico | `clabe` |
+| Peru | `cci` |
+| Sweden | `bankgiro` |
+| United Kingdom | `building_society_roll_number` |
+
+Which keys a country requires is on its page under [Supplier countries](/user-guides/supplier-countries/overview).
+
+### Tax ID types
+
+Sixty-nine countries use a single key, `tax_id`, for their tax or VAT number. The other forty use the keys below.
+
+<AccordionGroup>
+  <Accordion title="Tax ID type keys by country" icon="table">
+    | Country | `tax_id_type` keys |
+    | ------- | ------------------ |
+    | Australia | `abn` |
+    | Brazil | `cnpj` |
+    | Bulgaria | `uic`, `vat` |
+    | Canada | `business_number` |
+    | Chile | `rut` |
+    | China | `uscc` |
+    | Colombia | `nit` |
+    | Côte d'Ivoire | `compte_contribuable` |
+    | Finland | `y_tunnus` |
+    | France | `siren`, `siret`, `vat` |
+    | Germany | `vat` |
+    | Ghana | `tin` |
+    | Hong Kong SAR | `brn` |
+    | India | `pan`, `gstin` |
+    | Indonesia | `npwp` |
+    | Ireland | `vat` |
+    | Italy | `partita_iva` |
+    | Japan | `corporate_number` |
+    | Malaysia | `tin` |
+    | Mauritius | `tan` |
+    | Mexico | `rfc` |
+    | Netherlands | `kvk`, `btw` |
+    | Nigeria | `tin` |
+    | Oman | `vatin` |
+    | Peru | `ruc` |
+    | Philippines | `tin` |
+    | Poland | `nip` |
+    | Portugal | `nif` |
+    | Saudi Arabia | `vat_tin` |
+    | Singapore | `uen` |
+    | South Africa | `tax_ref`, `cipc_reg` |
+    | South Korea | `brn` |
+    | Spain | `nif_cif` |
+    | Sweden | `orgnr` |
+    | Switzerland | `uid` |
+    | Thailand | `tin` |
+    | Türkiye | `vkn` |
+    | United Arab Emirates | `trn` |
+    | United Kingdom | `company_number`, `vat` |
+    | United States | `ein` |
+  </Accordion>
+</AccordionGroup>

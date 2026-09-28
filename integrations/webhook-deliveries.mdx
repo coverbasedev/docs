@@ -99,8 +99,8 @@ print(resp.json())
     <ResponseField name="webhook_id" type="string">The subscription this attempt belongs to (`cbwh_...`).</ResponseField>
     <ResponseField name="event_id" type="string">The shared event ID (`cbevt_...`) sent in the envelope and the `X-Coverbase-Event-Id` header.</ResponseField>
     <ResponseField name="event_type" type="string">The event type the delivery was labeled with.</ResponseField>
-    <ResponseField name="status" type="string">One of `delivered`, `timeout`, `error`, `skipped`.</ResponseField>
-    <ResponseField name="response_status" type="integer | null">The receiver's HTTP status code, or `null` if no response was received (timeout / connection error / skipped).</ResponseField>
+    <ResponseField name="status" type="string">One of `delivered`, `timeout`, `error`.</ResponseField>
+    <ResponseField name="response_status" type="integer | null">The receiver's HTTP status code, or `null` if no response was received (timeout, connection error or blocked URL).</ResponseField>
     <ResponseField name="response_time_ms" type="integer | null">Round-trip time in milliseconds, or `null` if no response was received.</ResponseField>
     <ResponseField name="error" type="string | null">Error detail when `status` is `timeout` or `error` (e.g. a blocked-URL message); otherwise `null`.</ResponseField>
     <ResponseField name="payload" type="object">The `data` object that was delivered for this attempt.</ResponseField>
@@ -125,13 +125,12 @@ print(resp.json())
 
 | Status | Meaning |
 | ------ | ------- |
-| `delivered` | The receiver returned an HTTP response (any status code). `response_status` and `response_time_ms` are populated. |
+| `delivered` | The receiver answered with a `2xx` status. `response_status` and `response_time_ms` are populated. |
 | `timeout` | The request exceeded the 10-second per-attempt timeout. |
-| `error` | A connection error, or the URL was blocked by the [delivery-time SSRF re-check](/integrations/webhooks#url-restrictions). `error` carries detail. |
-| `skipped` | The subscription was not deliverable at send time (e.g. archived between dispatch and delivery). |
+| `error` | The receiver answered with a non-`2xx` status (`response_status` is populated), a connection error occurred, or the URL was blocked by the [delivery-time SSRF re-check](/integrations/webhooks#url-restrictions). `error` carries detail. |
 
 <Note>
-  `delivered` means a response was received, not that the receiver "succeeded". If your endpoint returns a non-`2xx`, the attempt is still recorded as `delivered` with that `response_status`, and it is not retried. Check `response_status`, not `status`, to find the events your receiver rejected.
+  Every attempt is its own row. A delivery that timed out, lost its connection, or got a `408`, `429` or `5xx` answer is retried with the same `event_id`, up to six attempts in all, so the newest row for an `event_id` is where that delivery stands. Other non-`2xx` answers are recorded as `error` and not retried.
 </Note>
 
 ### Error responses
