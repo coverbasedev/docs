@@ -1,0 +1,139 @@
+---
+title: "Natural hazard monitoring guide"
+description: "How to watch earthquakes, storms, floods, wildfires and severe weather warnings, and get an alert when one reaches the location of a vendor's site."
+icon: "house-flood-water"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the natural hazard sources specifically; for reading and triaging the signals they produce, see the [Radar signals guide](/user-guides/radar-signals). For where your vendors' sites are, see the [Risk geography map](/user-guides/risk-geography-map). For every source Coverbase draws on, see the [source library](/products/source-library).
+</Info>
+
+A hazard feed never names your vendor. An earthquake report says "M 6.1, 2 km SW of Sakai, Japan", not "your wafer supplier". Coverbase connects the two through **where your vendors' sites are**: each hazard is turned into an area on the map, and any vendor with a site inside that area is in scope.
+
+The most common reason these sources produce nothing is that the vendor has no located site. Add sites with addresses before you rely on this.
+
+## What Coverbase monitors
+
+The **Natural Hazards** group in the source library holds seven sources.
+
+| Source | Coverage | What it covers | Checked |
+| --- | --- | --- | --- |
+| USGS Earthquakes (M4.5+) | Worldwide | Every earthquake of magnitude 4.5 or more, with depth, PAGER alert level and tsunami flag | Hourly |
+| GDACS Disaster Alerts (orange and red) | Worldwide | UN and European Commission alerts for earthquakes, tropical cyclones, floods, volcanoes, droughts and wildfires, with the affected countries | Every 3 hours |
+| NASA EONET natural events | Worldwide | Open wildfires, severe storms and their tracks, volcanic eruptions, floods and landslides | Every 3 hours |
+| US National Weather Service, severe and extreme alerts | United States | Tornado, severe thunderstorm and hail, flash flood, hurricane, winter storm, extreme heat and fire weather warnings and watches | Every 30 minutes |
+| Meteoalarm, Sweden | Sweden | Orange and red warnings from the national weather service | Hourly |
+| Meteoalarm, the Netherlands | The Netherlands | Orange and red warnings from the national weather service | Hourly |
+| Meteoalarm, Germany | Germany | Orange and red warnings from the national weather service | Hourly |
+
+Each source only collects what is worth reading. Coverbase skips earthquakes below magnitude 4.5, GDACS green alerts, weather service alerts below Severe, and Meteoalarm yellow warnings and warnings that have already expired.
+
+<Note>
+  Hail has no feed of its own anywhere. It arrives inside US severe thunderstorm warnings and Meteoalarm thunderstorm warnings, which name hail when it is expected.
+</Note>
+
+## How a hazard reaches a vendor
+
+Coverbase draws an area for each hazard and checks it against every active site of your active vendors.
+
+| Hazard | The area Coverbase draws |
+| --- | --- |
+| Earthquake | A circle around the epicenter, larger for a stronger earthquake: about 30 km at magnitude 4.5, 120 km at 6.0 and 280 km at 7.0 |
+| Weather warning with a polygon | The warned polygon, plus a few kilometers around its edge |
+| US warning issued by county | Each warned county |
+| Meteoalarm warning without a polygon | The warned region, matched by name |
+| Storm | The storm's latest positions along its track |
+| Wildfire, volcano, flood | A circle around the event |
+| GDACS alert for one to three countries | Those countries |
+
+How a site is matched depends on how precisely you have located it:
+
+| Your site has | It matches when |
+| --- | --- |
+| An address or coordinates | It falls inside the area, or just outside a polygon's edge |
+| A city or region but no coordinates yet | A warning names that region |
+| Only a country | A GDACS alert names that country |
+
+A located site is judged by distance only. A hurricane in Mexico does not reach a plant in Mexico City just because both are in Mexico. The areas are deliberately generous, because the detector judges how serious the hazard is for the site. The area only decides which vendors it is asked about.
+
+<Tip>
+  Enter full addresses rather than a country alone. Coverbase converts addresses to coordinates on a schedule, so a site added minutes ago gets its own position shortly after. A site with only a country is reached by very few hazards.
+</Tip>
+
+## Step 1. Locate your vendors' sites
+
+Open a vendor and add its sites on the **Locations** card, with a street address or at least a city. The card appears when the Risk module is on. The [Risk geography map](/user-guides/risk-geography-map) shows which sites have been located: a solid dot is a located site, and a country with only a hollow mark holds sites Coverbase cannot place yet.
+
+## Step 2. Turn on the detector
+
+Go to **Configuration → Radar**, open the **Detectors** tab, and click **Add detector → From detector library**. Search for **Natural Hazard Near a Supplier Site** (it sits in the **Geopolitical & External** segment) and click **Configure** to add it and open it for editing, or **Add detector** to add it with its defaults.
+
+Enabling it adds the seven natural hazard sources to your sources where you do not have them already, and scopes the detector to them. You can also add the sources yourself from **Sources → Add source → From Source Library**, in the **Natural Hazards** segment, but nothing alerts until a detector reads them.
+
+<Note>
+  Only a detector scoped to these sources judges a vendor that a hazard reached through its site. Your other detectors keep reading what names the vendor, so they do not all start evaluating every storm near a supplier.
+</Note>
+
+In the editor, check two settings:
+
+- **Sources.** Remove the sources for regions you have no suppliers in. Keeping them costs nothing, but removing them keeps the source list readable.
+- **Severity threshold.** The default is Medium. High limits alerts to destructive events at or very near a site, such as a strong shallow earthquake, a hurricane landfall or a red alert.
+
+## Step 3. Check what arrives
+
+Go to **Radar → Signals**. A hazard signal names the sites it reached and how far each one is from the hazard, for example "inside the hazard area, 36 km from its centre". The signal's exposure lists each of those vendors as directly exposed.
+
+How the detector grades a hazard:
+
+| Severity | Typical case |
+| --- | --- |
+| High | A destructive hazard at or very near a site: a strong shallow earthquake close to it, a hurricane making landfall over it, a red alert, an observed tornado or a flash flood emergency covering it |
+| Medium | A credible threat of disruption: an orange alert or a severe warning covering the site, a moderate earthquake nearby, an active wildfire close to it |
+| Low | A plausible but minor effect, and any watch or forecast whose certainty is only "possible" |
+| Informational | A hazard unlikely to affect the site, such as light shaking far away or a warning that has already expired |
+
+Triaging what arrives works the same way as any other signal, which the [Radar signals guide](/user-guides/radar-signals) covers. A useful first step on a Medium or High signal is to ask the vendor to confirm the site's status and its continuity plan.
+
+## What to know when reading these signals
+
+**The signal is about a place, not a company.** The source will not mention your vendor. The link is the site, so check that the site is still in use before you act.
+
+**The first report is not revised.** Coverbase reads each earthquake and storm once, when it first appears. A later revision of the magnitude, or a storm that moves, does not create a new signal. GDACS publishes a new episode when an alert level changes, and each new episode is read.
+
+**Several sources can report one event.** A hurricane can appear in GDACS, NASA EONET and a US weather warning. Each source produces its own signal.
+
+**Only the countries listed have Meteoalarm.** Weather warnings elsewhere in Europe reach you only when GDACS or NASA EONET reports the event.
+
+## Troubleshooting
+
+| What you see | What is happening |
+| --- | --- |
+| Sources are added but nothing alerts. | No detector reads them. Enable **Natural Hazard Near a Supplier Site** (Step 2), or add the sources to an existing detector's **Sources**. |
+| A hazard hit a region where you have a supplier, but no signal appeared. | The supplier has no site there, or the site has no coordinates yet. Check the vendor's **Locations** card and the [Risk geography map](/user-guides/risk-geography-map). |
+| A site with a city was not reached by a nationwide alert. | A site with a city waits for its coordinates instead of matching the whole country. It is matched by distance once it is located. |
+| A signal arrived but did not alert. | The detector judged the hazard below your severity threshold. Watches with "possible" certainty are Low at most. |
+| A Meteoalarm source collects nothing. | No orange or red warning is active in that country. Yellow warnings are skipped by design. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    Reading the signal queue and turning a signal into work.
+  </Card>
+
+  <Card title="Risk geography map" icon="map-location-dot" href="/user-guides/risk-geography-map">
+    Where your suppliers are, and which sites have been located.
+  </Card>
+
+  <Card title="Source library" icon="rss" href="/products/source-library">
+    Every source Coverbase draws on, across all tiers.
+  </Card>
+
+  <Card title="Detector library" icon="filter" href="/products/detector-library">
+    The full catalog of detectors and what each one looks for.
+  </Card>
+</CardGroup>
