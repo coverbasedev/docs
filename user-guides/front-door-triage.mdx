@@ -1,0 +1,145 @@
+---
+title: "Front Door triage"
+description: "Set up and run the Front Door review of intake requests: the reuse window and sign-off groups, IRQ scoping rules, the Do Not Use list, checking identifiers, choosing a disposition, signing it off, sending questions back to the requester, and the budget and material change cards."
+icon: "door-open"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the **Front Door** tab of an intake request and the **Configuration → Front Door** settings. It sits beside [Requesting a new vendor](/user-guides/requesting-a-vendor), which covers the requester's side, and [The engagement record](/user-guides/engagement-record), which picks up once due diligence starts. For what the module is, see [Front Door](/products/front-door).
+</Info>
+
+<LifecycleBeta />
+
+The Front Door is where the TPRM Office decides what an intake request needs before anyone sends a questionnaire. You answer four questions on one tab: is this a new vendor, can earlier due diligence be reused, is an inherent risk questionnaire (IRQ) required, and is the vendor on the Do Not Use list. The answers become a disposition that two people sign off.
+
+The mistake people make most often is signing off a disposition and then revising it to fix a typo in the rationale. Revising clears both sign-offs, so both signers have to sign again.
+
+## Before you start
+
+You need the Admin role, or a role that can change organization settings, to change the Front Door settings. Triage itself needs permission to review intake requests.
+
+Decide three things with your team first:
+
+- Which user group is the **TPRM Office** and which is **Supply Chain**. Each disposition needs one sign-off from each, by two different people.
+- How old a completed assessment can be and still be reused. The default is 12 months.
+- Whether an IRQ is required by default, and which intake answers should change that.
+
+## Step 1: Configure the Front Door
+
+Open **Configuration** and choose **Front Door**.
+
+<Steps>
+  <Step title="Reuse and Sign-off">
+    Set **Reuse Window (Months)**. A completed assessment younger than this can be proposed for reuse on a similar engagement. Choose the **TPRM Office Group** and the **Supply Chain Group**. Left on **Any reviewer**, anyone who can review the request may sign for that role, but the two sign-offs must still come from different people.
+  </Step>
+  <Step title="IRQ Scoping Rules">
+    Choose whether **IRQ required by default** is on. Then **Add rule** for each exception. A rule has a **Rule Name**, picks a **Questionnaire** and a **Question** from your intake, and fires **When the Answer** **is any of** or **is none of** the **Answers** you choose. Its **Outcome** is **Require the IRQ**, with the **IRQ Templates** to send, or **No IRQ needed**.
+  </Step>
+  <Step title="Save">
+    Click **Save**. Saving rules that differ from the last saved set increases the rule set version shown in the description. Each disposition records the version and the rules that fired when it was decided, so later edits do not rewrite past decisions.
+  </Step>
+</Steps>
+
+How rules combine: a firing rule that requires the IRQ wins over a firing exemption. With no rule firing, **IRQ required by default** decides.
+
+## Step 2: Mark vendors you must not use
+
+Open the vendor, find the **Do Not Use** card on the overview, and click **Mark Do Not Use**. Give a **Reason**, then **Add to Do Not Use**. **Remove from Do Not Use** takes the vendor off the list.
+
+A Do Not Use vendor can still be requested. The requester is warned that a reviewer must approve an exception, and approving the request needs an override rationale (step 6).
+
+## Step 3: Open a request
+
+Open **Intake** in the left navigation and choose the request. With the beta on, the request opens on the **Front Door** tab. **Submission** shows the requester's answers as before.
+
+If the request started as a purchase requisition in a connected procurement system, a **Started From Procurement** card shows the **Source**, **Value**, **Category** and when it was **Synced**. See [Integration Hub](/user-guides/integration-hub).
+
+## Step 4: Is this new?
+
+The **Is This New?** card compares the request with your vendors.
+
+| Badge | Meaning |
+| --- | --- |
+| **Tax ID exact**, **D-U-N-S exact**, **LEI exact** | A registry identifier matched. Shown as **Deterministic match**, with how many of the three identifiers agree. |
+| **Domain exact**, **Name similar** | Only the website or the name matched. Shown as **Probabilistic match**. Check the vendor before you treat it as the same company. |
+| **Linked** | The request was already linked to this vendor. |
+
+If the requester did not give identifiers, enter the **Tax ID**, **D-U-N-S** or **LEI** yourself and click **Check identifiers**. A stored tax ID is shown only as its last four characters.
+
+For an existing vendor, the card then finds the most similar engagement, ranked by shared services and tags, and tells you whether its due diligence is **inside** or **outside** the reuse window. **Choose the engagement to compare** picks a different one. The comparison lists the services the two share and the attributes they differ on.
+
+## Step 5: Decide reuse and record the disposition
+
+When a similar engagement has completed due diligence, **Proposed Reuse by Domain** lists each risk domain with its **Prior Result** and a **Proposal**: **Reuse prior due diligence**, **Abbreviated review** or **New due diligence**. Change any proposal you disagree with.
+
+Then pick the **Disposition**:
+
+- **Add as new engagement, reuse due diligence** reuses the domains you marked for reuse.
+- **Extend the existing engagement** treats the request as an amendment. No new engagement is created.
+- **Full new due diligence** ignores prior results.
+
+Write the **Rationale (Required, Kept in the Audit Trail)** and click **Record disposition**. The card then shows **Awaiting TPRM Office** and **Awaiting Supply Chain**. Each signer clicks **Sign off**. The disposition is **Decided** when the second, different person signs.
+
+<Warning>
+  **Revise disposition** clears both sign-offs. Once the reuse has been applied to a launched assessment, the disposition can no longer be revised.
+</Warning>
+
+What happens when it is decided:
+
+- **The IRQ is sent once.** If an IRQ is required, the templates go to the requester as soon as the second sign-off lands. If the request has no vendor or requester yet, the card says **Required but not sent yet**; click **Send IRQ** once it does.
+- **Reuse waits for the next assessment.** The vendor's next assessment launched from an assessment plan drops the control sets for reused domains and copies the prior scores for them, labeled with their source. Zero Touch assessments do not use it.
+
+## Step 6: Handle a Do Not Use vendor
+
+When the vendor is on the list, a banner names it and shows the reason. Enter an **Override rationale** and click **Record override** before approving the request. Approval without one is refused. The override applies to this request only, and is kept in the audit trail.
+
+<Note>
+  A workflow that approves intakes automatically skips a request whose vendor is on the Do Not Use list, because no one is there to give a rationale.
+</Note>
+
+## Step 7: Ask the requester
+
+Click **Send back with questions**, write one or more questions, and **Send**. The requester is notified and answers inside their request, including an anonymous requester on a public portal. Questions and answers stay under **Questions for the Requester** and in the **Audit Trail**.
+
+## Budget and material change
+
+Two more cards appear when the requester filled in the matching intake steps.
+
+- **Budget.** Shows the request amount, its amortization and **First year's draw** against the synced budget line's remaining balance, with **Within budget** or **Exceeds budget**. Coverbase works this out from the synced line, not from figures the requester typed. A line the procurement system reports no committed figure for shows **Unknown**. If the requester asked for a budget exception, **Approve exception** or **Decline exception**, with an optional **Decision rationale**.
+- **Material Change.** For an existing vendor, lists what the requester flagged as changed, such as a new offshore location, a new AI use case or a new subprocessor, with **Needs IRQ refresh**. **Refresh IRQ** opens an IRQ refresh on the engagement's monitoring plan for its Transaction Owner to answer. See [IRQ refresh](/user-guides/monitoring-plans#step-5-refresh-an-irq).
+
+## Troubleshooting
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| No **Front Door** tab on the request | The beta is not on for your organization. | Ask your Coverbase representative. |
+| **Probabilistic match** on a vendor you know is the same | Only the name or website matched. | Enter a tax ID, D-U-N-S or LEI and click **Check identifiers**. |
+| **Sign off** does nothing for the second signer | The same person tried to sign both roles, or is not in the role's group. | A different member of the other group signs. |
+| Both sign-offs disappeared | Someone clicked **Revise disposition**. | Both signers sign the revised disposition. |
+| **Required but not sent yet** | The request had no vendor or requester when it was decided. | Link the vendor, then click **Send IRQ**. |
+| Approving the request returns an error about the Do Not Use list | No override rationale was recorded. | Record an override rationale, then approve. |
+| The new assessment did not reuse anything | It was a Zero Touch assessment, or not launched from an assessment plan, or the reuse was already applied to an earlier one. | Launch from an assessment plan. Check the **Audit Trail** for **Disposition applied to the launched assessment**. |
+| The budget card says **Unknown** | The procurement system has no committed figure for that budget line. | Check the line in your procurement system, then sync again. |
+| **Refresh IRQ** says there is nothing to refresh | The vendor has no engagement under an active monitoring plan. | Generate a monitoring plan for the engagement first. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Requesting a new vendor" icon="cart-shopping" href="/user-guides/requesting-a-vendor">
+    What the requester sees, including Front Door notices.
+  </Card>
+  <Card title="The engagement record" icon="route" href="/user-guides/engagement-record">
+    Linked and reused diligence, and the Risk Summary.
+  </Card>
+  <Card title="Risk methodology" icon="scale-balanced" href="/user-guides/risk-methodology">
+    How the IRQ is scored and who reviews each domain.
+  </Card>
+  <Card title="Front Door" icon="door-open" href="/products/front-door">
+    What the module does and does not do.
+  </Card>
+</CardGroup>
