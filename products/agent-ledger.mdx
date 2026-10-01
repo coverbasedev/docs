@@ -17,11 +17,11 @@ The **Agent Ledger** page under **Configuration** answers the questions an audit
 
 <CardGroup cols={2}>
   <Card title="A row for every agent action" icon="list">
-    Which agent, what it did, to which record, what it read, what it cited, its confidence, the models it called and how many personal details were redacted. A person can accept, edit and accept, or reject an action from its row.
+    Which agent, what it did, to which record, what it read, what it cited, its confidence, the models it called and how many personal details were redacted. A person can accept, edit and accept, or reject an action, one at a time or in bulk.
   </Card>
 
   <Card title="Agent policies" icon="sliders">
-    What agents may do without a person: close low tier reassessments with no changes, re-time monitoring from feed signals, propose diligence reuse, or send to a vendor without review. Accepting risk or closing an issue always needs a person and cannot be switched on. In this release no agent acts on its own under these policies yet.
+    What agents may do without a person, enforced where the agent acts. Re-timing monitoring from feed signals (off by default) and proposing diligence reuse (on by default) are live. Accepting risk or closing an issue always needs a person and cannot be switched on.
   </Card>
 
   <Card title="Redaction before model calls" icon="user-secret">
@@ -33,13 +33,24 @@ The **Agent Ledger** page under **Configuration** answers the questions an audit
   </Card>
 
   <Card title="Audit export" icon="file-csv">
-    **Export for audit** exports a window of up to a year as CSV, one row per action, with citations, models, the redaction count and the human decision.
+    **Export filtered for audit** writes the actions matching your filters, up to 50,000, to a CSV in the background, with citations, models, the redaction count and the human decision.
   </Card>
 </CardGroup>
 
 ## What is recorded today
 
-These agents write to the ledger: control evaluation, vendor matching and question planning during intake, follow-up suggestions, questionnaire drafting in the portal, document analysis, the Zero Touch automated review, contract clause review, the risk report narrative, and Radar signal summaries. When agents act on their own under one of your policies, those actions will be recorded as **Applied under org policy**. In this release no agent does yet: signal re-timing on monitoring plans follows the plan's own signal rule, and the Front Door proposes reuse whenever earlier due diligence qualifies.
+These agents write to the ledger: control evaluation, vendor matching and question planning during intake, follow-up suggestions, the [Intake Agent](/products/intake-agent) reading a request from a message, questionnaire drafting in the portal, document analysis, the Zero Touch automated review, contract clause review, [claim checks](/products/claim-check), the risk report narrative, and Radar signal summaries.
+
+## Agent policies
+
+A policy is checked where the agent acts, against the current setting, so a policy switched off a moment ago holds.
+
+| Policy | What the agent does | With the policy off |
+| --- | --- | --- |
+| **Re-time monitoring from feed signals** (off by default) | Moves monitoring plan activities forward when a Radar alert or reassessment trigger fires. Each moved plan gets a row reading **Applied under org policy**. | Nothing moves. One row per vendor and signal reads **Held back by org policy**. |
+| **Propose diligence reuse** (on by default) | Picks the similar engagement inside the reuse window that the Front Door starts reviewers from. Recording the disposition writes a row with the reviewer's acceptance or rejection. | No proposal. Reviewers start from full due diligence and still see every match. |
+
+**Auto-close low tier reassessments with no changes** and **Send anything to a vendor without review** have no agent behind them yet, so they stay off and cannot be switched on. **Accept risk or close an issue** always needs a person.
 
 Writing a ledger row never fails the action it records. A failed action is recorded as **Failed**.
 

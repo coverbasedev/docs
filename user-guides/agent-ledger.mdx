@@ -23,37 +23,38 @@ Open **Configuration** and choose **Agent Ledger**. Changing settings needs a ro
 
 ## Step 1: Read the ledger
 
-**Actions** lists what agents did, newest first, with **Time**, **Agent**, **Action**, **Confidence**, what it **Read**, and the **Human Decision**. Filter by **Agent**, choose a **Time window**, or turn on **Awaiting decision** to see only actions nobody has decided on. The header counts today's actions.
+**Actions** lists what agents did, newest first, with **Time**, **Agent**, **Action**, **Confidence**, what it **Read**, and the **Human Decision**. Search, filter by agent, action, decision, outcome, record type, date or confidence, or show only actions **Awaiting decision**. The header counts today's actions.
 
 | Agent | Records |
 | --- | --- |
-| **Evidence agent** | Control evaluations, document analysis and the Zero Touch review |
-| **Intake agent** | Vendor matching, question planning and follow-up suggestions during intake |
+| **Evidence agent** | Control evaluations, document analysis, the Zero Touch review and claim checks |
+| **Intake agent** | Vendor matching, question planning and follow-up suggestions during intake, and the Intake Agent reading requests from messages |
 | **Drafting agent** | Questionnaire answers drafted in the portal |
 | **Contract agent** | Contract clause reviews |
 | **Risk agent** | Risk report narratives |
 | **Radar agent** | Radar signal summaries |
+| **Monitoring agent** | Monitoring plans re-timed from signals under your policy, or held back by it |
 
 Open a row to see the **Record** it acted on, what it **Read**, what it **Cited**, its **Confidence**, the **Models** it called and how many, and how many personal details were redacted.
 
 ## Step 2: Record a decision
 
-On an action awaiting review, choose **Accept**, **Edited and accepted** or **Reject**, add a **Note** if useful, and confirm. The row then reads, for example, **Accepted by** and the person's name. An action taken under one of your policies reads **Applied under org policy**, and a failed action reads **Failed**.
+On an action awaiting review, choose **Accept**, **Edited and accepted** or **Reject**, and confirm. A **Note** is saved with your decision in the ledger and its audit export; rejecting needs one. The row then reads, for example, **Accepted by** and the person's name.
+
+To decide several at once, select them and choose **Accept** or **Reject**. Only completed actions nobody has decided are changed; the result says how many were left as they were.
+
+An action taken under one of your policies reads **Applied under org policy**, one a policy held back reads **Held back by org policy**, and a failed action reads **Failed**.
 
 ## Step 3: Choose what agents may do
 
-Under **What Agents May Do**, switch on only the actions you are content for an agent to take without a person:
+Under **What Agents May Do**, switch on only the actions you are content for an agent to take without a person. Only admins can change them. Each switch is enforced where the agent acts:
 
-- **Auto-close low tier reassessments with no changes**
-- **Re-time monitoring from feed signals**
-- **Propose diligence reuse**
-- **Send anything to a vendor without review**
+| Policy | On | Off |
+| --- | --- | --- |
+| **Re-time monitoring from feed signals** (off by default) | Moves monitoring activities forward when a Radar alert or reassessment trigger fires, under your [signal re-timing rule](/user-guides/monitoring-plans#step-4-keep-or-revert-a-signal-move). | Signals are noted in the ledger and plans stay as scheduled. |
+| **Propose diligence reuse** (on by default) | Proposes reusing a similar engagement's due diligence at the Front Door. | Reviewers start from full due diligence. |
 
-**Accept risk or close an issue** shows **Always needs a person** and cannot be switched on.
-
-<Note>
-  In this release the policies record what your organization allows, and no agent yet acts on its own under them. Re-timing a monitoring plan from a Radar signal is governed by the signal rule on **Configuration → Monitoring Plans**, and the Front Door proposes reuse whenever earlier due diligence qualifies, whatever these switches say.
-</Note>
+**Auto-close low tier reassessments with no changes** and **Send anything to a vendor without review** read **No agent does this yet, so it stays off**. **Accept risk or close an issue** reads **Always needs a person; this cannot be delegated**.
 
 ## Step 4: Decide on redaction
 
@@ -84,19 +85,20 @@ When a reviewer overturns a control evaluation, clearing or flagging an issue, a
 
 ## Step 6: Export for an audit
 
-Click **Export for audit** and choose a window of up to a year. The export is a CSV with one row per action, including citations, models, the redaction count and the human decision.
+Filter the ledger to what the audit needs (agent, action, decision, outcome, record type, date or confidence), then click **Export filtered for audit**. The CSV is prepared in the background, up to 50,000 actions, and downloads when it is ready; you are also notified. Each row carries the citations, models, redaction count and human decision. A value a spreadsheet would run as a formula is written as text.
 
 ## Troubleshooting
 
 | What you see | Cause | Fix |
 | --- | --- | --- |
 | No **Agent Ledger** under **Configuration** | The beta is not on for your organization. | Ask your Coverbase representative. |
-| **No agent actions in this window.** | Nothing ran in the window you chose. | Widen the **Time window**. |
+| **No agent actions match these filters** | The filters exclude everything. | Widen or clear the filters. |
 | **Accept risk or close an issue** cannot be switched on | It always needs a person. | Expected. |
 | An answer contains a placeholder such as `[[PERSON:...]]` | The model rewrote a placeholder so it could not be restored. | Run the action again. Report repeated cases to your Coverbase representative. |
 | A model call failed after redaction was turned on | The call used a request type redaction does not cover, or the setting could not be read. | Report it to your Coverbase representative with the time and the action. |
 | **No reviewer overrides yet.** | No reviewer has changed an evaluation's verdict in the last 180 days. | Expected. Examples appear as reviewers correct evaluations. |
-| The export is refused | The window is longer than a year. | Export in yearly windows. |
+| The export fails with a message to narrow it | More than 50,000 actions match. | Narrow the filters, for example to a shorter date range. |
+| Signals did not move any monitoring plan | **Re-time monitoring from feed signals** is off. | Turn it on. The ledger shows what was held back. |
 
 ## Related
 

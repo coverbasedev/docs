@@ -16,7 +16,7 @@ import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 <LifecycleBeta />
 
 <Warning>
-  Every Integration Hub connector is in **beta** and has not yet been validated against a live customer tenant. Connect a sandbox or test tenant first, run **Sync now**, and read the **Sync Log** before you point a connector at production.
+  Every Integration Hub connector, including Archer, ServiceNow IRM, the ERM risk register and the Teams bot, is in **beta** and has not yet been validated against a live customer tenant. Connect a sandbox or test tenant first, run **Sync now**, and read the **Sync Log** before you point a connector at production.
 </Warning>
 
 The Integration Hub is one page for every procurement, contract and messaging system your program touches. Each connection has the same tabs: **Field Mappings**, **Sync Log**, **Steward Queue** and **Authentication**.
@@ -25,9 +25,9 @@ The mistake people make most often is expecting a supplier to link by name. A su
 
 ## Step 1: Open a provider
 
-Open **Configuration**, choose **External Integrations**, and click **Coupa**, **SAP Ariba**, **Ironclad**, **Icertis** or **Microsoft Teams**. With the beta on, each card opens that provider in the Integration Hub. **Spend Controls** and **Vendor Master Data** also have **Open Integration Hub**.
+Open **Configuration**, choose **External Integrations**, and click **Coupa**, **SAP Ariba**, **Ironclad**, **Icertis**, **Archer**, **ServiceNow IRM**, **ERM Risk Register** or **Microsoft Teams**. With the beta on, each card opens that provider in the Integration Hub. **Spend Controls** and **Vendor Master Data** also have **Open Integration Hub**.
 
-The hub lists providers by category (**Procure-to-pay**, **Contract lifecycle**, **Messaging**) with their direction (**Two-way** or **Inbound only**), health (**Available**, **Healthy**, **Needs attention**, **Paused** or **Error**) and when each **Last synced**. Changing a connection needs permission to manage integrations; without it, the page is read-only.
+The hub lists providers by category (**Procure-to-pay**, **Contract lifecycle**, **GRC and ERM**, **Messaging**) with their direction (**Two-way** or **Inbound only**), health (**Available**, **Healthy**, **Needs attention**, **Paused** or **Error**) and when each **Last synced**. Changing a connection needs permission to manage integrations; without it, the page is read-only.
 
 ## Step 2: Authenticate
 
@@ -39,7 +39,10 @@ On the **Authentication** tab, fill in what the provider needs. The method is sh
 | SAP Ariba | **Client ID**, **Client secret**, **Application key**, **Realm**, and optionally the **Sourcing reporting view** |
 | Ironclad | **Instance URL**, **API token** |
 | Icertis | **Instance URL**, **Token URL**, **Client ID**, **Client secret**, and optionally the **Scope** |
-| Microsoft Teams | **Webhook URL**, and the **Notification Types** to post |
+| Archer | **Instance URL**, **Instance Name**, **User Domain**, **Service Account Username** and **Password**, and the issue and risk level and status field IDs. See [Archer](/integrations/guides/archer). |
+| ServiceNow IRM | **Instance URL**, **Client ID**, **Client Secret**, and the **Issue Table** and **Risk Table**. See [ServiceNow IRM](/integrations/guides/servicenow-irm). |
+| ERM risk register | **Instance URL**, **API Token**, and the register's paths, update method, ID field and token header. See [ERM risk register](/integrations/guides/erm-register). |
+| Microsoft Teams | **Webhook URL**, the **Notification Types** to post, and for approvals and intake chats the bot's app ID, client secret and tenant ID. See [Microsoft Teams](/integrations/guides/microsoft-teams). |
 
 Then choose:
 
@@ -73,9 +76,17 @@ Click **Sync now**. The **Sync Log** tab lists **Recent Runs** with when each **
 
 ## Step 6: Work the steward queue
 
-Supplier records that did not match a vendor wait on the **Steward Queue** tab, with their **Identifiers** and a **Reason**: **No match**, **Several matches** or **Identifiers disagree**. Pick the right vendor under **Third Party** and click **Link**, or **Dismiss**. A banner on the hub says how many records are waiting.
+Supplier records that did not match a vendor wait on the **Steward Queue**, with their **Identifiers**, a **Reason** (**No match**, **Several matches** or **Identifiers disagree**), and when they were **First Seen** and **Last Seen**. Filter by system, reason and age (for example **Waiting over 7 days**), and search by name or record ID. Pick the right vendor under **Vendor** and click **Link**, or **Dismiss**. A banner on the hub says how many records are waiting.
+
+To work many at once, choose a vendor on each row you are sure of, select the rows, and click **Link chosen matches**, or **Dismiss**. The work runs in the background with progress, and the result reads, for example, "12 linked, 3 need a decision", naming each record it could not handle and why. Rows with no vendor chosen stay in the queue.
+
+A dismissed record comes back only if its identifiers change.
 
 Linking a supplier is permanent for that record. A contract that synced before its supplier was linked is filed against the vendor, with its executed copy, as soon as you link the supplier.
+
+## The Intake Agent
+
+The hub's **Intake Agent** card opens zero-form intake: requests for a new vendor made in Slack, Teams, email or an AI assistant. See [Intake Agent](/user-guides/intake-agent).
 
 ## What a synced requisition looks like
 

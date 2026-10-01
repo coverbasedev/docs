@@ -31,7 +31,7 @@ Open **Configuration** and choose **Monitoring Plans**. Changing it needs a role
     Choose the **TPRM Office** group (left unset, it is the TPRM Office named under **Configuration → Communications**, then the vendor's risk analysts), the **Upcoming Notice (Days)** before an activity is due, the **Overdue Escalation (Days)** after which the owner and the TPRM Office are escalated to, and the **Low Scorecard Threshold**.
   </Step>
   <Step title="Signal Re-timing">
-    Choose **Alerts at or above** a severity, whether **Reassessment triggers** count, how far forward to pull activities (**Due within (days)**), the **Undo window (days)**, and which activities a signal **Re-times**.
+    Choose **Alerts at or above** a severity, whether **Reassessment triggers** count, how far forward to pull activities (**Due within (days)**), the **Undo window (days)**, and which activities a signal **Re-times**. Signals move plans only while the **Re-time monitoring from feed signals** policy is on in the [Agent Ledger](/user-guides/agent-ledger#step-3-choose-what-agents-may-do); it is off by default, and the page warns when the rule is on but the policy is off.
   </Step>
   <Step title="Pausing Statuses">
     Canceled statuses always pause a plan. Add any other engagement or service status that should, such as On hold. Under **Start Offboarding Moves To**, choose the status an owner's start offboarding answer sets (the first canceled status unless you choose one).
@@ -81,6 +81,21 @@ When a scorecard comes due, each respondent is assigned and notified. On the **S
 
 The tab shows the **Weighted Score** for the period, the change from the previous period, a flag when it is **Below the threshold**, the **Categories and Weights** of the rubric, and **SLA Adherence** from the vendor's SLAs (Met and On track count as adhering). The period closes when every respondent has scored or the escalation window passes.
 
+## Work across plans in the Monitoring workbench
+
+Open **Monitoring** in the left navigation. **Activities** lists every scheduled activity with its engagement or service, owner, due date and status; **Plans** lists every plan with its tier and when it was generated. Search, choose which **Activities**, the **Due** window (**Overdue**, **Next 30 days**, **Next 90 days** or **All**), and **Owned by me**.
+
+Select activities, then:
+
+- **Reschedule**: **Move to a date** or **Shift by days** (a negative number pulls them earlier), with an optional **Note**. Each move is logged as a TPRM Office edit. A reassessment moves its scheduled date too.
+- **Send scorecards**: opens each scorecard's current period today and asks its respondents to score.
+
+Up to 20 activities run at once; more run in the background with progress, and the result reads, for example, "18 moved, 2 need attention", listing each with its reason.
+
+## Compare submissions
+
+On the vendor's **Questionnaires** tab, **Compare** shows a finished submission beside the vendor's earlier submission of the same questionnaire: **Domain Scores** before and after (with **Risk rose** where it did), and every answer **Changed**, **Added**, **Removed** or **Unchanged**, with its score. Show only the changes, or all answers.
+
 ## Plan history
 
 **Plan History** records everything that happened to a plan: generation, re-plans, every edit with before and after, completions, notices and escalations, signal moves and whether they were kept or reverted, pauses and resumes, attestations, IRQ refreshes, reassessments raised and offboarding requested.
@@ -95,6 +110,8 @@ The tab shows the **Weighted Score** for the period, the change from the previou
 | Radar went quiet for a vendor | Every plan for the vendor paused, and no other live engagement needed Radar. | Resume a plan. Radar comes back on where the pause turned it off. |
 | The reassessment interval on the matrix cannot be edited | It comes from your reassessment rules. | Change the reassessment rule, or move the reassessment's date with **Edit plan**. |
 | A signal moved an activity you did not want moved | Your signal rule re-times that activity. | **Revert** within the undo window, and remove the activity from **Re-times**. |
+| Signals never move a plan | The **Re-time monitoring from feed signals** agent policy is off. | Turn it on in the Agent Ledger. Held-back moves are listed there. |
+| A bulk reschedule skipped some activities | Each skipped activity was paused, had no date, or would land in the past or inside a reassessment's collection time. | Read the reason on each, and adjust the date. |
 | **Generate plan now** is refused for a service | The service belongs to a live engagement. | Use the engagement's plan. |
 | No scorecard was issued | No tier requires one, or the activity is not yet within its notice window. | Set a **Performance Scorecard** interval for the tier. |
 
