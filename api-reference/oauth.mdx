@@ -30,7 +30,7 @@ For a walkthrough, see [OAuth 2.0 client credentials](/integrations/guides/oauth
   `POST /v1/oauth/token`
 </ParamField>
 
-Follows RFC 6749 section 4.4. The body is form-encoded (`application/x-www-form-urlencoded`), not JSON. Send the client ID and secret as HTTP Basic credentials (preferred), or as `client_id` and `client_secret` form fields.
+Follows RFC 6749 section 4.4. The body is form-encoded (`application/x-www-form-urlencoded`), not JSON. Send the client ID and secret as HTTP Basic credentials (preferred), or as `client_id` and `client_secret` form fields, but not both.
 
 ### Request body
 
@@ -100,8 +100,8 @@ Errors follow RFC 6749 section 5.2, not the [coded envelope](/conventions#errors
 | ------ | ------- | ---- |
 | `400` | `unsupported_grant_type` | `grant_type` is missing or not `client_credentials`. |
 | `400` | `invalid_scope` | The request asks for a scope the client was not granted. |
-| `400` | `invalid_request` | The Basic credentials and the `client_id` field name different clients. |
-| `401` | `invalid_client` | The client is unknown or revoked, or the secret is wrong. Comes with `WWW-Authenticate: Basic realm="coverbase"`. |
+| `400` | `invalid_request` | The request uses HTTP Basic and also sends the secret as a form field, or the two name different clients. |
+| `401` | `invalid_client` | The client is unknown or revoked, the secret is wrong, or your organization is no longer in the beta. Comes with `WWW-Authenticate: Basic realm="coverbase"`. |
 
 ## List clients
 

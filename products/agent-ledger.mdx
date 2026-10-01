@@ -45,7 +45,7 @@ Writing a ledger row never fails the action it records. A failed action is recor
 
 ## How redaction works
 
-Redaction runs in the connection to the model provider, not in individual features, so every model call your organization makes passes through it. If Coverbase cannot read whether redaction is on for your organization, the call fails rather than going out unredacted. Placeholders look like `[[PERSON:1a2b3c4d]]` and are stable for your organization, so the same person gets the same placeholder across calls. Only placeholders the redactor issued are restored.
+Redaction runs in the connection to the model provider, not in individual features, so every model call your organization makes passes through it. If Coverbase cannot read whether redaction is on for your organization, the call fails rather than going out unredacted. Placeholders look like `[[PERSON:1a2b3c4d5e6f]]`. Each is a keyed hash under a secret held for your organization, so the same person gets the same placeholder across calls and a placeholder cannot be reversed by guessing. Only placeholders the redactor issued are restored.
 
 <Warning>
   Redaction covers the text of a request. It does not reach inside images or attached documents, such as a PDF sent to the model as a document, or a file the model provider reads directly from storage. Bank and tax identifiers stored on supplier records are sealed per field and never reach a prompt in clear, whether or not redaction is on.

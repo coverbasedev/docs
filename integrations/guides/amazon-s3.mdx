@@ -17,7 +17,7 @@ An Amazon S3 destination is part of [warehouse data share](/products/warehouse-d
 
 ```mermaid
 sequenceDiagram
-  participant CB as Coverbase API or worker role
+  participant CB as Coverbase share role
   participant STS as AWS STS
   participant Role as Your IAM role
   participant S3 as Your bucket
@@ -27,8 +27,8 @@ sequenceDiagram
   CB->>S3: PutObject under your prefix
 ```
 
-- **Two principals.** Coverbase's API role tests the connection and its worker role runs syncs. The destination card lists both under **AWS principals your role must trust**.
-- **One external ID per destination.** It is generated when you save the destination, starts with `coverbase-`, and is shown on the card. Coverbase's roles may only assume a role that demands a `coverbase-` external ID, and yours demands this destination's, so your role cannot be used for another customer's destination.
+- **One principal.** Your role trusts a single, dedicated Coverbase role that exists only to assume customer share roles. The destination card shows it under **AWS principals your role must trust**. Coverbase's services reach your role only through it.
+- **One external ID per destination.** It is generated when you save the destination, starts with `coverbase-`, and is shown on the card. Coverbase's share role may only assume a role that demands a `coverbase-` external ID and sits outside Coverbase's own AWS account, and yours demands this destination's, so your role cannot be used for another customer's destination. A role ARN in Coverbase's own account is refused when you save.
 
 ## Prepare the bucket and role
 
@@ -56,7 +56,7 @@ You finish the role's trust policy after saving the destination in Coverbase, wh
 2. Choose **Amazon S3**, give it a **Name**, and choose **Hourly** or **Daily**.
 3. Enter the **Bucket**, **Prefix**, **Region** and **IAM Role ARN**, and choose the **File Format**: **CSV (gzip)**, **JSON Lines (gzip)** or **Parquet (snappy)**.
 4. Click **Add destination**.
-5. On the destination card, click **Copy trust policy** and set it as your role's trust policy. It has this shape, with the principals and external ID filled in:
+5. On the destination card, click **Copy trust policy** and set it as your role's trust policy. It has this shape, with the principal and external ID filled in:
 
 ```json
 {
@@ -64,7 +64,7 @@ You finish the role's trust policy after saving the destination in Coverbase, wh
   "Statement": [
     {
       "Effect": "Allow",
-      "Principal": { "AWS": ["<principal from the card>", "<principal from the card>"] },
+      "Principal": { "AWS": "<principal from the card>" },
       "Action": "sts:AssumeRole",
       "Condition": { "StringEquals": { "sts:ExternalId": "coverbase-<from the card>" } }
     }
