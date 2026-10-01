@@ -55,6 +55,33 @@ AI behavior is tested, not assumed. We treat model-driven features as systems th
 - **Scoped context.** User-provided context is bounded before it is sent to a model (inputs are truncated to conservative limits), and prompts are structured to keep instructions and data clearly separated.
 - **Tenant boundary preserved.** Model-driven features operate within the same per-organization isolation as everything else; AI cannot reach across tenants. See [Tenant isolation](/security/data-protection#tenant-isolation).
 
+## Redacting personal data before model calls
+
+Organizations in the third-party lifecycle beta can turn on **Redact personal data before model calls** on the [Agent Ledger](/products/agent-ledger) page. It is off by default.
+
+- **What is redacted.** Email addresses, phone numbers, IBANs, US tax IDs, and the full names of your organization's users and your vendors' contacts are replaced with placeholders such as `[[PERSON:1a2b3c4d]]` before the request reaches the model. The placeholder is a digest salted with your organization's ID, so the same person gets the same placeholder across calls and the placeholders mean nothing outside your organization.
+- **What comes back.** The model is told to reproduce placeholders verbatim, and the response is restored before anyone sees it. Only placeholders the redactor issued are restored.
+- **Enforced in one place.** Redaction runs in the connection to the model provider, not in each feature, so every model call your organization makes passes through it: the model request types for invoking a model, conversing, streaming, counting tokens, guardrails, and knowledge-base generation.
+- **Fail closed.** If Coverbase cannot read whether redaction is on for your organization, the call fails rather than going out unredacted. A model request type redaction does not cover fails while redaction is on, so a new kind of call cannot slip past it.
+- **What is not redacted.** The contents of images and attached documents (for example a PDF sent to the model as a document, or a file the model provider reads from storage itself), and the search query of a knowledge-base retrieval, which runs against your organization's own knowledge base. Bank and tax identifiers stored on supplier records are sealed per field (see [Field-level encryption](/security/data-protection#field-level-encryption)) and never reach a prompt in clear, whether or not redaction is on.
+
+Each Agent Ledger row records how many personal details were redacted for that action.
+
+## The Agent Ledger and agent policies
+
+The [Agent Ledger](/products/agent-ledger) records every action an AI agent takes on your data: which agent, what it did, to which record, what it read and cited, its confidence, which models it called, the redaction count, and what a person decided. Recording never blocks the action, and a failed action is recorded as failed. Anyone who can read organization settings can export any window of up to a year as CSV for an audit.
+
+Agent policies say what agents may do without a person. Accepting risk or closing an issue is locked: it always needs a person, and the setting cannot be turned on. In this release the other policies are recorded settings; no agent yet acts on its own under them.
+
+## Learning from your reviewers
+
+An organization can let its own reviewers' corrections calibrate its control evaluations. It is off by default and applies to that organization only.
+
+- A daily job turns each evaluation a reviewer overturned in the last 180 days into an example for that control. An admin can switch any example off.
+- With learning on, a control's evaluation receives up to five of its enabled examples and the organization's evaluation guidance, truncated, escaped and marked as reference data rather than instructions.
+- With learning off, evaluations use the baseline prompt unchanged.
+- Nothing learned from one organization reaches another organization's evaluations, and nothing is used to train a foundation model.
+
 ## Transparency
 
 <Card title="What we log and don't retain" icon="list-timeline" href="/mcp/security">
