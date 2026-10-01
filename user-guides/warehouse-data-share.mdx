@@ -10,7 +10,7 @@ import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 <AgentDirective />
 
 <Info>
-  This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Configuration → Data Share** and the **Distribution** card on the **Dashboards** page. It sits beside [Exporting and scheduling dashboards](/user-guides/dashboard-exports) and [Integration Hub](/user-guides/integration-hub). Each destination has a setup guide: [Snowflake](/integrations/guides/snowflake), [Amazon S3](/integrations/guides/amazon-s3) and [BigQuery](/integrations/guides/bigquery). For what the module is, see [Warehouse data share](/products/warehouse-data-share).
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Configuration → Data Share** and the **Distribution** card on **Program Overview**. It sits beside [Exporting and scheduling dashboards](/user-guides/dashboard-exports) and [Integration Hub](/user-guides/integration-hub). Each destination has a setup guide: [Snowflake](/integrations/guides/snowflake), [Amazon S3](/integrations/guides/amazon-s3) and [BigQuery](/integrations/guides/bigquery). For what the module is, see [Warehouse data share](/products/warehouse-data-share).
 </Info>
 
 <LifecycleBeta />
@@ -50,7 +50,7 @@ Credentials are stored encrypted the moment you save and are never shown again. 
 
 ## Step 3: Finish the S3 trust policy
 
-After you save an S3 destination, its card shows the **External ID for the role's trust policy**, the **AWS principals your role must trust**, and a **Trust policy with this destination's external ID** ready to copy. Paste the policy into your role's trust relationship. Coverbase assumes the role only with that external ID, which is generated for this one destination and starts with `coverbase-`.
+After you save an S3 destination, its card shows the **External ID for the role's trust policy**, the Coverbase principal under **AWS principals your role must trust**, and a **Trust policy with this destination's external ID** ready to copy. Paste the policy into your role's trust relationship. Coverbase assumes the role only with that external ID, which is generated for this one destination and starts with `coverbase-`.
 
 ## Step 4: Test and sync
 
@@ -71,14 +71,14 @@ Timestamps are UTC. Archived records stay with `is_archived` set. Columns are on
 
 ## Where it shows
 
-The **Distribution** card on the **Dashboards** page lists each destination with its table count and last sync, beside the board pack schedule and your scheduled dashboard emails. **Manage** opens the Data Share page.
+The **Distribution** card on [Program Overview](/user-guides/program-insights), under **Dashboards**, lists each destination with its table count and last sync, beside the board pack schedule and your scheduled dashboard emails. **Manage** opens the Data Share page.
 
 ## Troubleshooting
 
 | What you see | Cause | Fix |
 | --- | --- | --- |
 | **The destination rejected the test** | A grant is missing, or the key, service account or role is wrong. | Check the grants in the provider guide. |
-| An S3 test fails with access denied | The role's trust policy does not name the principals or require the external ID. | Copy the trust policy from the destination card. |
+| An S3 test fails with access denied | The role's trust policy does not name the Coverbase principal or require the external ID. | Copy the trust policy from the destination card. |
 | The health reads **Needs credential** | The credential was never saved or was removed. | **Edit** the destination and enter it. |
 | A **Sync now** did nothing | A scheduled sync of the same destination was already running. | Expected. Check the run log after it finishes. |
 | Rows appear more than once | You are reading the raw tables. | Read the `_current` views, or deduplicate on `id`. |
