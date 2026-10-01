@@ -111,7 +111,56 @@ A second refresh on the same day keeps comparing against the earlier day rather 
 
 When your organization has at least five vendors with a security rating, the rating carries a standing such as **Top 30%** or **Bottom 20%**. It is the share of the other rated vendors you can open that this one scores at or above, computed when you open the page from the ratings as they stand today. Hover it for the count. A user who can only open assigned vendors is ranked among those vendors, so two people can see different standings for the same vendor.
 
-It ranks the vendor against your portfolio, not against the industry. A vendor in your top 10% can still carry an actively exploited vulnerability, which is why **Next steps** sits above it in the reading order.
+It ranks the vendor against your portfolio, not against the industry. A vendor in your top 10% can still carry an actively exploited vulnerability, which is why **Next steps** sits above it in the reading order. To see the vendor against its own market, read [Compared with industry peers](#compared-with-industry-peers).
+
+## Compared with industry peers
+
+A rating on its own does not tell you whether a 72 is weak for this kind of company or typical of it. **Industry Comparison** places the vendor beside three to seven companies that sell what it sells, each rated by the same scan.
+
+<Frame caption="1 The vendor's factor scores against the industry average. 2 The vendor's rating, the average and its rank. 3 Every company's rating and band, the vendor first.">
+  <img src="/images/user-guides/vendor-intelligence-security-peers.png" alt="The Industry Comparison section. A radar chart titled Rating by Factor draws Northwind Data as a filled green shape against a dashed blue industry average across ten factors. Beside it, Northwind Data scores 78 (Strong), the industry average is 76 (Strong) and the rank is 4 of 6, with a line reading 2 points above the industry average of 76, then Leads peers on TLS configuration and Trails peers on Email authentication. Below, Peer Comparison shows a highlighted tile for Northwind Data at 78 and tiles for six peers with their scores and bands, one still scanning." />
+</Frame>
+
+The section has three parts:
+
+- **Rating by Factor** draws the vendor's factor scores as a filled shape and the industry average as a dashed outline. Where the fill falls inside the outline, the vendor trails its peers on that factor.
+- The summary gives the vendor's rating, the industry average and the vendor's rank, then the factor the vendor leads its peers on by the most and the one it trails on by the most.
+- **Peer Comparison** gives each company's rating with its band: Critical, Weak, Fair, Strong or Advanced. The vendor's tile comes first and is highlighted. Hover a tile to see why the company was chosen and when it was last scanned.
+
+Once three peers have a rating, the same comparison appears in brief in the top right of the rating card: the industry average, where the vendor ranks, and every rated company on a strip of the rating scale. **See comparison** jumps to the full section. In **Vendor Intelligence**, the **External Security Intelligence** card on the **Overview** tab repeats the average and the rank in one line.
+
+<Frame caption="The comparison in brief, in the top right of the rating card.">
+  <img src="/images/user-guides/vendor-intelligence-security-peer-standing.png" alt="The rating card. On the left, a security rating of 78 (Strong) on the rating scale. In the top right, Industry Peers: an industry average of 76, a line reading Northwind Data is 2 points above it, Ranks 4 of 6, and a strip of the rating scale with a dot for each rated peer and a ring for the vendor, then a See comparison link." />
+</Frame>
+
+### How peers are chosen
+
+Peers are chosen for the product your organization buys from the vendor. Coverbase reads the vendor's services and product list in your workspace, or its use case when neither names a product, and compares the vendor at company level when there is neither. It searches the web for the vendor's competitors, adds the competitors already on the vendor's fact sheet, and has a model pick the closest companies: ones that sell a competing product to the same kind of buyer, in the same industry, at a comparable scale.
+
+The picks are then checked. A company is dropped when the only website found for it is a profile on another site, such as LinkedIn or a review site, when it is the vendor itself, its parent or its owner, or when it repeats a company already on the list.
+
+Coverbase keeps between three and seven peers. When the first pick leaves fewer than three, it asks for more, and when it still cannot find three, it shows no comparison rather than one built on one or two companies.
+
+Each peer is rated by the same outside-in scan as your vendors. A peer Coverbase already rated in the last 30 days keeps that rating. A new peer, or one with an older rating, is scanned when the comparison is built, and its tile reads **Scanning** until the result lands, usually within a few minutes. A company the scan cannot measure reads **Not rated** and is left out of the average. When that leaves fewer than three rated peers, Coverbase replaces the companies it could not rate.
+
+### Keeping it current
+
+The comparison is built the first time anyone opens the vendor's Security tab, and then keeps itself current:
+
+- Peers are chosen again every 90 days.
+- A peer's rating is refreshed once it is more than 30 days old.
+
+To choose peers again sooner, for example after the vendor changes what it sells, click **Choose peers again** in the section header. You need permission to edit the vendor, and peers can be chosen again at most once an hour.
+
+Peers and their ratings are shared research. Every organization that buys the same product from the same company sees the same peers, and a peer's rating is the same wherever it appears. Your organization's revisions to this vendor's rating carry into the comparison, because it compares the rating you see.
+
+### Reading the comparison
+
+- The industry average is the mean of the rated peers' overall ratings, and it appears once at least three peers have a rating. On the chart, each factor is the mean of the peers that measured it, and a factor is drawn only when the vendor and at least two peers were measured on it.
+- A note under the summary says when some peers were rated on fewer factors than the vendor. Their overall scores weigh fewer checks, so they compare less directly.
+- The comparison is outside-in, like the rest of the page. A vendor above its industry average can still carry an actively exploited vulnerability, so read **Next steps** first.
+
+**Export PDF** includes the comparison: the chart with the figures beside it, then a tile for every company.
 
 ## The rating is a floor, not a verdict
 
@@ -274,6 +323,10 @@ A mail-capable lookalike matters most. It can host a page and receive replies, w
 | Next steps says nothing needs action but a factor scored D | The factor's findings did not trip a rule. Open the factor: a low score built from several small deductions is worth raising, and each finding still has a remediation step and **Raise finding**. |
 | Since last scan says no earlier scan, but the vendor has been scanned for months | The comparison is stored by each scan against the one before it. A profile written before the comparison existed has nothing to compare with until the next refresh runs. |
 | The standing pill is missing | Your organization has fewer than five vendors with a security rating, or this vendor has no rating yet. |
+| Industry Comparison says Coverbase could not find at least three companies | Coverbase could not identify three companies that sell what the vendor sells. Add the product you buy as a service on the vendor, then click **Try again**. |
+| Industry Comparison shows the tiles but no average | Fewer than three peers have a rating. Wait for the scans marked **Scanning** to finish. If the section says too few could be rated, Coverbase replaces the companies it could not measure, or you can click **Choose peers again**. |
+| The peers are for a different product than the one you buy | Peers follow the vendor's services and product list in your workspace. Correct those, then click **Choose peers again**. |
+| A peer reads Not rated | The scan could not measure that company's domain, so it is left out of the average. The scan is tried again on a later visit. |
 | A finding shows as resolved but the vendor changed nothing | Check the drawer's scan coverage. A source that was skipped this time drops its findings from the comparison, and the rating; they return when the source runs again. |
 
 ## Related
