@@ -70,7 +70,7 @@ curl -X POST "https://api.coverbase.app/v1/oauth/token" \
 }
 ```
 
-The response carries `Cache-Control: no-store`. Send the token as `Authorization: Bearer cbat_...` until `expires_in` seconds pass, then request a new one.
+The response carries `Cache-Control: no-store`. Send the token as `Authorization: Bearer cbat_...` until `expires_in` seconds pass, then request a new one. A client holds at most 50 live tokens: requesting a 51st revokes its oldest, so an integration should reuse a token until it expires rather than request one per call.
 
 <ResponseField name="access_token" type="string">
   The bearer token, prefixed `cbat_`.
