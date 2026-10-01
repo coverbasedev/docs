@@ -1,0 +1,79 @@
+---
+title: "ERM risk register (REST)"
+description: "Push each Coverbase vendor's risk into an enterprise risk register that has a REST API but no dedicated connector, through the Integration Hub."
+icon: "table-list"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import BetaConnector from "/snippets/beta-connector.mdx";
+
+<AgentDirective />
+
+<BetaConnector />
+
+The ERM risk register connector is part of the [Integration Hub](/products/integration-hub). It is for an enterprise risk register with a REST API and no dedicated Coverbase connector. You describe the register's create and update endpoints, and Coverbase pushes a risk per rated vendor. It writes only; it reads nothing back.
+
+## What it pushes
+
+- **Vendor risk**: every vendor with a residual or inherent risk level, plus every vendor already pushed.
+
+Each risk is created the first time and updated after that, and only when one of its mapped values changed. Coverbase keeps a link from each vendor to its register record, which the sync log shows.
+
+| Coverbase value | Default key | What it holds |
+| --- | --- | --- |
+| **Title** | `title` | The vendor's name followed by "third party risk" |
+| **Vendor** | `third_party` | The vendor's name |
+| **Residual risk** | `residual_risk` | The vendor's residual risk level |
+| **Inherent risk** | `inherent_risk` | The vendor's inherent risk level |
+| **Risk tier** | `tier` | The vendor's tier |
+| **Approval status** | `approval_status` | The vendor's status |
+| **Open findings** | `open_issue_count` | How many open findings the vendor has |
+| **Coverbase reference** | `external_reference` | The vendor's Coverbase ID |
+| **Coverbase link** | `source_url` | A link to the vendor |
+
+Every value is written as text. A value with a blank target is not written.
+
+## Status read back
+
+This connector does not read anything back.
+
+## Authentication
+
+The register takes an API token in a header you name.
+
+1. Create an API token for Coverbase in the register.
+2. Note the path that creates a risk (for example `/risks`), the path that updates one with `{id}` in it (for example `/risks/{id}`), whether updates use `PUT` or `PATCH`, and the key in the create response that holds the new risk's ID (a dot path reaches into nested objects).
+3. Note the JSON key for each value Coverbase should send.
+
+## Set up in Coverbase
+
+1. Open the Integration Hub and choose **ERM risk register** in the **GRC and ERM** category.
+2. On **Authentication**, enter the **Instance URL** and **API Token**. Under **Risk Register Endpoint**, set the **Token Header** (**Authorization** sends the token as a bearer token), the **Create Path**, the **Update Path**, the **Update Method** and the **ID Field**. Paths start from the instance URL's host.
+3. Turn on **Push findings and vendor risk to ERM risk register**, set the **Sync Interval (Minutes)**, click **Save**, then **Test connection**.
+4. On **Field Mappings**, check the JSON key for each value under **Vendor Risk** (dot paths nest), and **Save mappings**.
+5. Click **Sync now** and read the **Sync Log**.
+
+## When a response is not what Coverbase expects
+
+A create response without an ID at the key you named fails that record, with the reason in the sync log.
+
+<Warning>
+  If a create succeeds in the provider but Coverbase fails to save its link to the new record, the next sync creates a second record instead of updating the first. Watch the first syncs, and remove any duplicate it leaves.
+</Warning>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Integration Hub guide" icon="book-open" href="/user-guides/integration-hub">
+    Field mappings and the sync log.
+  </Card>
+  <Card title="Integration platforms" icon="diagram-project" href="/integrations/guides/integration-platforms">
+    Building your own sync on the API instead.
+  </Card>
+  <Card title="Findings and remediation" icon="flag" href="/user-guides/findings-and-remediation">
+    The findings pushed as issues.
+  </Card>
+  <Card title="Integration credentials and signing" icon="key" href="/security/integration-credentials">
+    How the credentials are stored.
+  </Card>
+</CardGroup>

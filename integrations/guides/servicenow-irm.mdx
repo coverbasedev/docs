@@ -1,0 +1,81 @@
+---
+title: "ServiceNow IRM"
+description: "Push Coverbase findings as GRC issues and vendors as risks into ServiceNow Integrated Risk Management through the Table API, and read each record's state back, through the Integration Hub."
+icon: "server"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import BetaConnector from "/snippets/beta-connector.mdx";
+
+<AgentDirective />
+
+<BetaConnector />
+
+The ServiceNow IRM connector is part of the [Integration Hub](/products/integration-hub). It writes Coverbase findings to GRC issues (`sn_grc_issue`) and vendor risk to risks (`sn_risk_risk`) through the Table API, and reads each record's state back. It is separate from the [ServiceNow VRM and ITSM integration](/integrations/guides/servicenow), which creates records from workflows.
+
+## What it pushes
+
+- **Findings as issues**: every open finding that has a vendor, plus every finding already pushed, so a closure reaches ServiceNow IRM too.
+- **Vendor risk**: every vendor with a residual or inherent risk level, plus every vendor already pushed.
+
+Each record is created the first time and updated after that, and only when one of its mapped values changed. Coverbase keeps a link from each Coverbase record to the ServiceNow IRM record, which the sync log shows.
+
+| Coverbase value | Issues (findings) | Risks (vendors) |
+| --- | --- | --- |
+| **Title** | The finding's title | The vendor's name followed by "third party risk" |
+| **Description** | The finding's text | |
+| **Severity** | The finding's severity level | |
+| **Status** | The finding's status | |
+| **Vendor** | The vendor's name | The vendor's name |
+| **Due date** | The remediation due date | |
+| **Residual risk**, **Inherent risk**, **Risk tier**, **Approval status** | | The vendor's levels and status |
+| **Open findings** | | How many open findings the vendor has |
+| **Coverbase reference** | The finding number | The vendor's Coverbase ID |
+| **Coverbase link** | A link to the finding | A link to the vendor |
+
+Every value is written as text. A value with a blank target is not written.
+
+## Status read back
+
+After each push, Coverbase reads the `state` of every record it holds, by display value, in batches of 100, and shows it on the record link. It does not change the finding in Coverbase.
+
+## Authentication
+
+ServiceNow IRM uses OAuth 2.0 client credentials at `<instance>/oauth_token.do`.
+
+1. In ServiceNow, create an OAuth API endpoint for external clients with the client credentials grant, and note the client ID and secret.
+2. Give the integration user access to create, update and read the issue and risk tables.
+3. If you use tables other than `sn_grc_issue` and `sn_risk_risk`, note their names.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **ServiceNow IRM**, or open it from the **GRC and ERM** category of the Integration Hub.
+2. On **Authentication**, enter the **Instance URL**, **Client ID** and **Client Secret**. Under **ServiceNow Tables**, change the **Issue Table** and **Risk Table** if you use your own.
+3. Turn on **Push findings and vendor risk to ServiceNow IRM**, set the **Sync Interval (Minutes)**, click **Save**, then **Test connection**.
+4. On **Field Mappings**, check the column for each value. The defaults write the issue title to `short_description`, its description to `description`, its due date to `due_date` and its reference to `correlation_id`, and the risk title to `name`. **Save mappings**.
+5. Click **Sync now** and read the **Sync Log**.
+
+## When a response is not what Coverbase expects
+
+The Table API silently drops a column the table does not have, so every write asks for the mapped columns back, and a write that dropped one fails that record with the reason in the sync log.
+
+<Warning>
+  If a create succeeds in the provider but Coverbase fails to save its link to the new record, the next sync creates a second record instead of updating the first. Watch the first syncs, and remove any duplicate it leaves.
+</Warning>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Integration Hub guide" icon="book-open" href="/user-guides/integration-hub">
+    Field mappings and the sync log.
+  </Card>
+  <Card title="Integration platforms" icon="diagram-project" href="/integrations/guides/integration-platforms">
+    Building your own sync on the API instead.
+  </Card>
+  <Card title="Findings and remediation" icon="flag" href="/user-guides/findings-and-remediation">
+    The findings pushed as issues.
+  </Card>
+  <Card title="Integration credentials and signing" icon="key" href="/security/integration-credentials">
+    How the credentials are stored.
+  </Card>
+</CardGroup>
