@@ -1,0 +1,66 @@
+---
+title: "Integration platforms (Workato, MuleSoft, Boomi)"
+description: "Connect Coverbase to Workato, MuleSoft, Boomi or another integration platform with its standard HTTP connector, OAuth 2.0 client credentials and signed webhooks, including pushing risk data into an enterprise risk register."
+icon: "diagram-project"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import BetaConnector from "/snippets/beta-connector.mdx";
+
+<AgentDirective />
+
+<BetaConnector />
+
+Coverbase does not ship a packaged Workato connector, MuleSoft template or Boomi process. Each of those platforms can still reach Coverbase with its standard HTTP connector, because the public API speaks plain JSON over HTTPS, accepts [OAuth 2.0 client credentials](/integrations/guides/oauth-client-credentials), and sends [signed webhooks](/integrations/webhooks). This page describes how to put those pieces together. It has not been run against a live tenant of any of these platforms.
+
+## The building blocks
+
+| Need | Coverbase piece |
+| --- | --- |
+| Authenticate | An OAuth client and the token URL `https://api.coverbase.app/v1/oauth/token`, or an `ak_*` key as a bearer header |
+| React to changes | [Webhooks](/integrations/webhooks): Coverbase posts each event to your platform's webhook trigger, signed with `Coverbase-Signature` |
+| Read records | The [API reference](/api-reference/vendors), including [contract records](/api-reference/contract-records) and [engagement records](/api-reference/engagement-records), and the [Export API](/export-api-concepts) |
+| Write records | The vendor, assessment, finding and other write endpoints, and the [Import API](/import-api) |
+| Bulk analytics | [Warehouse data share](/products/warehouse-data-share), when the destination is a warehouse rather than an application |
+
+## Workato
+
+1. Create a custom HTTP connection with **OAuth 2 (client credentials)** authentication, using the token URL above and your client ID and secret.
+2. For triggers, use a **Webhooks** trigger recipe, register its URL as a Coverbase webhook, and verify `Coverbase-Signature` in the first step (HMAC-SHA256 of the raw body with your webhook secret).
+3. Call Coverbase endpoints with **HTTP** actions, sending JSON.
+
+## MuleSoft
+
+1. Configure an HTTP Request connector with OAuth client credentials against the token URL, or a header policy carrying the bearer token.
+2. Expose an HTTP Listener for Coverbase webhooks, and verify the signature against the raw payload before transforming it in DataWeave.
+
+## Boomi
+
+1. Use the HTTP Client connector with OAuth 2.0 client credentials against the token URL.
+2. Receive webhooks with a Web Services Server listener, and verify the signature on the raw document before mapping it.
+
+## Pushing to an enterprise risk register
+
+There is no built-in push to an ERM or GRC risk register such as Archer or ServiceNow IRM yet. Two patterns work today:
+
+- **Event-driven.** Subscribe to finding and assessment events with a webhook. In your platform, fetch the full record from the API and create or update the matching risk or issue in the register.
+- **Batch.** Read engagements, contracts, findings and exceptions on a schedule from the API, or from the tables in [warehouse data share](/products/warehouse-data-share), and load them into the register.
+
+Store the register's record ID back on the Coverbase record (for example as a custom field) so later updates find it. For ServiceNow, the [ServiceNow integration](/integrations/guides/servicenow) creates and updates records natively from workflows.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="OAuth 2.0 client credentials" icon="key" href="/integrations/guides/oauth-client-credentials">
+    Create a client and test a token.
+  </Card>
+  <Card title="Webhooks" icon="arrow-right-from-bracket" href="/integrations/webhooks">
+    Events, payloads and signature verification.
+  </Card>
+  <Card title="Integration patterns" icon="shapes" href="/integrations/patterns">
+    Inbound, outbound and bidirectional patterns.
+  </Card>
+  <Card title="Integration directory" icon="grid-2" href="/integrations/directory">
+    Every system Coverbase connects to.
+  </Card>
+</CardGroup>

@@ -1,0 +1,63 @@
+---
+title: "SAP Ariba"
+description: "Inbound sync from SAP Ariba through the Integration Hub: supplier master data with qualification status links to your vendors and their approved supplier status, and sourcing events open intake requests."
+icon: "cart-flatbed"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import BetaConnector from "/snippets/beta-connector.mdx";
+
+<AgentDirective />
+
+<BetaConnector />
+
+The SAP Ariba connector is part of the [Integration Hub](/products/integration-hub). It is inbound only: SAP publishes no write endpoint for supplier master data, so Coverbase reads from Ariba and does not write back.
+
+## What it does
+
+| Ariba data | What happens in Coverbase |
+| --- | --- |
+| Supplier master data (Supplier Data API with Pagination) | Each supplier links to a vendor on tax ID or D-U-N-S number, or waits in the steward queue. Its qualification status sets the vendor's approved supplier status for Ariba: qualified, approved and preferred count as approved. |
+| Sourcing events (Operational Reporting for Sourcing) | A draft intake request carrying the event's planned spend, commodity and owner, shown to the Front Door as **Started From Procurement**. |
+
+Supplier master records also appear on **Configuration → Vendor Master Data**, with the steward queue and the sync log.
+
+## Authentication
+
+Ariba issues a token from `https://api.ariba.com/v2/oauth/token` with client credentials in HTTP Basic, and every data call to `https://openapi.ariba.com` also carries your application's API key and your realm.
+
+1. In the SAP Ariba developer portal, create an application with access to the **Supplier Data API with Pagination** and **Operational Reporting for Sourcing**.
+2. Note the OAuth client ID and secret, the application key, and your realm name.
+3. If you use a sourcing reporting view other than `SourcingProjectSourcingSystemView`, note its name.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **SAP Ariba**.
+2. On **Authentication**, enter the **Client ID**, **Client secret**, **Application key** and **Realm**, and the **Sourcing reporting view** if you use your own.
+3. Turn on **Open an intake request for each new requisition** to open intake requests from sourcing events.
+4. Set **Sync Interval (Minutes)**, click **Save**, then **Test connection**.
+5. Click **Sync now** and read the **Sync Log**. Work the **Steward Queue** for suppliers that did not match.
+
+## Onboarding checklist
+
+1. An Ariba test realm to connect first.
+2. An application with both APIs, and its client ID, secret and application key.
+3. Tax IDs or D-U-N-S numbers on your Ariba suppliers, so they link without a steward.
+4. A steward to work the steward queue.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Integration Hub guide" icon="book-open" href="/user-guides/integration-hub">
+    The sync log and the steward queue.
+  </Card>
+  <Card title="Coupa" icon="cart-shopping" href="/integrations/guides/coupa">
+    The two-way procure-to-pay connector.
+  </Card>
+  <Card title="Front Door triage" icon="door-open" href="/user-guides/front-door-triage">
+    Where a sourcing event is reviewed.
+  </Card>
+  <Card title="Workday Strategic Sourcing" icon="building" href="/integrations/guides/workday-strategic-sourcing">
+    Another source of new suppliers.
+  </Card>
+</CardGroup>
