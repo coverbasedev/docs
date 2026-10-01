@@ -15,7 +15,7 @@ import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 
 <LifecycleBeta />
 
-The **Risk Methodology** page is one place for the rules inherent risk follows: how domains roll up, who reviews what, when overdue work escalates, and which questionnaire version is live. It has five tabs: **Risk Domains**, **Tiers & Aggregation**, **Reviewer Matrix**, **SLAs & Escalation** and **Questionnaire Versions**.
+The **Risk Methodology** page is one place for the rules inherent risk follows: how domains roll up, who reviews what, when overdue work escalates, and which questionnaire version is live. It has five tabs: **Risk Domains**, **Tiers, Scales & Cadence**, **Reviewer Matrix**, **SLAs & Escalation** and **IRQ Versions**.
 
 The mistake people make most often is changing the aggregation method and expecting existing vendors to be re-rated. The method applies to questionnaires scored from then on. Scores already recorded stay as they are until the questionnaire is scored again.
 
@@ -23,7 +23,7 @@ Open **Configuration** and choose **Risk Methodology**. Changing settings needs 
 
 ## Step 1: Weight your domains
 
-The **Risk Domains** tab lists each domain with its **Weight** and **Risk Group** (its reviewers). Click **Edit risk domains** to change them on the risk domains page.
+The **Risk Domains** tab lists each domain with its **Weight**, its share of the roll-up, and its **Risk Group** (its reviewers). A domain with no weight reads **Not weighted** and is left out of the weighted roll-up. Click **Edit risk domains** to change them on the risk domains page.
 
 - Leave every weight empty to keep the questionnaire's flat score. Weighting turns on only when at least one active domain has a weight.
 - Weights are relative. They do not need to add up to 100, because the score is normalized by the weights of the domains that actually scored.
@@ -31,7 +31,7 @@ The **Risk Domains** tab lists each domain with its **Weight** and **Risk Group*
 
 ## Step 2: Choose how ratings roll up
 
-On **Tiers & Aggregation**, **Risk Tiers** shows the scale every domain score and overall rating is bucketed into. Under **How Ratings Roll Up**, choose one:
+On **Tiers, Scales & Cadence**, under **How Ratings Roll Up**, choose one:
 
 | Method | Overall rating |
 | --- | --- |
@@ -41,11 +41,13 @@ On **Tiers & Aggregation**, **Risk Tiers** shows the scale every domain score an
 
 The change saves at once. An answer option with a minimum score still lifts the whole questionnaire afterwards, whichever method you choose.
 
-**Scale Normalization** shows how each domain's scoring scale maps onto your 0 to 100 risk bands. Pick a **Risk Domain** to see each level's **Normalized Score**, and use **Preview** to see the residual risk a given assessment score leaves at a given inherent risk.
+**Scale Normalization** shows how each domain's scoring scale maps onto your 0 to 100 risk bands, so a three-tier and a five-tier scale read side by side. Select a domain to see each level's **Normalized Score**, and use the preview to see the residual risk a given assessment score leaves at a given inherent risk.
+
+**Monitoring Cadence by Tier** shows how often each monitoring activity runs at each tier. **Edit cadence** changes it; see [Monitoring plans](/user-guides/monitoring-plans#step-1-set-the-methodology).
 
 ## Step 3: Route reviews with the reviewer matrix
 
-On **Reviewer Matrix**, click **Add Rule** and fill in:
+On **Reviewer Matrix**, click **Add rule** and fill in the **Add Reviewer Rule** dialog:
 
 | Field | Matches |
 | --- | --- |
@@ -55,25 +57,27 @@ On **Reviewer Matrix**, click **Add Rule** and fill in:
 | **Risk Domain** | The domain being reviewed. |
 | **Reviewer** | The user or group who reviews when the rule matches. |
 
-Leave a criterion on **Any** to match everything. The most specific matching rule wins. With no rule matching, reviews go to the domain's own reviewers and the portal defaults, as they do today.
+Leave a criterion on **Any** to match everything. The most specific matching rule wins, and the table lists rules in the order routing checks them: most specific first, then oldest first. A rule with exactly the same criteria as another is refused. With no rule matching, reviews go to the domain's own reviewers and the portal defaults, as they do today.
 
 Intake review is routed before a tier is known, so only rules with no **Tier** and no **Risk Domain** apply to intake. When an IRQ is approved, every domain it scored gets a review task, routed by these rules.
 
 ## Step 4: Escalate overdue work
 
-On **SLAs & Escalation**, click **Add Rule**:
+On **SLAs & Escalation**, **SLA Targets** lists how long each stage of an assessment may take before it is overdue: the **Organization default**, and any risk domain that overrides it. **Edit SLA targets** changes them. These targets drive the engagement's expected decision date.
+
+Under **Escalation Rules**, click **Add rule** and fill in the **Add Escalation Rule** dialog:
 
 1. **Name** the rule, for example "Overdue Risk Group review".
-2. Choose the **Work** it applies to, or **All work**.
+2. Choose the **Work** it applies to. Leave it empty to escalate every kind of work.
 3. Set **Days Overdue**.
-4. Choose **Escalate To**: a **User**, a **Group** or a **Group lead**.
-5. Leave **Reassign instead of notify** off to give the target their own copy of the item, or turn it on to move the item to them.
+4. Choose who it escalates to: a **User**, a **Group**, or a **Group lead** (the group's lead at the time the item escalates).
+5. Choose **Notify**, so the target gets their own copy and the assignee keeps the item, or **Reassign**, so the item moves to the target.
 
 Escalation runs once a day. Each rule escalates an item once, and every escalation is recorded. A copy closes when the original's record resolves, and never escalates again itself.
 
 ## Step 5: Version your inherent risk questionnaires
 
-**Questionnaire Versions** lists each inherent risk questionnaire with its **Version**, **Published** date and **Content Review Due**. Select a row to see its **Changelog**.
+**IRQ Versions** lists each inherent risk questionnaire with its **Version**, **Published** date and **Content Review Due**. Use the row's actions to **Open template** or **View changelog**: every change across all of its versions.
 
 <Steps>
   <Step title="Draft">
@@ -83,7 +87,7 @@ Escalation runs once a day. Each rule escalates an item once, and every escalati
     Open the draft and change its questions. Drafting, edits, publishing, retiring, content reviews and cadence changes are recorded in the changelog with the version and who acted.
   </Step>
   <Step title="Publish">
-    Click **Publish**. The draft becomes the published version, and the previous version is retired for new sends. Questionnaires already out finish on the version they were sent with.
+    Click **Publish** and confirm. The draft becomes the published version, and the previous version is retired for new sends. Questionnaires already out finish on the version they were sent with.
   </Step>
   <Step title="Set a review cadence">
     Click **Review cadence**, choose **Review Every** (in months) and an **Owner**. The owner is reminded when the published version is due for review. **Mark reviewed** restarts the clock.
@@ -94,7 +98,7 @@ A published or retired version is read-only: its questions, sections, options an
 
 ## Step 6: Override a score with a rationale
 
-Anywhere you edit an inherent or residual score by hand, the score editor asks for a **Rationale** ("Explain why the calculated score is wrong before saving an override") and **Override Expires**: **Never**, or **After 30 days**, **90**, **180** or **365**. The rationale is required.
+Anywhere you edit an inherent or residual score by hand (**Edit Inherent Risk Score**, **Edit Residual Risk Score** or **Edit Assessment Score**), the editor asks for a **Rationale**, recorded with the override in the score history, and **Override Expires**: **Never**, or **After 30 days**, **90**, **180** or **365**. The rationale is required. With an expiry, the editor says when the calculated score returns.
 
 When an override expires, a daily job restores the last calculated score for each risk type the override changed, and the risk profile shows **Override expired**. If someone or something has replaced the override in the meantime, the newer score stands.
 
