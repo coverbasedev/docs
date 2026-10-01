@@ -1,0 +1,78 @@
+---
+title: "Agent Ledger and AI governance"
+description: "A record of every action an AI agent takes on your data, the policies that say what agents may do without a person, personal data redaction before model calls, and calibration from your own reviewers' corrections."
+icon: "book-bookmark"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<LifecycleBeta />
+
+The **Agent Ledger** page under **Configuration** answers the questions an auditor, a model risk team or a regulator asks about AI in your program: what did an agent do, to which record, based on what, how sure was it, which models did it call, and what did a person decide. Beside the ledger sit your organization's AI settings.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="A row for every agent action" icon="list">
+    Which agent, what it did, to which record, what it read, what it cited, its confidence, the models it called and how many personal details were redacted. A person can accept, edit and accept, or reject an action from its row.
+  </Card>
+
+  <Card title="Agent policies" icon="sliders">
+    What agents may do without a person: close low tier reassessments with no changes, re-time monitoring from feed signals, propose diligence reuse, or send to a vendor without review. Accepting risk or closing an issue always needs a person and cannot be switched on. In this release no agent acts on its own under these policies yet.
+  </Card>
+
+  <Card title="Redaction before model calls" icon="user-secret">
+    Off by default. When on, email addresses, phone numbers, IBANs, US tax IDs and the names of your users and your vendors' contacts are replaced with placeholders before a request reaches the model, and put back in the answer before anyone sees it.
+  </Card>
+
+  <Card title="Learning from your reviewers" icon="graduation-cap">
+    When a reviewer overturns a control evaluation, the correction becomes an example for that control. Nothing reaches an evaluation until you turn learning on, and you can switch any example off.
+  </Card>
+
+  <Card title="Audit export" icon="file-csv">
+    **Export for audit** downloads a window of up to a year as CSV, one row per action, with citations, models, the redaction count and the human decision.
+  </Card>
+</CardGroup>
+
+## What is recorded today
+
+These agents write to the ledger: control evaluation, vendor matching and question planning during intake, follow-up suggestions, questionnaire drafting in the portal, document analysis, the Zero Touch automated review, contract clause review, the risk report narrative, and Radar signal summaries. When agents act on their own under one of your policies, those actions will be recorded as **Applied under org policy**. In this release no agent does yet: signal re-timing on monitoring plans follows the plan's own signal rule, and the Front Door proposes reuse whenever earlier due diligence qualifies.
+
+Writing a ledger row never fails the action it records. A failed action is recorded as **Failed**.
+
+## How redaction works
+
+Redaction runs in the connection to the model provider, not in individual features, so every model call your organization makes passes through it. If Coverbase cannot read whether redaction is on for your organization, the call fails rather than going out unredacted. Placeholders look like `[[PERSON:1a2b3c4d]]` and are stable for your organization, so the same person gets the same placeholder across calls. Only placeholders the redactor issued are restored.
+
+<Warning>
+  Redaction covers the text of a request. It does not reach inside images or attached documents, such as a PDF sent to the model as a document, or a file the model provider reads directly from storage. Bank and tax identifiers stored on supplier records are sealed per field and never reach a prompt in clear, whether or not redaction is on.
+</Warning>
+
+A model request type that redaction does not cover fails while redaction is on, so a new kind of call cannot bypass it.
+
+## How learning works
+
+A daily job collects every evaluation a reviewer moved across the issue boundary in the last 180 days, in either direction, as a learned example for that control. With learning on, a control's evaluation gets up to five of its enabled examples and your organization's evaluation guidance, marked as reference data. With learning off, evaluations use the baseline prompt unchanged. Learning applies to your organization only.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Agent Ledger guide" icon="book-open" href="/user-guides/agent-ledger">
+    Read the ledger, record a decision, set policies, turn on redaction and learning, and export.
+  </Card>
+
+  <Card title="AI governance" icon="brain-circuit" href="/security/ai-governance">
+    How Coverbase selects, tests and constrains the models behind these agents.
+  </Card>
+
+  <Card title="MCP security" icon="robot" href="/mcp/security">
+    How assistants connected through MCP are logged and constrained.
+  </Card>
+
+  <Card title="Data protection" icon="lock" href="/security/data-protection">
+    Encryption, field-level sealing and tenant isolation.
+  </Card>
+</CardGroup>

@@ -1,0 +1,75 @@
+---
+title: "Integration Hub"
+description: "Two-way sync with your procure-to-pay and contract lifecycle systems (Coupa, SAP Ariba, Ironclad, Icertis) and Microsoft Teams notifications, with field mappings, a sync log and a steward queue for suppliers that do not match."
+icon: "plug"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<LifecycleBeta />
+
+<Warning>
+  Every Integration Hub connector is in **beta**. Each one is built against the provider's documented API and tested against recorded responses, but none has yet been validated against a live customer tenant. Connect a sandbox first and read the sync log before you rely on what a connector writes.
+</Warning>
+
+The Integration Hub connects Coverbase to the systems your purchases and contracts already move through. Requisitions in your procurement system open intake requests, supplier records link to your vendors, executed contracts in your contract lifecycle system mark the Coverbase contract executed, and Coverbase writes its risk tier, approval status and contract risk back to the provider. Every connection has the same three tabs: **Field Mappings**, **Sync Log** and **Steward Queue**.
+
+## Providers
+
+| Provider | Category | Direction | What syncs |
+| --- | --- | --- | --- |
+| [Coupa](/integrations/guides/coupa) | Procure-to-pay | Two-way | Requisitions, suppliers, contracts and budget lines in; supplier risk tier and approval status, and contract risk rating, out |
+| [SAP Ariba](/integrations/guides/sap-ariba) | Procure-to-pay | Inbound only | Supplier master data with qualification status, and sourcing events |
+| [Ironclad](/integrations/guides/ironclad) | Contract lifecycle | Two-way | Records and their signed copies in; risk rating, required clause pack and blocking issues out |
+| [Icertis](/integrations/guides/icertis) | Contract lifecycle | Two-way | Agreements and their executed copies in; risk rating, required clause pack and blocking issues out |
+| [Microsoft Teams](/integrations/guides/microsoft-teams) | Messaging | Outbound | Notifications you choose, posted to a channel as Adaptive Cards |
+
+## How a sync works
+
+Each connection syncs on its own interval (every 60 minutes unless you change it, and no more often than every 15 minutes), and on demand with **Sync now**. A provider that can call a webhook can also nudge a sync when a record changes. Inbound passes run first, in a fixed order, so later passes can find suppliers through links the supplier pass just made:
+
+1. **Suppliers** link to a vendor and record its approved supplier list status.
+2. **Requisitions and sourcing events** open a draft intake request carrying the value, category and requester, and pass the supplier's tax ID, D-U-N-S number and LEI to the Front Door.
+3. **Contracts** create or update a Coverbase contract and, when executed in the provider, mark it executed through the same path DocuSign uses, so the executed notice and accounting packet fire the same way.
+4. **Budget lines** (Coupa) record the amount and committed spend that Spend Controls and the intake budget step read.
+
+Outbound runs last, and pushes a record only when its values changed since the last push. Each record is written on its own, so one bad record fails alone, and the sync log says which record failed and why.
+
+## Matching suppliers
+
+A name alone never links a supplier. A tax ID or D-U-N-S match links on one hit, and a domain links only when no stronger identifier points to a different vendor. Anything else goes to the **Steward Queue**, where someone links it to the right vendor or dismisses it. Once linked, a supplier is never re-matched. A contract that arrives before its supplier is linked waits, and is filed against the vendor, with its executed copy, as soon as the steward links the supplier.
+
+## The required clause pack
+
+The clause pack written to a contract lifecycle system lists the high and critical severity clauses of your active clause sets, up to 25, by clause ID and name. It is the same list for every contract. Blocking issues are the titles of the vendor's open findings, up to 20.
+
+<Note>
+  A clause pack generated per contract from that vendor's risk domain results and open findings, and a portfolio report of non-standard contracts, are not available yet.
+</Note>
+
+## Credentials and webhooks
+
+Credentials go to a secrets manager when you save them and are never returned. The page only says which fields are set. A connection's webhook signing secret is shown once, when you create or rotate it. Inbound webhooks must be signed (see [Integration credentials and signing](/security/integration-credentials#inbound-integration-webhooks)), and a webhook body is never trusted as data: it only starts a sync that re-reads the record from the provider.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Integration Hub guide" icon="book-open" href="/user-guides/integration-hub">
+    Connect a provider, review its field mappings, read the sync log and work the steward queue.
+  </Card>
+
+  <Card title="Front Door" icon="door-open" href="/products/front-door">
+    Where a synced requisition shows up for the TPRM Office.
+  </Card>
+
+  <Card title="Integration directory" icon="grid-2" href="/integrations/directory">
+    Everything Coverbase connects to, and which systems have a connector.
+  </Card>
+
+  <Card title="Integration credentials and signing" icon="key" href="/security/integration-credentials">
+    How credentials, signing secrets and webhooks are protected.
+  </Card>
+</CardGroup>

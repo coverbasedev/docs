@@ -1,0 +1,77 @@
+---
+title: "Warehouse data share"
+description: "Push your third-party risk tables to your own Snowflake account, Amazon S3 bucket or BigQuery dataset on a schedule, so Power BI, Tableau or your data lake read them without going through the API."
+icon: "database"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<LifecycleBeta />
+
+<Warning>
+  The Snowflake, Amazon S3 and BigQuery destinations are in **beta**. They have been tested against recorded responses but not yet against a live customer account. Point a destination at a test schema, bucket prefix or dataset first and check the run log.
+</Warning>
+
+Data share writes the tables behind your third-party risk program into storage you own, on a schedule. Your BI team models against stable tables and views in their own warehouse instead of paging through an API, and nothing has to be exported by hand.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Three destination types" icon="database">
+    Snowflake (key-pair authentication through the SQL API), BigQuery (a service account key), and Amazon S3 (a role in your account that Coverbase assumes, with no stored secret).
+  </Card>
+
+  <Card title="Only what changed" icon="arrows-rotate">
+    Each sync appends the rows that changed since the last successful one, stamped with when they were written. A failed sync is retried from the same point by the next.
+  </Card>
+
+  <Card title="Current views" icon="table">
+    In Snowflake and BigQuery, each table has a `_current` view that keeps the newest version of each row. Point your BI model at the views.
+  </Card>
+
+  <Card title="A published contract" icon="file-contract">
+    Eighteen tables, from third parties, engagements and per-domain scores to findings, risk acceptances, contracts, obligations, monitoring and Radar. Columns are added over time but never renamed or removed in place.
+  </Card>
+</CardGroup>
+
+## Schedule
+
+Each destination syncs **Hourly** or **Daily**, and on demand with **Sync now**. A **Sync now** that lands while a scheduled sync of the same destination is running is dropped rather than run twice.
+
+## What lands where
+
+- **Snowflake and BigQuery:** one table per contract table, created on the first sync. A column the contract adds later is added to the table. Beside each table, a `<table>_current` view keeps the latest version of each row.
+- **Amazon S3:** files in gzip CSV, gzip JSON Lines or snappy Parquet at `<prefix>/<table>/synced_date=YYYY-MM-DD/<run id>-<page>.<ext>`, with each table's contract at `<prefix>/_contract/<table>.json`. Deduplicate on `id`, keeping the latest `_cb_synced_at`, the same way the views do.
+
+Timestamps are UTC. Archived records stay in the share with `is_archived` set. A hard delete is not sent, except that the `services` table is a full snapshot on every run, so a deleted service drops out of its current view.
+
+## Credentials
+
+A destination's credential is write-only. It is stored in a secrets manager the moment you submit it, and the page shows only a non-secret hint: the key's fingerprint for Snowflake, or the service account email for BigQuery. Archiving a destination deletes its credential. Amazon S3 stores no secret at all: Coverbase assumes your role with an external ID generated for that one destination. See [Integration credentials and signing](/security/integration-credentials#customer-s3-roles-and-external-ids).
+
+## Where it shows
+
+The **Distribution** card on the **Dashboards** page lists each destination with its status and last sync, beside the board pack and your scheduled dashboard emails.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Data share guide" icon="book-open" href="/user-guides/warehouse-data-share">
+    Add a destination, test it, read the run log and the table contract.
+  </Card>
+
+  <Card title="Snowflake" icon="snowflake" href="/integrations/guides/snowflake">
+    Key-pair setup and the grants the Snowflake user needs.
+  </Card>
+
+  <Card title="Amazon S3" icon="bucket" href="/integrations/guides/amazon-s3">
+    The role, its trust policy and the external ID.
+  </Card>
+
+  <Card title="BigQuery" icon="table" href="/integrations/guides/bigquery">
+    The service account and its roles.
+  </Card>
+</CardGroup>

@@ -1,0 +1,80 @@
+---
+title: "Front Door"
+description: "Triage every intake request before due diligence starts: is the vendor new, can earlier due diligence be reused, does the request need an inherent risk questionnaire, and is the vendor on the Do Not Use list."
+icon: "door-open"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<LifecycleBeta />
+
+Front Door is the first review an intake request gets. Before anyone sends a questionnaire or opens an assessment, the TPRM Office answers four questions on one page: is this a new vendor or one you already have, is there an engagement whose due diligence can be reused, does the request need an inherent risk questionnaire (IRQ), and is the vendor blocked. The answers are recorded as a **disposition**, signed off by two people, and kept in the request's audit trail.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Is this new?" icon="fingerprint">
+    Matches the request against your vendors on tax ID, D-U-N-S number and LEI, which count as deterministic, and on domain and name, which count as probabilistic. Tax IDs stay sealed: only the last four characters are ever shown.
+  </Card>
+
+  <Card title="Engagement reuse" icon="recycle">
+    Finds the most similar existing engagement by shared services and tags, says whether its completed due diligence is inside your reuse window (12 months unless you change it), and proposes per risk domain whether to reuse it, run an abbreviated review or start again.
+  </Card>
+
+  <Card title="Dual sign-off" icon="user-check">
+    A disposition is decided only when one person from the TPRM Office group and a different person from the Supply Chain group have both signed it off. Revising it clears both sign-offs.
+  </Card>
+
+  <Card title="IRQ scoping rules" icon="list-check">
+    Rules read the intake answers and decide whether an IRQ is required and which templates to send. The required IRQs go to the requester once, as soon as the disposition is decided.
+  </Card>
+
+  <Card title="Do Not Use" icon="ban">
+    A vendor marked Do Not Use can still be requested, but the requester is warned and approving the request needs an override rationale.
+  </Card>
+
+  <Card title="Procurement context" icon="cart-shopping">
+    When a request started as a purchase requisition in a connected procurement system, the review shows where it came from, its value and category. With budget lines synced, it shows the request's draw against the line and any budget exception the requester asked for.
+  </Card>
+</CardGroup>
+
+## How reuse works
+
+A disposition takes one of three forms:
+
+| Disposition | What happens next |
+| --- | --- |
+| **Add as new engagement, reuse due diligence** | The vendor's next assessment launched from an assessment plan drops the control sets for every domain marked **Reuse prior due diligence**, copies the prior assessment's scores for those domains, and labels each copied score with the assessment it came from. |
+| **Extend the existing engagement** | The request is treated as an amendment to an engagement you already have. No new engagement is created. |
+| **Full new due diligence** | Prior results are ignored and due diligence runs in full. |
+
+A reuse decision is applied once, to the next plan-launched assessment for that vendor. Zero Touch assessments do not consume it. After it has been applied it can no longer be revised, and the engagement record shows which domains were satisfied by reused diligence. If someone scores a reused domain on the new assessment, the reused label is removed from that domain.
+
+## What it does not do
+
+- It does not approve the vendor. Approving the intake is still a separate step, and a vendor created through intake stays in its created status until someone moves it.
+- It does not decide on a name match alone. A domain or name match is shown as probabilistic, and only a registry identifier counts as deterministic.
+- It does not remove a vendor from the Do Not Use list when an override is recorded. The override applies to that one request.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Front Door guide" icon="book-open" href="/user-guides/front-door-triage">
+    Set up the reuse window, sign-off groups and IRQ rules, then triage a request step by step.
+  </Card>
+
+  <Card title="Engagement record" icon="route" href="/products/engagement-record">
+    Where reused and new diligence come together for the Transaction Owner.
+  </Card>
+
+  <Card title="Autonomous Intake" icon="inbox" href="/products/autonomous-intake">
+    How a request is filed in the first place, from the portal, the API or an AI assistant.
+  </Card>
+
+  <Card title="Risk methodology" icon="scale-balanced" href="/products/risk-methodology">
+    How the IRQ the Front Door sends is scored and who reviews each domain.
+  </Card>
+</CardGroup>
