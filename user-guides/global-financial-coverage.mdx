@@ -1,0 +1,74 @@
+---
+title: "Global financial coverage"
+description: "Which markets Coverbase reads audited annual statements from, how each source is read, and what to do when a vendor has nothing on file."
+icon: "earth-americas"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It explains where the filed figures on a vendor's **Financial health** tab come from. For how those figures are scored, see the [Financial health guide](/user-guides/financial-health-score).
+</Info>
+
+When your organization rates vendors against its own credit methodology, Coverbase needs the vendor's latest audited annual statements: current assets and liabilities, total liabilities and equity, operating profit, interest, and cash flow. This page lists where those statements come from in each market, and what you see when none are available.
+
+## How a source is chosen
+
+Coverbase tries each source below in order and uses the first one that has the vendor's latest annual statements. Structured data a regulator publishes comes first. A published annual report, read by a model, is used only when no structured source has the company.
+
+| Order | Source | What it covers |
+| --- | --- | --- |
+| 1 | **SEC EDGAR** | US companies filing a 10-K, and foreign companies filing a 20-F or 40-F with the SEC, including many large Canadian, Israeli, Swiss, Japanese, Indian and Latin American companies. |
+| 2 | **ESEF and UKSEF annual reports** | Listed companies in the UK and most of the EU and EEA, including Denmark, Sweden, France, Finland, Norway, Poland, Italy, Belgium, the Netherlands, Austria, Spain and Portugal. |
+| 3 | **OpenDART** | Korean listed companies, and unlisted Korean companies that file audited reports. |
+| 4 | **Companies House** | Every UK company that files tagged accounts, private companies included. |
+| 5 | **Published annual report** | Any listed company that publishes an annual report on its own website or through its exchange. This covers Australia, Hong Kong, Singapore, New Zealand, Switzerland, Germany, Ireland, Japan, South Africa, India, domestic-only Canadian companies and other markets with no structured feed. |
+
+The **Financial health** tab names the source above the ratings, for example "Rated from SEC Form 10-K, fiscal year 2025" or "Rated from Annual report, fiscal year 2026". **Open filing** links to the document the figures were read from, so you can check any number against it.
+
+## How each source is read
+
+- **SEC, ESEF, UKSEF, OpenDART and Companies House** publish figures tagged with a standard taxonomy (US GAAP, IFRS, or the UK FRC taxonomy). Coverbase reads only the standard tags for the consolidated totals. A figure a company tagged with its own custom element is left blank rather than guessed, so some ESEF filers show no capital expenditure or interest even though the report contains one.
+- **Published annual reports** are read by a model. Coverbase keeps only the pages with the primary statements and the auditor's report, reads the figures, and then checks them. If the balance sheet does not balance (total assets within 2% of liabilities plus equity), the leverage figures are dropped rather than used. Coverbase also checks that the company named in the report is your vendor, and only accepts a report from the vendor's own website or an exchange that publishes on its behalf.
+
+<Warning>
+  A figure read from a published annual report can be wrong. The balance check catches large errors, not small ones. Before you rely on a rating that came from an annual report, open the filing and check the figures that drove it.
+</Warning>
+
+## Audit status
+
+Your methodology can require audited statements before a vendor rates Low. Coverbase decides whether the latest full year is audited from the source:
+
+| Source | How audit status is decided |
+| --- | --- |
+| SEC, ESEF and UKSEF | A statutory annual report is audited by law. The year counts as not audited if the next annual report is overdue. |
+| OpenDART | The auditor's opinion, read from DART. An adverse opinion or a disclaimer counts as not audited. |
+| Companies House | The accounts type. Small companies taking the audit exemption, micro-entities and dormant companies count as not audited. |
+| Published annual report | The auditor's report, as read from the document. |
+
+A report counts as overdue when the next year's report is past the market's own deadline: about four months after the year end for SEC and ESEF filers, three for Korea, nine for UK private companies, and six for markets read from published reports.
+
+## When a vendor has nothing on file
+
+**Nothing on file to rate** means no source had audited annual statements for the vendor. This is expected for:
+
+- Private companies outside the UK and Korea, which publish no statements.
+- Banks and insurers, which do not split current from non-current items, so the current ratio is not rated.
+- Companies whose identity Coverbase could not confirm. Check the **Corporate registration** tab: the filing sources are found from the registered identity there (the LEI, the company number, or the stock ticker).
+
+To rate a vendor with nothing on file, click **Upload financial statements** on the **Financial health** tab and add the statements the vendor gave you. Submitted statements are rated the same way and stay private to your organization. See [Submitting a vendor's own financial statements](/products/financial-health-score#submitting-a-vendors-own-financial-statements).
+
+## Freshness
+
+Structured sources are read each time the vendor's intelligence refreshes. A published annual report is read at most every 90 days, since a new report is published once a year.
+
+## Troubleshooting
+
+| What you see | What to check |
+| --- | --- |
+| A listed company reads **Nothing on file to rate** | Check the **Corporate registration** tab. If the company's identity or stock ticker is missing there, no source can be matched to it. |
+| The figures look like a different company's | Open the filing. If it names another company, report it to Coverbase support with the vendor's name; the filing is matched from the registered identity, so the registration may be bound to the wrong company. |
+| Capital expenditure or interest is blank for a European company | The company tagged that line with its own custom element. The other ratios are still rated. |
+| The year shows as not audited for a UK company | The company filed audit-exempt accounts. That is a fact about the company, not a gap in the data. |
