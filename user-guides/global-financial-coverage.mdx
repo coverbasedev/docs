@@ -12,7 +12,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
   This guide is part of the [User Guides](/user-guides/overview) collection. It covers where the filed figures on a vendor's **Financial health** tab come from. To learn how Coverbase scores those figures, see the [Financial health guide](/user-guides/financial-health-score).
 </Info>
 
-Coverbase reads a vendor's audited annual statements from five sources, tried in a fixed order, so it can rate listed companies in the US, the UK, most of the EU and EEA, Korea, and any market where the company publishes an annual report. Your credit methodology needs these figures from the latest audited year: current assets, current liabilities, total liabilities, equity, operating profit, interest, and cash flow.
+Coverbase reads a vendor's audited annual statements from seven sources, tried in a fixed order, so it can rate listed companies in the US, the UK, most of the EU and EEA, Korea, Brazil, Japan, and any market where the company publishes an annual report. Your credit methodology needs these figures from the latest audited year: current assets, current liabilities, total liabilities, equity, operating profit, interest, and cash flow.
 
 ## How Coverbase chooses a source
 
@@ -23,17 +23,19 @@ Coverbase tries each source in this order and stops at the first one that has th
 | 1 | **SEC EDGAR** | US companies that file a 10-K. Foreign companies that file a 20-F or 40-F with the SEC, for example many large Canadian, Israeli, Swiss, Japanese, Indian and Latin American companies. |
 | 2 | **ESEF and UKSEF annual reports** | Listed companies in the UK and most of the EU and EEA, for example Denmark, Sweden, France, Finland, Norway, Poland, Italy, Belgium, the Netherlands, Austria, Spain and Portugal. |
 | 3 | **OpenDART** | Korean listed companies, and unlisted Korean companies that file audited reports. |
-| 4 | **Companies House** | UK companies that file tagged accounts, private companies included. |
-| 5 | **Published annual report** | Listed companies that publish an annual report on their own website or through their exchange, for example in Australia, Hong Kong, Singapore, New Zealand, Switzerland, Germany, Ireland, Japan, South Africa, India, and Canadian companies that do not file with the SEC. |
+| 4 | **Companies House** | UK companies that file tagged accounts, private companies included. Small and micro companies that file only a balance sheet still get a current ratio and a debt-to-worth ratio. |
+| 5 | **CVM** | Brazilian listed companies, matched by CNPJ. |
+| 6 | **EDINET** | Japanese companies that file an annual securities report, matched by securities code or corporate number. |
+| 7 | **Published annual report** | Listed companies that publish an annual report on their own website or through their exchange, for example in Australia, Hong Kong, Singapore, New Zealand, Switzerland, Germany, Ireland, South Africa, India, and Canadian companies that do not file with the SEC. |
 
 The **Financial health** tab names the source above the ratings, for example "Rated from SEC Form 10-K, fiscal year 2025" or "Rated from Annual report, fiscal year 2026". To check a figure, click **Open filing**. It opens the document Coverbase read.
 
 ## How Coverbase reads each source
 
-- **SEC EDGAR, ESEF, UKSEF, OpenDART and Companies House** tag each figure with a standard taxonomy: US GAAP, IFRS, or the UK FRC taxonomy. Coverbase reads only the standard tags for consolidated totals. When a company tags a line with its own custom element, Coverbase leaves that figure blank. Some ESEF filers show no capital expenditure or interest for this reason.
+- **SEC EDGAR, ESEF, UKSEF, OpenDART, Companies House, CVM and EDINET** tag each figure with a standard taxonomy or chart of accounts: US GAAP, IFRS, the UK FRC taxonomy, the Brazilian standard chart, or the Japanese GAAP taxonomy. Coverbase reads only the standard tags for consolidated totals. When a company tags a line with its own custom element, Coverbase leaves that figure blank. Some ESEF filers show no capital expenditure or interest for this reason.
 - **Published annual reports** are PDFs. A model reads the pages that hold the primary statements and the auditor's report. Coverbase then checks the result in three ways:
   - The company named in the report must be your vendor.
-  - The report must come from the vendor's own website or from an exchange that publishes for it.
+  - The report must come from the vendor's own website or from an exchange that publishes for it. The vendor's site on its home country's domain also counts, for example telstra.com.au for an Australian vendor recorded as telstra.com.
   - Total assets must be within 2% of total liabilities plus equity. If they are not, Coverbase drops total liabilities and the debt-to-worth ratio.
 
 <Warning>
@@ -48,7 +50,9 @@ Your methodology can require audited statements before a vendor rates Low. Cover
 | --- | --- |
 | SEC EDGAR, ESEF and UKSEF | The law requires an audit of these annual reports. The year counts as not audited when the next annual report is overdue. |
 | OpenDART | DART publishes the auditor's opinion. An adverse opinion or a disclaimer counts as not audited. |
-| Companies House | The accounts type. Audit-exempt small companies, micro-entities and dormant companies count as not audited. |
+| Companies House | The accounts type, then the audit status the accounts declare in their tags. Audit-exempt small companies, micro-entities and dormant companies count as not audited. |
+| CVM | The auditor's report type CVM publishes. An adverse opinion or a disclaimer counts as not audited. |
+| EDINET | The law requires an audit of the annual securities report. The year counts as not audited when the next report is overdue. |
 | Published annual report | The model reads the auditor's report in the document. |
 
 A report counts as overdue when the next year's report is past this deadline after the fiscal year end:
@@ -59,6 +63,8 @@ A report counts as overdue when the next year's report is past this deadline aft
 | ESEF and UKSEF | 120 days |
 | OpenDART | 90 days |
 | Companies House | 275 days |
+| CVM | 90 days |
+| EDINET | 92 days |
 | Published annual report | 183 days |
 
 ## When a vendor has nothing on file
@@ -67,7 +73,7 @@ A report counts as overdue when the next year's report is past this deadline aft
 
 - The vendor is a private company outside the UK and Korea. These companies publish no statements.
 - The vendor is a bank or an insurer. These companies do not split current from non-current items, so Coverbase does not rate the current ratio.
-- Coverbase could not confirm the vendor's identity. Coverbase finds each source from the LEI, company number or stock ticker on the **Corporate registration** tab.
+- Coverbase could not confirm the vendor's identity. Coverbase finds each source from the LEI, company number or stock ticker on the **Corporate registration** tab. When several registered companies share the vendor's name, Coverbase prefers the one registered in the vendor's headquarters country and the group parent over its subsidiaries. When nothing separates them, the match waits for review instead of choosing one.
 
 To rate a vendor with nothing on file, click **Upload financial statements** on the **Financial health** tab and add the statements the vendor gave you. Coverbase rates submitted statements the same way, and only your organization sees them. See [Submitting a vendor's own financial statements](/products/financial-health-score#submitting-a-vendors-own-financial-statements).
 
