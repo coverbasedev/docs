@@ -1,0 +1,104 @@
+---
+title: "Engagement records API"
+description: "List and read engagements, the per-relationship record between your organization and a vendor: status, inherent and residual risk level, dates, services and contracts."
+icon: "route"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<LifecycleBeta />
+
+An **engagement record** (`cbegm_...`) is one piece of business with a vendor: the service a Transaction Owner is buying. This API lets a GRC, orchestration or reporting tool read engagements, their status and risk level, and the services and contracts they cover. It is read-only.
+
+<Note>
+  These routes are `/v1/engagement-records`. The similar-looking `/v1/engagements` paths are dashboard routes and are not part of the public API. While the beta is off for your organization, every route here returns `404` with `not_enabled`.
+</Note>
+
+All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token](/api-reference/oauth), and need permission to read vendors. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path |
+| ------ | ---- |
+| `GET` | `/v1/engagement-records` |
+| `GET` | `/v1/engagement-records/{engagement_id}` |
+
+## List engagement records
+
+<ParamField path="method" type="GET">
+  `GET /v1/engagement-records`
+</ParamField>
+
+Uses the standard [pagination](/conventions#pagination) envelope: `{ "items": [...], "total", "limit", "offset" }`.
+
+<ParamField query="vendor_id" type="string">
+  Only engagements with this vendor (`cbvndr_...`).
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  1 to 200.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  0 or more.
+</ParamField>
+
+```bash cURL
+curl "https://api.coverbase.app/v1/engagement-records?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+## Get an engagement record
+
+<ParamField path="method" type="GET">
+  `GET /v1/engagement-records/{engagement_id}`
+</ParamField>
+
+Returns the [engagement record object](#the-engagement-record-object), archived ones included. An unknown ID returns `404 engagement_not_found`.
+
+## The engagement record object
+
+```json
+{
+  "id": "cbegm_0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+  "name": "Acme payroll processing",
+  "description": null,
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "status": "Active",
+  "status_group": "started",
+  "inherent_risk_level": "High",
+  "residual_risk_level": "Medium",
+  "start_date": 1767225600,
+  "end_date": null,
+  "service_ids": ["cbsvc_9f8e7d6c5b4a39281706f5e4d3c2b1a0"],
+  "contract_ids": ["cbcontract_5f0c2b1e9d8a4c7b8e6f1a2b3c4d5e6f"],
+  "is_archived": false,
+  "created_at": 1767225600,
+  "updated_at": 1790000000
+}
+```
+
+<ResponseField name="status" type="string | null">
+  The label of the engagement's status in your organization's status list.
+</ResponseField>
+
+<ResponseField name="status_group" type="string | null">
+  The group the status belongs to: `unstarted`, `started`, `completed` or `canceled`. It does not change when your organization renames statuses, so use it, not the label, in integration logic.
+</ResponseField>
+
+<ResponseField name="inherent_risk_level" type="string | null">
+  The name of the engagement's inherent risk level.
+</ResponseField>
+
+<ResponseField name="residual_risk_level" type="string | null">
+  The name of the engagement's residual risk level.
+</ResponseField>
+
+<ResponseField name="service_ids" type="string[]">
+  The vendor services (`cbsvc_...`) the engagement covers.
+</ResponseField>
+
+<ResponseField name="contract_ids" type="string[]">
+  The [contract records](/api-reference/contract-records) linked to the engagement.
+</ResponseField>

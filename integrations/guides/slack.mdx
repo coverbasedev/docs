@@ -1,6 +1,6 @@
 ---
 title: "Slack"
-description: "Connect Coverbase's Slack app to your workspace, and route Coverbase events into Slack channels with webhooks."
+description: "Connect Coverbase's Slack app to your workspace, let requesters ask for a new vendor in a direct message to the app, and route Coverbase events into Slack channels with webhooks."
 icon: "slack"
 ---
 
@@ -11,7 +11,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 Coverbase ships a Slack app that installs into your workspace through Slack's own authorization flow. Once connected, Coverbase can reach people in your workspace by direct message, matched to their Slack account by email.
 
 <Note>
-  Coverbase notifications (assignments, reviews, alerts) are delivered in the app and by email, not through the Slack app. The only message the Slack app sends today is the test message below. To get Coverbase events into Slack now, use [webhooks](#channel-based-patterns).
+  Coverbase notifications (assignments, reviews, alerts) are delivered in the app and by email, not through the Slack app. The Slack app sends the test message below and, for organizations in the third-party lifecycle beta, the [Intake Agent](#vendor-requests-in-slack-beta)'s replies. To get Coverbase events into Slack channels, use [webhooks](#channel-based-patterns).
 </Note>
 
 ```mermaid
@@ -31,6 +31,12 @@ flowchart LR
 - **Direct messages to the right person.** Coverbase resolves a recipient to their Slack identity by email. **Send test message** sends a message to the Slack account matching your own signed-in email, so you can confirm the match before relying on it.
 - **Test, reauthorize, disconnect.** **Test connection** asks Slack to confirm the workspace, **Reauthorize Slack** repeats the authorization, and **Disconnect** removes the saved connection.
 - **Rate-limit aware.** The connector honors Slack's retry-after signals and distinguishes transient failures from authorization problems.
+
+## Vendor requests in Slack (beta)
+
+With the [Intake Agent](/user-guides/intake-agent)'s Slack channel turned on, a requester sends the Coverbase app a direct message, or mentions it in a channel, describing the vendor they need. The agent answers in a direct message, asks only for what is missing, and opens an intake request. It accepts requests only from people whose confirmed Slack address belongs to an active member of your organization.
+
+The channel needs the app to read direct messages and mentions. An app installed before the beta lacks that permission: the Intake Agent page shows **Needs reinstall**, and **Reauthorize Slack** grants it. This channel has not yet run against a live Slack workspace.
 
 ## Channel-based patterns
 

@@ -1,0 +1,82 @@
+---
+title: "Archer"
+description: "Push Coverbase findings as issues and vendors as risks into RSA Archer content records, and read each record's status back, through the Integration Hub."
+icon: "building-shield"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import BetaConnector from "/snippets/beta-connector.mdx";
+
+<AgentDirective />
+
+<BetaConnector />
+
+The Archer connector is part of the [Integration Hub](/products/integration-hub). It writes Coverbase findings and vendor risk into Archer content records in the applications you name, and reads back a status field after each sync, so your Archer program sees third-party risk without re-keying it.
+
+## What it pushes
+
+- **Findings as issues**: every open finding that has a vendor, plus every finding already pushed, so a closure reaches Archer too.
+- **Vendor risk**: every vendor with a residual or inherent risk level, plus every vendor already pushed.
+
+Each record is created the first time and updated after that, and only when one of its mapped values changed. Coverbase keeps a link from each Coverbase record to the Archer record, which the sync log shows.
+
+| Coverbase value | Issues (findings) | Risks (vendors) |
+| --- | --- | --- |
+| **Title** | The finding's title | The vendor's name followed by "third party risk" |
+| **Description** | The finding's text | |
+| **Severity** | The finding's severity level | |
+| **Status** | The finding's status | |
+| **Vendor** | The vendor's name | The vendor's name |
+| **Due date** | The remediation due date | |
+| **Residual risk**, **Inherent risk**, **Risk tier**, **Approval status** | | The vendor's levels and status |
+| **Open findings** | | How many open findings the vendor has |
+| **Coverbase reference** | The finding number | The vendor's Coverbase ID |
+| **Coverbase link** | A link to the finding | A link to the vendor |
+
+Every value is written as text. A value with a blank target is not written.
+
+## Status read back
+
+After each push, Coverbase reads the status field you named on every record it holds, a text or values list field, and shows it on the record link. It does not change the finding in Coverbase.
+
+## Authentication
+
+Archer uses a service account. Coverbase signs in at `/api/core/security/login`, holds the session only for the sync, and sends it as `Authorization: Archer session-id=<token>`.
+
+1. Create an Archer service account with rights to create and update content in the issue and risk applications.
+2. Note the application level ID that holds issue records, the one that holds risk records, and the field ID of the status field in each.
+3. Note the field ID of each Archer field you want each Coverbase value written to.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **Archer**, or open it from the **GRC and ERM** category of the Integration Hub.
+2. On **Authentication**, enter the **Instance URL** (the https:// address you sign in to Archer at), the **Instance Name**, the **User Domain** (blank for a local Archer account), and the **Service Account Username** and **Service Account Password**.
+3. Under **Archer Application**, enter the **Issue Level ID** and **Issue Status Field ID**, the **Risk Level ID** and **Risk Status Field ID**, or both pairs.
+4. Turn on **Push findings and vendor risk to Archer**, set the **Sync Interval (Minutes)**, click **Save**, then **Test connection**.
+5. On **Field Mappings**, enter the Archer field ID for each value under **Findings as Issues** and **Vendor Risk**, and **Save mappings**.
+6. Click **Sync now** and read the **Sync Log**.
+
+## When a response is not what Coverbase expects
+
+Coverbase checks every Archer response for its success flag. A reply that is not the documented shape fails that record, with the reason in the sync log, instead of being read as success.
+
+<Warning>
+  If a create succeeds in the provider but Coverbase fails to save its link to the new record, the next sync creates a second record instead of updating the first. Watch the first syncs, and remove any duplicate it leaves.
+</Warning>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Integration Hub guide" icon="book-open" href="/user-guides/integration-hub">
+    Field mappings and the sync log.
+  </Card>
+  <Card title="Integration platforms" icon="diagram-project" href="/integrations/guides/integration-platforms">
+    Building your own sync on the API instead.
+  </Card>
+  <Card title="Findings and remediation" icon="flag" href="/user-guides/findings-and-remediation">
+    The findings pushed as issues.
+  </Card>
+  <Card title="Integration credentials and signing" icon="key" href="/security/integration-credentials">
+    How the credentials are stored.
+  </Card>
+</CardGroup>

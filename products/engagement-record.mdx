@@ -1,0 +1,89 @@
+---
+title: "Engagement record and Risk Summary"
+description: "The engagement as the Transaction Owner sees it: where the request is, each Risk Group's review, the due diligence that counts toward it, and the Risk Summary they decide on."
+icon: "route"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<LifecycleBeta />
+
+An engagement is one piece of business with a vendor: the service a Transaction Owner is buying. The engagement record puts everything that happens to that piece of business on one page, so the person who asked for it can see where it is without asking the TPRM Office, and the TPRM Office can see which Risk Groups are still working.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="One tracker for everyone" icon="route">
+    **Where This Request Is** shows the stage (Request, Triage, Inherent risk, Due diligence, Decision, Contract, Active) and an expected decision date. Everyone involved in the engagement sees the same tracker.
+  </Card>
+
+  <Card title="Risk Groups at a glance" icon="users">
+    Each risk domain that needs a review shows its status: Complete, Reused, In review, Waiting on vendor or Not started, with the reviewer.
+  </Card>
+
+  <Card title="Linked and reused diligence" icon="link">
+    Assessments are linked to the engagement. A linked assessment performed for something else can be marked as reused, and a Front Door reuse decision links the prior assessment automatically.
+  </Card>
+
+  <Card title="Risk Summary" icon="file-lines">
+    Per domain: inherent risk, control effectiveness and residual risk, read live from the linked assessments. The TPRM Office adds a recommendation and conditions, the Transaction Owner records the decision, and the summary downloads as a PDF.
+  </Card>
+
+  <Card title="Notices" icon="bell">
+    The Transaction Owner and the TPRM Office are told when due diligence goes out to the vendor and when it completes. The Transaction Owner receives the Risk Summary automatically when the last Risk Group signs off.
+  </Card>
+
+  <Card title="Corporate family" icon="sitemap">
+    Set a vendor's parent company to see the family's rating, contract value and engagements rolled up to the ultimate parent.
+  </Card>
+</CardGroup>
+
+## When due diligence is complete
+
+A risk domain needs a review on a linked assessment by the same rule the assessment's own review progress uses. A domain is **complete** when every performed assessment that needs it has finished its review of it, and **reused** when a reused assessment has. Due diligence is complete when every domain is one or the other. Archived and canceled assessments drop out.
+
+A Front Door reuse decision satisfies exactly the domains it marked for reuse, and nothing it marked for an abbreviated review or new due diligence.
+
+## The expected decision date
+
+The expected decision date is when the last open domain review's SLA runs out. A review already running uses its remaining time; one not started uses its full target, counted from when the vendor's open request is due, or from today. Business days follow the SLA clock. If any open review has no SLA target, no date is shown, and none is shown once a decision is recorded.
+
+## The decision
+
+Only the Transaction Owner, or someone who can update the vendor, records the decision, and only once due diligence is complete. **Proceed to contracting** opens the contract handoff for Supply Chain, unless one is already pending or done. **Don't proceed** records the decision and stops there.
+
+The Transaction Owner is the engagement's relationship owners (people and groups) plus whoever raised the intake request a linked assessment came from. An engagement with no owners of its own falls back to the vendor's.
+
+## Delivery tracking
+
+The **Delivery** card on the Risk Summary shows, for each recipient, whether the summary is **Sent**, **In their notifications**, **Seen** or **Read in app** in Coverbase, and when it was emailed.
+
+Email open tracking is off by default. An admin can turn on **Risk Summary Open Tracking** under **Configuration → Communications → Lifecycle Routing and Reminders**. With it on, the Risk Summary email, and no other email, carries a tracking pixel, and the card shows **Email opened** with the date of the first open, or **Email not opened yet**.
+
+- Only the first open is kept. The recipient's mail client, operating system, IP address and location are discarded and never stored.
+- An open is an image load. A mail client that blocks images never reports one, and a security scanner that fetches images can report one before anyone read the email. Treat an open as a signal; **Read in app** is the stronger fact.
+- A summary sent to someone on a digest arrives inside a grouped email, which is never tracked.
+- Turning tracking off stops it at once. Opens already recorded keep showing.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Engagement record guide" icon="book-open" href="/user-guides/engagement-record">
+    Link diligence, read the tracker, write the recommendation and record the decision.
+  </Card>
+
+  <Card title="Front Door" icon="door-open" href="/products/front-door">
+    Where reuse decisions are made.
+  </Card>
+
+  <Card title="Monitoring plans" icon="calendar-check" href="/products/monitoring-plans">
+    What the engagement owes once it is active.
+  </Card>
+
+  <Card title="Offboarding and continuity" icon="right-from-bracket" href="/products/offboarding-and-continuity">
+    The contract handoff, continuity plans and the exit.
+  </Card>
+</CardGroup>

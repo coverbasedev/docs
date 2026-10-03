@@ -1,0 +1,133 @@
+---
+title: "Monitoring plans"
+description: "Set the cadence matrix, signal re-timing, pausing statuses and scorecard rubrics, then read an engagement's monitoring plan, edit an activity, keep or revert a signal move, refresh an IRQ and confirm its diff, answer an owner attestation, and score a performance scorecard."
+icon: "calendar-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Configuration → Monitoring Plans** and the **Monitoring Plan** and **Scorecard** tabs on an engagement or service. It sits beside [The engagement record](/user-guides/engagement-record) and [Working Radar signals](/user-guides/radar-signals). For what the module is, see [Monitoring plans and scorecards](/products/monitoring-plans).
+</Info>
+
+<LifecycleBeta />
+
+Every active engagement gets a monitoring plan: which activities it owes at its tier, who owns each, and when each is next due. A service outside any engagement gets a plan of its own. You set the rules once, and plans follow them.
+
+The mistake people make most often is changing the reassessment interval on the cadence matrix and finding it does not move. The reassessment interval comes from your reassessment rules; the plan only mirrors it.
+
+## Step 1: Set the methodology
+
+Open **Configuration** and choose **Monitoring Plans**. Changing it needs a role that can change organization settings.
+
+<Steps>
+  <Step title="Cadence Matrix">
+    For each tier of your risk scale, set the interval in months for each activity: **IRQ Refresh**, **Performance Scorecard**, **Owner Attestation**, **Evidence Request** and **Contract Review**, and who owns it, the **Transaction Owner** or the **TPRM Office**. 0 means the tier does not need the activity. Until you save, the page shows the default intervals, ranked by tier. **DD Reassessment** reads your reassessment rules and **Continuous Monitoring** is Radar, so neither is set here.
+  </Step>
+  <Step title="Methodology">
+    Choose the **TPRM Office** group (left unset, it is the TPRM Office named under **Configuration → Communications**, then the vendor's risk analysts), the **Upcoming Notice (Days)** before an activity is due, the **Overdue Escalation (Days)** after which the owner and the TPRM Office are escalated to, and the **Low Scorecard Threshold**.
+  </Step>
+  <Step title="Signal Re-timing">
+    Choose **Alerts at or above** a severity, whether **Reassessment triggers** count, how far forward to pull activities (**Due within (days)**), the **Undo window (days)**, and which activities a signal **Re-times**. Signals move plans only while the **Re-time monitoring from feed signals** policy is on in the [Agent Ledger](/user-guides/agent-ledger#step-3-choose-what-agents-may-do); it is off by default, and the page warns when the rule is on but the policy is off.
+  </Step>
+  <Step title="Pausing Statuses">
+    Canceled statuses always pause a plan. Add any other engagement or service status that should, such as On hold. Under **Start Offboarding Moves To**, choose the status an owner's start offboarding answer sets (the first canceled status unless you choose one).
+  </Step>
+  <Step title="Scorecard Rubrics">
+    Click **Add binding** to bind a **Rubric** to a tier (or **Any tier**) and a **Service Category** (or **Any category**), with its **Respondents**. The most specific match wins. With no binding, the default rubric is scored by the owner.
+  </Step>
+</Steps>
+
+Click **Save**. Plans pick up a change on their next re-plan.
+
+## Step 2: Read a plan
+
+Open the engagement (or the service) and choose the **Monitoring Plan** tab. The header says when the plan was generated and why, for example **when the engagement went active** or **at contract execution**. If no plan exists yet, the TPRM Office can click **Generate plan now**.
+
+The timeline shows the next twelve months for each activity, with its owner and interval. Markers read **Done**, **Planned**, **Overdue** or **Moved by a signal**, and **Today** marks the current date. **Continuous Monitoring** reads **Always on** while Radar watches the vendor.
+
+A service that belongs to a live engagement shows **This service is monitored under its engagement's plan.** with **Open engagement plan**.
+
+## Step 3: Edit an activity
+
+The TPRM Office clicks **Edit plan**, picks the **Activity**, and changes its **Interval (Months)**, **Next Due Date**, **Owner** (a person, or **By role**) or **Enabled**, with a **Reason**. Click **Save**.
+
+An edited activity keeps its interval, owner and due date when the plan is re-planned. Moving the reassessment's due date moves the vendor's reassessment schedule, so the reassessment is created on the new date. A date is never moved inside the window reassessments need to be prepared in.
+
+## Step 4: Keep or revert a signal move
+
+When a Radar alert or a reassessment trigger matches your signal rule, the activities you chose move forward at once, and the plan shows what moved: **IRQ Refresh moved from 12 March to 2 January**, with the signal's source and date. Within the undo window, the TPRM Office clicks **Keep** or **Revert**. Reverting restores each schedule the move changed. A signal moves a plan once, however often it is delivered.
+
+## Step 5: Refresh an IRQ
+
+The Transaction Owner opens the **IRQ Refresh** card and clicks **Refresh IRQ**. The questionnaire opens prefilled from the last approved IRQ, and every answer saves as you go. Change what is no longer true, then **Submit for review**.
+
+The card then shows the diff for the TPRM Office: each answer that changed, before and after, each domain's score and level, **Newly in scope** domains, and the **Engagement Tier** before and after. The TPRM Office clicks **Confirm and re-plan**, or **Confirm and schedule reassessment** when a domain was newly scoped or the tier rose. A reassessment is then raised straight away for the engagement's services. **Withdraw** abandons a refresh before it is confirmed.
+
+The Transaction Owner can refresh the IRQ and answer it without any vendor or questionnaire permission: access comes from owning the engagement.
+
+## Step 6: Answer an owner attestation
+
+When an attestation is due, its owner sees **Is ... still in use?** Answer **Yes, still in use**, or **Start offboarding**. Every answer is logged with the date and user.
+
+**Start offboarding** files an offboarding request with you as the requester and your note as the justification, moves the engagement to its not-in-use status, and pauses the plan. Answering twice never files a second request. A service outside any engagement has no offboarding request.
+
+## Step 7: Score a scorecard
+
+When a scorecard comes due, each respondent is assigned and notified. On the **Scorecard** tab, click **Score now**, score each category (each shows its **Weight**), add **Notes** and **Submit scorecard**.
+
+The tab shows the **Weighted Score** for the period, the change from the previous period, a flag when it is **Below the threshold**, the **Categories and Weights** of the rubric, and **SLA Adherence** from the vendor's SLAs (Met and On track count as adhering). The period closes when every respondent has scored or the escalation window passes.
+
+## Work across plans in the Monitoring workbench
+
+Open **Monitoring** in the left navigation. **Activities** lists every scheduled activity with its engagement or service, owner, due date and status; **Plans** lists every plan with its tier and when it was generated. Search, choose which **Activities**, the **Due** window (**Overdue**, **Next 30 days**, **Next 90 days** or **All**), and **Owned by me**.
+
+Select activities, then:
+
+- **Reschedule**: **Move to a date** or **Shift by days** (a negative number pulls them earlier), with an optional **Note**. Each move is logged as a TPRM Office edit. A reassessment moves its scheduled date too.
+- **Send scorecards**: opens each scorecard's current period today and asks its respondents to score.
+
+Up to 20 activities run at once; more run in the background with progress, and the result reads, for example, "18 moved, 2 need attention", listing each with its reason.
+
+## Compare submissions
+
+On the vendor's **Questionnaires** tab, **Compare** shows a finished submission beside the vendor's earlier submission of the same questionnaire: **Domain Scores** before and after (with **Risk rose** where it did), and every answer **Changed**, **Added**, **Removed** or **Unchanged**, with its score. Show only the changes, or all answers.
+
+## Plan history
+
+**Plan History** records everything that happened to a plan: generation, re-plans, every edit with before and after, completions, notices and escalations, signal moves and whether they were kept or reverted, pauses and resumes, attestations, IRQ refreshes, reassessments raised and offboarding requested.
+
+## Troubleshooting
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| No **Monitoring Plan** tab | The beta is not on for your organization. | Ask your Coverbase representative. |
+| **A monitoring plan is generated when the engagement goes active or its contract is executed.** | The engagement has not started yet. | Wait, or click **Generate plan now**. |
+| The plan is **Paused** | The engagement or service is in a canceled status, expired, or in one of your pausing statuses. | Move it back to an active status. Due dates shift by the time spent paused. |
+| Radar went quiet for a vendor | Every plan for the vendor paused, and no other live engagement needed Radar. | Resume a plan. Radar comes back on where the pause turned it off. |
+| The reassessment interval on the matrix cannot be edited | It comes from your reassessment rules. | Change the reassessment rule, or move the reassessment's date with **Edit plan**. |
+| A signal moved an activity you did not want moved | Your signal rule re-times that activity. | **Revert** within the undo window, and remove the activity from **Re-times**. |
+| Signals never move a plan | The **Re-time monitoring from feed signals** agent policy is off. | Turn it on in the Agent Ledger. Held-back moves are listed there. |
+| A bulk reschedule skipped some activities | Each skipped activity was paused, had no date, or would land in the past or inside a reassessment's collection time. | Read the reason on each, and adjust the date. |
+| **Generate plan now** is refused for a service | The service belongs to a live engagement. | Use the engagement's plan. |
+| No scorecard was issued | No tier requires one, or the activity is not yet within its notice window. | Set a **Performance Scorecard** interval for the tier. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="The engagement record" icon="route" href="/user-guides/engagement-record">
+    The engagement page the plan lives on.
+  </Card>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    The alerts that re-time a plan.
+  </Card>
+  <Card title="Offboarding and continuity" icon="right-from-bracket" href="/user-guides/offboarding-and-continuity">
+    What Start offboarding sets in motion.
+  </Card>
+  <Card title="Front Door triage" icon="door-open" href="/user-guides/front-door-triage">
+    Opening an IRQ refresh from a material change.
+  </Card>
+</CardGroup>

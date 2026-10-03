@@ -1,0 +1,56 @@
+---
+title: "BigQuery"
+description: "Share your third-party risk tables into your own BigQuery dataset on a schedule, authenticated with a service account key, with a current view beside every table."
+icon: "table"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import BetaConnector from "/snippets/beta-connector.mdx";
+
+<AgentDirective />
+
+<BetaConnector />
+
+A BigQuery destination is part of [warehouse data share](/products/warehouse-data-share). Coverbase writes through the BigQuery REST API with a service account key, creates one table per contract table on the first sync, and keeps a `<table>_current` view beside each.
+
+## Prepare BigQuery
+
+1. Create a service account for Coverbase.
+2. Grant it **BigQuery Data Editor** on the dataset and **BigQuery Job User** on the project.
+3. Create a JSON key for the service account.
+
+The dataset is created if it does not exist yet, in the location you give.
+
+## Add the destination in Coverbase
+
+1. Open **Configuration → Data Share** and click **Add destination**.
+2. Choose **BigQuery**, give it a **Name**, and choose **Hourly** or **Daily**.
+3. Enter the **Project ID**, **Dataset** and **Location**, and paste the **Service Account Key (JSON)**.
+4. Click **Add destination**, then **Test connection**, then **Sync now**.
+
+After saving, the card shows the service account's email as a hint. The key is never shown again. Archiving the destination deletes it.
+
+## What lands in BigQuery
+
+- One table per contract table, created on the first sync, with any column the contract adds later added to it.
+- Each sync appends the rows that changed, stamped with `_cb_synced_at`.
+- A `<table>_current` view per table keeps the newest version of each row.
+
+Point Looker Studio, Power BI or Tableau at the `_current` views.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Data share guide" icon="book-open" href="/user-guides/warehouse-data-share">
+    Run logs, pausing and the table contract.
+  </Card>
+  <Card title="Snowflake" icon="snowflake" href="/integrations/guides/snowflake">
+    The Snowflake destination.
+  </Card>
+  <Card title="Amazon S3" icon="bucket" href="/integrations/guides/amazon-s3">
+    The S3 destination.
+  </Card>
+  <Card title="Integration credentials and signing" icon="key" href="/security/integration-credentials">
+    How the key is stored.
+  </Card>
+</CardGroup>

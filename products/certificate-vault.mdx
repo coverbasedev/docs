@@ -1,0 +1,82 @@
+---
+title: "Certificate Vault and prequalification"
+description: "One repository for every certificate a vendor holds, whether uploaded, read from a document, pulled from ISNetworld, Avetta or EcoVadis, or found in a trust center, with prequalification rules that can block new purchase orders and licensed security, financial and credit ratings in Radar."
+icon: "certificate"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
+
+<AgentDirective />
+
+<LifecycleBeta />
+
+The Certificate Vault is a record for every attestation your program relies on: ISO certificates, SOC reports, PCI attestations, certificates of insurance, network grades and ESG ratings. Prequalification rules read the vault to decide which vendors may be used, and licensed rating providers feed rating changes into Radar.
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Every certificate in one place" icon="certificate">
+    **Certificates** in the left navigation lists every certificate across your vendors, and each vendor has a **Certificates** tab. Validity (valid, expiring within 60 days, expired) is worked out when you look, so it never goes stale.
+  </Card>
+
+  <Card title="Filled from what you already have" icon="file-import">
+    Certification, PCI, SOC 1 and SOC 2, ACORD 25 and insurance policy documents fill the vault when they are analyzed. Trust center documents, network pulls and certificates you add by hand fill it too, and you can request a certificate from the vendor through the supplier portal.
+  </Card>
+
+  <Card title="Prequalification rule sets" icon="list-check">
+    Rules that must all pass, each passing when any one of its conditions does: a network grade, a network status, a certificate held, insurance coverage with a minimum limit and additional insured, or a safety or ESG figure such as TRIR, EMR, DART rate or ESG score.
+  </Card>
+
+  <Card title="Blocking with an override" icon="ban">
+    A rule set can block new purchase orders until the vendor qualifies or someone records an override with a rationale. An override lapses when the result changes.
+  </Card>
+
+  <Card title="Contractor and ESG networks" icon="helmet-safety">
+    ISNetworld and Avetta grades, safety statistics and insurance, and EcoVadis scorecards, sync into the vault daily.
+  </Card>
+
+  <Card title="Licensed ratings in Radar" icon="chart-line">
+    Bitsight, SecurityScorecard, RapidRatings and Moody's ratings are pulled for your portfolio. A change in a matched vendor's rating becomes a Radar signal, and the first pull is a baseline, so connecting a provider does not flood Radar.
+  </Card>
+</CardGroup>
+
+<Warning>
+  The ISNetworld, Avetta, EcoVadis, Bitsight, SecurityScorecard, RapidRatings and Moody's connectors are in **beta** and have not yet been validated against a live customer tenant. RapidRatings, Moody's, ISNetworld, Avetta and EcoVadis are partner APIs whose request paths and field names need checking against your account. When a provider's response does not have the shape Coverbase expects, the pull stops and records the error rather than reading it as empty, so a changed response never archives certificates.
+</Warning>
+
+## How long a certificate counts
+
+- A SOC report is relied on for a year past the end of its period.
+- A certificate of insurance is only as current as its first policy to lapse.
+- Every prequalification condition reads only current certificates, so an expired record stops counting for its grade and its figures alike.
+- A safety figure over a number of years needs each of the latest years reported. A missing year fails the condition.
+
+## Where prequalification shows up
+
+- On the vendor's page, as **Qualified**, **Blocked** or **Overridden**, with **Override with rationale**.
+- On the Front Door review of an intake request, with the same override control.
+- When someone issues a purchase order in Coverbase for a blocked vendor: the purchase order is refused.
+- In workflows, as a prequalification condition you can branch on.
+
+A failing rule set that does not block reads as advisory. Results are recalculated when a certificate changes, when you save a rule set, and once a day. Each rule set can remind relationship owners a set number of days before a certificate lapses.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Certificate Vault guide" icon="book-open" href="/user-guides/certificate-vault">
+    Fill the vault, write a rule set, override a result and connect a network.
+  </Card>
+
+  <Card title="ISNetworld" icon="helmet-safety" href="/integrations/guides/isnetworld">
+    Connect contractor grades, statistics and insurance.
+  </Card>
+
+  <Card title="Bitsight" icon="shield-halved" href="/integrations/guides/bitsight">
+    Bring security rating changes into Radar.
+  </Card>
+
+  <Card title="Supplier Radar" icon="satellite-dish" href="/products/supplier-radar">
+    Where rating changes become signals.
+  </Card>
+</CardGroup>
