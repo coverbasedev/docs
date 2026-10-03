@@ -339,6 +339,61 @@ curl "https://api.coverbase.app/v1/webhooks/cbwh_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "webhook_not_found", "message": "Webhook not found."}}` | The `webhook_id` does not exist or is not in the API key's org. |
 
+## Dark web exposure payload
+
+`DarkWebExposure.Created` and `DarkWebExposure.Updated` deliveries carry the exposure's facts inside `data`, so a SIEM or SOAR playbook can act without calling back. The envelope, signing and retries are the same as every other event (see [Webhooks](/integrations/webhooks)). `DarkWebExposure.Deleted` carries only `dark_web_exposure_id`.
+
+The payload never includes the exposure's summary, its source details, a capture, or an unmasked identifier.
+
+```json Example data for DarkWebExposure.Created
+{
+  "event_type": "DarkWebExposure.Created",
+  "dark_web_exposure_id": "cbdwexp_01J9Q3",
+  "id": "cbdwexp_01J9Q3",
+  "category": "routing_number",
+  "category_label": "Routing number",
+  "severity": "critical",
+  "status": "new",
+  "subject": { "kind": "organization", "vendor_id": null, "vendor_name": null },
+  "source": "coverbase_crawler",
+  "channel": "paste_site",
+  "context": "account_list",
+  "matched": { "kind": "routing_number", "masked": "•••••7751" },
+  "item_count": 38,
+  "title": "Routing number posted with 38 account numbers",
+  "detected_at": "2026-09-30T19:14:05Z",
+  "first_seen_at": "2026-09-30T19:14:05Z",
+  "last_seen_at": "2026-09-30T19:14:05Z",
+  "ack_due_at": "2026-09-30T23:14:05Z",
+  "decision_due_at": null,
+  "case_id": null,
+  "url": "https://app.coverbase.app/dark-web?exposureId=cbdwexp_01J9Q3"
+}
+```
+
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `id` | string | The exposure id. `dark_web_exposure_id` repeats it for existing integrations. |
+| `category` | string | `routing_number`, `payment_card_exposure`, `credential_leak`, `stealer_infection`, `ransomware_victim`, `data_breach`, `brand_impersonation`, `dark_web_mention`, `ai_fraud` or `code_leak`. |
+| `category_label` | string | Display label for the category, for example `Card BIN` for `payment_card_exposure`. |
+| `severity` | string | `critical`, `high`, `medium`, `low` or `info`. |
+| `status` | string | The review status at delivery time, for example `new`, `acknowledged`, `confirmed` or `resolved`. |
+| `subject` | object | `kind` is `organization` or `vendor`. `vendor_id` and `vendor_name` are set for a vendor or partner. |
+| `source` | string | The feed that found it, for example `coverbase_crawler`, `hibp` or `ransomlook`. |
+| `channel` | string or null | Where it was posted, for example `paste_site` or `forum`, when the source reports it. |
+| `context` | string or null | For routing numbers and card BINs: `account_list`, `card_list`, `cash_out_method`, `check_sale_mention` or `mention`. |
+| `matched` | object | The watched identifier that matched. `kind` is its type; `masked` shows a routing number's last 4 digits, a BIN's first digit and last 2, a mailbox's first character and domain. |
+| `item_count` | integer or null | How many accounts, cards or records the post states, when it states a count. |
+| `title` | string | The exposure title. |
+| `detected_at`, `first_seen_at`, `last_seen_at` | string | ISO 8601 timestamps in UTC. |
+| `ack_due_at` | string or null | When the acknowledge clock runs out, counted in your business hours. Null when no clock runs. |
+| `decision_due_at` | string or null | When the Legal decision is due, while the exposure is with Legal. |
+| `case_id` | string or null | The Legal case the exposure is linked to, if any. |
+| `url` | string | A link to the exposure in Coverbase. Opening it requires sign-in. |
+| `field_diffs` | object | `DarkWebExposure.Updated` only: the fields that changed, as on every other `.Updated` event. |
+
+To check your parser, open **Configuration**, **Dark Web**, **Alerts** and click **Send test**. Coverbase signs a fictional `DarkWebExposure.Created` payload and sends it to every webhook subscribed to that event.
+
 ## Appendix A: cURL quick reference
 
 One block per endpoint, copy-paste ready. Set these once:
