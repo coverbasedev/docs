@@ -121,6 +121,20 @@ A single **Add Conditional Logic** action also sits on each question, prefilled 
 
 On the submission, a section or question a rule hid is listed under **Skipped because conditions were not met**, with the answer that was given against the answer the rule needed.
 
+#### Importing rules from a spreadsheet
+
+The top of **Configure Conditional Logic** takes an Excel file of rules, so a long questionnaire's logic does not have to be built one rule at a time. **Template** downloads a workbook with two sheets. You write rules on **Conditional Logic**, one rule per row. **Questions** lists every question on the template with the ID to use for it, its type, its option labels, and its section. The import reads only the first sheet.
+
+- **Parent Question ID**: the question that triggers the rule. Use the ID shown beside it in the editor (for example `1.1`) or the ID **Copy Question ID** gives you.
+- **Reference Values**: option labels from the trigger question, separated by `|`. Case and extra spaces are ignored. For a country or currency question, use ISO codes such as `US|CA`.
+- **Target Question IDs**: the questions to show, separated by `|`.
+- **Target Section Names**: the sections to show, by name, separated by `|`. A row shows questions or sections, not both.
+- **Predicate**: `one_of` (the default) or `not_one_of`, which the editor shows as **is any of** and **is not any of**.
+
+Every upload is previewed first. The preview counts the rules a confirm will create, counts a row that matches a rule already on the template as an update that changes nothing, and lists each row that will not import with the reason. **Download workbook with problems marked** gives you back your file with those reasons in a new column, ready to fix and drop in again.
+
+An import only adds rules. Changing a row and importing it again adds a second rule beside the first, so edit or delete an existing rule in the dialog. Each row has a single trigger question; build a rule that needs answers to several questions with **Add Condition**. The editor's checks apply to every row: a question cannot show itself or the section it sits in, and an internal-only question can only show other internal-only questions.
+
 ### Write-back: answers that update the record
 
 **Configure write-back** on a question makes its answer write a value onto the vendor, onto its services, or, for an assessment questionnaire, onto the assessment. The panel asks for:
@@ -147,7 +161,7 @@ The custom field's own settings page lists every question that fills it under **
 
 ### Spreadsheet import and export
 
-**Actions → Bulk Import Questions** opens a dialog that takes an Excel file. **Download blank template** gives you the column layout with example rows; **Download current questions** exports what is already on the template so you can edit and re-import it. The columns cover question text, type, required, pipe-separated options and weights, instructions, guidance, the comment and document switches, internal only, section name and order. Rows that fail come back in a **Download Errors** sheet with an **Error** column.
+**Actions → Bulk Import Questions** opens a dialog that takes an Excel file. **Download blank template** gives you the column layout with example rows; **Download current questions** exports what is already on the template so you can edit and re-import it. The columns cover question text, type, required, pipe-separated options and weights, instructions, guidance, the comment and document switches, internal only, section name and order. Rows that fail come back in a **Download Errors** sheet with an **Error** column. Conditional logic has an import of its own, covered in [Importing rules from a spreadsheet](#importing-rules-from-a-spreadsheet).
 
 **Actions → Export → Export Template as XLSX** downloads the template. **Export Submissions as XLSX** appears once the template has submissions and downloads every answer on the current page of the submissions table. A single submission has its own **Export as XLSX** in its actions menu.
 
@@ -323,6 +337,7 @@ Each person controls these under their notification settings; see [Email notific
 | "A write-back I configured never changed the vendor." | Either the submission has not been accepted, the suggestion was rejected on the **Suggested updates** panel, or the target already held a value someone typed. Built-in columns are only filled when empty. |
 | "The vendor cannot see a question I added." | They opened the portal before you saved it. After they submit, use **Reopen Submission**; they will see the new questions. |
 | "Configure Conditional Logic is disabled." | The template has unsaved changes, or you lack permission. Save first. On a derived questionnaire the rules belong to the control set. |
+| "An imported row says its ID could be any of two questions, such as 1.1 and 1.10." | Excel stored the ID as a number and dropped the trailing zero. Format the ID columns as text, type the IDs again, and upload the file again. The IDs on the template's **Questions** sheet are already text, so copying them avoids this. |
 | "Send Questionnaire is disabled." | Unsaved changes, or a select question with no options. The tooltip lists the questions to fix. |
 | "This questionnaire is no longer available." | The link points at a template that was deleted. Its submissions are still on each vendor's **Questionnaires** tab. |
 | "Questionnaire changed" dialog while editing. | Someone else saved the template. Reload to get their version; your unsaved edits are lost. |
