@@ -123,17 +123,21 @@ On the submission, a section or question a rule hid is listed under **Skipped be
 
 #### Importing rules from a spreadsheet
 
-The top of **Configure Conditional Logic** takes an Excel file of rules, so a long questionnaire's logic does not have to be built one rule at a time. **Template** downloads a workbook with two sheets. You write rules on **Conditional Logic**, one rule per row. **Questions** lists every question on the template with the ID to use for it, its type, its option labels, and its section. The import reads only the first sheet.
+The top of **Configure Conditional Logic** takes an Excel file of rules, so a long questionnaire's logic does not have to be built one rule at a time. **Template** downloads an empty workbook. **Current rules** downloads the rules the template already has, in the same layout, so you can edit them and upload the file again. Both workbooks have two sheets. You write rules on **Conditional Logic**, one condition per row. **Questions** lists every question on the template with the ID to use for it, its type, its option labels, and its section. The import reads only the first sheet.
 
-- **Parent Question ID**: the question that triggers the rule. Use the ID shown beside it in the editor (for example `1.1`) or the ID **Copy Question ID** gives you.
-- **Reference Values**: option labels from the trigger question, separated by `|`. Case and extra spaces are ignored. For a country or currency question, use ISO codes such as `US|CA`.
-- **Target Question IDs**: the questions to show, separated by `|`.
-- **Target Section Names**: the sections to show, by name, separated by `|`. A row shows questions or sections, not both.
+- **Rule**: optional. Rows with the same Rule make one rule, and all of their conditions must be met. Leave it blank for a rule with one condition. **Current rules** fills in the ID of each rule; keep it, and uploading the row updates that rule instead of adding a new one.
+- **Parent Question ID**: the trigger question for the condition. Use the ID shown beside it in the editor (for example `1.1`) or the ID **Copy Question ID** gives you.
 - **Predicate**: `one_of` (the default) or `not_one_of`, which the editor shows as **is any of** and **is not any of**.
+- **Reference Values**: option labels from the trigger question, separated by `|`. Case and extra spaces are ignored. For a country or currency question, use ISO codes such as `US|CA`.
+- **Target Question IDs**: the questions the rule shows, separated by `|`.
+- **Target Section Names**: the sections the rule shows, by name, separated by `|`.
+- **Target Options**: the options the rule shows, each written as the question's ID, a colon, and the option label (for example `1.2: Yes`), separated by `|`.
 
-Every upload is previewed first. The preview counts the rules a confirm will create, counts a row that matches a rule already on the template as an update that changes nothing, and lists each row that will not import with the reason. **Download workbook with problems marked** gives you back your file with those reasons in a new column, ready to fix and drop in again.
+A rule shows one kind of target: questions, sections, or options. Its targets can sit on any of its rows; **Current rules** puts them on the first. A rule can combine up to ten conditions, each on a different question.
 
-An import only adds rules. Changing a row and importing it again adds a second rule beside the first, so edit or delete an existing rule in the dialog. Each row has a single trigger question; build a rule that needs answers to several questions with **Add Condition**. The editor's checks apply to every row: a question cannot show itself or the section it sits in, and an internal-only question can only show other internal-only questions.
+Every upload is previewed first. The preview counts the rows a confirm will create, counts a row whose rule already exists or that updates a rule as an update, and lists each row that will not import with the reason. A rule imports whole or not at all, so a problem on one of its rows holds back the others, which name the row to fix. **Download workbook with problems marked** gives you back your file with those reasons in a new column, ready to fix and drop in again.
+
+An import adds and updates rules but never deletes one; delete a rule in the dialog. If someone changes or deletes a rule after you download **Current rules**, the rows carrying its old ID will not import. Download the current rules again, or clear the Rule cell to add the rule as a new one. The editor's checks apply to every rule: it cannot show one of its own trigger questions, a section that holds one, or options of one, and an internal-only question can only show other internal-only questions.
 
 ### Write-back: answers that update the record
 
@@ -338,6 +342,7 @@ Each person controls these under their notification settings; see [Email notific
 | "The vendor cannot see a question I added." | They opened the portal before you saved it. After they submit, use **Reopen Submission**; they will see the new questions. |
 | "Configure Conditional Logic is disabled." | The template has unsaved changes, or you lack permission. Save first. On a derived questionnaire the rules belong to the control set. |
 | "An imported row says its ID could be any of two questions, such as 1.1 and 1.10." | Excel stored the ID as a number and dropped the trailing zero. Format the ID columns as text, type the IDs again, and upload the file again. The IDs on the template's **Questions** sheet are already text, so copying them avoids this. |
+| "Rows from Current rules say the rule was changed or deleted after the sheet was exported." | Someone edited or deleted that rule in the dialog after you downloaded the file. Download **Current rules** again and redo your edits, or clear the Rule cell to add the row as a new rule. |
 | "Send Questionnaire is disabled." | Unsaved changes, or a select question with no options. The tooltip lists the questions to fix. |
 | "This questionnaire is no longer available." | The link points at a template that was deleted. Its submissions are still on each vendor's **Questionnaires** tab. |
 | "Questionnaire changed" dialog while editing. | Someone else saved the template. Reload to get their version; your unsaved edits are lost. |
