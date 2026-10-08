@@ -5,19 +5,22 @@ icon: "scale-balanced"
 ---
 
 import AgentDirective from "/snippets/agent-directive.mdx";
-import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 
 <AgentDirective />
 
-<LifecycleBeta />
+The **Risk Methodology** page under **Configuration** holds the rules your inherent risk scores follow. Intake, every Risk Group's review and every report read the same settings, so a change made here applies everywhere at once.
 
-The **Risk Methodology** page under **Configuration** holds the rules your inherent risk scores follow. Intake, every Risk Group's review and every report read the same settings, so a change made here applies everywhere at once rather than living in a spreadsheet beside the platform.
+Your Coverbase representative turns on the third-party lifecycle features for your organization.
+
+<Frame caption="Configuration → Risk Methodology, on the Risk Domains tab, with each domain's weight and Risk Group.">
+  <img src="/images/user-guides/risk-methodology-domains.png" alt="Risk Methodology page with five tabs and the Risk Domains table listing eight domains, each not weighted, with the Risk Group reviewer for each" />
+</Frame>
 
 ## What it covers
 
 <CardGroup cols={2}>
   <Card title="Risk domains and weights" icon="weight-scale">
-    The domains an inherent risk questionnaire (IRQ) scores, the weight each carries, and the Risk Group that reviews it. With no weight on any domain, the score is computed exactly as before.
+    The domains an inherent risk questionnaire (IRQ) scores, the weight each carries, and the Risk Group that reviews it. With no weight on any domain, the questionnaire keeps its flat score.
   </Card>
 
   <Card title="Aggregation" icon="layer-group">
@@ -48,11 +51,15 @@ The **Risk Methodology** page under **Configuration** holds the rules your inher
 3. **Aggregation method.** The org's method then applies. **Highest domain wins** replaces the score with the worst domain's score. **Weighted average with a domain floor** keeps the weighted score but lifts it to at least the lowest score of the tier one below the worst domain's tier, so a Critical domain makes the overall rating at least High. A domain on the lowest tier imposes no floor.
 4. **Answer floors.** Last, any answer option that carries a minimum score lifts the whole questionnaire to that minimum.
 
+<Frame caption="A submitted IRQ with Why This Rating and the Inherent Risk What-If.">
+  <img src="/images/user-guides/irq-why-this-rating.png" alt="Why This Rating card listing the three answers that moved the score most, above an Inherent Risk What-If table where each answer can be changed to preview the rating" />
+</Frame>
+
 The IRQ review shows **Why This Rating**: the answers that moved the score most, which domain rated it or which floor lifted it, and any answers flagged for review. The aggregation method applies to questionnaires scored after you change it; scores already recorded are not recalculated.
 
 ## Routing and escalation
 
-When an IRQ is approved, every domain it scored gets a review task for its Risk Group. The reviewer matrix decides who: a rule can name a requesting group, a business unit, a tier and a domain, and any criterion left on **Any** matches everything. With no matching rule, the domain's own reviewers are used, as before. Intake review is matched before a tier is known, so only rules without a tier or domain apply to it.
+When an IRQ is approved, every domain it scored gets a review task for its Risk Group. The reviewer matrix decides who: a rule can name a requesting group, a business unit, a tier and a domain, and any criterion left on **Any** matches everything. With no matching rule, the domain's own reviewers review it. Intake review is matched before a tier is known, so only rules without a tier or domain apply to it.
 
 Escalation rules run once a day over pending work items. **Notify** gives the target their own copy of the item, which closes when the original's record resolves. **Reassign** moves the item to the target. Every escalation is recorded on the item.
 
