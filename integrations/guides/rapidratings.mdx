@@ -1,0 +1,67 @@
+---
+title: "RapidRatings"
+description: "Bring RapidRatings Financial Health Ratings for your portfolio into Coverbase: each vendor's rating is recorded, and a material drop becomes a Radar signal."
+icon: "chart-line"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The RapidRatings connector is a licensed rating connector: you bring your own RapidRatings subscription, and Coverbase reads your portfolio with your credentials. It works like the [Black Kite integration](/user-guides/black-kite-monitoring). Ratings land on the vendor's **Certificates** tab under **Licensed Ratings**, and changes become [Radar](/products/supplier-radar) signals.
+
+<Note>
+  If a RapidRatings response does not have the shape Coverbase expects, the pull stops and the panel shows **The last sync failed** with the reason, instead of reading the response as an empty portfolio.
+</Note>
+
+## What it does
+
+- **Provisions monitoring once.** The first time you save credentials, Coverbase adds one RapidRatings source to Radar and one detector on it, named for a financial health rating drop. Both are created once. Archiving the source stops monitoring, and saving new credentials later does not bring it back.
+- **Matches companies to vendors.** Each company in your portfolio is matched to a vendor by a match recorded on an earlier pull, then by its domain (walking up to the parent domain, never down), then by its exact legal name. A company that matches no vendor is skipped.
+- **Records the rating.** Each pull records the matched vendor's Financial Health Rating (0 to 100).
+- **Signals only on change.** A Radar item is raised only when a stored rating moved. The first pull is a baseline, so connecting a provider does not flood Radar.
+
+## The detector
+
+The detector starts enabled, alerting on a drop of 10 points or more between pulls. Edit it like any other Radar detector. It has three gates, and at least one must be set. A rating change alerts only when it passes every gate that is set. **Minimum drop** and **Alert below** take zero or more, in the provider's own units.
+
+| Gate | Passes when |
+| --- | --- |
+| Minimum drop | The rating fell by at least this much since the last pull. |
+| Alert below | The rating is below this value. |
+| Grade worsened | The provider's grade or band got worse. |
+
+Alerts go through the ordinary Radar path, so reassessment triggers and monitoring plan signal rules see them like any other signal.
+
+## Authentication
+
+RapidRatings uses OAuth 2.0 client credentials at `https://api.rapidratings.com/oauth/token`. Coverbase reads your portfolio from `/v1/portfolio/companies`.
+
+1. Ask RapidRatings for API client credentials for your portfolio.
+2. Add the vendors you want monitored to that portfolio.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **Rapid Ratings**.
+2. Enter **Client ID**, **Client Secret**. The panel notes: "Saving the credentials adds a RapidRatings source to Radar for Financial Health Rating changes."
+3. Click **Save**, then **Test connection**.
+4. Open **Radar** to find the new source and its detector.
+
+The panel never shows a stored secret again. **Remove** deletes the stored credentials; ratings already pulled stay.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Certificate Vault guide" icon="certificate" href="/user-guides/certificate-vault#step-6-connect-licensed-ratings">
+    Where licensed ratings show on a vendor.
+  </Card>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    Triaging the signals a rating change raises.
+  </Card>
+  <Card title="Monitoring plans" icon="calendar-check" href="/user-guides/monitoring-plans">
+    Letting a rating drop pull monitoring forward.
+  </Card>
+  <Card title="Security intelligence guide" icon="shield-halved" href="/user-guides/security-intelligence">
+    Coverbase's own outside-in rating, which needs no subscription.
+  </Card>
+</CardGroup>

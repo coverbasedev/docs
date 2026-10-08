@@ -1,0 +1,197 @@
+---
+title: "Contract records API"
+description: "List, read, create and update contract metadata from a GRC, orchestration or reporting tool: type, counterparty, term dates, renewal, notice period, value, workflow state and linked engagements."
+icon: "file-contract"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Note>
+  Your Coverbase representative turns on the third-party lifecycle features, including these routes, for your organization.
+</Note>
+
+A **contract record** (`cbcontract_...`) is a contract's metadata: what it is, who it is with, its term, its value and where it is in your approval and signature process. This API lets another system of record read and keep that metadata in step. Documents, clause analyses and approval chains stay on the dashboard.
+
+<Note>
+  These routes are `/v1/contract-records`. The similar-looking `/v1/contracts` paths are dashboard routes and are not part of the public API. While the third-party lifecycle features are off for your organization, every route here returns `404` with `not_enabled`.
+</Note>
+
+All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token](/api-reference/oauth). See [API conventions](/conventions) for shared behavior. None of these honor `Idempotency-Key`.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/contract-records` | Read contracts |
+| `GET` | `/v1/contract-records/{contract_id}` | Read contracts |
+| `POST` | `/v1/contract-records` | Create contracts |
+| `PATCH` | `/v1/contract-records/{contract_id}` | Update contracts (and archive contracts, to change `is_archived`) |
+
+## List contract records
+
+<ParamField path="method" type="GET">
+  `GET /v1/contract-records`
+</ParamField>
+
+Newest first. Uses the standard [pagination](/conventions#pagination) envelope: `{ "items": [...], "total", "limit", "offset" }`.
+
+<ParamField query="vendor_id" type="string">
+  Only contracts with this vendor (`cbvndr_...`).
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  1 to 200.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  0 or more.
+</ParamField>
+
+```bash cURL
+curl "https://api.coverbase.app/v1/contract-records?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&limit=50" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+## Get a contract record
+
+<ParamField path="method" type="GET">
+  `GET /v1/contract-records/{contract_id}`
+</ParamField>
+
+Returns the [contract record object](#the-contract-record-object), archived ones included. An unknown ID returns `404 contract_not_found`.
+
+## Create a contract record
+
+<ParamField path="method" type="POST">
+  `POST /v1/contract-records`
+</ParamField>
+
+Returns `201 Created` with the [contract record object](#the-contract-record-object). The contract is created commercially active, in the `draft` workflow state.
+
+<ParamField body="name" type="string" required>
+  1 to 500 characters.
+</ParamField>
+
+<ParamField body="contract_type" type="string" required>
+  One of `msa`, `sow`, `order_form`, `amendment`, `nda`, `dpa`, `baa`, `subscription_agreement`, `license_agreement`, `services_agreement`, `reseller_agreement`, `statement_of_services`, `letter_of_intent`, `renewal`, `api_integration_agreement`, `data_sharing_agreement`, `eula`, `addendum`, `appendix`, `other`.
+</ParamField>
+
+<ParamField body="vendor_id" type="string">
+  The vendor (`cbvndr_...`). An unknown vendor returns `400 vendor_not_found`.
+</ParamField>
+
+<ParamField body="counterparty_name" type="string">
+  The other party's name, up to 500 characters, for a contract with no vendor record.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Up to 10,000 characters.
+</ParamField>
+
+<ParamField body="effective_date" type="integer">
+  Unix seconds.
+</ParamField>
+
+<ParamField body="term_start_date" type="integer">
+  Unix seconds.
+</ParamField>
+
+<ParamField body="expiration_date" type="integer">
+  Unix seconds. The effective date, term start and expiration must be in order, or the request returns `422 invalid_term`.
+</ParamField>
+
+<ParamField body="renewal_date" type="integer">
+  Unix seconds.
+</ParamField>
+
+<ParamField body="auto_renew" type="string">
+  `none`, `automatic` or `manual`.
+</ParamField>
+
+<ParamField body="termination_notice_period_days" type="integer">
+  0 or more.
+</ParamField>
+
+<ParamField body="contract_value_amount" type="number">
+  0 or more.
+</ParamField>
+
+<ParamField body="contract_value_currency" type="string">
+  A three-letter currency code.
+</ParamField>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/contract-records" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Acme master services agreement",
+    "contract_type": "msa",
+    "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+    "effective_date": 1767225600,
+    "expiration_date": 1830297600,
+    "auto_renew": "manual",
+    "termination_notice_period_days": 90,
+    "contract_value_amount": 250000,
+    "contract_value_currency": "USD"
+  }'
+```
+
+## Update a contract record
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/contract-records/{contract_id}`
+</ParamField>
+
+Changes only the fields you send; omitted fields are unchanged. Accepts `name`, `description`, `contract_type`, `effective_date`, `term_start_date`, `expiration_date`, `renewal_date`, `auto_renew`, `termination_notice_period_days`, `contract_value_amount`, `contract_value_currency` and `is_archived`, with the same rules as create. Changing `is_archived` also needs permission to archive contracts. Every changed field is recorded in the contract's activity log.
+
+The workflow state cannot be set through this API. A contract becomes `executed` only through Coverbase's signature engines or a connected contract lifecycle system.
+
+## The contract record object
+
+```json
+{
+  "id": "cbcontract_5f0c2b1e9d8a4c7b8e6f1a2b3c4d5e6f",
+  "name": "Acme master services agreement",
+  "description": null,
+  "contract_type": "msa",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+  "counterparty_name": null,
+  "parent_contract_id": null,
+  "workflow_state": "draft",
+  "lifecycle_status": null,
+  "effective_date": 1767225600,
+  "term_start_date": null,
+  "expiration_date": 1830297600,
+  "renewal_date": null,
+  "auto_renew": "manual",
+  "termination_notice_period_days": 90,
+  "contract_value_amount": "250000",
+  "contract_value_currency": "USD",
+  "executed_at": null,
+  "engagement_ids": ["cbegm_0a1b2c3d4e5f60718293a4b5c6d7e8f9"],
+  "is_archived": false,
+  "created_at": 1790000000,
+  "updated_at": 1790000000
+}
+```
+
+<ResponseField name="workflow_state" type="string">
+  Where the contract is in your process: `draft`, `pending_approval`, `approved`, `sent_for_signature`, `executed`, `rejected` or `terminated`. Only `executed` asserts that a signature exists. Contracts that predate the workflow read `draft`.
+</ResponseField>
+
+<ResponseField name="lifecycle_status" type="string | null">
+  The label of the contract's status in your organization's status list, if one is set.
+</ResponseField>
+
+<ResponseField name="executed_at" type="integer | null">
+  When it was executed, in Unix seconds.
+</ResponseField>
+
+<ResponseField name="engagement_ids" type="string[]">
+  The [engagements](/api-reference/engagement-records) linked to this contract.
+</ResponseField>
+
+<ResponseField name="contract_value_amount" type="string | null">
+  A decimal, serialized as a string to keep its precision.
+</ResponseField>

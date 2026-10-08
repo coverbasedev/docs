@@ -1,0 +1,186 @@
+---
+title: "OAuth API"
+description: "Exchange an OAuth 2.0 client's credentials for a short-lived bearer token at POST /v1/oauth/token, and manage OAuth clients."
+icon: "key"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Note>
+  Your Coverbase representative turns on the third-party lifecycle features, including OAuth clients, for your organization.
+</Note>
+
+An integration that cannot store a long-lived `ak_*` key can use the OAuth 2.0 client credentials grant instead. An admin creates an **OAuth client**: a public `client_id` and a `client_secret` shown once. The integration trades them for a bearer token that lasts at most an hour, and sends that token wherever an `ak_*` key goes.
+
+A token acts exactly like an `ak_*` key: it authenticates as your organization's API service account, every public route and the [IP allowlist](/conventions#api-ip-allowlist) apply unchanged, and its calls are recorded in the [public API audit log](/conventions#public-api-audit-log). It carries the [elevated scopes](/conventions#api-key-scopes) the client was granted, or fewer if the token request narrows them.
+
+| Method | Path | Auth |
+| ------ | ---- | ---- |
+| `POST` | `/v1/oauth/token` | Client ID and secret |
+| `GET` | `/v1/api-oauth-clients` | Admin JWT, or `ak_*` key with `keys:manage` |
+| `POST` | `/v1/api-oauth-clients` | Admin JWT, or `ak_*` key with `keys:manage` |
+| `POST` | `/v1/api-oauth-clients/{client_row_id}/revoke` | Admin JWT, or `ak_*` key with `keys:manage` |
+
+For a walkthrough, see [OAuth 2.0 client credentials](/integrations/guides/oauth-client-credentials).
+
+## Get a token
+
+<ParamField path="method" type="POST">
+  `POST /v1/oauth/token`
+</ParamField>
+
+Follows RFC 6749 section 4.4. The body is form-encoded (`application/x-www-form-urlencoded`), not JSON. Send the client ID and secret as HTTP Basic credentials (preferred), or as `client_id` and `client_secret` form fields, but not both.
+
+### Request body
+
+<ParamField body="grant_type" type="string" required>
+  Must be `client_credentials`.
+</ParamField>
+
+<ParamField body="scope" type="string">
+  Space-separated scopes to request. Optional. It can only narrow what the client was granted: asking for a scope the client does not hold fails with `invalid_scope`. Omit it to get every scope the client holds.
+</ParamField>
+
+<ParamField body="client_id" type="string">
+  The client ID (`cbci_...`), when not sent in HTTP Basic.
+</ParamField>
+
+<ParamField body="client_secret" type="string">
+  The client secret (`cbcs_...`), when not sent in HTTP Basic.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/oauth/token" \
+  -u "cbci_0123456789abcdef0123456789abcdef:cbcs_xxx" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&scope=audit:read"
+```
+
+### Example response
+
+```json
+{
+  "access_token": "cbat_xxx",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "audit:read"
+}
+```
+
+The response carries `Cache-Control: no-store`. Send the token as `Authorization: Bearer cbat_...` until `expires_in` seconds pass, then request a new one. A client holds at most 50 live tokens. Requesting a 51st revokes its oldest, so an integration should reuse a token until it expires rather than request one per call.
+
+<ResponseField name="access_token" type="string">
+  The bearer token, prefixed `cbat_`.
+</ResponseField>
+
+<ResponseField name="token_type" type="string">
+  Always `Bearer`.
+</ResponseField>
+
+<ResponseField name="expires_in" type="integer">
+  Lifetime in seconds: the client's token lifetime, between 300 and 3600.
+</ResponseField>
+
+<ResponseField name="scope" type="string">
+  The scopes the token carries, space-separated. Empty for a client with no elevated scopes.
+</ResponseField>
+
+### Errors
+
+Errors follow RFC 6749 section 5.2, not the [coded envelope](/conventions#errors):
+
+```json
+{ "error": "invalid_client", "error_description": "Client authentication failed" }
+```
+
+| Status | `error` | When |
+| ------ | ------- | ---- |
+| `400` | `unsupported_grant_type` | `grant_type` is missing or not `client_credentials`. |
+| `400` | `invalid_scope` | The request asks for a scope the client was not granted. |
+| `400` | `invalid_request` | The request uses HTTP Basic and also sends the secret as a form field, or the two name different clients. |
+| `401` | `invalid_client` | The client is unknown or revoked, the secret is wrong, or the third-party lifecycle features are no longer on for your organization. Comes with `WWW-Authenticate: Basic realm="coverbase"`. |
+
+## List clients
+
+<ParamField path="method" type="GET">
+  `GET /v1/api-oauth-clients`
+</ParamField>
+
+Returns `{ "clients": [ ... ] }`, one [client object](#the-client-object) per client, revoked ones included. Secrets are never returned.
+
+## Create a client
+
+<ParamField path="method" type="POST">
+  `POST /v1/api-oauth-clients`
+</ParamField>
+
+Returns `201 Created` with the [client object](#the-client-object) plus `client_secret`. **This is the only time the secret is returned.** Coverbase stores only its SHA-256 digest and last four characters.
+
+<ParamField body="name" type="string" required>
+  A label, 1 to 200 characters, such as "Archer sync".
+</ParamField>
+
+<ParamField body="scopes" type="string[]">
+  Elevated scopes to grant: `keys:manage`, `audit:read`, `banking:read`, `review:sensitive_changes`. Granting any needs an admin dashboard JWT; any other caller gets `403 scope_grant_forbidden`. Omit for a client with standard access.
+</ParamField>
+
+<ParamField body="access_token_ttl_seconds" type="integer">
+  How long each token lives, 300 to 3600. Default 3600.
+</ParamField>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/api-oauth-clients" \
+  -H "Authorization: Bearer <admin-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "GRC sync", "scopes": ["audit:read"], "access_token_ttl_seconds": 900 }'
+```
+
+## Revoke a client
+
+<ParamField path="method" type="POST">
+  `POST /v1/api-oauth-clients/{client_row_id}/revoke`
+</ParamField>
+
+Revokes the client and deletes every token it issued. Returns the [client object](#the-client-object) with `revoked_at` set. A server that already cached a token can keep accepting it for a few seconds. Creating and revoking clients are recorded in the activity log.
+
+## The client object
+
+<ResponseField name="id" type="string">
+  The client's row ID, used in the revoke path.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The label.
+</ResponseField>
+
+<ResponseField name="client_id" type="string">
+  The public client ID, prefixed `cbci_`.
+</ResponseField>
+
+<ResponseField name="secret_last4" type="string">
+  The last four characters of the secret, to tell clients apart.
+</ResponseField>
+
+<ResponseField name="scopes" type="string[]">
+  The elevated scopes granted.
+</ResponseField>
+
+<ResponseField name="access_token_ttl_seconds" type="integer">
+  Token lifetime in seconds.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer">
+  Unix seconds.
+</ResponseField>
+
+<ResponseField name="last_used_at" type="integer | null">
+  When the client last obtained a token.
+</ResponseField>
+
+<ResponseField name="revoked_at" type="integer | null">
+  When it was revoked, or `null`.
+</ResponseField>

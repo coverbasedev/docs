@@ -256,18 +256,18 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs/cbwr_a8f2c19e3d4b5e6f7a
     <ResponseField name="step_id" type="string">The run-step ID (`cbwrs_...`).</ResponseField>
     <ResponseField name="component_id" type="string | null">The workflow component this step ran.</ResponseField>
     <ResponseField name="component_name" type="string | null">The component's display name.</ResponseField>
-    <ResponseField name="action_type" type="string | null">The component's action type (e.g. `send_questionnaire`), when available.</ResponseField>
+    <ResponseField name="action_type" type="string | null">The component's action type (for example, `send_questionnaire`), when available.</ResponseField>
     <ResponseField name="status" type="string | null">Action outcome. One of `success`, `failed`, `skipped`, or `null` if the engine has not yet recorded a result for this step.</ResponseField>
     <ResponseField name="message" type="string | null">Optional human-readable explanation. Set on failure to surface the error; set on `skipped` to explain why; usually `null` on success.</ResponseField>
     <ResponseField name="artifacts" type="object[]">
-      Entities the step consumed or produced. Each entry has `artifact_type` (the canonical target type, e.g. `vendor`, `assessment`, `questionnaire_response`), `id` (the entity ID), and `role` (`trigger` for entities that fed into the step; `result` for entities the step created or modified).
+      Entities the step consumed or produced. Each entry has `artifact_type` (the canonical target type, for example, `vendor`, `assessment`, `questionnaire_response`), `id` (the entity ID), and `role` (`trigger` for entities that fed into the step; `result` for entities the step created or modified).
     </ResponseField>
     <ResponseField name="created_at" type="integer | null">Unix timestamp (seconds) when the step was recorded.</ResponseField>
     <ResponseField name="updated_at" type="integer | null">Unix timestamp (seconds) of the step's last update.</ResponseField>
   </Expandable>
 </ResponseField>
 
-Poll this endpoint until `status` is terminal (`completed`, `canceled`, or `failed`); `steps[]` grows as the engine progresses, and each step's `status` and `artifacts` reflect what that stage actually did.
+Poll this endpoint until `status` is terminal (`completed`, `canceled`, or `failed`); `steps[]` grows as the engine progresses, and each step's `status` and `artifacts` reflect what that stage did.
 
 ### Error responses
 
@@ -290,7 +290,7 @@ Returns workflow runs for the org, newest first. Use this when you don't already
 </ParamField>
 
 <ParamField query="status" type="string">
-  Filter by run status. Repeat to include multiple statuses, e.g. `?status=started&status=failed`. Valid values: `started`, `completed`, `canceled`, `failed`.
+  Filter by run status. Repeat to include multiple statuses, for example, `?status=started&status=failed`. Valid values: `started`, `completed`, `canceled`, `failed`.
 </ParamField>
 
 <ParamField query="created_at_after" type="integer">
@@ -360,4 +360,4 @@ curl -X GET "https://api.coverbase.app/v1/workflows/runs?workflow_name=quarterly
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 404 | `{"detail": {"code": "workflow_not_found", "message": "Workflow '...' not found."}}` | `workflow_name` was supplied but no workflow with that name exists for the org. |
-| 422 | Standard validation error | A query parameter failed validation (e.g. `limit` out of range, malformed `status`). |
+| 422 | Standard validation error | A query parameter failed validation (for example, `limit` out of range, malformed `status`). |

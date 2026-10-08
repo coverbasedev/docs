@@ -29,6 +29,7 @@ Authorization: Bearer ak_...
 Two credential types are accepted:
 
 - **Service-account API key** (`ak_...`): the primary credential for integrations. An admin in your organization mints it on the dashboard's **API keys** page (Clerk-backed). It is scoped to exactly one organization; everything the key reads or writes is implicitly scoped to that org. It authenticates as a service account. By default a key carries no scopes and can only call ordinary `/v1/*` routes; an admin can additionally grant it elevated [scopes](#api-key-scopes).
+- **OAuth 2.0 access token** (`cbat_...`): a short-lived token an [OAuth client](/api-reference/oauth) obtains with the client credentials grant. It authenticates as the same service account as an `ak_*` key, carries the client's elevated scopes, and is accepted wherever an `ak_*` key is. Available to organizations in the third-party lifecycle beta.
 - **Logged-in user JWT**: the dashboard session token, useful for first-party scripts running as a specific user. A few endpoint families in this reference accept only this credential and reject `ak_` keys: the [Bill of Materials API](/api-reference/bill-of-materials), the [Zero Touch Assessments API](/api-reference/zero-touch-assessments), the org update and `whoami` endpoints below, and the `POST /v1/<resource>/query` routes in the [field reference](/fields/overview). The [Import API](/import) is the reverse: it accepts only `ak_` keys.
 
 Admins can list, create, rotate, and revoke `ak_*` keys self-service via the [API Keys API](/api-reference/api-keys). No support ticket required.
@@ -66,7 +67,7 @@ Every call made with an `ak_*` key to a public API resource endpoint (vendors, d
 
 Request and response bodies are not stored, with one exception: a call to a custom [Import API](/import) report stores both bodies, redacted and capped at 1 MB, and shows them on that report's **Request history** tab. The records surface in the dashboard under **Configuration → Audit Logs** (in the **Integrations** group) and through `GET /v1/system_audit_log` (and `GET /v1/system_audit_log/metadata`). Both read endpoints accept **either** a dashboard session JWT (member, siloed member, or admin) **or** an `ak_*` key that carries the [`audit:read` scope](#api-key-scopes).
 
-Requests that fail authentication before the `ak_*` key resolves (e.g. an unknown or revoked key returning `401`) are not stored in the activity log; they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
+Requests that fail authentication before the `ak_*` key resolves (for example, an unknown or revoked key returning `401`) are not stored in the activity log; they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
 
 ### Test your credentials
 
@@ -148,7 +149,7 @@ curl -sS "https://api.coverbase.app/v1/whoami/ip" \
 
 ## IDs
 
-Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (e.g. `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque: never parse or construct them.
+Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (for example, `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque: never parse or construct them.
 
 | Prefix | Resource |
 | ------ | -------- |
@@ -171,6 +172,9 @@ Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characte
 | `cbevt_` | Webhook delivery event |
 | `cbwhd_` | Webhook delivery (attempt record) |
 | `cborg_` | Organization |
+| `cbegm_` | Engagement record |
+| `cbcontract_` | Contract record |
+| `cbci_` | OAuth client ID |
 
 <Note>
   Findings are internally called "tasks", so finding IDs use the `cbtask_` prefix. This is expected. A `cbtask_...` value **is** a finding ID.
@@ -205,7 +209,7 @@ Behavior on supported endpoints: keys are scoped to **(org, endpoint, key)** and
 
 ## Pagination
 
-List endpoints (`GET /v1/vendors`, `GET /v1/users`, `GET /v1/findings`, `GET /v1/obligations`, and the Radar lists) use `limit`/`offset` query parameters:
+List endpoints (`GET /v1/vendors`, `GET /v1/users`, `GET /v1/findings`, `GET /v1/obligations`, `GET /v1/contract-records`, `GET /v1/engagement-records`, and the Radar lists) use `limit`/`offset` query parameters:
 
 | Param | Default | Range |
 | ----- | ------- | ----- |
@@ -254,6 +258,6 @@ Bodies/params that fail schema validation return `422` with FastAPI's standard a
 | `401` | Invalid, expired, or revoked credential, or a role not allowed on the endpoint. |
 | `403` | No `Authorization` header (`Not authenticated`), or authenticated but not authorized: the key lacks a required scope (`insufficient_scope`), a non-admin tried to grant scopes (`scope_grant_forbidden`), or the client IP is outside the org allowlist (`ip_not_allowed`). |
 | `404` | Resource not found or not in the API key's org. |
-| `409` | Conflict: e.g. `user_exists`, or running a disabled workflow (`workflow_disabled`). |
+| `409` | Conflict: for example, `user_exists`, or running a disabled workflow (`workflow_disabled`). |
 | `422` | Request body/query failed schema validation. |
-| `502` | An upstream provider failed (e.g. `clerk_upstream_error` on the API Keys API); safe to retry. |
+| `502` | An upstream provider failed (for example, `clerk_upstream_error` on the API Keys API); safe to retry. |

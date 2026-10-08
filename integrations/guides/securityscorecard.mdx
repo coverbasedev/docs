@@ -1,0 +1,63 @@
+---
+title: "SecurityScorecard"
+description: "Bring SecurityScorecard scores for your portfolios into Coverbase: each vendor's score is recorded, and a material drop becomes a Radar signal."
+icon: "shield-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The SecurityScorecard connector is a licensed rating connector: you bring your own SecurityScorecard subscription, and Coverbase reads your portfolio with your credentials. It works like the [Black Kite integration](/user-guides/black-kite-monitoring). Ratings land on the vendor's **Certificates** tab under **Licensed Ratings**, and changes become [Radar](/products/supplier-radar) signals.
+
+## What it does
+
+- **Provisions monitoring once.** The first time you save credentials, Coverbase adds one SecurityScorecard source to Radar and one detector on it, named for a security score drop. Both are created once. Archiving the source stops monitoring, and saving new credentials later does not bring it back.
+- **Matches companies to vendors.** Each company in your portfolio is matched to a vendor by a match recorded on an earlier pull, then by its domain (walking up to the parent domain, never down), then by its exact legal name. A company that matches no vendor is skipped.
+- **Records the rating.** Each pull records the matched vendor's Security Score (0 to 100).
+- **Signals only on change.** A Radar item is raised only when a stored rating moved. The first pull is a baseline, so connecting a provider does not flood Radar.
+
+## The detector
+
+The detector starts enabled, alerting on a drop of 5 points or more between pulls. Edit it like any other Radar detector. It has three gates, and at least one must be set. A rating change alerts only when it passes every gate that is set. **Minimum drop** and **Alert below** take zero or more, in the provider's own units.
+
+| Gate | Passes when |
+| --- | --- |
+| Minimum drop | The rating fell by at least this much since the last pull. |
+| Alert below | The rating is below this value. |
+| Grade worsened | The provider's grade or band got worse. |
+
+Alerts go through the ordinary Radar path, so reassessment triggers and monitoring plan signal rules see them like any other signal.
+
+## Authentication
+
+SecurityScorecard issues an API key. Coverbase sends it as `Authorization: Token <key>` to `https://api.securityscorecard.io`, lists your portfolios from `/portfolios`, and reads each portfolio's companies.
+
+1. In SecurityScorecard, create an API key for a user who can read your portfolios.
+2. Note the ID of the portfolio to read, if you want only one.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **SecurityScorecard**.
+2. Enter **API Token**, and optionally **Account ID** (a portfolio ID; leave it blank to read every portfolio the key can see). The panel notes: "Saving the key adds a SecurityScorecard source to Radar. Leave the account ID blank to read every portfolio."
+3. Click **Save**, then **Test connection**.
+4. Open **Radar** to find the new source and its detector.
+
+The panel never shows a stored secret again. **Remove** deletes the stored credentials; ratings already pulled stay.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Certificate Vault guide" icon="certificate" href="/user-guides/certificate-vault#step-6-connect-licensed-ratings">
+    Where licensed ratings show on a vendor.
+  </Card>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    Triaging the signals a rating change raises.
+  </Card>
+  <Card title="Monitoring plans" icon="calendar-check" href="/user-guides/monitoring-plans">
+    Letting a rating drop pull monitoring forward.
+  </Card>
+  <Card title="Security intelligence guide" icon="shield-halved" href="/user-guides/security-intelligence">
+    Coverbase's own outside-in rating, which needs no subscription.
+  </Card>
+</CardGroup>

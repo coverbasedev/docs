@@ -133,11 +133,11 @@ Creates a new API key scoped to your org. The raw `ak_*` secret is returned **on
 ### Request body
 
 <ParamField body="name" type="string" required>
-  Human-readable name for the key (e.g. `"ServiceNow exporter"`). Must be non-empty after trimming.
+  Human-readable name for the key (for example, `"ServiceNow exporter"`). Must be non-empty after trimming.
 </ParamField>
 
 <ParamField body="seconds_until_expiration" type="integer">
-  Optional. Seconds until the key automatically expires. Omit for a non-expiring key. Recommended for keys used by short-lived integrations (e.g. `31536000` for a one-year rotation policy).
+  Optional. Seconds until the key automatically expires. Omit for a non-expiring key. Recommended for keys used by short-lived integrations (for example, `31536000` for a one-year rotation policy).
 </ParamField>
 
 <ParamField body="scopes" type="string[]">
@@ -241,7 +241,7 @@ The endpoint is **idempotent**: the first revocation (the active → revoked tra
 ### Request body
 
 <ParamField body="reason" type="string">
-  Optional. Free-form revocation reason (e.g. `"Employee offboarded"`, `"Suspected leak in Sentry log"`). Recorded for compliance.
+  Optional. Free-form revocation reason (for example, `"Employee offboarded"`, `"Suspected leak in Sentry log"`). Recorded for compliance.
 </ParamField>
 
 ### Example request
@@ -261,7 +261,7 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 
 - Each endpoint accepts **either** an admin dashboard JWT (org **`admin` role**) **or** an `ak_*` key carrying the `keys:manage` scope. A JWT caller without the admin role, or a key without `keys:manage`, is rejected.
 - **Granting scopes is admin-only.** A non-empty `scopes` array on create can only be supplied with an admin JWT; a scoped-key caller that passes `scopes` is rejected with `403 scope_grant_forbidden`. A scoped key can manage keys but can never grant scopes; there is no self-propagation.
-- Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it actually transitions a key from active to revoked**; re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Configuration → Audit Logs** (in the **Integrations** group).
+- Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it transitions a key from active to revoked**; re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Configuration → Audit Logs** (in the **Integrations** group).
 
 ## Error responses
 

@@ -1,0 +1,59 @@
+---
+title: "Ironclad"
+description: "Two-way sync with Ironclad through the Integration Hub: records and their signed copies sync in and mark the Coverbase contract executed, and Coverbase writes its risk rating, required clause pack and blocking issues to record properties you name."
+icon: "file-signature"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Ironclad connector is part of the [Integration Hub](/products/integration-hub). It reads Ironclad's Records API, the repository of agreements, and writes Coverbase's risk view back onto each record.
+
+## What it does
+
+| Direction | What syncs |
+| --- | --- |
+| In | Each record's agreement date, expiration date and contract value. A record with a `signedCopy` attachment is executed: Coverbase marks its contract executed through the same path DocuSign uses, so the executed notice and accounting packet fire, and files the signed copy against the vendor once the supplier is linked. A record whose status is expired or terminated is recorded as such. |
+| Out | The vendor's risk rating, the required clause pack and the vendor's blocking issues, written as string properties on the record under the property keys you name. |
+
+The required clause pack is the high and critical clauses of your active clause sets, up to 25, by clause ID and name, separated by semicolons. Blocking issues are the titles of the vendor's open findings, up to 20.
+
+## Authentication
+
+Ironclad uses a bearer API token.
+
+1. In Ironclad, create an API token with access to records, and note your instance URL.
+2. Create record properties for the values Coverbase writes back, for example `coverbaseRiskRating`, `coverbaseClausePack` and `coverbaseBlockingIssues`.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **Ironclad**.
+2. On **Authentication**, enter the **Instance URL** and **API token**.
+3. Turn on **Write risk tier, approval status and contract values back to the provider** for two-way sync, set the **Sync Interval (Minutes)**, click **Save**, then **Test connection**.
+4. On **Field Mappings**, check each outbound row's **Target** matches your property keys, and **Save mappings**.
+5. Optionally create a webhook signing secret so Ironclad, through middleware that signs the call, can trigger a sync when a record changes. See [Set up the webhook](/user-guides/integration-hub#step-3-set-up-the-webhook-optional).
+6. Click **Sync now** and read the **Sync Log**.
+
+## Onboarding checklist
+
+1. An API token and the instance URL.
+2. Record properties for the values Coverbase writes back.
+3. Vendors in Coverbase for the counterparties you contract with, so executed copies file against them.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Integration Hub guide" icon="book-open" href="/user-guides/integration-hub">
+    Field mappings and the sync log.
+  </Card>
+  <Card title="Icertis" icon="file-contract" href="/integrations/guides/icertis">
+    The other contract lifecycle connector.
+  </Card>
+  <Card title="Contract intake and approval" icon="clipboard-check" href="/user-guides/contract-intake-and-approval">
+    What happens when a contract is executed.
+  </Card>
+  <Card title="Clause set library" icon="book-open" href="/user-guides/clause-set-library">
+    The clause sets the required clause pack comes from.
+  </Card>
+</CardGroup>

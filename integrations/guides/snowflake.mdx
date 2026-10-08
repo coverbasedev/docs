@@ -1,0 +1,65 @@
+---
+title: "Snowflake"
+description: "Share your third-party risk tables into your own Snowflake account on a schedule, authenticated with a key pair, with a current view beside every table."
+icon: "snowflake"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A Snowflake destination is part of [warehouse data share](/products/warehouse-data-share). Coverbase connects through the Snowflake SQL API with key-pair authentication, creates one table per contract table on the first sync, and keeps a `<table>_current` view beside each.
+
+## Prepare Snowflake
+
+1. Create a key pair. Keep the private key (PEM) for Coverbase, and set the public key on the Snowflake user as `RSA_PUBLIC_KEY`.
+2. Give the user a role with:
+   - `USAGE` on the warehouse, the database and the schema;
+   - `CREATE TABLE` and `CREATE VIEW` on the schema.
+3. Use a schema of its own, so Coverbase's tables and views do not mix with others.
+
+```sql
+CREATE ROLE coverbase_share;
+GRANT USAGE ON WAREHOUSE reporting_wh TO ROLE coverbase_share;
+GRANT USAGE ON DATABASE risk TO ROLE coverbase_share;
+GRANT USAGE ON SCHEMA risk.coverbase TO ROLE coverbase_share;
+GRANT CREATE TABLE, CREATE VIEW ON SCHEMA risk.coverbase TO ROLE coverbase_share;
+CREATE USER coverbase_share_user DEFAULT_ROLE = coverbase_share RSA_PUBLIC_KEY = '<public key>';
+GRANT ROLE coverbase_share TO USER coverbase_share_user;
+```
+
+The names are examples; use your own.
+
+## Add the destination in Coverbase
+
+1. Open **Configuration → Data Share** and click **Add destination**.
+2. Choose **Snowflake**, give it a **Name**, and choose **Hourly** or **Daily**.
+3. Enter the **Account**, **User**, **Role**, **Warehouse**, **Database** and **Schema**, paste the **Private Key (PEM)**, and add the **Key passphrase** if the key has one.
+4. Click **Add destination**, then **Test connection**, then **Sync now**.
+
+After saving, the card shows the key's fingerprint as a hint. The private key is never shown again. Archiving the destination deletes it.
+
+## What lands in Snowflake
+
+- One table per contract table, created on the first sync. A column the contract adds later is added to the table.
+- Each sync appends the rows that changed, stamped with `_cb_synced_at`.
+- A `<table>_current` view per table keeps the newest version of each row. For the `services` snapshot table, it keeps only the latest run.
+
+Point Power BI or Tableau at the `_current` views. The tables and their columns are listed under **Table Contract** on the Data Share page.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Data share guide" icon="book-open" href="/user-guides/warehouse-data-share">
+    Run logs, pausing and the table contract.
+  </Card>
+  <Card title="BigQuery" icon="table" href="/integrations/guides/bigquery">
+    The BigQuery destination.
+  </Card>
+  <Card title="Amazon S3" icon="bucket" href="/integrations/guides/amazon-s3">
+    The S3 destination.
+  </Card>
+  <Card title="Integration credentials and signing" icon="key" href="/security/integration-credentials">
+    How the private key is stored.
+  </Card>
+</CardGroup>

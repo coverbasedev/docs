@@ -24,7 +24,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PATCH` | `/v1/users/{user_id}` | No |
 
 <Tip>
-  Syncing relationship owners, watchers, or risk analysts from an external system (e.g. ServiceNow)? Those [vendor/service fields](/api-reference/vendors#assigning-people-analysts-owners-watchers) take Coverbase user IDs, not emails. Use [`GET /v1/users?email=`](#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID, and `POST /v1/users` to create the user if they don't exist yet; it returns the existing user if they do.
+  Syncing relationship owners, watchers, or risk analysts from an external system (for example, ServiceNow)? Those [vendor/service fields](/api-reference/vendors#assigning-people-analysts-owners-watchers) take Coverbase user IDs, not emails. Use [`GET /v1/users?email=`](#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID, and `POST /v1/users` to create the user if they don't exist yet; it returns the existing user if they do.
 </Tip>
 
 ## Org roles
@@ -153,7 +153,7 @@ print(resp.status_code, resp.json())
 <ResponseField name="email" type="string">User email.</ResponseField>
 <ResponseField name="first_name" type="string | null">Given name.</ResponseField>
 <ResponseField name="last_name" type="string | null">Family name.</ResponseField>
-<ResponseField name="role" type="string | null">Org role value for this org (e.g. `org:admin`).</ResponseField>
+<ResponseField name="role" type="string | null">Org role value for this org (for example, `org:admin`).</ResponseField>
 <ResponseField name="status" type="string | null">Org membership status: `invited`, `active`, or `inactive`.</ResponseField>
 <ResponseField name="is_archived" type="boolean">`true` once the user is deprovisioned.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
@@ -261,7 +261,7 @@ user_id = items[0]["id"] if items else None  # resolve email -> cbuser_ id
 <ResponseField name="offset" type="integer">Echo of the requested offset.</ResponseField>
 
 <Tip>
-  To create-if-missing and always end up with the user's ID: look up the email here, and if `items` is empty call `POST /v1/users` to provision them; or just call `POST /v1/users` directly, which returns the existing user (`200`) when the email is already present.
+  To create-if-missing and always end up with the user's ID: look up the email here, and if `items` is empty call `POST /v1/users` to provision them; or call `POST /v1/users` directly, which returns the existing user (`200`) when the email is already present.
 </Tip>
 
 ## Retrieve a user

@@ -1,0 +1,57 @@
+---
+title: "Icertis"
+description: "Two-way sync with Icertis Contract Intelligence through the Integration Hub: agreements and their executed copies sync in and mark the Coverbase contract executed, and Coverbase writes its risk rating, required clause pack and blocking issues to agreement attributes you name."
+icon: "file-contract"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Icertis connector is part of the [Integration Hub](/products/integration-hub). It reads agreements from the Icertis Contract Intelligence (ICI) REST API and writes Coverbase's risk view back as agreement attributes.
+
+## What it does
+
+| Direction | What syncs |
+| --- | --- |
+| In | Each agreement's status, effective date, expiry date and contract value. Draft, in review, approved, waiting for signature, executed, expired and terminated statuses are read. An executed agreement marks its Coverbase contract executed through the same path DocuSign uses, and its executed copy is filed against the vendor once the supplier is linked. |
+| Out | The vendor's risk rating, the required clause pack and the vendor's blocking issues, written to the agreement attributes you name. |
+
+The required clause pack is the high and critical clauses of your active clause sets, up to 25, by clause ID and name. Blocking issues are the titles of the vendor's open findings, up to 20.
+
+## Authentication
+
+ICI tenants sit behind your identity provider, so the token URL is part of the connection. The grant is OAuth 2.0 client credentials.
+
+1. In your identity provider, register a client for Coverbase with the client credentials grant and access to the ICI API. Note the token URL, client ID, client secret and any scope it needs.
+2. In Icertis, create agreement attributes for the values Coverbase writes back, for example `CoverbaseRiskRating`, `CoverbaseClausePack` and `CoverbaseBlockingIssues`.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **Icertis**.
+2. On **Authentication**, enter the **Instance URL**, **Token URL**, **Client ID**, **Client secret** and, if needed, **Scope**.
+3. Turn on write-back, set the **Sync Interval (Minutes)**, click **Save**, then **Test connection**.
+4. On **Field Mappings**, check the outbound **Target** attribute names and **Save mappings**.
+5. Click **Sync now** and read the **Sync Log**.
+
+## Onboarding checklist
+
+1. A client in your identity provider, and the token URL.
+2. Agreement attributes for the values Coverbase writes back.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Integration Hub guide" icon="book-open" href="/user-guides/integration-hub">
+    Field mappings and the sync log.
+  </Card>
+  <Card title="Ironclad" icon="file-signature" href="/integrations/guides/ironclad">
+    The other contract lifecycle connector.
+  </Card>
+  <Card title="Contract intake and approval" icon="clipboard-check" href="/user-guides/contract-intake-and-approval">
+    What happens when a contract is executed.
+  </Card>
+  <Card title="Integration credentials and signing" icon="key" href="/security/integration-credentials">
+    How the client secret is kept.
+  </Card>
+</CardGroup>

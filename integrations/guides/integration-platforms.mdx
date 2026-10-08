@@ -1,0 +1,85 @@
+---
+title: "Integration platforms (Workato, MuleSoft, Boomi)"
+description: "Connect Coverbase to Workato, MuleSoft or Boomi with Coverbase's starting points (a Workato custom connector, a Mule 4 application template and a Boomi process recipe) built on OAuth 2.0 client credentials, the REST API and signed webhooks, including pushing risk data into an enterprise risk register."
+icon: "diagram-project"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Coverbase has a starting point for each of the three common integration platforms: a Workato custom connector, a Mule 4 application template and a Boomi process recipe. Each sits on the same public surfaces, [OAuth 2.0 client credentials](/integrations/guides/oauth-client-credentials), the REST API and [signed webhooks](/integrations/webhooks), so a recipe behaves the same on any of them, and any other platform can follow the same pattern with its own HTTP connector. Ask your Coverbase representative for the starting point you need.
+
+<Note>
+  These are templates you import into your own Workato, Anypoint or Boomi tenant. They are not marketplace connectors.
+</Note>
+
+## The building blocks
+
+| Need | Coverbase piece |
+| --- | --- |
+| Authenticate | An OAuth client and the token URL `https://api.coverbase.app/v1/oauth/token`, or an `ak_*` key as a bearer header |
+| React to changes | [Webhooks](/integrations/webhooks): Coverbase posts each event to your platform's webhook trigger, signed with `Coverbase-Signature` |
+| Read records | The [API reference](/api-reference/vendors), including [contract records](/api-reference/contract-records) and [engagement records](/api-reference/engagement-records), and the [Export API](/export-api-concepts) |
+| Write records | The vendor, assessment, finding and other write endpoints, and the [Import API](/import-api) |
+| Bulk analytics | [Warehouse data share](/products/warehouse-data-share), when the destination is a warehouse rather than an application |
+
+## Rules every recipe follows
+
+- **A webhook is a nudge.** It carries the event type and the record ID. Read the record again through the API before writing it anywhere, so a late or retried delivery never overwrites newer data with older data.
+- **Verify before anything else.** Reject a delivery whose `Coverbase-Signature` does not match (hex HMAC-SHA256 of the raw body, keyed by your webhook secret) or whose `Coverbase-Timestamp` is more than five minutes old.
+- **Deduplicate on `event_id`.** A retried delivery keeps its `event_id`, so acknowledge one you already handled and do nothing.
+- **Reconcile on a schedule.** Webhooks are not a guarantee while your target is down. Page the list routes nightly (`limit=200`, then `offset`) and upsert.
+- **Open an intake, not a vendor.** To bring in a new supplier, use the [Intake API](/api-reference/intake) so the Front Door triages it. A bare vendor record carries no due diligence.
+
+## Workato
+
+The custom connector is built with the Workato connector SDK. Paste it into a new custom connector in the SDK console, or push it with the Workato gem.
+
+1. Create an OAuth client in Coverbase and grant only the scopes your recipes need.
+2. In Workato, create a connection with the client ID and secret. The connector requests tokens from `POST /v1/oauth/token` with HTTP Basic credentials and fetches a new one whenever a request returns `401`.
+3. Use its actions: search, get and create vendors; list and get engagement records; list, get, create and update contract records; list, get, create and update findings; and a custom request for any other public route.
+4. Use its triggers for new or updated vendors, engagement records, contract records and findings. Turning a recipe on registers a Coverbase webhook for it and turning it off deletes it. Each delivery is verified before the recipe sees it. Restart recipes after rotating the OAuth client secret, so they re-subscribe.
+
+## MuleSoft
+
+The Mule 4 application template imports into Anypoint Studio.
+
+- An HTTP request configuration with OAuth 2.0 client credentials against the token URL, refreshed on `401`.
+- A webhook listener at `/coverbase/events` that verifies the signature and timestamp, and acknowledges a repeated `event_id` without acting.
+- A routing flow that reads the current finding, contract record, engagement record or vendor from the API and hands it to a target flow, and a nightly reconcile flow over findings.
+- Replace the target sub-flows with the operations for your system, keyed on the Coverbase ID (or the finding number), and keep the client secret and webhook secret in secure properties.
+
+## Boomi
+
+The Boomi recipe gives you what you cannot click together on the canvas: a Groovy script that verifies the signature and timestamp, and JSON profiles for the webhook envelope, findings, engagement records and contract records.
+
+1. Create an HTTP Client connection to `https://api.coverbase.app` with OAuth 2.0 client credentials and the token URL.
+2. Start the process with a Web Services Server listener that keeps the raw body, run the signature script first, drop a repeated `event_id`, route on `event_type`, read the current record with a GET operation, map it, and upsert it.
+3. Register the listener URL once as a Coverbase webhook, with the same secret the script uses.
+
+## Pushing to an enterprise risk register
+
+Archer, ServiceNow IRM and REST risk registers have built-in connectors in the Integration Hub: see [Archer](/integrations/guides/archer), [ServiceNow IRM](/integrations/guides/servicenow-irm) and [ERM risk register](/integrations/guides/erm-register). For a register those do not fit, two patterns work through an integration platform, and the starting points above include both:
+
+- **Event-driven.** Subscribe to finding and assessment events with a webhook. In your platform, fetch the full record from the API and create or update the matching risk or issue in the register.
+- **Batch.** Read engagements, contracts, findings and exceptions on a schedule from the API, or from the tables in [warehouse data share](/products/warehouse-data-share), and load them into the register.
+
+Store the register's record ID back on the Coverbase record (for example as a custom field) so later updates find it. For ServiceNow, the [ServiceNow integration](/integrations/guides/servicenow) creates and updates records natively from workflows.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="OAuth 2.0 client credentials" icon="key" href="/integrations/guides/oauth-client-credentials">
+    Create a client and test a token.
+  </Card>
+  <Card title="Webhooks" icon="arrow-right-from-bracket" href="/integrations/webhooks">
+    Events, payloads and signature verification.
+  </Card>
+  <Card title="Integration patterns" icon="shapes" href="/integrations/patterns">
+    Inbound, outbound and bidirectional patterns.
+  </Card>
+  <Card title="Integration directory" icon="grid-2" href="/integrations/directory">
+    Every system Coverbase connects to.
+  </Card>
+</CardGroup>

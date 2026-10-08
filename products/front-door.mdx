@@ -1,0 +1,105 @@
+---
+title: "Front Door"
+description: "Triage every intake request before due diligence starts: is the vendor new, can earlier due diligence be reused, does the request need an inherent risk questionnaire, and is the vendor on the Do Not Use list."
+icon: "door-open"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Front Door is the first review an intake request gets. Before anyone sends a questionnaire or opens an assessment, the TPRM Office answers four questions on one page: is this a new vendor or one you already have, is there an engagement whose due diligence can be reused, does the request need an inherent risk questionnaire (IRQ), and is the vendor blocked. The answers are recorded as a **disposition**, signed off by two people, and kept in the request's audit trail.
+
+Your Coverbase representative turns on the third-party lifecycle features for your organization.
+
+<Frame caption="The Front Door tab of an intake request, with the identifier match, proposed reuse by domain, the decided disposition and its two sign-offs.">
+  <img src="/images/user-guides/front-door-triage-tab.png" alt="Front Door tab for Orbitline Data Services showing a deterministic D-U-N-S and LEI match, a similar engagement inside the 12-month reuse window, a reuse proposal for eight risk domains, and a decided disposition signed by the TPRM Office and Supply Chain" />
+</Frame>
+
+## What it does
+
+<CardGroup cols={2}>
+  <Card title="Is this new?" icon="fingerprint">
+    Matches the request against your vendors on tax ID, D-U-N-S number and LEI, which count as deterministic, and on domain and name, which count as probabilistic. Tax IDs stay sealed: Coverbase shows only the last four characters.
+  </Card>
+
+  <Card title="Engagement reuse" icon="recycle">
+    Finds the most similar existing engagement by shared services and tags, says whether its completed due diligence is inside your reuse window (12 months unless you change it), and proposes per risk domain whether to reuse it, run an abbreviated review or start again.
+  </Card>
+
+  <Card title="Dual sign-off" icon="user-check">
+    A disposition is decided only when one person from the TPRM Office group and a different person from the Supply Chain group have both signed it off. Revising it clears both sign-offs.
+  </Card>
+
+  <Card title="Decline with a reason" icon="rotate-left">
+    While a disposition waits for sign-off, a member of a group that has not signed yet can decline it with a required reason. The disposition goes back to the TPRM Office as a draft, any sign-off already given is cleared, and the TPRM Office and the requester are notified.
+  </Card>
+
+  <Card title="IRQ scoping rules" icon="list-check">
+    Rules read the intake answers and decide whether an IRQ is required and which templates to send. The required IRQs go to the requester once, as soon as the disposition is decided.
+  </Card>
+
+  <Card title="Do Not Use" icon="ban">
+    A vendor marked Do Not Use can still be requested, but the requester is warned and approving the request needs an override rationale. Adding a vendor to the list and taking it off both need a reason.
+  </Card>
+
+  <Card title="Procurement context" icon="cart-shopping">
+    When a request started as a purchase requisition in a connected procurement system, the review shows where it came from, its value and category. With budget lines synced, it shows the request's draw against the line and any budget exception the requester asked for.
+  </Card>
+
+  <Card title="Microsoft Teams approvals" icon="comments">
+    With Teams approvals on, both sign-off groups can sign off or decline from one Teams card. A decision made in Coverbase updates that card, so it cannot record a second decision.
+  </Card>
+</CardGroup>
+
+## How reuse works
+
+A disposition takes one of three forms:
+
+| Disposition | What happens next |
+| --- | --- |
+| **Add as new engagement, reuse due diligence** | The vendor's next assessment launched from an assessment plan drops the control sets for every domain marked **Reuse prior due diligence**, copies the prior assessment's scores for those domains, and labels each copied score with the assessment it came from. |
+| **Extend the existing engagement** | The request is treated as an amendment to an engagement you already have. No new engagement is created. |
+| **Full new due diligence** | Prior results are ignored and due diligence runs in full. |
+
+A reuse decision is applied once, to the next plan-launched assessment for that vendor. Zero Touch assessments do not consume it. After it has been applied, nobody can revise it, and the engagement record shows which domains reused diligence satisfied. If someone scores a reused domain on the new assessment, Coverbase removes the reused label from that domain.
+
+## When a sign-off group declines
+
+While a disposition waits for sign-off, a member of a sign-off group that has not signed yet can click **Decline**, beside **Approve triage**, and write the reason. A decided disposition cannot be declined. Coverbase then:
+
+- returns the disposition to the TPRM Office as a draft and clears any sign-off already given,
+- shows on the disposition who declined, for which group, and why, and records the same in the audit trail,
+- notifies the TPRM Office and whoever recorded the disposition with the reason, and tells the requester that the TPRM Office is revising the decision.
+
+Nobody can sign off or decline again until the TPRM Office records the disposition again. Recording it again clears the decline and asks both groups to sign off.
+
+<Frame caption="A declined disposition, back with the TPRM Office, showing who declined, for which group, and the reason.">
+  <img src="/images/user-guides/front-door-declined-disposition.png" alt="Disposition card labeled Back with the TPRM Office, with a notice that Dana Sato declined for Supply Chain because the hosting region is not in the request, a Record again button, and the decline entry in the audit trail" />
+</Frame>
+
+## What it does not do
+
+- It does not approve the vendor. Approving the intake is still a separate step, and a vendor created through intake stays in its created status until someone moves it.
+- It does not decide on a name match alone. A domain or name match is shown as probabilistic, and only a registry identifier counts as deterministic.
+- It does not remove a vendor from the Do Not Use list when an override is recorded. The override applies to that one request.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Front Door guide" icon="book-open" href="/user-guides/front-door-triage">
+    Set up the reuse window, sign-off groups and IRQ rules, then triage a request step by step.
+  </Card>
+
+  <Card title="Engagement record" icon="route" href="/products/engagement-record">
+    Where reused and new diligence come together for the Transaction Owner.
+  </Card>
+
+  <Card title="Autonomous Intake" icon="inbox" href="/products/autonomous-intake">
+    How a request is filed in the first place, from the portal, the API or an AI assistant.
+  </Card>
+
+  <Card title="Risk methodology" icon="scale-balanced" href="/products/risk-methodology">
+    How the IRQ the Front Door sends is scored and who reviews each domain.
+  </Card>
+</CardGroup>

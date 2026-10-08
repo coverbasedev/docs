@@ -1,6 +1,6 @@
 ---
 title: "Slack"
-description: "Connect Coverbase's Slack app to your workspace, and route Coverbase events into Slack channels with webhooks."
+description: "Connect Coverbase's Slack app to your workspace, let requesters ask for a new vendor in a direct message to the app, and route Coverbase events into Slack channels with webhooks."
 icon: "slack"
 ---
 
@@ -11,7 +11,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 Coverbase ships a Slack app that installs into your workspace through Slack's own authorization flow. Once connected, Coverbase can reach people in your workspace by direct message, matched to their Slack account by email.
 
 <Note>
-  Coverbase notifications (assignments, reviews, alerts) are delivered in the app and by email, not through the Slack app. The only message the Slack app sends today is the test message below. To get Coverbase events into Slack now, use [webhooks](#channel-based-patterns).
+  Coverbase notifications (assignments, reviews, alerts) are delivered in the app and by email, not through the Slack app. The Slack app sends the test message below and, for organizations with the third-party lifecycle features, the [Intake Agent](#vendor-requests-in-slack)'s replies. To get Coverbase events into Slack channels, use [webhooks](#channel-based-patterns).
 </Note>
 
 ```mermaid
@@ -32,6 +32,12 @@ flowchart LR
 - **Test, reauthorize, disconnect.** **Test connection** asks Slack to confirm the workspace, **Reauthorize Slack** repeats the authorization, and **Disconnect** removes the saved connection.
 - **Rate-limit aware.** The connector honors Slack's retry-after signals and distinguishes transient failures from authorization problems.
 
+## Vendor requests in Slack
+
+With the [Intake Agent](/user-guides/intake-agent)'s Slack channel turned on, a requester sends the Coverbase app a direct message, or mentions it in a channel, describing the vendor they need. The agent answers in a direct message, asks only for what is missing, and opens an intake request. It accepts requests only from people whose confirmed Slack address belongs to an active member of your organization.
+
+The channel needs the app to read direct messages and mentions. An app installed before the Intake Agent was available lacks that permission. The Intake Agent page then shows **Needs reinstall**, and **Reauthorize Slack** grants it.
+
 ## Channel-based patterns
 
 For channel notifications and richer routing (a #vendor-risk feed, per-team channels), pair Coverbase [webhooks](/integrations/webhooks) with a Slack workflow or a small handler you control. The webhook carries the event type and affected object, so the routing logic stays yours.
@@ -39,5 +45,5 @@ For channel notifications and richer routing (a #vendor-risk feed, per-team chan
 ## Onboarding checklist
 
 1. A workspace admin connects the Coverbase Slack app (OAuth, self-serve).
-2. Confirm user emails match between Coverbase and Slack: that's the identity join. **Send test message** checks it for you.
+2. Confirm user emails match between Coverbase and Slack, because email is how Coverbase finds each person in Slack. **Send test message** checks it for you.
 3. For notifications in Slack today, register a webhook and route its events into the channels you choose.

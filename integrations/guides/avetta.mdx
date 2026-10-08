@@ -1,0 +1,56 @@
+---
+title: "Avetta"
+description: "Sync Avetta supplier compliance status, safety statistics and insurance into the Certificate Vault daily, for prequalification rules to read."
+icon: "helmet-safety"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Avetta connector feeds the [Certificate Vault](/products/certificate-vault). You bring your own Avetta subscription, and Coverbase reads it with your credentials once a day.
+
+<Note>
+  If a Avetta response does not have the shape Coverbase expects, the sync stops and records the error. It never treats such a response as an empty list, because an empty pull archives every certificate the network supplied.
+</Note>
+
+## What it does
+
+Avetta prequalifies suppliers and contractors on safety, insurance and compliance. Coverbase reads your client account's suppliers and writes each one's **Avetta prequalification** status, safety statistics and insurance into the vault.
+
+- **Matched to your vendors.** Each record is matched to a vendor by a match recorded on an earlier run, then by its domain (walking up to the parent domain, never down), then by its exact legal name. A record that matches no vendor is skipped.
+- **Kept current.** A network record is keyed by the network's ID and the certificate type. A complete pull archives records the network no longer returns.
+- **Read by prequalification.** Network grade, network status and safety or ESG figure conditions in your [prequalification rule sets](/user-guides/certificate-vault#step-4-write-a-prequalification-rule-set) read these records. Only current records count.
+
+## Authentication
+
+Avetta issues an API token for your client account. Coverbase reads `/v1/clients/<account ID>/suppliers` from `https://api.avetta.com`.
+
+1. Ask Avetta for an API token for your client account.
+2. Note your Avetta client ID.
+
+## Set up in Coverbase
+
+1. Open **Configuration → External Integrations** and click **Avetta**.
+2. Enter **API Token** and **Account ID** (your client ID).
+3. Click **Save**, then **Test connection**.
+4. On the **Certificates** page, the **Networks** card shows Avetta as connected, with its certificate count and last sync. Click **Sync now** for the first pull.
+
+If a sync fails, the panel and the **Networks** card show **The last sync failed** with the reason. Only Coverbase's own error messages are stored, never a credential or the provider's response. **Remove** deletes the stored credentials; certificates already pulled stay.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Certificate Vault guide" icon="certificate" href="/user-guides/certificate-vault">
+    The vault, rule sets and overrides.
+  </Card>
+  <Card title="Certificate Vault and prequalification" icon="list-check" href="/products/certificate-vault">
+    What prequalification does.
+  </Card>
+  <Card title="Front Door triage" icon="door-open" href="/user-guides/front-door-triage">
+    Prequalification on an intake request.
+  </Card>
+  <Card title="Integration directory" icon="grid-2" href="/integrations/directory">
+    Every system Coverbase connects to.
+  </Card>
+</CardGroup>

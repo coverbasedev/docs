@@ -59,7 +59,7 @@ Vendors and services accept optional personnel assignments as arrays of user IDs
 | `watcher_ids` | ✓ | ✓ | Watchers (users who follow the vendor/service for notifications). |
 
 <Tip>
-  These fields take Coverbase user IDs, not emails. Syncing from an external system (e.g. ServiceNow) that keys on email? Use the [Users API](/api-reference/users#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID; `GET /v1/users?email=` looks one up, and `POST /v1/users` provisions the user if they don't exist yet (returning the existing user if they do).
+  These fields take Coverbase user IDs, not emails. Syncing from an external system (for example, ServiceNow) that keys on email? Use the [Users API](/api-reference/users#list-users-and-look-up-by-email) to resolve an email to its `cbuser_...` ID; `GET /v1/users?email=` looks one up, and `POST /v1/users` provisions the user if they don't exist yet (returning the existing user if they do).
 </Tip>
 
 ## Create a vendor
@@ -93,7 +93,7 @@ Creates a parent vendor. Returns `201 Created` with the full vendor object.
 </ParamField>
 
 <ParamField body="external_id" type="string">
-  Your system's identifier for this vendor (e.g. an Ariba request ID). Stored and echoed back; useful for correlation.
+  Your system's identifier for this vendor (for example, an Ariba request ID). Stored and echoed back; useful for correlation.
 </ParamField>
 
 <ParamField body="risk_analyst_ids" type="string[]">
@@ -531,7 +531,7 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
 <ResponseField name="website" type="string | null">Vendor website URL.</ResponseField>
 <ResponseField name="description" type="string | null">Vendor description.</ResponseField>
 <ResponseField name="hq_location" type="string | null">Headquarters location.</ResponseField>
-<ResponseField name="status" type="string | null">Current status as a plain label string (e.g. `"Active"`). Org-customizable. `null` if unset.</ResponseField>
+<ResponseField name="status" type="string | null">Current status as a plain label string (for example, `"Active"`). Org-customizable. `null` if unset.</ResponseField>
 <ResponseField name="status_id" type="string | null">ID (`cbst_...`) of the current status record.</ResponseField>
 <ResponseField name="tags" type="string[]">Tag value strings (empty array if none).</ResponseField>
 <ResponseField name="risk_analyst_ids" type="string[]">Assigned risk analyst user IDs (`cbuser_...`).</ResponseField>
@@ -541,7 +541,7 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
 <ResponseField name="residual_risk_level_id" type="string | null">Scale level ID (`cbsclvl_...`) for residual risk.</ResponseField>
 <ResponseField name="engagement_type" type="string | null">How this vendor engages with your organization: `vendor` or `product`.</ResponseField>
 <ResponseField name="use_case" type="string | null">How the vendor is used.</ResponseField>
-<ResponseField name="tier" type="string | null">Derived vendor tier (e.g. `tier_1`, `tier_2`). Set by workflow tiering actions; `null` until derived.</ResponseField>
+<ResponseField name="tier" type="string | null">Derived vendor tier (for example, `tier_1`, `tier_2`). Set by workflow tiering actions; `null` until derived.</ResponseField>
 <ResponseField name="primary_contact" type="object | null">The vendor point-of-contact (see [the primary contact object](#the-primary-contact-object)), or `null`.</ResponseField>
 <ResponseField name="services" type="object[]">The vendor's child services, each a [service object](#service-object). Empty array if none.</ResponseField>
 <ResponseField name="custom_fields" type="object[]">Values your organization has set on this vendor. Empty array if none are set. See the [Custom Fields API](/api-reference/custom-fields) for the value shapes. Nested services carry their own `custom_fields`.</ResponseField>
@@ -605,7 +605,7 @@ The response is the full vendor object (same shape as [Retrieve a vendor](#vendo
 
 | Status | Body | When |
 | ------ | ---- | ---- |
-| 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | Update rejected (e.g. an invalid reference ID). |
+| 400 | `{"detail": {"code": "invalid_update", "message": "..."}}` | Update rejected (for example, an invalid reference ID). |
 | 404 | `{"detail": {"code": "vendor_not_found", "message": "Vendor not found."}}` | `vendor_id` not found / not in org. |
 | 422 | Standard validation error | Body failed schema validation. |
 
@@ -790,7 +790,7 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
 Three sections carry outside-in intelligence measured from registries of record and from the vendor's own infrastructure, rather than produced by a language model. All three cite their sources. See [Vendor Intelligence](/products/vendor-intelligence), [Financial Health Score](/products/financial-health-score), and [Security Intelligence](/products/security-intelligence) for what each field means.
 
 <Note>
-  The Financial Health Score and the measured security rating are optional features in beta, enabled per organization. Write your integration to treat `financials.financial_health` and `security_posture.external_intelligence` as optional. `financial_health` is `null` for an organization that does not have the score enabled. `external_intelligence` is present for every organization once generated, but without the measured rating it scores only the seven original factors. Any section can be `null` even when `status` is `"completed"`.
+  The Financial Health Score and the measured security rating are optional features, enabled per organization. Write your integration to treat `financials.financial_health` and `security_posture.external_intelligence` as optional. `financial_health` is `null` for an organization that does not have the score enabled. `external_intelligence` is present for every organization once generated, but without the measured rating it scores only the seven original factors. Any section can be `null` even when `status` is `"completed"`.
 </Note>
 
 <ResponseField name="company_profile.registry_validation" type="object | null">
@@ -842,7 +842,7 @@ Three sections carry outside-in intelligence measured from registries of record 
 
   `data_available` is the field to branch on, and the one most likely to bite an integration. When it is `false`, the factor could not be measured on this run and was **excluded from `overall_score`**, but it still carries `score: 100`, `grade: "A"`, and its normal `weight`, because a factor that took no deductions never left its starting value. Read `data_available` first and treat `false` as "no data"; rendering or alerting on `score` without that check turns an unmeasured factor into a perfect one.
 
-  Only factors that were actually scored appear in the array. An organization without the measured security rating enabled gets the seven original factors and no entries for `email_security`, `tls_configuration`, `web_application_headers`, or `domain_squatting` at all.
+  Only factors that were scored appear in the array. An organization without the measured security rating enabled gets the seven original factors and no entries for `email_security`, `tls_configuration`, `web_application_headers`, or `domain_squatting` at all.
 
   `findings` carries the structured evidence (below); `drivers` carries the same evidence pre-rendered as English sentences, intended for prompt context rather than display.
 </ResponseField>
