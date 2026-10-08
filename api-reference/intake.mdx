@@ -231,6 +231,11 @@ Each entry in `answers[]` carries `question_id`, `question_text`,
 `status` (`answered`, `pending`, `failed`). `failed_count` summarizes failed
 answers.
 
+`vendor_id` is the vendor (`cbvndr_...`) the request created or linked, or
+`null` if no vendor is linked. Use it with the [Vendors API](/api-reference/vendors#retrieve-a-vendor)
+or to match an assessment back to this request (see
+[Find the assessment an intake leads to](#find-the-assessment-an-intake-leads-to)).
+
 ### Example response
 
 ```json
@@ -238,6 +243,7 @@ answers.
   "session_id": "cbintksn_7c1d9e2b41f04c5e8a3b6d0f9e2c4a71",
   "external_id": "PROC-4821",
   "status": "complete",
+  "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
   "vendor_name": "Acme Analytics",
   "vendor_website": "https://acme-analytics.example",
   "created_at": 1765432100,
@@ -256,6 +262,23 @@ answers.
   ]
 }
 ```
+
+## Find the assessment an intake leads to
+
+An intake session does not create an assessment, and its response does not
+carry an assessment ID. Your organization's workflows decide whether an
+assessment follows an intake, so one request can lead to no assessment or to
+several. To pick up the assessment:
+
+1. Subscribe a [webhook](/integrations/webhooks) to `Assessment.Created` and
+   `Assessment.Updated`. Each delivery carries the `assessment_id`.
+2. Call [`GET /v1/assessments/{assessment_id}`](/api-reference/assessments#retrieve-an-assessment).
+   The response carries `vendor_id`, `status` and `score_percent`.
+3. Match that `vendor_id` to the `vendor_id` on the intake session you created.
+
+If your receiver misses deliveries, read them back from
+[`GET /v1/webhooks/{webhook_id}/deliveries`](/integrations/webhook-deliveries).
+It lists every attempt from the last 90 days with the payload that was sent.
 
 ## How context drives inherent risk
 
