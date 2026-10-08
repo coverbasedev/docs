@@ -67,7 +67,7 @@ Every call made with an `ak_*` key to a public API resource endpoint (vendors, d
 
 Request and response bodies are not stored, with one exception: a call to a custom [Import API](/import) report stores both bodies, redacted and capped at 1 MB, and shows them on that report's **Request history** tab. The records surface in the dashboard under **Configuration → Audit Logs** (in the **Integrations** group) and through `GET /v1/system_audit_log` (and `GET /v1/system_audit_log/metadata`). Both read endpoints accept **either** a dashboard session JWT (member, siloed member, or admin) **or** an `ak_*` key that carries the [`audit:read` scope](#api-key-scopes).
 
-Requests that fail authentication before the `ak_*` key resolves (e.g. an unknown or revoked key returning `401`) are not stored in the activity log; they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
+Requests that fail authentication before the `ak_*` key resolves (for example, an unknown or revoked key returning `401`) are not stored in the activity log; they appear in Coverbase's structured request logs only and can be retrieved via support if needed for incident response.
 
 ### Test your credentials
 
@@ -149,7 +149,7 @@ curl -sS "https://api.coverbase.app/v1/whoami/ip" \
 
 ## IDs
 
-Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (e.g. `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque: never parse or construct them.
+Resource IDs are opaque, prefixed strings of the form `<prefix>_<32 hex characters>` (for example, `cbvndr_e448ba62882143f3ba0c140bb2e30162`). Treat them as opaque: never parse or construct them.
 
 | Prefix | Resource |
 | ------ | -------- |
@@ -258,6 +258,6 @@ Bodies/params that fail schema validation return `422` with FastAPI's standard a
 | `401` | Invalid, expired, or revoked credential, or a role not allowed on the endpoint. |
 | `403` | No `Authorization` header (`Not authenticated`), or authenticated but not authorized: the key lacks a required scope (`insufficient_scope`), a non-admin tried to grant scopes (`scope_grant_forbidden`), or the client IP is outside the org allowlist (`ip_not_allowed`). |
 | `404` | Resource not found or not in the API key's org. |
-| `409` | Conflict: e.g. `user_exists`, or running a disabled workflow (`workflow_disabled`). |
+| `409` | Conflict: for example, `user_exists`, or running a disabled workflow (`workflow_disabled`). |
 | `422` | Request body/query failed schema validation. |
-| `502` | An upstream provider failed (e.g. `clerk_upstream_error` on the API Keys API); safe to retry. |
+| `502` | An upstream provider failed (for example, `clerk_upstream_error` on the API Keys API); safe to retry. |

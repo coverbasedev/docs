@@ -216,7 +216,7 @@ New read endpoints for discovering IDs without leaving the API, plus a name filt
 
 ### Updates
 
-- **Supplier export filter.** [`GET /v1/export/{report_name}`](/export) now accepts a `supplier_name` query parameter that filters vendor-based reports (e.g. the all-suppliers report) by name.
+- **Supplier export filter.** [`GET /v1/export/{report_name}`](/export) now accepts a `supplier_name` query parameter that filters vendor-based reports (for example, the all-suppliers report) by name.
 - **Import API troubleshooting.** Clarified the most common `404`/`422` causes in the [Import API reference](/import): the path is singular (`/v1/import/...`), the body must be wrapped under `data`, and a service-account key is required.
 
 ---
@@ -248,7 +248,7 @@ Read and regenerate a vendor's AI-generated fact sheet (company intelligence) ov
 
 ## 2026-06-04: List and resolve users by email
 
-The Users API can now look up a user by email and returns the existing user on a duplicate create, so external systems (e.g. ServiceNow) can build an email → user ID mapping for relationship-owner / watcher / risk-analyst assignments.
+The Users API can now look up a user by email and returns the existing user on a duplicate create, so external systems (for example, ServiceNow) can build an email → user ID mapping for relationship-owner / watcher / risk-analyst assignments.
 
 ### New features
 
@@ -346,7 +346,7 @@ Reconciled against the `claude/webhook-ui-workflow` source branch. Two breaking 
 ### Breaking
 
 - **Webhook `events` is now strictly validated.** `POST /v1/webhooks` and `PATCH /v1/webhooks/{id}` reject any event type outside the supported [event catalog](/integrations/webhooks#event-catalog) with `422 invalid_event_types`. Previously the field was a free-form list of strings. Integrations that registered non-canonical values (for example, lowercase `vendor.created`) must switch to the exact catalog casing (for example, `Vendor.Created`) or their create/update calls will now fail.
-- **Webhook URLs are SSRF-restricted.** A webhook `url` must be a public HTTPS endpoint. URLs that are non-HTTPS, carry credentials, use a non-standard port, or resolve to a private / loopback / link-local / metadata address (e.g. `169.254.169.254`) are rejected at create/update with `400 invalid_url`. The same check is re-applied with DNS resolution at delivery time (DNS-rebinding safe); a delivery blocked this way is recorded with status `error`.
+- **Webhook URLs are SSRF-restricted.** A webhook `url` must be a public HTTPS endpoint. URLs that are non-HTTPS, carry credentials, use a non-standard port, or resolve to a private / loopback / link-local / metadata address (for example, `169.254.169.254`) are rejected at create/update with `400 invalid_url`. The same check is re-applied with DNS resolution at delivery time (DNS-rebinding safe); a delivery blocked this way is recorded with status `error`.
 
 ### Additive
 
@@ -385,7 +385,7 @@ The API reference was rebuilt to exactly match the implemented public API. Highl
 - **Assessment schema fixed.** Removed the non-existent `risk_type`, `doc_collection_mode`, and `products` request fields. `control_set_ids` is required. Status values corrected to the real enum. Idempotency replays return the original `201` body (no `409 idempotency_conflict`).
 - **Workflow schema fixed.** Run status values are `started`/`completed`/`canceled`/`failed`. The get-run response returns only run metadata: no `checkpoints_reached` or `output`. Removed the non-existent `429 rate_limited` / `400 invalid_input` errors and the non-existent `POST /v1/workflows/runs` alternative.
 - **Webhook signing documented from source.** Signature header is `Coverbase-Signature` (lowercase hex HMAC-SHA256 of the raw body, keyed by the registered secret). Deliveries also send `X-Coverbase-Event-Id` and `X-Coverbase-Event-Type`. Envelope is exactly `{event_id, event_type, occurred_at, data}`. Retries are bounded at 5 attempts with a 10s per-attempt timeout (no documented multi-hour backoff window).
-- **Event catalog corrected** to the emission-backed `SupportedEventType` values with exact casing (e.g. `Vendor.Created`, not `vendor.created`). Removed invented events (`evaluation.flagged`, `evidence.requested`, etc.).
+- **Event catalog corrected** to the emission-backed `SupportedEventType` values with exact casing (for example, `Vendor.Created`, not `vendor.created`). Removed invented events (`evaluation.flagged`, `evidence.requested`, etc.).
 - Added a shared [API conventions](/conventions) page (auth, IDs, timestamps, idempotency, error envelope).
 
 ### Open questions
