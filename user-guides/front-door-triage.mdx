@@ -1,11 +1,10 @@
 ---
 title: "Front Door triage"
-description: "Set up and run the Front Door review of intake requests: the reuse window and sign-off groups, IRQ scoping rules, the Do Not Use list, checking identifiers, choosing a disposition, signing it off, sending questions back to the requester, and the budget and material change cards."
+description: "Set up and run the Front Door review of intake requests: the reuse window and sign-off groups, IRQ scoping rules, the Do Not Use list, checking identifiers, choosing a disposition, signing it off or declining it, sending questions back to the requester, and the budget and material change cards."
 icon: "door-open"
 ---
 
 import AgentDirective from "/snippets/agent-directive.mdx";
-import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 
 <AgentDirective />
 
@@ -13,9 +12,9 @@ import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
   This guide is part of the [User Guides](/user-guides/overview) collection. It covers the **Front Door** tab of an intake request and the **Configuration → Front Door** settings. It sits beside [Requesting a new vendor](/user-guides/requesting-a-vendor), which covers the requester's side, and [The engagement record](/user-guides/engagement-record), which picks up once due diligence starts. For what the module is, see [Front Door](/products/front-door).
 </Info>
 
-<LifecycleBeta />
-
 The Front Door is where the TPRM Office decides what an intake request needs before anyone sends a questionnaire. You answer four questions on one tab: is this a new vendor, can earlier due diligence be reused, is an inherent risk questionnaire (IRQ) required, and is the vendor on the Do Not Use list. The answers become a disposition that two people sign off.
+
+Your Coverbase representative turns on the third-party lifecycle features for your organization.
 
 The mistake people make most often is signing off a disposition and then revising it to fix a typo in the rationale. Revising clears both sign-offs, so both signers have to sign again.
 
@@ -33,6 +32,10 @@ Decide three things with your team first:
 
 Open **Configuration** and choose **Front Door**.
 
+<Frame caption="Configuration → Front Door, with the reuse window, the two sign-off groups and the IRQ scoping rules.">
+  <img src="/images/user-guides/front-door-settings.png" alt="Front Door settings page with Reuse Window set to 12 months, TPRM Office and Supply Chain groups chosen, IRQ required by default turned on, and three IRQ scoping rules" />
+</Frame>
+
 <Steps>
   <Step title="Reuse and Sign-off">
     Set **Reuse Window (Months)**. A completed assessment younger than this can be proposed for reuse on a similar engagement. Choose the **TPRM Office Group** and the **Supply Chain Group**. Left on **Any reviewer**, anyone who can review the request may sign for that role, but the two sign-offs must still come from different people.
@@ -49,13 +52,15 @@ How rules combine: a firing rule that requires the IRQ wins over a firing exempt
 
 ## Step 2: Mark vendors you must not use
 
-Open the vendor, find the **Do Not Use** card on the overview, and click **Mark Do Not Use**. Give a **Reason**, then **Add to Do Not Use**. **Remove from Do Not Use** takes the vendor off the list; it also asks for a reason. Every change, on or off, is recorded in the vendor's activity with who made it and why.
+Open the vendor, find the **Do Not Use** card on the overview, and click **Mark Do Not Use**. Give a **Reason**, then click **Add to Do Not Use**.
+
+To take the vendor off the list, click **Remove from Do Not Use**. The confirmation asks for a **Reason for removing**, and Coverbase refuses the removal without one. Both reasons are capped at 2,000 characters, and a counter under the field shows how many you have used. Every change, on or off, is recorded in the vendor's activity with who made it and why.
 
 A Do Not Use vendor can still be requested. The requester is warned that a reviewer must approve an exception, and approving the request needs an override rationale (step 6).
 
 ## Step 3: Open a request
 
-Open **Intake** in the left navigation and choose the request. With the beta on, the request opens on the **Front Door** tab. **Submission** shows the requester's answers as before.
+Open **Intake** in the left navigation and choose the request. The request opens on the **Front Door** tab. **Submission** shows the requester's answers.
 
 If the request started as a purchase requisition in a connected procurement system, a **Started From Procurement** card shows the **Source**, **Value**, **Category** and when it was **Synced**. See [Integration Hub](/user-guides/integration-hub).
 
@@ -83,9 +88,34 @@ Then pick the **Disposition**:
 - **Extend the existing engagement** treats the request as an amendment. No new engagement is created.
 - **Full new due diligence** ignores prior results.
 
-Write the **Rationale**, which is required, kept in the audit trail and shown to both sign-off groups, and click **Record disposition**. The card then shows **Awaiting TPRM Office** and **Awaiting Supply Chain**. Each signer clicks **Sign off as** their role, or **Approve triage** at the top of the request, which signs off the recorded disposition for their group. The disposition is **Decided** when the second, different person signs.
+Write the **Rationale**, which is required, kept in the audit trail and shown to both sign-off groups, and click **Record disposition**. The card then shows **Awaiting sign-off**. Each signer clicks **Sign off as** their role, or **Approve triage** at the top of the request, which signs off the recorded disposition for their group. The disposition is **Decided** when the second, different person signs.
 
-With [Teams approvals](/integrations/guides/microsoft-teams#register-the-bot) on, each sign-off group can also approve or decline from a Teams card. Declining records the reason in the **Audit Trail** and leaves the disposition unsigned. A card for a disposition that has since been revised is refused, so nobody signs a decision they did not see.
+<Frame caption="A recorded disposition awaiting sign-off. The TPRM Office has signed, and Decline sits beside Approve triage for the Supply Chain group.">
+  <img src="/images/user-guides/front-door-awaiting-sign-off.png" alt="Front Door tab with Send back with questions, Decline and Approve triage buttons in the header, and a disposition card showing the TPRM Office signed off and Supply Chain awaiting" />
+</Frame>
+
+### Decline a disposition
+
+To send a disposition back instead of signing it, click **Decline** beside **Approve triage**. Only a member of a sign-off group that has not signed yet can decline, and only before the disposition is decided. Write the **Reason** (what needs to change before your group can sign off) and click **Decline and send back**. The reason is required.
+
+What a decline does:
+
+- The disposition goes back to the TPRM Office as a draft, labeled **Back with the TPRM Office**. Any sign-off already given is cleared.
+- The disposition shows who declined, for which group, and why. The **Audit Trail** records the same.
+- The TPRM Office and whoever recorded the disposition are notified with the reason. The requester is told that the TPRM Office is revising the decision.
+- Nobody can sign off or decline until the disposition is recorded again.
+
+To ask both groups again, the TPRM Office revises the disposition and clicks **Record again**. That clears the decline, and both groups sign off afresh.
+
+<Frame caption="A declined disposition, back with the TPRM Office, with the decline in the audit trail.">
+  <img src="/images/user-guides/front-door-declined-disposition.png" alt="Disposition card labeled Back with the TPRM Office, showing that Dana Sato declined for Supply Chain with the reason, a Record again button, and the audit trail entry for the decline" />
+</Frame>
+
+### Decide from Microsoft Teams
+
+With [Teams approvals](/integrations/guides/microsoft-teams#register-the-bot) on, Coverbase posts one card for both sign-off groups, and each group can sign off or decline from it. Declining from Teams does the same as **Decline** in Coverbase. A card for a disposition that has since been revised is refused, so nobody signs a decision they did not see.
+
+A sign-off or decline made in Coverbase also updates the Teams card. The card then shows who signed and which group is still waiting, the decided disposition, or who declined and why, and it cannot record a second decision.
 
 <Warning>
   **Revise disposition** asks you to confirm, then clears both sign-offs. Once an assessment has launched from the disposition, it is locked and can no longer be revised.
@@ -119,11 +149,14 @@ Two more cards appear when the requester filled in the matching intake steps.
 
 | What you see | Cause | Fix |
 | --- | --- | --- |
-| No **Front Door** tab on the request | The beta is not on for your organization. | Ask your Coverbase representative. |
+| No **Front Door** tab on the request | The third-party lifecycle features are not turned on for your organization. | Ask your Coverbase representative. |
 | **Probabilistic match** on a vendor you know is the same | Only the name or website matched. | Enter a tax ID, D-U-N-S or LEI and click **Check identifiers**. |
 | **Approve triage** is unavailable | No disposition is recorded, there are unsaved disposition changes, you already signed, or you are in neither sign-off group. | Follow the reason shown on the button. |
 | **Sign off** does nothing for the second signer | The same person tried to sign both roles, or is not in the role's group. | A different member of the other group signs. |
-| Both sign-offs disappeared | Someone clicked **Revise disposition**. | Both signers sign the revised disposition. |
+| Both sign-offs disappeared | Someone clicked **Revise disposition**, or a sign-off group declined. | Both signers sign the revised disposition. After a decline, the TPRM Office clicks **Record again** first. |
+| **Decline** is not shown | Your group already signed, you are in neither sign-off group, or the disposition is already decided or already declined. | Ask a member of the group still waiting. |
+| **Back with the TPRM Office** and nobody can sign | A sign-off group declined the disposition. | Read the reason, revise the disposition, and click **Record again**. |
+| **Remove from Do Not Use** does nothing | The **Reason for removing** is empty. | Write a reason, up to 2,000 characters. |
 | **Required but not sent yet** | The request had no vendor or requester when it was decided. | Link the vendor, then click **Send IRQ**. |
 | Approving the request returns an error about the Do Not Use list | No override rationale was recorded. | Record an override rationale, then approve. |
 | The new assessment did not reuse anything | It was a Zero Touch assessment, or not launched from an assessment plan, or the reuse was already applied to an earlier one. | Launch from an assessment plan. Check the **Audit Trail** for **Disposition applied to the launched assessment**. |
