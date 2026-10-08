@@ -10,17 +10,17 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Security Intelligence rates a vendor's external security posture without asking the vendor anything, without an agent, and without a questionnaire. Coverbase queries the vendor's own public infrastructure (its DNS records, its TLS certificate, the headers its web server returns) and scores what it finds.
 
-The distinction that matters: this is **measured**, not reported. A rating built from feed subscriptions tells you what someone said about a vendor. This tells you what the vendor's systems are actually configured to do, today, and shows you the record it read.
+The distinction that matters: this is **measured**, not reported. A rating built from feed subscriptions tells you what someone said about a vendor. This tells you what the vendor's systems are configured to do, today, and shows you the record it read.
 
 <Note>
-  This is an optional feature currently in beta. Let your Coverbase representative know if you'd like it turned on for your organization.
+  This is an optional feature. Ask your Coverbase representative to turn it on for your organization.
 </Note>
 
 ## What it does
 
 <CardGroup cols={2}>
   <Card title="Reads policy, not presence" icon="magnifying-glass">
-    A domain that publishes SPF and DMARC but sets `~all` and `p=none` blocks nothing. A presence check scores it identically to a domain enforcing `-all` and `p=reject`. Coverbase parses the policy and scores what it would actually do to a forged message.
+    A domain that publishes SPF and DMARC but sets `~all` and `p=none` blocks nothing. A presence check scores it identically to a domain enforcing `-all` and `p=reject`. Coverbase parses the policy and scores what it would do to a forged message.
   </Card>
 
   <Card title="Every deduction has a receipt" icon="receipt">
@@ -60,7 +60,7 @@ Four probes read the vendor's live infrastructure on each Vendor Intelligence re
 | ----- | ------------- |
 | **Email authentication** | The SPF `all` qualifier and lookup count, DMARC `p`/`sp`/`pct` and whether reports are collected, DKIM key size across the selectors major senders publish, MTA-STS mode fetched from the well-known URL, TLS-RPT, and BIMI |
 | **Web application headers** | Whether the origin upgrades to HTTPS at all, HSTS and its lifetime, Content-Security-Policy (including report-only-only and `unsafe-inline`), clickjacking cover, MIME-sniffing protection, Referrer and Permissions policies, version banners, and the security flags on every cookie set |
-| **TLS certificate** | Chain trust, whether the certificate actually covers the hostname, days to expiry, and the protocol and cipher negotiated |
+| **TLS certificate** | Chain trust, whether the certificate covers the hostname, days to expiry, and the protocol and cipher negotiated |
 | **Lookalike domains** | Registered typo and homoglyph variants of the vendor's domain that resolve, with mail-capable ones surfaced first |
 
 These sit alongside the feed-based factors Coverbase already scored (vulnerability exposure, network posture, IP and web reputation, and credential leaks), so the rating covers both what the vendor's infrastructure does and what public sources report about it.
@@ -87,9 +87,9 @@ Two deliberate constraints on that arithmetic:
 
 <AccordionGroup>
   <Accordion title="A factor with no data is excluded, not zeroed" icon="circle-minus" defaultOpen>
-    If a probe times out, gets rate-limited, or the vendor's infrastructure simply doesn't answer, that factor drops out of the weighted mean. It is never scored as a failure. A vendor is not penalized for a query that failed on our side, and a clean-looking score is never manufactured from a request that didn't complete.
+    If a probe times out, gets rate-limited, or the vendor's infrastructure doesn't answer, that factor drops out of the weighted mean. It is never scored as a failure. A vendor is not penalized for a query that failed on our side, and a clean-looking score is never manufactured from a request that didn't complete.
 
-    The same rule applies in the other direction. HTTPS enforcement is credited only when a plain-HTTP connection is actually refused. A request that merely timed out proves nothing, so it earns nothing.
+    The same rule applies in the other direction. HTTPS enforcement is credited only when a plain-HTTP connection is refused. A request that merely timed out proves nothing, so it earns nothing.
   </Accordion>
 
   <Accordion title="Domain-squatting deductions are capped" icon="ban">
@@ -108,7 +108,7 @@ Every factor's rationale lists the individual findings behind its grade. Each on
 
 That last field is the one worth watching. A finding that persists across months has been seen by the vendor's own team too. It has stopped being an oversight and become a decision.
 
-Opening a finding also shows the remediation step for its code, and whether the finding actually cost the rating points. Raise a tracked finding from it directly, or use **Generate findings** to raise them for every scored issue at once, which is the case a sweep across a wide estate creates.
+Opening a finding also shows the remediation step for its code, and whether the finding cost the rating points. Raise a tracked finding from it directly, or use **Generate findings** to raise them for every scored issue at once, which is the case a sweep across a wide estate creates.
 
 <Tip>
   Take a finding to the vendor as an observation, not an accusation: "your DMARC record is `p=none`, so mail forged from your domain still gets delivered. Is enforcement on the roadmap?" It is a verifiable fact about a public record, and it converts a security review into a specific, answerable question.
@@ -176,10 +176,10 @@ Three more limits worth stating plainly:
 
 ## Availability
 
-Security Intelligence is an optional feature in beta, enabled per organization. **Contact your Coverbase representative to have it turned on.**
+Security Intelligence is an optional feature, enabled per organization. **Contact your Coverbase representative to have it turned on.**
 
 Organizations without it keep the security rating exactly as it was before this feature shipped: the same seven factors at the same weights. Enabling it adds the four measured factors and re-weights accordingly, so expect ratings to move once it's on. That movement is the point: the new rating distinguishes vendors the old one scored alike.
 
 <Note>
-  See also [Vendor Intelligence](/products/vendor-intelligence) for corporate identity validation and the [Financial Health Score](/products/financial-health-score), both enabled alongside this feature and following the same beta arrangement.
+  See also [Vendor Intelligence](/products/vendor-intelligence) for corporate identity validation and the [Financial Health Score](/products/financial-health-score), both enabled alongside this feature.
 </Note>

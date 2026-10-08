@@ -261,7 +261,7 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 
 - Each endpoint accepts **either** an admin dashboard JWT (org **`admin` role**) **or** an `ak_*` key carrying the `keys:manage` scope. A JWT caller without the admin role, or a key without `keys:manage`, is rejected.
 - **Granting scopes is admin-only.** A non-empty `scopes` array on create can only be supplied with an admin JWT; a scoped-key caller that passes `scopes` is rejected with `403 scope_grant_forbidden`. A scoped key can manage keys but can never grant scopes; there is no self-propagation.
-- Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it actually transitions a key from active to revoked**; re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Configuration → Audit Logs** (in the **Integrations** group).
+- Create and rotate always write a `CbActivity` row (`record_creation` for create, `field_update` for rotate) against `target_type=api_key`. A revoke writes a `field_update` row **only when it transitions a key from active to revoked**; re-revoking an already-revoked key is an idempotent no-op and writes nothing. These rows are visible to admins in **Configuration → Audit Logs** (in the **Integrations** group).
 
 ## Error responses
 

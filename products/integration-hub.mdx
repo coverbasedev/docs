@@ -5,15 +5,12 @@ icon: "plug"
 ---
 
 import AgentDirective from "/snippets/agent-directive.mdx";
-import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 
 <AgentDirective />
 
-<LifecycleBeta />
-
-<Warning>
-  Every Integration Hub connector, including the GRC connectors, the Teams bot and the Intake Agent's channels, is in **beta**. Each one is built against the provider's documented API and tested against recorded responses, but none has yet been validated against a live customer tenant. Connect a sandbox first and read the sync log before you rely on what a connector writes.
-</Warning>
+<Note>
+  Your Coverbase representative turns on the third-party lifecycle features, including the Integration Hub, for your organization.
+</Note>
 
 The Integration Hub connects Coverbase to the systems your purchases and contracts already move through. Requisitions in your procurement system open intake requests, supplier records link to your vendors, executed contracts in your contract lifecycle system mark the Coverbase contract executed, and Coverbase writes its risk tier, approval status and contract risk back to the provider. Every connection has the same three tabs: **Field Mappings**, **Sync Log** and **Steward Queue**.
 
@@ -32,18 +29,26 @@ The Integration Hub connects Coverbase to the systems your purchases and contrac
 
 ## How a sync works
 
-Each connection syncs on its own interval (every 60 minutes unless you change it, and no more often than every 15 minutes), and on demand with **Sync now**. A provider that can call a webhook can also nudge a sync when a record changes. Inbound passes run first, in a fixed order, so later passes can find suppliers through links the supplier pass just made:
+Each connection syncs on its own interval (every 60 minutes unless you change it, and no more often than every 15 minutes), and on demand with **Sync now**. A provider that can call a webhook can also nudge a sync when a record changes. A webhook from a contract lifecycle system that names a contract syncs only that contract, including a contract whose record ID is `0`. Inbound passes run first, in a fixed order, so later passes can find suppliers through links the supplier pass just made:
 
 1. **Suppliers** link to a vendor and record its approved supplier list status.
 2. **Requisitions and sourcing events** open a draft intake request carrying the value, category and requester, and pass the supplier's tax ID, D-U-N-S number and LEI to the Front Door.
 3. **Contracts** create or update a Coverbase contract and, when executed in the provider, mark it executed through the same path DocuSign uses, so the executed notice and accounting packet fire the same way.
 4. **Budget lines** (Coupa) record the amount and committed spend that Spend Controls and the intake budget step read.
 
-Outbound runs last, and pushes a record only when its values changed since the last push. Each record is written on its own, so one bad record fails alone, and the sync log says which record failed and why.
+Outbound runs last, and pushes a record only when its values changed since the last push. After the push, an Archer or ServiceNow IRM connection reads back the status of every issue and risk record it holds. Coverbase shows that status beside the record and does not change the finding's own status from it. Each record is written on its own, so one bad record fails alone, and the sync log says which record failed and why.
+
+<Frame caption="A connection's Sync Log tab: each run's trigger, status and record counts, with the error for a failed run.">
+  <img src="/images/user-guides/integration-hub-sync-log.png" alt="Sync Log table with a scheduled run marked Partial, a webhook run marked Succeeded, and a manual run marked Failed because the provider rejected the stored credentials" />
+</Frame>
 
 ## Matching suppliers
 
-A name alone never links a supplier. A tax ID or D-U-N-S match links on one hit, and a domain links only when no stronger identifier points to a different vendor. Anything else goes to the **Steward Queue**, where someone links it to the right vendor or dismisses it. Once linked, a supplier is never re-matched. The queue filters by system, reason, age and name, and links or dismisses many records at once as a background job that reports, for example, "12 linked, 3 need a decision". A contract that arrives before its supplier is linked waits, and is filed against the vendor, with its executed copy, as soon as the steward links the supplier.
+A name alone never links a supplier. A tax ID, D-U-N-S number or LEI match links on one hit, and a domain links only when no stronger identifier points to a different vendor. Every match is among your organization's own vendors. Anything else goes to the **Steward Queue**, where someone links it to the right vendor or dismisses it. Once linked, a supplier is never re-matched. The queue filters by system, reason, age and name, and links or dismisses many records at once as a background job that reports, for example, "12 linked, 3 need a decision". A contract that arrives before its supplier is linked waits, and is filed against the vendor, with its executed copy, as soon as the steward links the supplier.
+
+<Frame caption="The Steward Queue: supplier records that did not match a vendor, with the reason and a suggested vendor to link.">
+  <img src="/images/user-guides/integration-hub-steward-queue.png" alt="Steward Queue table listing four Coupa supplier records with reasons Several matches, Identifiers disagree and No match, each with a vendor picker and Link and Dismiss buttons" />
+</Frame>
 
 ## The required clause pack
 

@@ -790,7 +790,7 @@ curl -X GET "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140
 Three sections carry outside-in intelligence measured from registries of record and from the vendor's own infrastructure, rather than produced by a language model. All three cite their sources. See [Vendor Intelligence](/products/vendor-intelligence), [Financial Health Score](/products/financial-health-score), and [Security Intelligence](/products/security-intelligence) for what each field means.
 
 <Note>
-  The Financial Health Score and the measured security rating are optional features in beta, enabled per organization. Write your integration to treat `financials.financial_health` and `security_posture.external_intelligence` as optional. `financial_health` is `null` for an organization that does not have the score enabled. `external_intelligence` is present for every organization once generated, but without the measured rating it scores only the seven original factors. Any section can be `null` even when `status` is `"completed"`.
+  The Financial Health Score and the measured security rating are optional features, enabled per organization. Write your integration to treat `financials.financial_health` and `security_posture.external_intelligence` as optional. `financial_health` is `null` for an organization that does not have the score enabled. `external_intelligence` is present for every organization once generated, but without the measured rating it scores only the seven original factors. Any section can be `null` even when `status` is `"completed"`.
 </Note>
 
 <ResponseField name="company_profile.registry_validation" type="object | null">
@@ -842,7 +842,7 @@ Three sections carry outside-in intelligence measured from registries of record 
 
   `data_available` is the field to branch on, and the one most likely to bite an integration. When it is `false`, the factor could not be measured on this run and was **excluded from `overall_score`**, but it still carries `score: 100`, `grade: "A"`, and its normal `weight`, because a factor that took no deductions never left its starting value. Read `data_available` first and treat `false` as "no data"; rendering or alerting on `score` without that check turns an unmeasured factor into a perfect one.
 
-  Only factors that were actually scored appear in the array. An organization without the measured security rating enabled gets the seven original factors and no entries for `email_security`, `tls_configuration`, `web_application_headers`, or `domain_squatting` at all.
+  Only factors that were scored appear in the array. An organization without the measured security rating enabled gets the seven original factors and no entries for `email_security`, `tls_configuration`, `web_application_headers`, or `domain_squatting` at all.
 
   `findings` carries the structured evidence (below); `drivers` carries the same evidence pre-rendered as English sentences, intended for prompt context rather than display.
 </ResponseField>
