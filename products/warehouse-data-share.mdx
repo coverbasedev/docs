@@ -5,15 +5,12 @@ icon: "database"
 ---
 
 import AgentDirective from "/snippets/agent-directive.mdx";
-import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 
 <AgentDirective />
 
-<LifecycleBeta />
-
-<Warning>
-  The Snowflake, Amazon S3 and BigQuery destinations are in **beta**. They have been tested against recorded responses but not yet against a live customer account. Point a destination at a test schema, bucket prefix or dataset first and check the run log.
-</Warning>
+<Note>
+  Your Coverbase representative turns on the third-party lifecycle features, including data share, for your organization.
+</Note>
 
 Data share writes the tables behind your third-party risk program into storage you own, on a schedule. Your BI team models against stable tables and views in their own warehouse instead of paging through an API, and nothing has to be exported by hand.
 
@@ -37,6 +34,10 @@ Data share writes the tables behind your third-party risk program into storage y
   </Card>
 </CardGroup>
 
+<Frame caption="Configuration, then Data Share: the destinations you add, and the table contract every destination receives.">
+  <img src="/images/user-guides/data-share-page.png" alt="Data Share page with an Add destination button, no destinations yet, and the Table Contract listing eighteen tables such as third_parties, engagements, services, assessments, findings and contracts with their sync type and column count" />
+</Frame>
+
 ## Schedule
 
 Each destination syncs **Hourly** or **Daily**, and on demand with **Sync now**. A **Sync now** that lands while a scheduled sync of the same destination is running is dropped rather than run twice.
@@ -50,7 +51,7 @@ Timestamps are UTC. Archived records stay in the share with `is_archived` set. A
 
 ## Credentials
 
-A destination's credential is write-only. It is stored in a secrets manager the moment you submit it, and the page shows only a non-secret hint: the key's fingerprint for Snowflake, or the service account email for BigQuery. Archiving a destination deletes its credential. Amazon S3 stores no secret at all: Coverbase assumes your role with an external ID generated for that one destination. See [Integration credentials and signing](/security/integration-credentials#customer-s3-roles-and-external-ids).
+A destination's credential is write-only. It is stored in a secrets manager the moment you submit it, and the page shows only a non-secret hint: the key's fingerprint for Snowflake, or the service account email for BigQuery. Archiving a destination deletes its credential. Amazon S3 stores no secret at all. Coverbase assumes your role with an external ID generated for that one destination. See [Integration credentials and signing](/security/integration-credentials#customer-s3-roles-and-external-ids).
 
 ## Where it shows
 

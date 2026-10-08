@@ -5,7 +5,6 @@ icon: "database"
 ---
 
 import AgentDirective from "/snippets/agent-directive.mdx";
-import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
 
 <AgentDirective />
 
@@ -13,11 +12,9 @@ import LifecycleBeta from "/snippets/lifecycle-beta.mdx";
   This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Configuration → Data Share** and the **Distribution** card on **Program Overview**. It sits beside [Exporting and scheduling dashboards](/user-guides/dashboard-exports) and [Integration Hub](/user-guides/integration-hub). Each destination has a setup guide: [Snowflake](/integrations/guides/snowflake), [Amazon S3](/integrations/guides/amazon-s3) and [BigQuery](/integrations/guides/bigquery). For what the module is, see [Warehouse data share](/products/warehouse-data-share).
 </Info>
 
-<LifecycleBeta />
-
-<Warning>
-  Warehouse destinations are in **beta** and have not yet been validated against a live customer account. Start with a test schema, dataset or bucket prefix.
-</Warning>
+<Note>
+  Your Coverbase representative turns on the third-party lifecycle features, including data share, for your organization.
+</Note>
 
 Data share writes your third-party risk tables into your own warehouse or bucket on a schedule. Your BI tools read them there.
 
@@ -35,6 +32,10 @@ Before you open Coverbase, prepare the account on your side. The provider guides
 
 Open **Configuration** and choose **Data Share**. Click **Add destination**.
 
+<Frame caption="The Data Share page before any destination is added, with the table contract below.">
+  <img src="/images/user-guides/data-share-page.png" alt="Data Share page with an Add destination button, no destinations yet, and the Table Contract listing eighteen tables such as third_parties, engagements, services, assessments, findings and contracts with their sync type and column count" />
+</Frame>
+
 1. Give it a **Name**, choose the **Type** (**Snowflake**, **Amazon S3** or **BigQuery**) and how often to **Sync** (**Hourly** or **Daily**).
 2. Fill in the fields for the type:
 
@@ -46,7 +47,7 @@ Open **Configuration** and choose **Data Share**. Click **Add destination**.
 
 3. Click **Add destination**.
 
-Credentials are stored encrypted the moment you save and are never shown again. The card shows only a hint: the key's fingerprint for Snowflake, or the service account's email for BigQuery. To change a credential, **Edit** the destination and enter a new one; leave the field empty to keep the stored one.
+Credentials are stored encrypted the moment you save and are never shown again. The card shows only a hint: the key's fingerprint for Snowflake, or the service account's email for BigQuery. To change a credential, **Edit** the destination and enter a new one. Leave the field empty to keep the stored one.
 
 ## Step 3: Finish the S3 trust policy
 
@@ -58,7 +59,7 @@ Click **Test connection**. **Coverbase wrote to the destination.** means the cre
 
 The card shows health: **Live**, **Failing**, **Paused**, **Pending** or **Needs credential**. **Run log** lists each run's **Started**, **Status**, **Trigger** (**Scheduled** or **Sync now**), **Rows** and **Tables**, a page at a time. **Show run details** gives the rows written per table and, for a failed run, **What went wrong**. A failed run is retried from the same point by the next one, so nothing is skipped.
 
-**Pause syncing** and **Resume syncing** stop and restart the schedule. **Archive** stops syncing and deletes the credential; tables already written stay in your warehouse.
+**Pause syncing** and **Resume syncing** stop and restart the schedule. **Archive** stops syncing and deletes the credential. Tables already written stay in your warehouse.
 
 ## Step 5: Model on the current views
 
