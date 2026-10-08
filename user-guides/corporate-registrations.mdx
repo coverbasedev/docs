@@ -1,6 +1,6 @@
 ---
 title: "Corporate registrations guide"
-description: "How to read the registry validation on a vendor, what a match decision means, and what to do when nothing matched."
+description: "How to read a vendor's legal entity, its group, and the evidence behind them, and how to correct the entity in your own words."
 icon: "building-columns"
 ---
 
@@ -12,7 +12,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
   This guide is part of the [User Guides](/user-guides/overview) collection. For what the capability is and where it stops, see [Corporate registrations](/products/corporate-registrations).
 </Info>
 
-Every vendor record starts as a name and a website. This page tells you whether a currently registered company stands behind it, and whether it is the one you think it is.
+The **Registrations** tab tells you which legal entity stands behind a vendor, what that rests on, and the corporate group around it. Coverbase reads the vendor's own legal pages, looks the entity up in public registers, and shows you every source it used.
 
 It runs on its own once a vendor has a website on file. You do not start it.
 
@@ -20,88 +20,133 @@ It runs on its own once a vendor has a website on file. You do not start it.
 
 Open a vendor, go to **Vendor Intelligence**, and pick the **Registrations** tab.
 
-<Frame caption="1 Match verdict and confidence. 2 Registry identifiers. 3 Standing and jurisdiction. 4 The register behind each fact.">
-  <img src="/images/user-guides/vendor-intelligence-registrations.png" alt="The Registrations tab for a vendor, showing a confirmed match, LEI and company number, active standing, and the registers each fact came from." />
+<Frame caption="A vendor bound to a register: the legal entity, a tile per identifier, the three steps that identified it, and its group.">
+  <img src="/images/user-guides/vendor-intelligence-registrations.png" alt="The Registrations tab for Computershare, showing Computershare Limited bound to a register as the head of a group of 19 subsidiaries, tiles for its LEI and ASIC company number, a dashed D-U-N-S tile, and three steps: the vendor record, the copyright line from its website, and the GLEIF record." />
 </Frame>
 
-## Read the verdict before the identifiers
+## What the entity rests on
 
-The page leads with a match decision, because every identifier below it only means something once you know the records belong to *this* vendor.
+The label above the entity's name says what the identity rests on. Read it before you use any identifier below it.
 
-| Verdict | What it means | What to do |
+| Label | What it means | What to do |
 | --- | --- | --- |
-| Matched | A registered company was bound with high confidence | Use the identifiers. They are safe to quote in a questionnaire. |
-| Needs review | Something plausible was found but not confirmed | Check the identifiers by hand before relying on them. |
-| No match | Nothing credible matched | Normal for small, new, or non-corporate suppliers. Not a finding against the vendor. |
+| **Bound to a register** | A public register holds this entity, and the evidence agrees with your vendor. | Use the identifiers. They are safe to quote in a questionnaire. |
+| **Identified from the vendor's own pages** | No open register holds the entity, but the vendor names it on its own legal pages. | Read the quotes. Confirm the entity, add its registration number, or ask the vendor. |
+| **Confirmed by your team** | Someone in your organization named or picked the entity. | Nothing. Every refresh keeps it. |
+| **Match result: needs review** | Several registered companies could be your vendor. | Pick the right one from **Possible matches**. |
+| **Recorded by your team** | Someone in your organization recorded that no registered entity stands behind the vendor. | Nothing. Coverbase stops searching the registers under its name. |
+| **No registry match** | Nothing credible matched, and the vendor's pages name no entity. | Normal for small, new, or non-corporate suppliers. Use **Correct with AI** if you know the entity, or **Mark as no registered entity** if there is none. |
 
-<Frame caption="An unconfirmed match. The identifiers are mostly absent, and the caveat offers a search under a different legal name.">
-  <img src="/images/user-guides/vendor-intelligence-registrations-unconfirmed.png" alt="The Registrations tab showing a plausible but unconfirmed registry match at 61 percent, with a caveat explaining that the identifiers should be checked by hand and a Try a different legal name button beside it." />
-</Frame>
+## How Coverbase finds the entity
 
-<Warning>
-  Two companies with the same name is common. A "needs review" verdict usually means that, and the fix is to open the registry link and check, not to raise a support ticket.
-</Warning>
-
-## Search under a different legal name
-
-When the verdict is **Needs review** or **No registry match**, the verdict panel offers **Try a different legal name**. Use it when you know the name the company is registered under, such as the legal entity on your contract.
-
-1. Click **Try a different legal name**.
-2. Enter the **Registered legal name** and click **Search registers**. The registers are searched live, so the dialog stays open until the answer comes back.
-3. The dialog closes and a message says whether a register returned a record. A match updates the page.
-
-The vendor's own name is searched alongside yours, so a wrong guess cannot cost you a match you already have. The name is saved either way and searched again on every later refresh. A **Matched** verdict does not offer the search, and you need permission to edit the vendor to run it.
-
-## How the match is found
-
-Most companies are filed under a legal name that is not the name you know them by, and the two often share no words at all. A product sold as Northwind Analytics may be registered as *Halden Labs Inc.*; searching the registers for "Northwind Analytics" returns nothing, so there is no near-miss to review, only an empty result.
-
-Matching therefore runs in three passes:
+Coverbase looks for the entity the way you would if you searched for it yourself.
 
 <Steps>
-  <Step title="Search the trading name">
-    Every register is queried for the name on the vendor record.
+  <Step title="Read the vendor's own legal pages">
+    The terms, privacy policy, imprint and site footer name the company a customer contracts with, often with its registration number, its former names and its subsidiaries. Coverbase reads them and keeps the passage each entity came from. A company named only in passing, such as a payment provider or a hosting company, is ignored.
   </Step>
-  <Step title="Search the likely legal names">
-    Candidate registered names are proposed from what is already known about the company (a former name, a parent, the legal entity behind the brand) and every register is searched for those too. These are search terms only. A record they surface still has to clear the same confidence bar as any other.
+  <Step title="Look the entity up by its number">
+    When the vendor states a registration number, Coverbase looks it up directly in GLEIF and Companies House. The record is bound only when its name agrees with the one the vendor states.
   </Step>
-  <Step title="Settle a genuine near-miss">
-    When a plausible record is found but similarity alone cannot confirm it, the record is weighed against what is known about the vendor: the jurisdiction, the industry, the headquarters, and the names of documents you already hold. A match confirmed this way says so in the notes, with the reasoning behind it.
+  <Step title="Search the registers by name">
+    Coverbase searches GLEIF, Companies House, OpenCorporates and SEC EDGAR for the stated legal name, the vendor's name and its former names. A record that carries the exact legal name the vendor states wins over one that only shares its brand. A record in another country than the vendor's is offered for review, not bound.
+  </Step>
+  <Step title="Fall back to the vendor's word">
+    When no register holds the entity, the page shows the entity the vendor names, marked **Identified from the vendor's own pages**, with the quotes. It stays unvalidated until you confirm it.
   </Step>
 </Steps>
 
-<Note>
-  None of these passes lowers the bar for binding a record. They widen what can be *found*; a name that resembles the vendor and nothing more is still "needs review", and two equally plausible candidates are still left for a person.
-</Note>
+<Frame caption="No open register holds the vendor. The page quotes its legal pages and separates the subsidiary a register holds from the one only the vendor names.">
+  <img src="/images/user-guides/vendor-intelligence-registrations-self-declared.png" alt="The Registrations tab for PostHog, identified from its own privacy policy as PostHog Inc., formerly Hiberly Inc., with Hiberly Ltd on Companies House and PostHog GmbH named by the vendor." />
+</Frame>
+
+## Identifiers
+
+Under the verdict, each identifier has a tile: the LEI, the company number with the register that issued it, the SEC CIK, and the D-U-N-S number. A dashed tile is one no register returned.
+
+- **Add a D-U-N-S number** saves the number Dun & Bradstreet assigns to the vendor.
+- **Add a file number**, **Add HRB number** or **Add company number** appears when the entity rests on the vendor's word. Coverbase looks the number up wherever the home register is open.
+
+When a register holds the entity, **How we identified it** shows the three steps that got there: your vendor record, the passage on the vendor's own pages, and the register record. Each step links to its source.
+
+## Confirm an entity the vendor names
+
+When the entity is **Identified from the vendor's own pages**, **What would confirm it** lists the evidence that would settle it.
+
+- **Confirm** saves the entity as your team's, for example once you have checked it against your signed contract.
+- **Ask the vendor** drafts a message asking which entity contracts with you and for its registration number. **Request a certificate of incorporation** drafts a request for the certificate. Edit the message, copy it, and send it from your own mail.
+
+## Organization structure
+
+**Organization structure** shows the vendor's parents above it and its subsidiaries below it. Each entity shows its country, its identifiers, and where it is known from:
+
+- **GLEIF** or **Companies House**: a register holds the entity and reports the relationship.
+- **Named by the vendor**: only the vendor's own pages mention the entity. Treat the link as the vendor's statement. Click **Add HRB number** (or the number its country uses) to add its registration number.
+
+When a group has many subsidiaries, filter them by country. GLEIF lists at most 25 here, and the heading gives the register's total.
+
+## Choose among possible matches
+
+When several registered companies share your vendor's name, **Possible matches** lists them, ranked by what agrees besides the name: the state or country, the city, and the industry. Click **Use this entity** on the right one. The page binds it at once, and every later refresh keeps your choice.
+
+If none of them is your vendor, click **Correct with AI** to name the right entity, or **Mark as no registered entity** when the vendor has none, such as a sole trader or an open-source project.
+
+<Frame caption="Three registered companies share the Mercury brand. The best fit agrees on country and industry.">
+  <img src="/images/user-guides/vendor-intelligence-registrations-candidates.png" alt="The Possible matches section for Mercury, with Mercury Technologies, Inc. marked best fit, Mercury Systems, Inc. and Mercury NZ Limited beside it, each with a Use this entity button." />
+</Frame>
+
+## Correct with AI
+
+Use **Correct with AI** when the entity is wrong or missing. You describe the right entity in your own words, and you see the match before anything changes.
+
+1. Click **Correct with AI** in the verdict.
+2. Describe the entity. For example: "Our contract is with PostHog's UK company, Hiberly Ltd." You can also paste a registration number, an LEI, or the signature block from your contract.
+3. Click **Find the entity**. Coverbase reads your note, searches the registers, and shows what it found and the proposed change.
+4. Click **Apply** to save it, or **Not right, try again** to edit your note.
+5. The panel confirms the change. Click **Back to registrations**, or **Undo** to put the previous entity back.
+
+<Frame caption="Applied: the panel says what changed and offers Undo.">
+  <img src="/images/user-guides/vendor-intelligence-registrations-correct-done.png" alt="The Correct the Registration panel after Apply, reading HIBERLY LTD is now the legal entity, with Back to registrations and Undo buttons." />
+</Frame>
+
+<Frame caption="The note read as Hiberly Ltd in the UK, found on Companies House, and named on the vendor's own pages.">
+  <img src="/images/user-guides/vendor-intelligence-registrations-correct.png" alt="The Correct the Registration panel, showing the reviewer's note, three checked steps, and a proposed change from PostHog Inc. to HIBERLY LTD, company number 12082013, on a register." />
+</Frame>
+
+You need permission to edit the vendor. The correction applies to every organization that shares the vendor's company record.
+
+## Undo a change
+
+Every change you make on the page, a picked match, a confirmed entity, an added number, or a correction, shows a banner at the top with **Undo**. Undo restores what your team had confirmed before, or returns the vendor to what the evidence alone shows.
+
+<Frame caption="A candidate picked. The banner keeps Undo until your next change.">
+  <img src="/images/user-guides/vendor-intelligence-registrations-undo.png" alt="A green banner reading Bound to Mercury Technologies, Inc., saved so the next scheduled check keeps it, with an Undo button, above the Mercury match result." />
+</Frame>
 
 ## Registered address
 
-The address on the register, which is the vendor's legal address rather than wherever the people work. A registered-agent or accountant's address is normal and is not a red flag by itself.
+The address on the register is the vendor's legal address, not where its people work. A registered agent's or accountant's address is normal and is not a red flag by itself.
 
 ## What to do with a dissolved status
 
-A **dissolved** status on a vendor you are actively paying needs attention.
-
-It usually means one of two things. A restructure happened and nobody told you, so the entity on your contract is not the entity trading today. Or you are contracting with a company that no longer exists.
-
-Either way the next step is the same: ask procurement which legal entity is on the current contract, and compare it to the registered name on this page.
+A **dissolved** status on a vendor you are paying needs attention. It usually means a restructure moved the business to another entity, or the company on your contract no longer exists. Ask procurement which legal entity is on the current contract, and compare it to the registered name on this page.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 | --- | --- |
-| The page says no registration record yet | The vendor has no website on file. Add one, and validation runs on the next refresh. |
-| The legal name differs from the name you use | That is expected. Trading names and registered names often differ. The **also known as** list shows both. |
-| Two companies are in contention | The caveats under **Registry details, addresses, unresolved fields and caveats** record why. Open the registry links and pick, then use **Try a different legal name** with the registered name of the right one. Where two candidates are equally plausible, nothing is bound automatically. |
-| A match was confirmed but you disagree | The caveats name the evidence used. Open the actions menu (**...**) at the top of the page, pick **Correct the AI**, choose **This is a different company**, and say why under **What should the model know?**. Give the right website or registered legal name if you know it. The tab is researched again straight away. |
-| Nothing matched, but you know the registered name | Use **Try a different legal name**. Most misses are a trading name searched instead of the registered entity. |
+| The page says no registration record yet | The vendor has no website on file. Add one, and the check runs on the next refresh. |
+| The legal name differs from the name you use | Trading names and registered names often differ. The **Also known as** list shows both. |
+| A private US company stays **Identified from the vendor's own pages** | US state registers are not open to search, so the entity cannot be checked against one. Confirm it, or ask the vendor for its state file number. |
+| The vendor's pages name no entity | Some sites block automated reading or build their pages in the browser. Use **Correct with AI** with the entity on your contract. |
+| A match was bound but you disagree | Use **Correct with AI** and name the right entity. |
 | A US vendor has no CIK | Only public filers have one. Its absence says nothing about the company. |
 
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="People intelligence guide" icon="users" href="/user-guides/people-intelligence">
-    Who runs the company you just validated.
+  <Card title="Global financial coverage" icon="earth-americas" href="/user-guides/global-financial-coverage">
+    How the bound entity decides which filings Coverbase reads.
   </Card>
   <Card title="Zero Touch Assessments" icon="bolt" href="/user-guides/zero-touch-assessments">
     Registration standing as a scored component.
