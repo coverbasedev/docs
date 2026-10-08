@@ -5,11 +5,8 @@ icon: "comments"
 ---
 
 import AgentDirective from "/snippets/agent-directive.mdx";
-import BetaConnector from "/snippets/beta-connector.mdx";
 
 <AgentDirective />
-
-<BetaConnector />
 
 The Microsoft Teams connector is part of the [Integration Hub](/products/integration-hub). It posts the notification types you choose to one Teams channel, so a team sees new reviews, decisions and alerts where it already talks.
 
@@ -64,10 +61,15 @@ The **Approval Cards** status is **Live**, **Needs the bot** (approvals on but n
 - **You act as yourself.** The first time someone presses a button, Coverbase looks them up in Microsoft's roster for the conversation and matches the address to an active member of your organization. They then decide with their own Coverbase permissions, so a person who cannot decide in the dashboard cannot decide in Teams. Nothing on the card identifies anyone.
 - **A press counts once.** If Teams delivers a press twice, it is recorded once. A press on a card someone already decided reports it as decided.
 - **A card is tied to what it showed.** If the disposition was revised or the acceptance chain moved on after the card was posted, the press is refused rather than applied to a decision the presser never saw.
-- **Decline needs a reason.** Declining a sign-off records the reason on the Front Door audit trail and leaves the disposition unsigned. Declining an acceptance step records remediation or rejection. Returning exit evidence reopens the step for its owner.
+- **Decline needs a reason.** Declining a Front Door sign-off does what **Decline** does in Coverbase: the disposition goes back to the TPRM Office as a draft, both sign-offs clear, the reason goes on the audit trail, and the person who recorded the disposition, the TPRM Office group and the requester are notified. Declining an acceptance step records remediation or rejection. Returning exit evidence reopens the step for its owner.
+- **One card per event, kept current.** A Front Door card posts once for both sign-off groups. When someone presses a button, the card is replaced with the outcome. When someone signs off or declines in Coverbase instead, the card is replaced too. It then shows who signed and which group is still waiting, the decided disposition once both groups have signed, or who declined and why.
 - **An outage never loses a notification.** If approvals are off, the bot is not in a channel, or a post fails, the plain card goes out instead.
 
 The **Approvals** tab lists every **Approve** and **Decline** pressed: the time, the person, the request, the outcome (**Recorded**, **Already decided**, **Not allowed**, **Account not matched**, **Not recorded** or **Failed**) and the detail.
+
+<Frame caption="The Approvals tab on the Microsoft Teams connection: every button press, who pressed it, and what it did.">
+  <img src="/images/user-guides/integration-hub-teams-approvals.png" alt="Decisions From Teams table listing a Front Door sign-off recorded, an acceptance decision declined with a reason, exit plan evidence already decided, a press not allowed, and a guest whose account was not matched" />
+</Frame>
 
 Coverbase checks that every message to the bot is signed by Microsoft for your bot, with your app ID, and from your tenant when you gave one. It sends the bot's token only to Microsoft's Bot Connector hosts.
 
