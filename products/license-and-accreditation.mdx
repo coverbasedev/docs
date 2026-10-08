@@ -10,7 +10,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 A vendor that collects debts, originates mortgages, adjusts claims or rewires a building usually needs a license from the state or country where it works. The license lives on the issuing regulator's own register, not on the vendor's website. Coverbase works out which licenses the vendor's business calls for, searches the registers that issue them, and shows you what each register says.
 
-The lookup also reads registers every vendor is checked against, whatever it does: sanctions lists, debarment lists, data protection and certification registers. Enforcement actions and exclusions it finds are shown first.
+Sanctions and debarment lists are not part of the license lookup: the Zero Touch sanctions screen checks the vendor against them separately. Enforcement actions and exclusions the license lookup finds are shown first.
 
 The most common mistake is reading an empty result as a clean one. A register that was not read, or that publishes no lookup, says nothing about the vendor. The page lists every register planned for the vendor and what happened at each one, so you can tell the two apart.
 
@@ -32,7 +32,7 @@ Research waits for a description of the vendor. Until the vendor has an industry
 ```mermaid
 flowchart LR
   A["Vendor description and headquarters"] --> B["Lines of business, states and countries"]
-  B --> C["Plan: the register for each line in each jurisdiction, plus entity, enforcement, exclusion and global registers"]
+  B --> C["Plan: the register for each line in each jurisdiction, plus entity, enforcement and exclusion registers"]
   C --> D{"Register"}
   D -->|"Searchable"| E["Search under up to 3 spellings of the vendor's names"]
   D -->|"Not read automatically"| F["Lookup link and the reason"]
@@ -51,7 +51,7 @@ flowchart LR
     The same read gives the US state of the headquarters, the US states the description confines the vendor to (a local practice, a regional bank, "licensed in Texas and Oklahoma"), whether it serves the US nationwide, and the countries outside the US where it is headquartered or operates. A US vendor that names no states is searched in every state, because licensed firms rarely list them.
   </Step>
   <Step title="Plan the registers">
-    For each line of business, the plan takes the register that licenses it in each state and the national register for that line. It adds the business entity filing in the headquarters state, financial enforcement lists when a line is financial, Medicaid exclusion lists when a line is in health care, and the company registry and financial regulator of each country outside the US. Every vendor also gets the global registers: sanctions, debarment, data protection and certification.
+    For each line of business, the plan takes the register that licenses it in each state and the national register for that line. It adds the business entity filing in the headquarters state, financial enforcement lists when a line is financial, Medicaid exclusion lists when a line is in health care, and the company registry and financial regulator of each country outside the US. Sanctions lists and SEC filing indexes are never planned, because they hold no license.
   </Step>
   <Step title="Search">
     Each register is searched by business name under up to three spellings of the vendor's names. A register gets 30 seconds, the whole lookup gets 150 seconds, and Coverbase sends at most three searches at a time to any one register's site.
@@ -190,11 +190,10 @@ These are read for every vendor whose lines or location call for them:
 
 | Register family | When it is read | Examples |
 | --- | --- | --- |
-| **Business entity filings** | Every vendor with a US headquarters, in its headquarters state; SEC EDGAR for US vendors | State business entity registers such as the Delaware Division of Corporations and Florida's Sunbiz |
+| **Business entity filings** | Every vendor with a US headquarters, in its headquarters state | State business entity registers such as the Delaware Division of Corporations and Florida's Sunbiz |
 | **Enforcement actions** | When any line is financial, in each state planned and nationally | OCC, Federal Reserve Board, SEC administrative proceedings and litigation releases, CFPB, FinCEN; state regulators' enforcement orders such as the New York Department of Financial Services |
 | **Exclusion lists** | When any line is in health care, in each state planned | State Medicaid exclusion lists such as New York's Office of the Medicaid Inspector General and California's Medi-Cal Suspended and Ineligible Provider List |
 | **Company registries and financial regulators abroad** | For each country outside the US where the vendor is headquartered or operates; the financial regulator when a line is financial | UK Companies House, the FCA Register and the ICO data protection register; Australia's ASIC, ABN Lookup and AUSTRAC; Corporations Canada and the Canadian Securities Administrators' national registration search; Germany's Handelsregister and BaFin; Singapore's ACRA and MAS; India's RBI and SEBI; Ireland's Companies Registration Office and Central Bank |
-| **Global registers** | Every vendor | OFAC sanctions lists, the Commerce Department's Consolidated Screening List, the UK sanctions list, the EU financial sanctions list, the UN consolidated sanctions list, the World Bank debarment list, the Data Privacy Framework list, TÜV NORD's certificate database and the TTB alcohol and tobacco permit list |
 
 The countries with a planned company registry are Australia, Brazil, Canada, France, Germany, Hong Kong, India, Ireland, Israel, Japan, Luxembourg, Mexico, the Netherlands, the Philippines, Singapore, Switzerland and the United Kingdom.
 
@@ -208,7 +207,7 @@ A register's search is a loose text search, so it returns every firm that shares
 
 **When a record binds.** A record binds when it carries one of the vendor's legal names with its legal form, however the register spaces it. Otherwise the name with its legal form set aside must match a distinctive name (more than one word), and every record so named must carry one legal form: "Clear Capital LLC" next to "Clear Capital Inc." binds neither. A trade name or d/b/a that the register lists beside the holder binds on the same rules. A one word brand never binds on its own.
 
-**Enforcement and exclusion lists are stricter.** A record on an enforcement, sanctions, debarment or exclusion list binds only on the exact name, legal form included. A namesake on a sanctions list ("Example Group FZCO") is never treated as the vendor ("Example Group Inc.").
+**Enforcement and exclusion lists are stricter.** A record on an enforcement or exclusion list binds only on the exact name, legal form included. A namesake on an exclusion list ("Example Group FZCO") is never treated as the vendor ("Example Group Inc.").
 
 Some national registers are also searched under the parent company's name. Those records are labeled **Parent company**.
 
@@ -229,7 +228,7 @@ The tab reads top to bottom: a verdict, the adverse records, the records found, 
     One section per register, with every record it holds for the vendor: **Holder**, **Jurisdiction**, **License** (number and license type), **Status**, **Expires** and **Record**, which opens the register's own page. **Active** and **Not active** come from the register's status, or from the expiry date when the register gives no status. **Status not stated** means the register published neither. A record held by the parent company says so under the holder.
   </Accordion>
   <Accordion title="State and National Registers">
-    Every register planned for the vendor's lines of business, with **Line of Business**, **Jurisdiction**, **Register**, **Outcome** and a **Look up** link. Entity, enforcement and global registers are listed under **Entity, enforcement and national registers**. A summary line counts how many were read, how many to check by hand, how many did not answer, and how many need no license or have no lookup.
+    Every register planned for the vendor's lines of business, with **Line of Business**, **Jurisdiction**, **Register**, **Outcome** and a **Look up** link. Entity and enforcement registers are listed under **Entity, enforcement and national registers**. A summary line gives the number of registers, then how many were read, how many to check by hand, how many did not answer, and how many need no license or have no lookup.
   </Accordion>
   <Accordion title="Registers Checked and Not Checked">
     **Registers Checked** lists the other registers searched by name, such as NASBA CPAverify, the FCA Register or state license data. **Not Checked** lists each register that did not answer and each one you need to check by hand. When more than four registers for one line need checking by hand, they are summarized as one line that names the jurisdictions, and each is linked on the **State and National Registers** list.
@@ -257,7 +256,7 @@ The **Zero Touch License and Accreditation Validation** template asks the four l
 | ZT-LIC-03 | Each license is held by the contracting entity or a named affiliate that delivers the service |
 | ZT-LIC-04 | Voluntary accreditations the service relies on (peer review, PCAOB, SOC reports) are current |
 
-- The requirement comes from what the vendor does, never from a word in its name. A vendor whose service needs no license is compliant on ZT-LIC-01.
+- The requirement comes from what the vendor does, never from a word in its name. When the license research finds that nothing the vendor does needs a license, and no register lists one, ZT-LIC-01 and ZT-LIC-02 are compliant and ZT-LIC-03 is not applicable, with the research's reason. This holds even when the vendor's own website cannot be read.
 - A required license shown inactive, expired, suspended or revoked, with no active record beside it, is not compliant.
 - A jurisdiction whose only records are inactive is a gap on ZT-LIC-02. An inactive record next to an active one in the same jurisdiction is history.
 - A register that was not read is listed as a gap for the vendor to fill with a copy, not reported as a missing license.
@@ -271,7 +270,7 @@ A run that leaves the **Licenses** section out skips the license controls.
 - **Registers that are not read automatically.** Some registers sit behind a CAPTCHA or a login, or are not read automatically yet. They are listed with a **Look up** link rather than left out.
 - **Register outages.** A register that does not answer on a run is marked **Did not answer**, and its earlier records are kept until it answers again.
 - **Names that differ from the legal name.** A license held under a name Coverbase does not know, such as an affiliate's, is not matched. If the vendor's legal name is missing or wrong, correct the corporate registration match on the **Registrations** tab and refresh. See [Corporate Registrations](/products/corporate-registrations).
-- **A description that is too thin.** If the vendor's description does not say what it does, no line of business is chosen and only the entity filing, company registry and global registers apply.
+- **A description that is too thin.** If the vendor's description does not say what it does, no line of business is chosen and only the entity filing and company registry apply.
 
 ## Related
 
