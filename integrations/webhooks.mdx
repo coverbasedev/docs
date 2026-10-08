@@ -16,7 +16,7 @@ Admins can do the same from the dashboard under **Configuration → Webhooks** (
 
 When a subscribed event occurs, Coverbase POSTs a JSON envelope to **every active webhook subscribed to that event type**. Deliveries originate from three sources, and all of them are recorded in [delivery history](/integrations/webhook-deliveries):
 
-- **Domain-event fan-out**: a domain event (e.g. a vendor is created) fans out to every subscription for that event type.
+- **Domain-event fan-out**: a domain event (for example, a vendor is created) fans out to every subscription for that event type.
 - **Workflow `send_webhook` action**: a workflow automation explicitly delivers its triggering event, either to the webhooks the action names or to every subscription for the event type. See [Workflow engine → Actions](/integrations/workflow-engine#actions).
 - **Manual test**: the [test endpoint](/api-reference/webhooks#test-a-webhook), or **Send test** on the **Webhooks** page, sends a one-off delivery to a single subscription.
 
@@ -143,7 +143,7 @@ Every delivery attempt is recorded in [delivery history](/integrations/webhook-d
 
 ## URL restrictions
 
-Webhook URLs must be **public HTTPS endpoints**. A URL is rejected at create/update time (`400 invalid_url`) if it is not HTTPS, carries credentials, uses a non-standard port, or resolves to a private, loopback, link-local, or metadata address (e.g. `169.254.169.254`).
+Webhook URLs must be **public HTTPS endpoints**. A URL is rejected at create/update time (`400 invalid_url`) if it is not HTTPS, carries credentials, uses a non-standard port, or resolves to a private, loopback, link-local, or metadata address (for example, `169.254.169.254`).
 
 The same check is **re-applied with DNS resolution at delivery time**, and the delivery connects only to an address that check approved, with TLS still verifying the endpoint's own hostname. A hostname repointed to an internal address after registration, or one that answers the check and the connection differently (DNS rebinding), is still blocked. A delivery blocked this way is recorded with status `error` in [delivery history](/integrations/webhook-deliveries).
 
@@ -217,7 +217,7 @@ A `sensitive` change fires its event only after a reviewer approves it, not when
 
 `SupplierUpdateRequest.Submitted` and `VendorContact.Updated` can be subscribed to, but nothing sends them yet. What a supplier changes in answer to an update request arrives as the record events above.
 
-All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
+All IDs are opaque prefixed strings (for example, `cbvndr_...`, `cbqsrw_...`); see [API conventions → IDs](/conventions#ids). Every event's `data` also echoes its own `event_type`.
 
 <Note>
   `webhook.test` is a valid value only for the [test endpoint's](/api-reference/webhooks#test-a-webhook) `event_type` field. It is **not** a subscribable event type; it will be rejected if used in a subscription's `events` array.
@@ -226,5 +226,5 @@ All IDs are opaque prefixed strings (e.g. `cbvndr_...`, `cbqsrw_...`); see [API 
 ### Strict event-type validation
 
 <Warning>
-  **Breaking change.** `events` is now strictly validated against the catalog above. Previously any free-form string was accepted. A `POST /v1/webhooks` or `PATCH /v1/webhooks/{id}` whose `events` contains a value not in the catalog now fails with `422 invalid_event_types`. Integrations that registered non-canonical strings (e.g. lowercase `vendor.created`) must switch to the exact catalog value (e.g. `Vendor.Created`).
+  **Breaking change.** `events` is now strictly validated against the catalog above. Previously any free-form string was accepted. A `POST /v1/webhooks` or `PATCH /v1/webhooks/{id}` whose `events` contains a value not in the catalog now fails with `422 invalid_event_types`. Integrations that registered non-canonical strings (for example, lowercase `vendor.created`) must switch to the exact catalog value (for example, `Vendor.Created`).
 </Warning>
