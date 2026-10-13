@@ -1,0 +1,174 @@
+---
+title: "Portals API"
+description: "List the requests you have sent to a vendor, each with the link the vendor uses to respond and whether it is still waiting on them."
+icon: "link"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+A **portal** (`cbsbpt_...`) is one request sent to a vendor: an assessment's document collection and its follow-ups, a questionnaire, a findings and commitments request, an RFP, a case follow-up, or onboarding. Each request has its own link. These endpoints list the requests so your own systems can show a vendor everything still waiting on them, or sync request status into a partner portal, a CRM, or a ticketing tool.
+
+The endpoints return only requests addressed to a vendor. Org-level portals (intake, vendor search), signing portals, and obligation commitments sent to your own stakeholders are never returned.
+
+All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token](/api-reference/oauth), and need permission to read portals. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path |
+| ------ | ---- |
+| `GET` | `/v1/portals` |
+| `GET` | `/v1/portals/{portal_id}` |
+
+## States
+
+Each request carries a `state`, derived from its status, its due date, and whether you have paused it:
+
+| State | Meaning |
+| ----- | ------- |
+| `open` | Waiting on the vendor. Includes a request you have paused and one whose answers are being analyzed. |
+| `overdue` | Open, past its `due_at`, and not paused. |
+| `submitted` | The vendor has submitted their response. |
+| `closed` | You closed the request. |
+
+`open` and `overdue` are the two states that need the vendor's attention.
+
+## Request types
+
+| `type` | What the vendor is asked for |
+| ------ | ---------------------------- |
+| `assessment` | Documents for an assessment, and its follow-up questions. |
+| `informational` | A questionnaire with no assessment attached. |
+| `irq` | An inherent risk questionnaire. |
+| `findings_commitment` | Remediation commitments on findings you have shared. |
+| `vendor_onboarding` | Onboarding details for a new vendor. |
+| `rfp` | An RFP prequalification or response. |
+| `case` | A follow-up on a monitoring case. |
+
+## The link is not a credential
+
+`url` is the same link the invitation email carries. Opening it still asks the recipient to sign in with an email address the request allows, so the link identifies the request; it does not grant access to it. Share it with the people you invited and it works the way the email did.
+
+<Tip>
+  If you want each vendor to have one address for everything, turn on the [centralized supplier portal](/user-guides/centralized-supplier-portal). Every request keeps its own `url`, and the vendor also gets a single page listing all of them.
+</Tip>
+
+## List portals
+
+<ParamField path="method" type="GET">
+  `GET /v1/portals`
+</ParamField>
+
+Lists requests in the API key's org, newest first. Without filters it returns every request addressed to a vendor, paginated.
+
+### Query parameters
+
+<ParamField query="vendor_id" type="string">
+  Only requests sent to this vendor (`cbvndr_...`). Resolve the id first with [`GET /v1/vendors`](/api-reference/vendors#list-vendors) by `external_id` or `name`.
+</ParamField>
+
+<ParamField query="state" type="string">
+  Only requests in this state: `open`, `overdue`, `submitted`, or `closed`.
+</ParamField>
+
+<ParamField query="type" type="string">
+  Only requests of this [type](#request-types).
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Page size, 1-200.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Rows to skip.
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl "https://api.coverbase.app/v1/portals?vendor_id=cbvndr_e448ba62882143f3ba0c140bb2e30162&state=open" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+```json
+{
+  "items": [
+    {
+      "id": "cbsbpt_9c1f0e2a7b3d4e5f8a6b7c8d9e0f1a2b",
+      "reference": "WF-855",
+      "type": "assessment",
+      "state": "open",
+      "status": "open",
+      "url": "https://dashboard.coverbase.app/portal/k3x9q2m8v1",
+      "display_name": "Annual security review",
+      "vendor_id": "cbvndr_e448ba62882143f3ba0c140bb2e30162",
+      "assessment_id": "cbassm_1f2e3d4c5b6a79880a1b2c3d4e5f6a7b",
+      "due_at": 1762300800,
+      "paused": false,
+      "submitted_at": null,
+      "created_at": 1760313600
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+Rows are ordered by `created_at` descending, with ties broken by `id`, so paging with `offset` never repeats or skips a row.
+
+### Portal object
+
+<ResponseField name="id" type="string">Portal ID (`cbsbpt_...`).</ResponseField>
+<ResponseField name="reference" type="string | null">A short reference the vendor also sees, such as `WF-855`. Set once the [centralized supplier portal](/user-guides/centralized-supplier-portal) is on; `null` otherwise.</ResponseField>
+<ResponseField name="type" type="string">The [request type](#request-types).</ResponseField>
+<ResponseField name="state" type="string">`open`, `overdue`, `submitted`, or `closed`. See [States](#states).</ResponseField>
+<ResponseField name="status" type="string">The stored status: `open`, `analyzing`, `analysis_complete`, `submitted`, or `closed`. Use `state` unless you need to tell the three open statuses apart.</ResponseField>
+<ResponseField name="url" type="string">The link the vendor uses to respond. On a branded portal domain, the link uses that domain.</ResponseField>
+<ResponseField name="display_name" type="string | null">The request's title as the vendor sees it.</ResponseField>
+<ResponseField name="vendor_id" type="string">The vendor the request was sent to (`cbvndr_...`).</ResponseField>
+<ResponseField name="assessment_id" type="string | null">The assessment this request collects for (`cbassm_...`), for `assessment` requests.</ResponseField>
+<ResponseField name="due_at" type="integer | null">Unix timestamp (seconds) the response is due, or `null` when no due date was set.</ResponseField>
+<ResponseField name="paused" type="boolean">`true` while you have put the request on hold. A paused request reads `open`, never `overdue`, and no reminders go out.</ResponseField>
+<ResponseField name="submitted_at" type="integer | null">Unix timestamp (seconds) of the vendor's first submission, or `null`.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## Retrieve a portal
+
+<ParamField path="method" type="GET">
+  `GET /v1/portals/{portal_id}`
+</ParamField>
+
+Returns the [portal object](#portal-object), or `404 portal_not_found`. A portal that the list would not return (one with no vendor, or of a type outside the [request types](#request-types)) is also a `404`.
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "portal_not_found", ...}}` | Not found, not in the API key's org, or not a vendor request. |
+
+## Show a vendor their open requests
+
+The common integration: a partner or vendor portal of your own that lists everything Coverbase is waiting on from one vendor.
+
+<Steps>
+  <Step title="Resolve the vendor">
+    `GET /v1/vendors?external_id=<your id>` returns the Coverbase `vendor_id` for the identifier your system holds. Match by `name` if you have not set `external_id` on your vendors yet.
+  </Step>
+  <Step title="Fetch what is waiting">
+    `GET /v1/portals?vendor_id=<vendor_id>&state=open`, then the same call with `state=overdue`. Or fetch without `state` and group rows by it, which also gives you the submitted and closed history.
+  </Step>
+  <Step title="Show the link">
+    Render each row's `display_name`, `due_at`, and `url`. Mark `overdue` rows and `paused` rows so the reader knows which ones need action now.
+  </Step>
+</Steps>
+
+Poll on a schedule that suits you; the list is cheap. To react to a change as it happens instead, subscribe to `Assessment.*` events with [webhooks](/integrations/webhooks#event-catalog).
+
+## Related
+
+- [Vendors API](/api-reference/vendors): resolve a vendor by `external_id` or name.
+- [Assessments API](/api-reference/assessments): the assessment an `assessment` request collects for.
+- [Centralized supplier portal](/user-guides/centralized-supplier-portal): one sign-in page per vendor that lists every request.
+- [API conventions](/conventions): pagination, timestamps, and the error envelope.
