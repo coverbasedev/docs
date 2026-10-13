@@ -69,9 +69,9 @@ When you author a questionnaire on the **Know-Your-Vendor** tab of **Configurati
 | Question type | What the supplier fills in |
 | --- | --- |
 | **Bank Account** | Country, then that country's bank fields, plus IBAN and SWIFT where they apply |
-| **Site / Address** | An address, with the postal code checked against the national format, and the email addresses purchase orders and remittance advice go to |
+| **Site / Address** | An address in your finance system's structure (street name, building number, city, and the postal code and state where the country uses them), and the email addresses purchase orders and remittance advice go to |
 | **Tax Registration** | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one |
-| **Diversity Record** | An inclusion category, a business size, the certifying body, and the certificate's validity dates |
+| **Diversity Record** | A business classification and, for minority owned, its subclassification; the certifying agency, certificate number, start and expiration dates, the certificate itself, and notes |
 
 They do not appear on assessments or RFPs, because there is no supplier profile behind those to write into.
 
@@ -166,10 +166,29 @@ Most rules judge a field on its own. These read a second value, so they can only
 | A name in the local script | Twelve countries write in a script a romanized name cannot stand in for, among them Japan, China, Korea and Greece. The form asks for the legal name in that script alongside the romanized one, and warns if what is typed is not in it. |
 | A registration without its certificate | Thirteen Latin American countries ship the certificate that proves a registration. This warns rather than blocks: a supplier who has the number but not the PDF to hand can still finish. |
 
+### Question settings
+
+Each of these question types has settings in the questionnaire builder, under the response type:
+
+| Setting | Question | What it does |
+|---|---|---|
+| **Multiple Entries** | Site, tax registration, diversity | Lets the supplier add more than one record, or narrows the question to one. |
+| **Address Type** | Site | **Primary address** makes the answer the supplier's main address. **Remit-to address** makes it the address payments are remitted to. Either one must be a complete address before it saves. **Any location** also accepts a country on its own. |
+| **Exemption Document** | Tax registration | **Suggested** asks for the document behind a tax exemption but lets the supplier submit without it. **Required** blocks the submission until it is attached. |
+
+### Answers that build on earlier ones
+
+The form reuses what the supplier already entered, so they type an address once:
+
+- **Countries follow the main address.** Once the primary address is saved, every later address and the bank details open on its country. The supplier can pick another country, and from then on the form leaves their choice alone.
+- **Same as main address.** A remit-to address question offers a **Same as main address** box. Ticking it copies the main address and keeps the two in step until the supplier saves. A list beside it copies any other address from the form, which the supplier can then edit.
+- **The bank is paid against the remit-to address.** A bank details question shows a **Remit-to address** list, set to the remit-to answer. Your finance system receives the link with the account.
+
 ## Addresses hold more than an address
 
 An address carries the details your finance system needs to pay against it, not only the lines and the postal code.
 
+- **Your finance system's structure.** Line 1 is the street name (up to 70 characters) and line 2 the building number (up to 16). The city (up to 35) is required, the postal code (up to 16) is required everywhere except countries with no postal codes, and the state or province is required in the United States and Canada. The form shows a running character count and says which field is missing before the supplier saves. An address that is only a country is still accepted where the question allows any location.
 - **Purpose.** An address is a **Primary** or a **Remittance** address. An address is a registration address by carrying a tax registration rather than by being marked as one, so a single address can be both where the supplier is registered and where remittance advice goes.
 - **Email lists.** Two lists per address: where purchase orders go, and where remittance advice goes. A malformed address is refused. A missing one is a warning, on the primary address and on any remittance address, and is never asked for in China.
 - **Tax registrations.** A tax registration can attach to one address rather than to the supplier as a whole, which is how a supplier registered in more than one region records each registration against the site it belongs to.
@@ -177,6 +196,22 @@ An address carries the details your finance system needs to pay against it, not 
 ## Registrations a supplier is exempt from
 
 A supplier who is exempt from a registration has no number to give. Ticking the box that says the supplier is exempt from that registration replaces the identifier with a **Reason for exemption**, which is required. The two are alternatives: a submission carrying both is refused.
+
+An exempt supplier is also asked for a **Supporting document**, such as the legal provision or the certificate their tax authority issued. Whether it is suggested or required is the question's **Exemption Document** setting.
+
+## Diversity classifications
+
+A diversity record takes the same shape as a business classification in Oracle Fusion:
+
+| Field | Notes |
+|---|---|
+| **Classification** | HUBZone, India medium business, India micro business, India small business, Minority owned, Service-disabled veteran owned, Small business, Veteran owned, or Women owned. |
+| **Subclassification** | Shown for **Minority owned** only: African American, American Indian, Asian, or Hispanic. |
+| **Certifying agency** | The agencies that certify the chosen classification, or **Other** with the agency's name typed in. |
+| **Certificate number**, **Start date**, **Expiration date** | The **Status** reads Current, Expired or Not yet valid from the dates. |
+| **Attachment**, **Notes** | The certificate itself, and anything a reviewer should know. |
+
+**None of the classifications are applicable** is a recorded answer, so the supplier is not asked again.
 
 ## Asking an existing supplier to update their details
 
