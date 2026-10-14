@@ -1,6 +1,6 @@
 ---
 title: "Risk methodology"
-description: "Configure the Risk Methodology page: domain weights and Risk Groups, how domain scores roll up, the reviewer matrix, SLA escalation rules, inherent risk questionnaire versions and review cadence, and score overrides with a rationale and expiry."
+description: "Configure the Risk Methodology page: domain weights and Risk Groups, how domain scores roll up, the reviewer matrix, SLA escalation rules, inherent risk questionnaire versions and review cadence, score overrides with a rationale and expiry, and how far residual risk can fall below inherent risk."
 icon: "scale-balanced"
 ---
 
@@ -116,6 +116,18 @@ Select versions and choose **Retire**, or use **Discard draft** on one draft. A 
 Anywhere you edit an inherent or residual score by hand (**Edit Inherent Risk Score**, **Edit Residual Risk Score** or **Edit Assessment Score**), the editor asks for a **Rationale**, recorded with the override in the score history, and **Override Expires**: **Never**, or **After 30 days**, **90**, **180** or **365**. The rationale is required. With an expiry, the editor says when the calculated score returns.
 
 While it is active, a chip beside the score reads **Override ends in N days** (or **Override ends today**). When an override expires, a daily job restores the last calculated score for each risk type the override changed, and the risk profile shows **Override expired**. If someone or something has replaced the override in the meantime, the newer score stands.
+
+## Set how far residual risk can fall
+
+Residual risk starts from the formula under **Configuration → Scoring → Risk Scoring → Residual Risk Formula**: inherent risk reduced by the assessment score, weighted by **Assessment score weight**. **Residual Risk Step Down** then decides how far below inherent risk the result may land.
+
+- **No limit**: residual risk follows the formula, however many levels it drops.
+- **Cap the step down**: the formula still sets the score, but residual risk lands at most **Most Levels Below Inherent** levels below inherent risk. With a one level cap, Critical inherent risk ends no better than High.
+- **Set by rating**: residual risk lands exactly one level below inherent when the assessment's rating is one you tick under **Ratings That Step Down One Level**, and stays at inherent for any other rating. A qualifying rating moves residual risk one level down even when the formula would have left it at inherent. Inherent risk already at your lowest level stays there.
+
+**Set by rating** reads your assessment rating scale (the **Assessment Scoring** tab), so set that scale up first. The rating is the band the assessment score falls in. The overall residual uses the overall rating, and each risk domain uses its own domain rating. While the rule uses a rating, that rating cannot be removed from the scale, and the scale cannot be turned off. Choose another step down first.
+
+A change applies the next time an assessment's residual risk is calculated. Completed assessments and current vendor scores keep their values. When the rule moves a score, the assessment's **Summary** tab shows the score the formula gave, the level the rule set, and under **Set by rating** the rating that decided it. Significant deficiency floors still apply on top, and the higher of the two wins.
 
 ## Try a what-if
 
