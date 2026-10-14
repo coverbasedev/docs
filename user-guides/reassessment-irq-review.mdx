@@ -1,0 +1,124 @@
+---
+title: "Confirm inherent risk before a reassessment"
+description: "Turn on the inherent risk check for an assessment plan, see what the relationship owner receives, read the owner's changes on the assessment, confirm or skip the check, start a reassessment by hand with or without it, and fix the common reasons a check does not go out."
+icon: "user-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the **Before a Reassessment Starts** setting under **Configuration → Assessment Settings** and the **Inherent Risk Check** card on an assessment. It sits beside [Running an assessment](/user-guides/running-an-assessment) and [IRQ Library](/user-guides/irq-library). For the plans and cadence it builds on, see [Admin setup](/user-guides/admin-setup#step-7-assessment-plans-and-reassessment-cadence).
+</Info>
+
+A reassessment usually starts from the vendor's inherent risk as it was last time. When the relationship has changed (new data, new access, a new use), the vendor gets last year's questionnaires. The inherent risk check closes that gap: before anything goes to the vendor, the relationship owner re-answers your IRQ, prefilled with the answers you approved last cycle. The plan then picks questionnaires and control sets from the refreshed inherent risk.
+
+The mistake people make most often is expecting the check on every assessment. It runs only on reassessments created from a plan that has it turned on: the scheduled reassessment, a Radar reassessment run, and a reassessment you start by hand with the box left checked. A first assessment from intake already has its IRQ.
+
+## How it works
+
+<Steps>
+  <Step title="The reassessment is created and waits">
+    The reassessment is created from its plan on schedule, from Radar, or by hand. It stays in **Created**. No vendor portal goes out and no analysis runs.
+  </Step>
+  <Step title="The relationship owner gets the IRQ">
+    Coverbase emails the vendor's relationship owners a link to the IRQ, with last cycle's approved answers filled in. A reassessment for one service goes to that service's relationship owners, then the vendor's.
+  </Step>
+  <Step title="The owner confirms or changes each answer">
+    The owner clicks **Confirm all** for answers that are still true and changes the ones that moved. They cannot submit while a carried-forward answer is unconfirmed.
+  </Step>
+  <Step title="Coverbase or the assignee decides">
+    If the owner kept every answer, Coverbase approves the IRQ and the assessment starts on its own. If anything changed, the assessment's assignee reviews the changes and clicks **Confirm and start assessment**.
+  </Step>
+  <Step title="The assessment starts">
+    Confirming approves the IRQ onto the vendor the same way any IRQ approval does: inherent risk scores, tags and contacts update. The plan is then applied again, so its rules pick questionnaires and control sets from the new inherent risk, and document collection begins.
+  </Step>
+</Steps>
+
+## Step 1: Turn on the check for a plan
+
+Open **Configuration**, choose **Assessment Settings**, and open the plan your reassessments use. Changing a plan needs a role that can change organization settings.
+
+<Steps>
+  <Step title="Choose Confirm inherent risk first">
+    Under **Before a Reassessment Starts**, choose **Confirm inherent risk first**. **Start right away** keeps today's behavior.
+  </Step>
+  <Step title="Pick the IRQ">
+    Choose the **Inherent Risk Questionnaire** to send. Use the IRQ your intake uses, so the owner sees the same questions they answered before and their answers carry forward. If you publish a new version of it, sends use the published version.
+  </Step>
+  <Step title="Set how long the owner has">
+    **Due After** is the number of days before the owner's link is due. The default is 14. Portal reminders apply as they do for any IRQ.
+  </Step>
+</Steps>
+
+Click **Save plan**. Reassessments created after the save use the check. Reassessments already in progress are not changed.
+
+<Tip>
+  The IRQ goes out when the reassessment is created, which is the plan's **Document collection** offset before the reassessment date. Lengthen that offset by the owner's due window so the vendor still has the time it had before. See [Admin setup](/user-guides/admin-setup#step-7-assessment-plans-and-reassessment-cadence).
+</Tip>
+
+<Note>
+  A Zero Touch plan cannot use the check, because a Zero Touch assessment contacts nobody.
+</Note>
+
+## Step 2: Follow a reassessment that is waiting
+
+Open the assessment. The **Inherent Risk Check** card on the **Summary** tab says who the check is waiting on, when it was sent and is due, and which approved IRQ the answers came from. The status card reads **Confirm inherent risk** above the assessment's phases.
+
+From the card you can:
+
+- Click **Open IRQ** to read the owner's answers so far.
+- Click **Send to someone else** to send the IRQ to a different person, for example when the relationship owner is out. When no relationship owner has an email address, the button reads **Send IRQ** and nothing has been sent yet.
+- Click **Skip and start assessment** to start without the check. See [Skip the check](#skip-the-check).
+
+## Step 3: Review the owner's changes
+
+When the owner submits with changes, the card reads **Ready for your review**. It shows:
+
+1. How many answers the owner kept and changed.
+2. The inherent risk level before and after, for example **High** to **Critical**.
+3. Each changed answer, with the old answer struck through above the new one.
+
+Click **Confirm and start assessment**. The assignee also gets a review item in their work queue for the IRQ; approving it from the submission page does the same as confirming on the card.
+
+<Warning>
+  Confirming updates the vendor's inherent risk, which can change its reassessment cadence under your reassessment rules. It keeps the assessment's plan. To use a different plan for the new risk level, edit it on the assessment's **Plan** card while documents are still being collected.
+</Warning>
+
+## Skip the check
+
+Click **Skip and start assessment**, give a reason, and confirm. The assessment starts on the vendor's current inherent risk. The IRQ stays open: if the owner answers later and you approve it, the vendor's inherent risk updates as it does for any IRQ. The card keeps who skipped and why.
+
+## Start a reassessment by hand
+
+Click **Start reassessment** on the vendor, or create an assessment from **Assessments**, and choose a plan that has the check. The dialog shows **Confirm inherent risk with the relationship owner first**, checked. Leave it checked for the check, or clear it to start right away.
+
+## When the check does not run
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| The card says the IRQ has not been sent | No relationship owner on the vendor (or the service) has an email address. | Add a relationship owner, or click **Send IRQ** and choose who to send it to. |
+| The card says **No earlier answers to carry forward** | The vendor has no approved IRQ of this questionnaire to copy from. | Nothing to fix. The owner answers it from scratch, and the next reassessment carries their answers forward. |
+| The card reads **Skipped** with a reason about engagements | The vendor's inherent risk is tracked per engagement, so a vendor-wide IRQ would not reach it. | Refresh each engagement's IRQ from its [monitoring plan](/user-guides/monitoring-plans). |
+| The card reads **Skipped** saying the plan no longer asks for the check | The plan's setting was turned off after the reassessment was created. | Nothing to fix. The assessment started on current inherent risk. |
+| No **Inherent Risk Check** card | The assessment was not created with the check: the plan has it off, it is a first assessment, or the box was cleared when it was started by hand. | Turn the check on for the plan for future reassessments. |
+| The owner cannot submit | An answer carried forward from last cycle is not confirmed yet. | The owner confirms or changes each carried-forward answer, or clicks **Confirm all**. |
+| The assessment still says **Created** after confirming | The assessment is starting in the background. | Wait a moment and refresh. If your organization uses its own **Unstarted** statuses, the assessment moves to the first of them instead of starting collection. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Admin setup" icon="gear" href="/user-guides/admin-setup">
+    Assessment plans, reassessment rules and the reassessment timeline.
+  </Card>
+  <Card title="Running an assessment" icon="list-check" href="/user-guides/running-an-assessment">
+    What happens after the assessment starts.
+  </Card>
+  <Card title="IRQ Library" icon="book" href="/user-guides/irq-library">
+    Choosing and weighting the IRQ the check sends.
+  </Card>
+  <Card title="The vendor record" icon="building" href="/user-guides/vendor-record">
+    Setting relationship owners.
+  </Card>
+</CardGroup>
