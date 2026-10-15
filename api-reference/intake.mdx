@@ -382,6 +382,33 @@ the inferred document type, analysis status and a download link. Before submit
 or to match an assessment back to this request (see
 [Find the assessment an intake leads to](#find-the-assessment-an-intake-leads-to)).
 
+### Inherent risk score
+
+Once `status` is `complete`, the response carries the questionnaire's inherent
+risk score and tier, so your system can route the request without waiting for
+review.
+
+<ResponseField name="raw_irq_score" type="number | null">
+  The inherent risk score of the session's IRQ answers, from 0 to 100. It is
+  calculated the same way approval scores the vendor, including your
+  organization's risk domain weights, aggregation method and option score
+  floors. When the session has several IRQs, this is the highest score, because
+  approval only ever raises the vendor's score. It is `null` until `status` is
+  `complete`, and `null` when no questionnaire on the session is a scored IRQ.
+</ResponseField>
+
+<ResponseField name="inherent_risk_level" type="string | null">
+  The level on your organization's default risk scale that `raw_irq_score`
+  falls in, named the way your scale names it (for example `Medium`). It is
+  `null` whenever `raw_irq_score` is `null`, and `null` if your organization has
+  no default risk scale.
+</ResponseField>
+
+Both fields follow the current answers. If a reviewer edits an answer before
+approving, the score changes with it. If the reviewer overrides the score when
+approving, the vendor record holds the override and these fields still report
+the score calculated from the answers.
+
 ### Example response
 
 ```json
@@ -395,6 +422,8 @@ or to match an assessment back to this request (see
   "created_at": 1765432100,
   "updated_at": 1765432190,
   "failed_count": 0,
+  "raw_irq_score": 42.5,
+  "inherent_risk_level": "Medium",
   "documents": [
     {
       "document_id": "cbodoc_3f9a1c2e7b5d4e6f8a0b1c2d3e4f5a6b",
@@ -446,8 +475,10 @@ It lists every attempt from the last 90 days with the payload that was sent.
    flagged for human review rather than guessed.
 3. **Scoring & review.** The answered inherent risk questionnaire produces the
    IRQ score and per-domain risk breakdown shown on the intake request in the
-   dashboard. A reviewer approves or denies the request; approval applies the
-   inherent risk scores to the vendor and its services.
+   dashboard. The session response returns the same score and its risk level as
+   [`raw_irq_score` and `inherent_risk_level`](#inherent-risk-score). A reviewer
+   approves or denies the request; approval applies the inherent risk scores to
+   the vendor and its services.
 
 <Note>
   Until it is submitted, an intake session created by this API is a **Draft**
