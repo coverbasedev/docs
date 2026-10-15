@@ -10,7 +10,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 An **intake session** (`cbintksn_...`) is a vendor intake request. Creating one through this API registers the vendor, creates the intake session, and kicks off AI processing that auto-answers the selected inherent risk questionnaire(s). With `auto_submit`, the session is then submitted to the dashboard's **Intake** queue, where reviewers approve or deny it; on approval, the questionnaire-derived inherent risk scores are applied to the vendor and its services.
 
-Use this API to embed Coverbase intake inside another system (procurement tool, ticketing, internal portal): POST the request (including any free-form context you already have) and poll for the generated answers.
+Use this API to embed Coverbase intake inside another system (procurement tool, ticketing, internal portal): POST the request (including any free-form context and files you already have) and poll for the generated answers.
 
 All endpoints are org-scoped to the API key. See [API conventions](/conventions) for authentication, IDs, timestamps, and the error envelope.
 
@@ -21,6 +21,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | Method | Path | Idempotent |
 | ------ | ---- | ---------- |
 | `GET` | `/v1/intake/api/questionnaires` | - |
+| `POST` | `/v1/intake/api/documents` | Yes (`Idempotency-Key`) |
 | `POST` | `/v1/intake/api/sessions` | Yes (`external_id`) |
 | `GET` | `/v1/intake/api/sessions/{session_id}` | - |
 | `GET` | `/v1/intake/api/sessions/external/{external_id}` | - |
@@ -74,6 +75,127 @@ curl -X GET "https://api.coverbase.app/v1/intake/api/questionnaires?type=irq" \
 </ResponseField>
 <ResponseField name="total" type="integer">Number of questionnaires returned.</ResponseField>
 
+## Upload a document
+
+<ParamField path="method" type="POST">
+  `POST /v1/intake/api/documents`
+</ParamField>
+
+Uploads a file you want an intake to read, such as a SOC 2 report, a security
+questionnaire, or architecture notes from the procurement ticket. Returns
+`201 Created` with a `document_id` (`cbodoc_...`). Pass that ID in
+`document_ids` when you [create the intake session](#create-an-intake-session).
+This is the API equivalent of uploading files on the first step of the intake
+portal.
+
+Attaching files is a two-step flow:
+
+1. Upload each file with this endpoint and keep the returned `document_id`.
+2. Create the intake session with those IDs in `document_ids`.
+
+The files are attached before Coverbase starts answering the questionnaire, so
+every answer can draw on them. An upload you never name on an intake is not
+used.
+
+The body is `multipart/form-data`, one file per request. Uploads follow the
+same limits as the [Documents API](/api-reference/documents): 100 MiB per file
+and the same allowed file types.
+
+### Which files inform the answers
+
+Coverbase reads `pdf`, `doc`, `docx`, `txt`, `md`, `csv`, `xls` and `xlsx` files
+when it answers the questionnaire. Other allowed types (`png`, `jpg`, `jpeg`,
+`gif`, `webp`, `ppt`, `pptx`, `rtf`, `xlsm`, `zip`, `msg`, `eml`) are accepted
+and kept as evidence, but they do not inform the answers. A file too long for
+the model is also kept but skipped when answering. This matches how the intake
+portal treats the same files.
+
+### Form fields
+
+<ParamField body="file" type="file" required>
+  The document file (`multipart/form-data` part). The file name's extension
+  decides the file type.
+</ParamField>
+
+<ParamField body="name" type="string">
+  Display name. Defaults to the file name.
+</ParamField>
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional. Replaying the same key within 24 hours returns the original `201`
+  body and stores no second file. A retry sent while the first request is still
+  uploading waits for it and returns the same response. See
+  [Idempotency](/conventions#idempotency).
+</ParamField>
+
+### Example request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/intake/api/documents" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Idempotency-Key: PROC-4821-soc2" \
+  -F "file=@acme-soc2-type2.pdf" \
+  -F "name=Acme SOC 2 Type II (2026)"
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.environ["COVERBASE_API_KEY"]
+BASE_URL = "https://api.coverbase.app"
+
+with open("acme-soc2-type2.pdf", "rb") as f:
+    resp = requests.post(
+        f"{BASE_URL}/v1/intake/api/documents",
+        headers={
+            "Authorization": f"Bearer {API_KEY}",
+            "Idempotency-Key": "PROC-4821-soc2",
+        },
+        files={"file": ("acme-soc2-type2.pdf", f, "application/pdf")},
+        data={"name": "Acme SOC 2 Type II (2026)"},
+    )
+resp.raise_for_status()
+document_id = resp.json()["document_id"]
+```
+
+</CodeGroup>
+
+### Example response
+
+`201 Created`:
+
+```json
+{
+  "document_id": "cbodoc_3f9a1c2e7b5d4e6f8a0b1c2d3e4f5a6b",
+  "name": "Acme SOC 2 Type II (2026)",
+  "extension": "pdf",
+  "size": 2411200,
+  "created_at": 1765432050
+}
+```
+
+<ResponseField name="document_id" type="string">
+  The uploaded document (`cbodoc_...`). Pass it in `document_ids`.
+</ResponseField>
+<ResponseField name="name" type="string">Display name.</ResponseField>
+<ResponseField name="extension" type="string">Normalized file extension (no leading dot).</ResponseField>
+<ResponseField name="size" type="integer">File size in bytes.</ResponseField>
+<ResponseField name="created_at" type="integer">Upload time (Unix seconds).</ResponseField>
+
+### Errors
+
+| Status | `code` | When |
+| ------ | ------ | ---- |
+| `400` | `unsupported_file_type` | The file extension is not in the allowlist. |
+| `400` | `invalid_extension` | No file extension could be read from the file name. |
+| `400` | `empty_file` | The uploaded file is empty. |
+| `413` | `file_too_large` | The file exceeds the 100 MiB limit. |
+
 ## Create an intake session
 
 <ParamField path="method" type="POST">
@@ -85,8 +207,8 @@ questionnaire, then dispatches asynchronous AI processing. Returns
 `201 Created` with the new `session_id`. Unknown questionnaire IDs return
 `404`, and so does an organization whose vendor intake is turned off. Replaying the same `external_id`
 returns the existing `session_id` with `200 OK` and does not reprocess; the
-original request's data (including `context`) is retained, and any changed
-fields in the replay are ignored. To analyze a vendor with updated context,
+original request's data (including `context` and `document_ids`) is retained,
+and any changed fields in the replay are ignored. To analyze a vendor with updated context,
 create a new request with a new `external_id`.
 
 ### Body fields
@@ -116,6 +238,22 @@ create a new request with a new `external_id`.
   most decision-relevant facts first rather than padding toward the limit.
   When your context exceeds that cap, the create response sets
   `context_truncated: true`.
+</ParamField>
+
+<ParamField body="document_ids" type="string[]">
+  Documents (`cbodoc_...`) uploaded with
+  [`POST /v1/intake/api/documents`](#upload-a-document) to attach to this intake.
+  At most 20. Coverbase reads them as evidence when it answers the
+  questionnaire, and they move onto the vendor record when the intake is
+  submitted. Each document can be attached to one intake only. If any ID cannot
+  be attached, the request returns `422` with code `documents_unavailable`, a
+  `documents` list naming each ID with its `problem`, and creates nothing:
+
+  | `problem` | Meaning |
+  | --------- | ------- |
+  | `not_found` | No document with that ID exists in your organization. |
+  | `not_an_intake_upload` | The ID belongs to a document that was not uploaded with `POST /v1/intake/api/documents`. |
+  | `already_attached` | Another intake session already has the document. Upload the file again for a new intake. |
 </ParamField>
 
 <ParamField body="vendor_website" type="string">
@@ -231,10 +369,45 @@ Each entry in `answers[]` carries `question_id`, `question_text`,
 `status` (`answered`, `pending`, `failed`). `failed_count` summarizes failed
 answers.
 
+`documents[]` lists the files attached with `document_ids`, in the order you
+named them. Each entry carries `document_id`, `name`, `extension` and `size`.
+Once the intake is submitted, each entry also carries `vendor_document_id`: the
+vendor document (`cbvdoc_...`) the file became. Use it with
+[`GET /v1/documents/{document_id}`](/api-reference/documents#get-a-document) for
+the inferred document type, analysis status and a download link. Before submit
+`vendor_document_id` is `null`.
+
 `vendor_id` is the vendor (`cbvndr_...`) the request created or linked, or
 `null` if no vendor is linked. Use it with the [Vendors API](/api-reference/vendors#retrieve-a-vendor)
 or to match an assessment back to this request (see
 [Find the assessment an intake leads to](#find-the-assessment-an-intake-leads-to)).
+
+### Inherent risk score
+
+Once `status` is `complete`, the response carries the questionnaire's inherent
+risk score and tier, so your system can route the request without waiting for
+review.
+
+<ResponseField name="raw_irq_score" type="number | null">
+  The inherent risk score of the session's IRQ answers, from 0 to 100. It is
+  calculated the same way approval scores the vendor, including your
+  organization's risk domain weights, aggregation method and option score
+  floors. When the session has several IRQs, this is the highest score, because
+  approval only ever raises the vendor's score. It is `null` until `status` is
+  `complete`, and `null` when no questionnaire on the session is a scored IRQ.
+</ResponseField>
+
+<ResponseField name="inherent_risk_level" type="string | null">
+  The level on your organization's default risk scale that `raw_irq_score`
+  falls in, named the way your scale names it (for example `Medium`). It is
+  `null` whenever `raw_irq_score` is `null`, and `null` if your organization has
+  no default risk scale.
+</ResponseField>
+
+Both fields follow the current answers. If a reviewer edits an answer before
+approving, the score changes with it. If the reviewer overrides the score when
+approving, the vendor record holds the override and these fields still report
+the score calculated from the answers.
 
 ### Example response
 
@@ -249,6 +422,17 @@ or to match an assessment back to this request (see
   "created_at": 1765432100,
   "updated_at": 1765432190,
   "failed_count": 0,
+  "raw_irq_score": 42.5,
+  "inherent_risk_level": "Medium",
+  "documents": [
+    {
+      "document_id": "cbodoc_3f9a1c2e7b5d4e6f8a0b1c2d3e4f5a6b",
+      "name": "Acme SOC 2 Type II (2026)",
+      "extension": "pdf",
+      "size": 2411200,
+      "vendor_document_id": "cbvdoc_8d2e4f6a1b3c4d5e9f0a7b6c5d4e3f2a"
+    }
+  ],
   "answers": [
     {
       "question_id": "cbqstn_91b2",
@@ -284,14 +468,17 @@ It lists every attempt from the last 90 days with the payload that was sent.
 
 1. **Evidence assembly.** For every questionnaire question, Coverbase builds an
    evidence stack ordered by reliability: your provided `context`, then intake
-   follow-up responses, then uploaded documents, then targeted web research.
+   follow-up responses, then the documents you attached with `document_ids`,
+   then targeted web research.
 2. **Auto-answering.** The answer agent answers each question from that
    evidence, recording its reasoning per answer. Questions it cannot answer are
    flagged for human review rather than guessed.
 3. **Scoring & review.** The answered inherent risk questionnaire produces the
    IRQ score and per-domain risk breakdown shown on the intake request in the
-   dashboard. A reviewer approves or denies the request; approval applies the
-   inherent risk scores to the vendor and its services.
+   dashboard. The session response returns the same score and its risk level as
+   [`raw_irq_score` and `inherent_risk_level`](#inherent-risk-score). A reviewer
+   approves or denies the request; approval applies the inherent risk scores to
+   the vendor and its services.
 
 <Note>
   Until it is submitted, an intake session created by this API is a **Draft**
