@@ -4,6 +4,22 @@ description: "Notable changes to the Coverbase public API documentation."
 icon: "clock-rotate-left"
 ---
 
+## 2026-10-16: Finance system ids, inactive addresses and Colombian registration details
+
+### New features
+
+- **Finance system ids on addresses and contacts.** Sites accept and return `external_id`, and [`PUT /v1/vendors/{vendor_id}/contacts/external_id`](/api-reference/supplier-profile#set-a-contacts-finance-system-id) stores your finance system's id on a contact. [`GET /v1/vendors/{vendor_id}/contacts`](/api-reference/supplier-profile#list-contacts) lists contacts with their ids.
+- **Inactive addresses.** Sites accept `is_inactive` and return `inactive_at`. An inactive address stays on file. A supplier who moves can file a new address in the portal and keep the old one as inactive.
+- **Registration details.** Tax registrations accept and return `details`, the country's registration fields beside the number. Colombia's include `nature`, `legal_entity_type`, `document_type`, `dv` and `ciiu`, and its NIT is now sent without the verification digit.
+
+### Updates
+
+- **IBAN checks.** An IBAN must start with its bank's country code, and a bank or branch code that does not match its position in the IBAN is refused. Countries that do not issue IBANs no longer collect one.
+- **Intermediary bank in every country**, with country, bank name, city, SWIFT/BIC, bank code, branch number, account number, IBAN and check digits. See [field keys](/api-reference/supplier-profile#bank-account-values).
+- **Peru.** `branch_code` and `account_number` are entered beside the `cci` again and checked against it.
+
+---
+
 ## 2026-10-14: Document uploads and risk scores on the Intake API
 
 ### New features
