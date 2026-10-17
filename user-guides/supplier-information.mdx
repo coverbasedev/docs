@@ -68,9 +68,9 @@ When you author a questionnaire on the **Know-Your-Vendor** tab of **Configurati
 
 | Question type | What the supplier fills in |
 | --- | --- |
-| **Bank Account** | Country, then that country's bank fields, plus IBAN and SWIFT where they apply |
+| **Bank Account** | Country, then that country's bank fields, the IBAN where the country issues one, the SWIFT/BIC, and an optional intermediary bank |
 | **Site / Address** | An address in your finance system's structure (building number, street name, city, and the postal code and state where the country uses them), and the email addresses purchase orders and remittance advice go to |
-| **Tax Registration** | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one |
+| **Tax Registration** | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one. Countries with registration details of their own ask for them beside the number: Colombia's nature, type of legal entity, document type, DV and CIIU, and Brazil's state and municipal registrations |
 | **Diversity Record** | A business classification and, for minority owned, its subclassification; the certifying agency, certificate number, start and expiration dates, the certificate itself, and notes |
 
 They do not appear on assessments or RFPs, because there is no supplier profile behind those to write into.
@@ -142,6 +142,14 @@ Before anything is judged, values are cleaned up in the way that country expects
 
 Each country page carries a **rule confidence** rating, and it is a statement about our evidence, not about the supplier. Where a rule is confirmed against a primary source such as a tax authority or a central bank, it is enforced strictly. Where it comes from secondary documentation, it warns instead. Promoting a rule without evidence would mean rejecting suppliers who are doing nothing wrong, which is the failure this is built to avoid.
 
+### Which countries ask for an IBAN
+
+The IBAN box appears only for countries that issue IBANs, and it stops accepting characters at that country's IBAN length. Spaces do not count, so an IBAN pasted in groups of four is cut at the right place. An IBAN is required in every EU member state and in Oman. Countries that do not issue IBANs, such as the United States, Canada, Australia, India, Japan, Singapore and Colombia, do not show the box.
+
+### The intermediary bank
+
+Every country offers an optional **Intermediary bank** section, folded away below the account. A supplier fills it in only when payments to their account are routed through a correspondent bank. It takes the fields your finance system keeps for an intermediary account: country code, city, account number, bank name, branch number and IBAN, plus a SWIFT/BIC. Once any of them is filled, the country code and account number are required.
+
 ### Checksums
 
 A checksum is a self checking digit built into an identifier: an IBAN, a US routing number, a Spanish NIF, a Mexican CLABE. It catches the most common human errors, a mistyped digit and a transposed pair, before the details ever reach your finance system. Coverbase implements the published algorithm for each identifier that has one, and only those. Where an identifier's check digit rule is not publicly documented, the format is checked and the checksum is not invented.
@@ -162,7 +170,9 @@ Most rules judge a field on its own. These read a second value, so they can only
 | --- | --- |
 | Cross border payment | An account in a country none of your assigned legal entities pay from needs a SWIFT/BIC, because the payment goes out by wire. The supplier is told rather than blocked, and the derived payment method is stored on the account. |
 | Currency held for local suppliers only | BRL is refused on an account whose supplier is not in Brazil. The test is the supplier's own country, not the bank's, so a Brazilian supplier banking abroad still qualifies. |
-| The IBAN and the fields inside it | Where a supplier gives both an IBAN and the bank, branch or account codes separately, those codes must appear inside the IBAN. A mismatch is a warning, because the two came from different documents and either could be the stale one. |
+| The IBAN's country | An IBAN has to start with the bank's country code. A German account with a Spanish IBAN is refused. Accounts in the French overseas departments use French IBANs and are accepted. |
+| The IBAN and the fields inside it | Where a supplier gives both an IBAN and the bank or branch code, each code is compared with the position the IBAN registry gives it, and a mismatch blocks the submission. An account number has to appear somewhere inside the IBAN; a mismatch there is a warning, because a country's account number can include digits the IBAN stores elsewhere. |
+| Peru's CCI and the account beside it | A Peruvian supplier gives the 20 digit CCI plus the branch and the account number as their bank prints them. The bank code comes from the CCI. A branch or account that does not match the CCI is a warning. |
 | A name in the local script | Twelve countries write in a script a romanized name cannot stand in for, among them Japan, China, Korea and Greece. The form asks for the legal name in that script alongside the romanized one, and warns if what is typed is not in it. |
 | A registration without its certificate | Thirteen Latin American countries ship the certificate that proves a registration. This warns rather than blocks: a supplier who has the number but not the PDF to hand can still finish. |
 
@@ -192,6 +202,7 @@ An address carries the details your finance system needs to pay against it, not 
 - **Purpose.** An address is a **Primary** or a **Remittance** address. An address is a registration address by carrying a tax registration rather than by being marked as one, so a single address can be both where the supplier is registered and where remittance advice goes.
 - **Email lists.** Two lists per address: where purchase orders go, and where remittance advice goes. A malformed address is refused. A missing one is a warning, on the primary address and on any remittance address, and is never asked for in China.
 - **Tax registrations.** A tax registration can attach to one address rather than to the supplier as a whole, which is how a supplier registered in more than one region records each registration against the site it belongs to.
+- **Inactive addresses.** An address the supplier no longer uses can be kept on file as inactive rather than deleted, the way your finance system keeps a superseded address. It shows an **Inactive** label on the **Know Your Supplier** tab. The primary address cannot be made inactive until another address takes its place.
 
 ## Registrations a supplier is exempt from
 
@@ -239,7 +250,7 @@ The supplier receives an email that opens the **Profile** page of their supplier
 
 What the supplier can do on each section:
 
-- **Change an account or address.** They pick which one they are replacing, then enter the new details. A bank change waits in the review queue against the account it replaces, and your finance system keeps paying the old account until you approve it.
+- **Change an account or address.** They pick which one they are replacing, then enter the new details. A bank change waits in the review queue against the account it replaces, and your finance system keeps paying the old account until you approve it. When a supplier replaces an address because they moved, rather than to fix a typo, they tick **This is a new address**. The new address is saved alongside the old one, which is kept on file as inactive. The new address keeps the old one's purpose and email lists.
 - **Add** a new record.
 - **Confirm details** with **This is still correct**, when nothing has changed.
 - **Contacts.** They mark people to remove and add new ones. Nothing changes on the vendor until you click **Apply to contacts**.
@@ -336,6 +347,8 @@ Two ways, and most integrations use both.
   </Card>
 </CardGroup>
 
+Your finance system's own ids for a supplier's addresses and contacts can be stored on them through the API, so a sync updates the record it already holds instead of creating a second one. They are never shown in Coverbase. See the [supplier profile API](/api-reference/supplier-profile).
+
 A bank change's webhook fires on approval, not on submission. If you are testing the integration and a submitted change is not showing up, that is almost always why: check the review queue.
 
 ## When something goes wrong
@@ -352,7 +365,8 @@ A bank change's webhook fires on approval, not on submission. If you are testing
 | A warning asking for a SWIFT/BIC on a domestic-looking account | The account's country is not one your assigned legal entities pay from, so the payment is treated as a wire. Check the legal entities assigned to that supplier. |
 | A Colombian supplier is asked for a bank statement | They typed a bank name the list does not hold. Have them check the spelling against their statement; a bank on the list fills its own details in and asks for nothing. |
 | "BRL is held for suppliers in BR only" | BRL is held for suppliers in Brazil. The test is the supplier's own country, not the bank's. |
-| A warning that the IBAN and the bank codes disagree | The two were taken from different documents. Have the supplier confirm which is current, usually the IBAN. |
+| An error that the bank or branch code does not match the IBAN | The two were taken from different documents. Have the supplier confirm which is current, usually the IBAN, and correct the other. |
+| A warning that the account number is not in the IBAN | Usually the same cause. Some countries' account numbers include digits the IBAN stores elsewhere, which is why this one only warns. |
 
 ## Where to next
 

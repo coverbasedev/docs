@@ -457,6 +457,8 @@ A site is one place the supplier operates, at whatever precision is known: a ful
 <ResponseField name="latitude" type="number | null">Filled in by Coverbase after the site is saved, from the address. `null` until then, and always `null` for a country-only site.</ResponseField>
 <ResponseField name="longitude" type="number | null">As `latitude`.</ResponseField>
 <ResponseField name="status" type="string">`active`. Deleted sites are not returned.</ResponseField>
+<ResponseField name="external_id" type="string | null">Your finance system's id for this address, such as its Oracle supplier address id. Set only through the API and never shown in Coverbase.</ResponseField>
+<ResponseField name="inactive_at" type="integer | null">Unix timestamp (seconds) when the address was made inactive. An inactive address stays on file and in the list; `null` while it is in use.</ResponseField>
 <ResponseField name="source" type="string">Where the site came from: `questionnaire`, `portal`, `api`, `internal` or `migration`.</ResponseField>
 <ResponseField name="validation_results" type="object">The [validation outcome](#country-rules-and-validation). Postal-code format problems, over-long address lines and a missing PO email address are warnings, never errors.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
@@ -605,6 +607,8 @@ Adds a site and returns `201 Created` with the [site object](#the-site-object). 
 <ParamField body="po_emails" type="string[]">Up to 20 addresses where purchase orders for this address are emailed. A malformed address is refused with `422`. A primary site with an address line and no PO email saves with an `email.missing` warning, except in China, where no PO email is asked for.</ParamField>
 <ParamField body="remittance_emails" type="string[]">Up to 20 addresses where remittance advice for this address is emailed. A site whose `address_purpose` is `remittance` and has none saves with an `email.missing` warning.</ParamField>
 <ParamField body="is_primary" type="boolean" default="false">`true` makes this the vendor's primary site and demotes the current one.</ParamField>
+<ParamField body="external_id" type="string">Up to 120 characters. Your finance system's id for this address. On an update, omitting it keeps the stored id and an empty string clears it.</ParamField>
+<ParamField body="is_inactive" type="boolean">`true` makes the address inactive and `false` makes it active again. Omit it to leave the address as it is. The primary address cannot be made inactive.</ParamField>
 
 #### Example request
 
@@ -686,6 +690,7 @@ curl -X PATCH "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c1
 | Status | Body | When |
 | ------ | ---- | ---- |
 | 404 | `{"detail": "Not Found"}` | The site does not exist, was deleted, or belongs to a different vendor. |
+| 409 | `{"detail": {"code": "primary_site_inactive", ...}}` | `is_inactive: true` on the primary site. Mark another site primary first. |
 | 422 | `{"detail": {"error": "validation_failed", ...}}` | The same rules as [add a site](#add-a-site). A primary site is checked against the email lists it will hold after the update. |
 
 ### Delete a site
@@ -743,6 +748,7 @@ After a registration is saved, Coverbase checks it against the public register f
 <ResponseField name="is_exempt" type="boolean">Whether this records an exemption rather than a number.</ResponseField>
 <ResponseField name="exemption_reason" type="string | null">Why the supplier is exempt.</ResponseField>
 <ResponseField name="evidence_document_id" type="string | null">A vendor document (`cbvdoc_...`), such as the registration certificate.</ResponseField>
+<ResponseField name="details" type="object">The country's registration details beside the number, keyed by field. Colombia's are `nature`, `legal_entity_type`, `document_type`, `dv` and `ciiu`, alongside its other details; Brazil's are its state and municipal registrations. An empty object for a country without any. The keys and options are on each country's page under [Supplier countries](/user-guides/supplier-countries/overview).</ResponseField>
 <ResponseField name="validation_results" type="object">The [validation outcome](#country-rules-and-validation).</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
 <ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
@@ -844,6 +850,10 @@ Saves a registration and returns `201 Created` with the [tax registration object
 
 <ParamField body="evidence_document_id" type="string">
   A document already uploaded for this vendor with the [Documents API](/api-reference/documents) (`cbvdoc_...`), such as the registration certificate. A document of another vendor is refused with `422` and the code `invalid_document`. Omitting it on an update keeps the one already attached. In Argentina, Brazil, Chile, Colombia, Costa Rica, the Dominican Republic, Ecuador, Guatemala, Mexico, Panama, Paraguay, Peru and Uruguay, a registration without a certificate saves with a `tax_certificate.expected` warning.
+</ParamField>
+
+<ParamField body="details" type="object">
+  The country's registration details, as an object of field key to string value. Validated against the country's rules: in Colombia `dv` must be the NIT's verification digit, and `nature` and `document_type` are required. Omitting `details` keeps the stored details and skips their rules. A Colombian NIT is sent without its verification digit, which goes in `dv`.
 </ParamField>
 
 #### Example request
@@ -1110,6 +1120,55 @@ curl -X POST "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c14
 | 422 | `{"detail": {"code": "justification_required", "message": "...", "limit_days": 30}}` | `purchase_requisition_age_days` is over 30 and `justification` is empty. |
 | 422 | `{"detail": {"code": "invalid_legal_entity", "message": "legal_entity_ids must name your organization's active legal entities.", "legal_entity_id": "cble_..."}}` | An ID in `legal_entity_ids` is not one of your organization's active legal entities. |
 | 422 | Standard validation error | `legal_entity_ids` is empty or the body is malformed. |
+
+## Contacts
+
+A vendor's contacts are the people on its record. These two endpoints let your finance system store its own id for each contact, such as its Oracle supplier contact id, so a sync updates the contact it already holds. The id is never shown in Coverbase, and it is kept when someone edits the contact list in the dashboard, as long as the contact keeps the same email address.
+
+### List contacts
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/contacts`
+</ParamField>
+
+Returns the vendor's contacts as a plain array, each with `name`, `title`, `email`, `phone_number` and `external_id` (`null` until one is set).
+
+**Auth:** any `ak_` key.
+
+### Set a contact's finance system id
+
+<ParamField path="method" type="PUT">
+  `PUT /v1/vendors/{vendor_id}/contacts/external_id`
+</ParamField>
+
+Finds the contact by email address, ignoring case, stores the id on it, and returns the contact.
+
+**Auth:** any `ak_` key.
+
+#### Request body
+
+<ParamField body="email" type="string" required>
+  The contact's email address.
+</ParamField>
+
+<ParamField body="external_id" type="string" required>
+  Up to 120 characters. An empty string clears the stored id.
+</ParamField>
+
+#### Example request
+
+```bash cURL
+curl -X PUT "https://api.coverbase.app/v1/vendors/cbvndr_e448ba62882143f3ba0c140bb2e30162/contacts/external_id" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "ana@example.com", "external_id": "300000123456789"}'
+```
+
+#### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "contact_not_found", ...}}` | No contact on the vendor has that email address. |
 
 ## Update requests
 
@@ -1401,16 +1460,17 @@ Every country uses the same keys for the common fields, whatever the form calls 
 | `check_digit` | Check digits, where the country uses them | Check digit |
 | `account_type` | `checking` or `savings`. Required in Brazil, China, Hong Kong and the United States; not used in Japan. | Account type |
 
-Nine countries add their own:
+Every country also takes an optional intermediary bank: `intermediary_country`, `intermediary_city`, `intermediary_account_number`, `intermediary_bank_name`, `intermediary_branch_code`, `intermediary_iban` and `intermediary_swift_bic`. When any of them is sent, `intermediary_country` and `intermediary_account_number` are required.
+
+Eight countries add their own:
 
 | Country | Extra keys |
 | ------- | ---------- |
-| Australia, China | `intermediary_bank_name`, `intermediary_swift_bic`, `intermediary_account_number` |
 | Brazil | `company_code` |
 | Colombia | `branch_name`, `tax_payer_id` (the bank's taxpayer ID) |
 | Japan | `beneficiary_name` (account holder, in half-width katakana), `bank_name_local`, `branch_name_local`, and `deposit_type` (`futsu`, `toza` or `chochiku`) in place of `account_type` |
 | Mexico | `clabe` |
-| Peru | `cci` |
+| Peru | `cci`, alongside `branch_code` and `account_number` as the bank prints them. `bank_code` and `check_digit` are read from the CCI. |
 | Sweden | `bankgiro` |
 | United Kingdom | `building_society_roll_number` |
 

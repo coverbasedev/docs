@@ -23,23 +23,35 @@ A supplier whose bank account is held in Colombia sees the fields below. The cou
 | Bank's taxpayer ID (NIT) | Optional | up to 15 characters, digits only, NIT verification digit | The NIT of the bank holding the account, not the supplier's own NIT. Leave blank if it is not on the bank statement. |
 | SWIFT/BIC | Optional | 8 to 11 characters, letters and digits | 8 or 11 characters, for example, BOFAUS3N. Needed for a payment by wire. |
 | Account type | Optional | no length limit, one of: checking, savings | Checking unless the bank issued the account as a savings account. |
+| Intermediary bank country code | Optional | 2 characters, letters only | Two-letter country code, for example, US. |
+| Intermediary bank city | Optional | up to 60 characters |  |
+| Account number at the intermediary bank | Optional | up to 34 characters |  |
+| Intermediary bank name | Optional | up to 60 characters |  |
+| Intermediary branch number | Optional | up to 30 characters |  |
+| Intermediary IBAN | Optional | 15 to 34 characters, letters and digits, IBAN MOD-97 check |  |
+| Intermediary SWIFT/BIC | Optional | 8 to 11 characters, letters and digits | 8 or 11 characters, for example, CHASUS33. |
 
 ### IBAN
 
-An IBAN is optional for Colombia. It is up to 34 characters and is checked against the ISO 7064 MOD-97 algorithm, which catches a mistyped or transposed digit before the details reach your finance system.
+Colombia does not use IBANs. Accounts are identified by the fields above.
 
 ## Tax and company registrations
 
 | Registration | Requirement | Format | Notes |
 | --- | --- | --- | --- |
-| NIT | Required | up to 15 characters, digits only, NIT verification digit | Include the verification digit, for example, 890903938-8. |
+| NIT | Required | 5 to 15 characters, digits only | Without the verification digit, for example, 890903938. The DV goes in its own box below. |
 
 ## Additional details
 
-Colombia collects a few fields that other countries do not.
+Colombia collects a few fields that other countries do not. They are asked in the tax registration question, beside the number.
 
 | Field | Requirement | Format | Notes |
 | --- | --- | --- | --- |
+| Nature (persona natural or jurídica) | Required | no length limit, one of: Persona natural (individual), Persona jurídica (company or organization) |  |
+| Type of legal entity | Suggested | no length limit, one of: Sociedad por acciones simplificada (S.A.S.), Sociedad anónima (S.A.), Sociedad limitada (Ltda.), Sociedad en comandita simple (S. en C.), Sociedad en comandita por acciones (S.C.A.), Empresa unipersonal (E.U.), Entidad sin ánimo de lucro (ESAL), Sucursal de sociedad extranjera, Entidad pública, Not applicable (persona natural), Other |  |
+| Document type | Required | no length limit, one of: 31 NIT, 13 Cédula de ciudadanía, 22 Cédula de extranjería, 41 Pasaporte, 42 Documento de identificación extranjero, 50 NIT de otro país, 12 Tarjeta de identidad, 11 Registro civil, 21 Tarjeta de extranjería, 47 Permiso especial de permanencia (PEP), 48 Permiso por protección temporal (PPT) | The DIAN code for the document the NIT was issued against. |
+| DV (verification digit) | Required | 1 character, digits only, checked against the NIT | The single digit after the hyphen in the NIT, for example, the 8 in 890903938-8. |
+| Main economic activity (CIIU) | Suggested | 4 characters, digits only | The 4-digit CIIU code in box 46 of the RUT, for example, 6201. |
 | Tax regime | Suggested | no length limit, one of: comun, simplificado, especial |  |
 | Fiscal responsibilities (DIAN) | Optional | no length limit, one of: O-13, O-15, O-23, O-47 |  |
 | ICA activity code | Optional | up to 10 characters, digits only |  |
@@ -53,7 +65,7 @@ Oracle Fusion Cash Management 26c CO validations; DIAN NIT checksum.
 
 The rules on this page are confirmed against a primary source, so they are enforced strictly.
 
-Configuration version `2026.10.1`. Your organization can override any of these rules for its own suppliers.
+Configuration version `2026.10.2`. Your organization can override any of these rules for its own suppliers.
 
 ## Related
 
