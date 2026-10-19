@@ -1,6 +1,6 @@
 ---
 title: "Document Insights guide"
-description: "Define the fields Coverbase pulls out of every document: how to write an insight, when to use Extract vs Synthesize, a starter library you can copy, and how to check the results."
+description: "Define the fields Coverbase pulls out of every document, test and apply changes, review and correct values, fill contract and custom fields, and read the audit trail."
 icon: "file-magnifying-glass"
 ---
 
@@ -9,7 +9,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 <AgentDirective />
 
 <Info>
-  This guide is part of the [User Guides](/user-guides/overview) collection. It pairs with the [Contract Guardian guide](/user-guides/contract-guardian), which covers clause sets and clause reviews. Insights are the *field-level* half of contract intelligence; clause review is the *language-level* half.
+  This guide is part of the [User Guides](/user-guides/overview) collection. It pairs with the [Contract Guardian guide](/user-guides/contract-guardian), which covers clause sets and clause reviews. Insights are the *field-level* half of contract intelligence; clause review is the *language-level* half. The types an insight can apply to are set on [Document types](/user-guides/document-types).
 </Info>
 
 A **document insight** is a field you want pulled out of every document of a given type. You define it once (a name, a description, a type, and a mode), and from then on Coverbase populates it automatically whenever a matching document is processed, with a page citation and a verbatim source quote attached to the value.
@@ -69,7 +69,7 @@ Every extracted value arrives with:
 4. **In bulk, across history.** A new insight starts empty on every document you already hold. **Configuration → Document Insights → Document types** shows exactly how many, and a backfill re-extracts them. See [Backfilling history](#backfilling-history).
 
 <Warning>
-  Adding a new insight does not fill your existing documents on its own. Until you run a backfill, the field only populates on documents processed after the change.
+  Adding a new insight does not fill your existing documents on its own. Until you run a backfill, the field only populates on documents processed after the change. When you edit an existing insight, you choose which documents to re-run as you save: see [Applying a change](#applying-a-change).
 </Warning>
 
 ---
@@ -183,6 +183,23 @@ Take one requirement (*do we have the right to run a penetration test?*) and see
 
 <Note>
   Mixing modes across your insight set is normal and costs nothing. Coverbase groups insights by mode and runs each group as its own pass over the document.
+</Note>
+
+---
+
+## Concise and Detailed answers
+
+Every insight also has an **Answer format**, set on its **Definition** tab. It decides how long the stored value is.
+
+| Format | What the value holds | Example for *Payment terms* |
+| --- | --- | --- |
+| **Concise** | The shortest answer that is still correct. Supporting detail moves to the reasoning | `Net 45` |
+| **Detailed** | The answer with the qualifiers the document attaches to it | `Net 45 from receipt of a correct invoice, with disputed amounts withheld until resolved` |
+
+New insights start as **Concise**, because a short value is easier to sort, filter, compare across vendors, and copy into a field. Insights that existed before answer formats were introduced stay **Detailed**, so their values read the same as they always have. Switch one to **Concise** only after you have tried it on the **Test** tab.
+
+<Note>
+  The format changes the length of the answer, not what counts as the answer. Both formats follow the same rules: a later amendment or override controls over the original clause, a section marked superseded or void is ignored, a unit heading such as "in thousands" applies to the figures beneath it, and a Yes/No answer is No only when the document says so. If the document is silent, the value stays empty.
 </Note>
 
 ---
@@ -370,6 +387,99 @@ A backfill re-extracts documents you already hold, so a new or reworded insight 
 
 ---
 
+## The insight workbench
+
+Click an insight on **Configuration → Document Insights** to open its workbench. Everything about one insight lives here: what it extracted, how to test a change, its definition, the fields it fills, its history, and the changes waiting for a reviewer.
+
+The header shows the insight's name, whether it is on, its current version (**Version 3**, for example), and whether it fills fields automatically or asks a reviewer first. **Test**, **Re-run** and **Export** start from here.
+
+| Tab | Use it to |
+| --- | --- |
+| **Values** | See every value this insight extracted, mark values correct or incorrect, correct a wrong one, and select documents to re-run |
+| **Test** | Try a change on documents you pick and compare the new answer with the stored one before you save |
+| **Definition** | Edit the name, description, type, mode, answer format, document types, and examples |
+| **Fields** | Choose the custom fields and built-in fields this insight fills, and whether a reviewer approves each change first |
+| **History** | Read every revision of the definition and every change to a value, with who made it and when |
+| **Review** | Approve or reject the field changes this insight proposed |
+
+On **Values**, filter by revision, verdict, confidence, or whether the quote was found in the document. Click a row to open the value's detail: the value, the quote and page, the reasoning, the verdict, and a timeline of everything that happened to it.
+
+---
+
+## Teaching an insight with examples
+
+A description tells Coverbase what to look for. An example shows it. Add examples on the **Definition** tab when the description is right but the answers keep coming back in the wrong shape, or when one kind of wording keeps tripping it up.
+
+Each example has three parts:
+
+- **Document Excerpt.** The passage the answer comes from, pasted from a real document (up to 4,000 characters).
+- **Expected Answer.** What the insight should return for that passage. Leave it empty when the passage does not answer the question, which is how you teach an insight not to guess.
+- **Why This Is the Answer** (optional). One sentence on why that is the answer, such as "The amendment in Exhibit C replaces the Net 30 term."
+
+Coverbase uses up to three of an insight's examples each time it runs. Turn an example off to stop using it without deleting it. Adding, editing, or removing an example changes the definition, so it creates a new revision.
+
+<Tip>
+  The fastest way to build examples is from your own corrections. When you correct a value on the **Values** tab, choose **Save as example** and Coverbase saves the document's passage with your corrected answer.
+</Tip>
+
+---
+
+## Testing a change before you save
+
+The **Test** tab runs your edited definition, including unsaved changes and examples, against documents you choose. Nothing is saved and no field is filled.
+
+<Steps>
+  <Step title="Pick documents">
+    Choose a handful that cover the cases you care about: a clean one, one with an amendment, one you know came back wrong.
+  </Step>
+  <Step title="Run the test">
+    Coverbase extracts each document the same way it does in production.
+  </Step>
+  <Step title="Compare">
+    Each row shows the stored value next to the new one, with the new quote and page. Rows where the answer changed are marked, so you can see whether the edit fixed the problem without breaking a document that was already right.
+  </Step>
+</Steps>
+
+---
+
+## Applying a change
+
+When you save an edit that affects extraction (the description, type, mode, answer format, display format, document types, or examples), the insight moves to a new revision and Coverbase asks which documents should use it. Renaming an insight, turning it on or off, reordering it, or moving it to another group does not create a revision.
+
+| Choice | What happens | Use it when |
+| --- | --- | --- |
+| **Only new documents** | Nothing is re-run. Documents uploaded from now on use the new revision | The change is small, or you want to watch it on new uploads first |
+| **Selected documents** | Re-runs the documents you choose, from a selection or a filter on the **Values** tab such as **Incorrect**, low confidence, or an older revision | You fixed a specific problem and know which documents had it |
+| **All past documents** | Re-runs every document in scope that an older revision produced | The change should apply across your whole library |
+
+Before you confirm, Coverbase shows how many documents it will re-run. Values set or corrected by hand are never overwritten by a re-run.
+
+Every value records the revision that produced it. Values extracted before revisions existed show **Before versioning**, so you can always tell which definition an answer came from.
+
+---
+
+## Marking values correct or incorrect
+
+A verdict records that a person checked a value against the document. On the **Values** tab, mark a value **Correct** or **Incorrect**, one at a time or by selecting several rows. You can clear a verdict if you change your mind.
+
+When you mark a value **Incorrect**, you can enter the right answer. The corrected value replaces the extracted one, is treated as set by hand, and is never overwritten by a later re-run. It also flows to any field the insight fills, following that field's rules.
+
+Verdicts do three things for you:
+
+- They tell you which insights to fix. Filter to **Incorrect** to see where a definition goes wrong, then fix it and re-run those documents with **Selected documents**.
+- They become examples. Choose **Save as example** on a correction.
+- They build the dataset for your [decision model](#the-decision-model).
+
+---
+
+## Seeing one document type at a time
+
+The **Document types** tab on **Configuration → Document Insights** shows coverage for each type. Click a type to open a grid of every document of that type down the side and every insight that applies to it across the top. Use it to read an MSA's insights side by side across vendors, or to spot the one document where a value is missing.
+
+On **Configuration → [Document types](/user-guides/document-types)**, each type shows how many insights apply to it and links to those insights.
+
+---
+
 ## Retiring an insight
 
 Three actions, easy to confuse:
@@ -391,7 +501,7 @@ Three actions, easy to confuse:
 An insight lives on a document. Your team works from vendor, contract, and assessment records. Promotion carries the value across.
 
 <Steps>
-  <Step title="Open the insight and choose Promote to custom field">
+  <Step title="Open the insight's Fields tab and choose Promote to custom field">
     **Link an existing field** of a compatible type, or **Create a new field** from the insight's name and type.
 
     Text fills Text, Number fills Number, Date fills Date, Yes/No fills True/False. Select and multi-select are not supported.
@@ -417,6 +527,86 @@ An insight lives on a document. Your team works from vendor, contract, and asses
 
 ---
 
+## Filling built-in contract and document fields
+
+Besides custom fields, an insight can fill fields Coverbase already has on contracts and documents. Choose them on the insight's **Fields** tab.
+
+| Record | Fields an insight can fill |
+| --- | --- |
+| Contract | Effective date, expiration date, term start date, renewal date, termination notice period (days), contract value, payment terms, indemnification, limitation of liability |
+| Document | Expiration date |
+
+A contract field is filled on the contracts linked to the document. The insight's type has to match the field: a Date insight fills a date field, a Number insight fills a number field, and a Text insight fills a text field.
+
+Each built-in field uses the same gates and conflict choices as a custom field: **Require a grounded quote**, **Minimum confidence**, and **Never overwrite**, **Fill if empty**, or **Latest document wins**. **Latest document wins** compares the dates of the documents, so an older document processed later does not replace a newer one's value.
+
+<Note>
+  A value a person typed into a field is never overwritten by an insight, whichever conflict choice you pick.
+</Note>
+
+---
+
+## Fill automatically or ask a reviewer
+
+The **Fields** tab also sets what happens when the insight finds a value for a field.
+
+| Setting | What happens |
+| --- | --- |
+| **Fill automatically** | The value is written to the field as soon as it is extracted, subject to the gates and conflict choice. This is how every insight worked before the setting existed, and it stays the default |
+| **Ask a reviewer** | The change waits for approval. Coverbase creates a work queue item and sends a notification to the reviewer you choose |
+
+With **Ask a reviewer**, pick a reviewer on the **Fields** tab. If you leave it empty, the request goes to the owner of the document's vendor. If neither is set, the change still waits on the **Review** tab, but no one is notified.
+
+The reviewer sees the field, its current value, and the proposed value with its quote. **Approve** writes the value. **Reject** leaves the field as it is. If a newer document proposes another value before anyone acts, the older proposal is marked as replaced.
+
+Review pending changes for one insight on its **Review** tab, or for every insight on the **Review** tab of **Configuration → Document Insights**, where you can approve or reject several at once.
+
+<Tip>
+  Use **Ask a reviewer** for fields that drive reminders or reports, such as a contract's renewal date, and **Fill automatically** for fields people only read.
+</Tip>
+
+---
+
+## The audit trail
+
+Every insight keeps a full record on its **History** tab.
+
+**Definition Changes.** Each version of the definition is listed with what changed, who changed it, and when. Open one to see the definition and examples exactly as they were.
+
+**Value Changes.** Every change to a value is recorded and never edited afterwards:
+
+- Extracted, or extracted again by a re-run, with the revision that produced it
+- Set or cleared by hand
+- An unverified answer accepted
+- Marked correct or incorrect, a verdict cleared, or a value corrected
+- Written to a field
+- A review requested, approved, or rejected
+
+Each entry shows who or what made the change (an upload, a re-run, a backfill, or a person) and the value before and after. The same timeline appears in a value's detail on the **Values** tab. Values that existed before the history was introduced start with one entry recording the value as it stood then.
+
+---
+
+## The decision model
+
+The **Model** tab on **Configuration → Document Insights** lets you build a model tuned to your organization's documents from the answers your team has checked. You never need one: insights work without it.
+
+<Steps>
+  <Step title="Build the dataset">
+    Coverbase gathers every value marked **Correct** and every correction. The tab shows how many examples that gives you and how they spread across insights. More verdicts make a better dataset, so mark values as you review them.
+  </Step>
+  <Step title="Evaluate">
+    Runs your verified values as a test and reports how often the standard model and your candidate model agree with your team's answers.
+  </Step>
+  <Step title="Train">
+    Training needs Coverbase to enable it for your organization. Until then, **Start training** is unavailable; contact your Coverbase team to turn it on.
+  </Step>
+  <Step title="Activate">
+    Once a trained model is ready and its evaluation looks right, **Activate** it. From then on, every insight in your organization extracts with it. Only one model is active at a time. **Retire** it to go back to the standard model.
+  </Step>
+</Steps>
+
+---
+
 ## Sharing a library between orgs
 
 Insight definitions can be exported as a JSON file (names, descriptions, types, modes, and document-type scope, with no values and no ids) and imported into another org. This runs through the Coverbase API rather than a button in the dashboard.
@@ -436,10 +626,10 @@ The AI drafts; a reviewer checks the evidence before anyone relies on it.
     Expand any insight on the document's **Insights** tab to see the source quote, page number, confidence, and the model's reasoning. Scan low-confidence values first; they are flagged because the model was not sure.
   </Accordion>
   <Accordion title="Accept an answer whose evidence was not verified" icon="pen">
-    When the quote could not be located in the document, the insight reads **Supporting evidence not verified**. Check the answer against the document, then choose **Accept answer** to record that a reviewer accepted it; the evidence stays marked as unverified. The dashboard does not edit a value in place, so to change a wrong one, tighten the description and re-extract. A value set through the API is recorded as manual, is never overwritten by re-extraction or a backfill, and shows as manual in the CSV export.
+    When the quote could not be located in the document, the insight reads **Supporting evidence not verified**. Check the answer against the document, then choose **Accept answer** to record that a reviewer accepted it; the evidence stays marked as unverified. To fix a wrong value, mark it **Incorrect** on the insight's **Values** tab and enter the right answer (see [Marking values correct or incorrect](#marking-values-correct-or-incorrect)). A value set through the API is recorded as manual, is never overwritten by re-extraction or a backfill, and shows as manual in the CSV export.
   </Accordion>
   <Accordion title="Re-extract after you change a definition" icon="arrows-rotate">
-    Changing a description does not retroactively update values that were already extracted. Use **Refresh all** on a document, or re-extract a single insight from its row, once you have reworded it.
+    Saving a change on the insight's **Definition** tab asks which documents to re-run: only new documents, selected documents, or all past documents. See [Applying a change](#applying-a-change). On a single document, **Refresh all** re-runs every insight, and a row's actions re-run one.
   </Accordion>
   <Accordion title="Export for analysis" icon="table">
     **Export CSV** gives you every insight for the document with all metadata: the display value, each typed column, confidence, source quote, page number, reasoning, and whether it was AI-extracted or manual. Useful for spot-auditing a batch of contracts, or for handing a legal reviewer a worksheet.
@@ -474,6 +664,15 @@ The AI drafts; a reviewer checks the evidence before anyone relies on it.
   <Accordion title="The insight is right for one document type and noisy on another" icon="filter">
     Scope it. An insight with an empty document-type list runs against every document in your library, including SOC 2s and policies. Put it in a group with the correct scope and enable inheritance.
   </Accordion>
+  <Accordion title="I changed an insight but old documents still show the old answer" icon="clock-rotate-left">
+    You saved with **Only new documents**, so documents processed earlier keep the value from their revision. Filter the **Values** tab by an older revision, select those documents, and re-run them, or save again with **All past documents**. Values set or corrected by hand are never re-run.
+  </Accordion>
+  <Accordion title="A field change is waiting but no one was asked to review it" icon="bell-slash">
+    The insight is set to **Ask a reviewer** with no reviewer chosen, and the document's vendor has no owner. Pick a reviewer on the insight's **Fields** tab, then approve the waiting change on the **Review** tab.
+  </Accordion>
+  <Accordion title="Start training is unavailable on the Model tab" icon="lock">
+    Training needs Coverbase to enable it for your organization. You can still build the dataset and run an evaluation. Contact your Coverbase team to turn training on.
+  </Accordion>
   <Accordion title="I don't see Configuration → Document Insights" icon="lock">
     The page requires the org-settings update permission. Ask an admin in your organization to grant it, or to make the change for you.
   </Accordion>
@@ -482,6 +681,9 @@ The AI drafts; a reviewer checks the evidence before anyone relies on it.
 ## What's next
 
 <CardGroup cols={2}>
+  <Card title="Document types" icon="folder-tree" href="/user-guides/document-types">
+    The types an insight applies to, including your own custom types.
+  </Card>
   <Card title="Contract Guardian guide" icon="file-contract" href="/user-guides/contract-guardian">
     Insights tell you what a contract *says*. Clause reviews tell you how far it sits from what you would accept. Set up your clause sets next.
   </Card>
