@@ -60,6 +60,21 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `DELETE` | `/v1/clause-domain-rules/{rule_id}` | `contract:update:org`, signed-in user only |
 | `GET` | `/v1/non-standard-clauses` | `contract:read:org` |
 | `GET` | `/v1/non-standard-clauses/export` | `contract:export:org` |
+| `GET` | `/v1/contract-records/{contract_id}/components` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/resync` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/pin` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/unpin` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/recheck-done` | `contract:update:org` |
+| `GET` | `/v1/contract-value` | `contract:read:org` |
+| `GET` | `/v1/contract-fx-rates` | `contract:read:org` |
+| `PUT` | `/v1/contract-fx-rates` | `contract:update:org` |
+| `GET` | `/v1/component-policies` | `contract:read:org` |
+| `POST` | `/v1/component-policies` | `contract:create:org` |
+| `PATCH` | `/v1/component-policies/{policy_id}` | `contract:update:org`; archiving needs a signed-in user |
+| `GET` | `/v1/contract-records/{contract_id}/spend-lines` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/spend-lines` | `contract:update:org` |
+| `PATCH` | `/v1/contract-records/{contract_id}/spend-lines/{line_id}` | `contract:update:org` |
+| `DELETE` | `/v1/contract-records/{contract_id}/spend-lines/{line_id}` | `contract:update:org`, signed-in user only |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
 
@@ -305,3 +320,15 @@ A clause domain rule requires a reference clause when a risk domain reaches a le
 ## Non-standard clauses report
 
 `GET /v1/non-standard-clauses` lists every clause on a contract's latest clause review that departs from the standard. Filter with `search`, `vendor_ids`, `severities`, `statuses` and `risk_domain_ids`; sort with `sort` (`severity`, `contract`, `vendor` or `reviewed_at`) and `descending`. `GET /v1/non-standard-clauses/export` takes the same filters and returns a short-lived `download_url` for the report as CSV.
+
+## Contract components, value and spend
+
+These endpoints need Contracts v3. Without it they return `404` with code `not_enabled`.
+
+A contract carries component slots: MSA, DPA, SLA, order form and the others. `GET /v1/contract-records/{contract_id}/components` returns each slot's `component_type`, the `current_component_id` that answers it, `gap_state`, `pinned`, `resolution_reason` and `required_by_policy_id`. To recompute every slot from the live components, send `POST .../components/resync`. To hold a decision against re-analysis, send `POST .../components/{component_type}/pin` with `current_component_id` and `resolution_reason`; `unpin` releases it, and `recheck-done` answers a re-check request.
+
+A component policy says which components a matching contract must carry. `GET /v1/component-policies` lists them. To create one, send `POST /v1/component-policies` with `name`, `required_component_types`, and optionally `description`, `severity` and `predicate` (`contract_types`, `vendor_tiers`, `processes_customer_data`, `is_ai_subprocessor`, `min_annual_value`, `regulatory_flags`). An empty predicate matches every contract. `PATCH /v1/component-policies/{policy_id}` changes any field; an API key cannot set `is_archived`.
+
+`GET /v1/contract-fx-rates` returns the pinned rate table: `base_currency`, `as_of` and `rates` (`currency`, `rate_to_base`). To replace it, send `PUT /v1/contract-fx-rates` with the whole table. `GET /v1/contract-value` returns what the portfolio, or one vendor with `vendor_id`, is committed to in the base currency, with currencies that have no rate listed in `unconverted`.
+
+`GET /v1/contract-records/{contract_id}/spend-lines` returns the live pricing lines, the `superseded` lines a later amendment re-priced, `annual_total`, `one_time_total`, `currency` and `mixed_currencies`. To add a line, send `POST` with `description`, `amount`, `currency` (ISO 4217), `frequency` (`one_time`, `monthly`, `quarterly`, `annual` or `usage`), and optionally `effective_date`, `document_id`, `page_number` and `line_key`. `PATCH .../spend-lines/{line_id}` corrects a line; `DELETE` archives it so re-extraction cannot bring it back, and an API key cannot do that. An unknown currency returns `422` with code `invalid_currency`.
