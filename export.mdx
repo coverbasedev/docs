@@ -48,6 +48,47 @@ Retrieves the data for the specified report. Authenticate with an `ak_` API key 
 
 A negative `limit` or `offset` returns `400`. An unknown slug returns `404` with `{"detail": "Export report not found"}`.
 
+These are the only filters the endpoint accepts. Any other query parameter is ignored and the full report comes back. A column in the report, such as **Assessment ID**, is not a filter: `?assessment_id=...` returns every row, not one assessment's rows.
+
+### Get one assessment's rows
+
+To pull the evaluations for a single assessment, page through the report and keep the rows whose assessment column matches. Use the column name as it appears in the report's `mapping` (the key in each `data` object), not the Coverbase field name.
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("COVERBASE_API_KEY", "<api-key>")
+BASE_URL = "https://api.coverbase.app"
+
+slug = "evaluation-export"
+assessment_id = "cbassmt_..."
+column = "Assessment ID"
+page_size = 5000
+
+headers = {"Authorization": f"Bearer {API_KEY}"}
+
+rows = []
+offset = 0
+while True:
+    resp = requests.get(
+        f"{BASE_URL}/v1/export/{slug}",
+        params={"limit": page_size, "offset": offset},
+        headers=headers,
+        timeout=120,
+    )
+    resp.raise_for_status()
+    page = resp.json()
+    rows.extend(r for r in page["data"] if r.get(column) == assessment_id)
+    offset += page_size
+    if offset >= page["total_count"]:
+        break
+
+print(f"{len(rows)} rows for {assessment_id}")
+```
+
+You can do the same with the CSV download: fetch `/v1/export/{slug}/download?format=csv` and filter on the assessment column in your spreadsheet or script.
+
 ### Example request
 
 <CodeGroup>
