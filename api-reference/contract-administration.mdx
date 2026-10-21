@@ -37,6 +37,12 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews` | `contract:update:org` |
 | `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}` | `contract:read:org` |
 | `PATCH` | `/v1/clause-matches/{match_id}` | `contract:update:org`; accepting a risk needs a signed-in user |
+| `POST` | `/v1/clause-matches/triage` | `contract:update:org`; accepting a risk needs a signed-in user |
+| `POST` | `/v1/contract-records/{contract_id}/findings-from-clause-matches` | `finding:create:org` |
+| `POST` | `/v1/clause-matches/{match_id}/finding-links` | `finding:update:org` |
+| `POST` | `/v1/clause-match-finding-links/{association_id}/unlink` | `finding:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/follow-up-drafts` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` | `contract:read:org` |
 
 List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
 
@@ -224,3 +230,15 @@ To start one, send `POST /v1/contract-records/{contract_id}/clause-reviews` with
 Each match has `status`, `triage_decision`, `triage_notes`, `confidence`, `extracted_text`, `reasoning`, `source_document_id` and `page_num`.
 
 To record a reviewer's verdict, send `PATCH /v1/clause-matches/{match_id}` with either `status` (`conforming`, `needs_review`, `non_conforming`, `missing`, `not_applicable` or `accepted_risk`, plus `accepted_risk_expires_at`) or `triage_decision` (`no_action`, `accepted_risk` or `false_positive`, plus `triage_notes`). Accepting a risk is a sign-off, so an API key gets `403` with code `api_key_not_allowed`.
+
+To set one triage decision on up to 500 matches, send `POST /v1/clause-matches/triage` with `match_ids`, `decision` and optional `notes`. Each match is decided on its own: the response lists `succeeded_match_ids` and `failures`, each with a `match_id` and a `message`.
+
+## Findings from clause matches
+
+To raise one finding from up to 200 of a contract's clause matches, send `POST /v1/contract-records/{contract_id}/findings-from-clause-matches` with `clause_match_ids` and `title`, and optionally `body`, `assigned_to_id`, `due_date`, the severity, urgency and risk level IDs, and `finding_status_id`. Coverbase returns `201` with `finding_id` and sets each match's triage to `action_created`.
+
+To link a match to an existing finding, send `POST /v1/clause-matches/{match_id}/finding-links` with `finding_id`. To remove a link, send `POST /v1/clause-match-finding-links/{association_id}/unlink` with `next_triage`: `leave`, `clear`, `no_action`, `accepted_risk` or `false_positive`. Setting `accepted_risk` with an API key returns `403` with code `api_key_not_allowed`.
+
+## Follow-up drafts
+
+To have Coverbase AI draft a follow-up from clause matches, send `POST /v1/contract-records/{contract_id}/follow-up-drafts` with `clause_match_ids` (1 to 200), `audience` (`vendor` or `procurement`) and `force`. Coverbase returns `202` and writes the draft in the background. Poll `GET /v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` until `status` is `completed` or `failed`, then read `draft_text`. Coverbase sends nothing to anyone. A match from another contract returns `422` with code `foreign_clause_match`.

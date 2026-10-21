@@ -54,6 +54,15 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `GET` | `/v1/vendors/{vendor_id}/due-diligence-status` | `vendor:read:org` |
 | `GET` | `/v1/findings-stats` | `finding:read:org` |
 | `POST` | `/v1/commitments/{commitment_id}/extend-due-date` | `portal:update:org` and `commitment:update:org` |
+| `GET` | `/v1/questionnaire-versions` | `questionnaire:read:org` |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/draft-version` | `questionnaire:update:org` |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/publish-version` | `questionnaire:update:org` |
+| `GET` | `/v1/responsibility-topics` | `vendor:read:org` |
+| `POST` | `/v1/responsibility-topics` | `org_settings:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/responsibility-matrix` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/responsibility-matrix` | `vendor:update:org` |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation` | `questionnaire:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/review-sessions` | `assessment:read:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -405,3 +414,23 @@ Changes `pii_redaction_enabled`, `learning_enabled`, `evaluation_guidance` (null
 `GET /v1/findings-stats` returns the Findings page's insight numbers over every finding.
 
 `POST /v1/commitments/{commitment_id}/extend-due-date` moves a mitigation-underway commitment's `due_at` later and stores an optional internal `note`. The vendor's acceptance stands. A commitment that is not mitigation-underway, or a date that is not later, returns `400` with the code `extension_not_allowed`.
+
+## Questionnaire versions
+
+These need the TPRM lifecycle. `GET /v1/questionnaire-versions` lists versioned templates; pass `types` (default `irq`). `POST /v1/questionnaires/{questionnaire_id}/draft-version` returns `201 Created` with a new draft copied from that version. `POST /v1/questionnaires/{questionnaire_id}/publish-version` publishes a draft so new sends use it.
+
+## Responsibilities
+
+These need Responsibilities enabled for your organization, and return `404` with the code `not_enabled` otherwise.
+
+`GET /v1/responsibility-topics` lists the topics in template order. `POST /v1/responsibility-topics` returns `201 Created` with a new topic. Send `label`, `question`, and optionally `guidance`, `default_iaas`, `default_paas`, `default_saas` and `owner_department_id`.
+
+`GET /v1/vendors/{vendor_id}/responsibility-matrix` returns the vendor's matrix, its current version and its version history. Pass `engagement_id` for an engagement's matrix. It returns `404` with the code `responsibility_matrix_not_found` until a matrix is saved.
+
+`POST /v1/vendors/{vendor_id}/responsibility-matrix` saves `columns`, `rows`, `cells` and an optional `note` as a new published version and returns the matrix.
+
+## Attestations and review sessions
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation` returns the questionnaire's attestation config, every record on the response, and `is_satisfied`. Signing an attestation stays with a person.
+
+`GET /v1/assessments/{assessment_id}/review-sessions` lists the remote and onsite review sessions on an assessment. It needs the TPRM lifecycle.
