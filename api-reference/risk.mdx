@@ -34,6 +34,12 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `GET` | `/v1/risk-domains/{risk_domain_id}` | `risk:read:org` |
 | `PATCH` | `/v1/risk-domains/{risk_domain_id}` | `risk:update:org` |
 | `GET` | `/v1/vendors/{vendor_id}/risk-score-history` | `vendor:read:org` |
+| `GET` | `/v1/risk-methodology` | `org_settings:read:org` |
+| `GET` | `/v1/reviewer-matrix-rules` | `org_settings:read:org` |
+| `GET` | `/v1/work-queue-escalation-rules` | `org_settings:read:org` |
+| `GET` | `/v1/ai-settings` | `org_settings:read:org` |
+| `GET` | `/v1/agent-actions` | `org_settings:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/access-removal-requests` | `integration:read:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -295,3 +301,45 @@ Takes the same fields as create. Fields you omit keep their value, and an explic
 </ParamField>
 
 Lists how a vendor's overall and per-domain risk scores changed, newest first, with `limit` (at most 200) and `offset`. An entry with a null `risk_domain_id` is the vendor's overall score.
+
+## Read methodology and AI governance
+
+These reads need the TPRM lifecycle. When your organization does not have it, they return `404` with the code `not_enabled`.
+
+<ParamField path="method" type="GET">
+  `GET /v1/risk-methodology`
+</ParamField>
+
+Returns `irq_aggregation_method`, which decides how inherent risk questionnaire answers aggregate into a score.
+
+<ParamField path="method" type="GET">
+  `GET /v1/reviewer-matrix-rules`
+</ParamField>
+
+Returns the reviewer matrix in `data`. Each rule names a requester group, risk level, risk domain and business unit (a null criterion matches anything) and one reviewing user or group.
+
+<ParamField path="method" type="GET">
+  `GET /v1/work-queue-escalation-rules`
+</ParamField>
+
+Returns the rules that escalate overdue work queue items in `data`.
+
+<ParamField path="method" type="GET">
+  `GET /v1/ai-settings`
+</ParamField>
+
+Returns PII redaction, learning, evaluation guidance, each agent policy and the privacy posture.
+
+<ParamField path="method" type="GET">
+  `GET /v1/agent-actions`
+</ParamField>
+
+Lists the Agent Ledger, newest first. Filter with `awaiting_decision`, `target_type` and `target_id`, and page with `limit` (at most 200) and `offset`. Deciding an action stays with a signed-in user.
+
+## Read access removal requests
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/access-removal-requests`
+</ParamField>
+
+Lists the identity-provider access removals a workflow proposed for a vendor, with each assignment it would remove. This read needs Inspect and returns `404` when Inspect is not enabled. Approving or rejecting a request stays with a signed-in user.

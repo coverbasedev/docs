@@ -37,6 +37,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PUT` | `/v1/radar/alerts/{alert_id}/dismiss-reason` |
 | `PATCH` | `/v1/radar/events/{event_id}` |
 | `GET` | `/v1/radar/events/{event_id}/updates` |
+| `GET` | `/v1/radar/events/{event_id}/diagnostics` |
 | `GET` | `/v1/radar/signals` |
 | `GET` | `/v1/radar/signals/{signal_id}` |
 | `PATCH` | `/v1/radar/signals/{signal_id}` |
@@ -44,12 +45,14 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/radar/signals/undismiss` |
 | `POST` | `/v1/radar/signals/{signal_id}/acknowledge` |
 | `POST` | `/v1/radar/signals/risk-impact-decision` |
+| `POST` | `/v1/radar/signals/{signal_id}/regenerate-summary` |
 | `GET` | `/v1/radar/cases` |
 | `POST` | `/v1/radar/cases` |
 | `GET` | `/v1/radar/cases/{case_id}` |
 | `PATCH` | `/v1/radar/cases/{case_id}` |
 | `POST` | `/v1/radar/cases/{case_id}/signals` |
 | `DELETE` | `/v1/radar/cases/{case_id}/signals/{signal_id}` |
+| `POST` | `/v1/radar/cases/{case_id}/description-suggestion` |
 | `GET` | `/v1/radar/cases/{case_id}/threads` |
 | `POST` | `/v1/radar/cases/{case_id}/threads` |
 | `POST` | `/v1/radar/cases/{case_id}/threads/bulk` |
@@ -494,6 +497,22 @@ Lists the developments Coverbase recorded on an event as its story changed, newe
 
 Each update carries `id`, `event_id`, `update_kind`, `update_metadata` (an object whose fields depend on `update_kind`), and `created_at`.
 
+## Diagnose an event
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/events/{event_id}/diagnostics`
+</ParamField>
+
+Explains whether an event reached your organization and, if it did not, why. Returns `404 event_not_found` for an unknown event.
+
+<ResponseField name="event_id" type="string">The event diagnosed.</ResponseField>
+<ResponseField name="steps" type="object[]">One entry per check, in order. Each has `id` (`ingested`, `source_enabled`, `detector_enabled`, `detector_evaluated`, or `vendor_matched`), `status` (`passed`, `failed`, or `not_evaluated`), and `completed_at`.</ResponseField>
+<ResponseField name="root_cause" type="string | null">Why the event did not reach your organization, for example `source_not_subscribed` or `detector_did_not_alert`.</ResponseField>
+<ResponseField name="action" type="string | null">What fixes it, for example `add_library_source` or `run_detector_on_event`.</ResponseField>
+<ResponseField name="sources" type="object[]">Sources that fed the event and your organization may see, with `name`, `canonical_url`, `library_name`, and `source_id` (your organization's source on it, if any).</ResponseField>
+<ResponseField name="detectors" type="object[]">Detectors that bear on the event, with `name`, `library_slug`, and `detector_id`.</ResponseField>
+<ResponseField name="matched_vendor_count" type="integer | null">How many of your vendors the event matched.</ResponseField>
+
 ## List signals
 
 <ParamField path="method" type="GET">
@@ -635,6 +654,19 @@ Resolves the residual-risk changes proposed on alerts. Returns `204 No Content`.
   For `manual`, one object per vendor: `vendor_id`, `overall_score` (0 to 100), `domain_scores` (a list of `risk_domain_id` and `score`), and `note`.
 </ParamField>
 
+## Regenerate a signal's summary
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/signals/{signal_id}/regenerate-summary`
+</ParamField>
+
+Rewrites a signal's title and summary from its current alerts and returns `{"signal": ...}` with the refreshed [signal object](#signal-object). The new text replaces any title and summary your organization edited by hand, and follows your organization's saved summary instructions. The event the signal covers keeps its own text.
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 404 | `signal_not_found` | Not found, or not in the API key's org. |
+| 503 | `summary_unavailable` | The summary could not be written. Try again. |
+
 ## List cases
 
 <ParamField path="method" type="GET">
@@ -769,6 +801,20 @@ Returns `404 case_not_found`, or `400 invalid_case_link` when a signal is not fo
 </ParamField>
 
 Removes one signal from a case and returns the refreshed [case object](#case-object). The case's threads stay. Returns `404 signal_not_linked` when the signal is not on the case.
+
+## Draft a case description
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/cases/{case_id}/description-suggestion`
+</ParamField>
+
+Drafts a description from every signal linked to the case and returns it as `{"description": "..."}`. Nothing is saved. To keep the draft, send it as `description` to [`PATCH /v1/radar/cases/{case_id}`](#update-a-case). This route needs `radar_alert:update:org`.
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 404 | `case_not_found` | Not found, or not in the API key's org. |
+| 422 | `case_has_no_signals` | No signal is linked to the case. |
+| 502 | `description_unavailable` | A draft could not be written. Try again. |
 
 ## List a case's threads
 
