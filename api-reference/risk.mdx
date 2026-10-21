@@ -1,0 +1,297 @@
+---
+title: "Risk API"
+description: "Read and edit the risk register, run and save scenarios, read exposure and the board report, and manage risk domains."
+icon: "triangle-exclamation"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Risk API gives you the same risk register, scenarios and reports the Risk page shows. A **risk** is an entry on the register with an inherent and a residual score, an owner, a scope and the signals (findings, contract gaps, alerts and other records) that support it.
+
+Every endpoint is scoped to the organization of the API key. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `POST` | `/v1/risks/query` | `risk:read:org` |
+| `GET` | `/v1/risks/summary` | `risk:read:org` |
+| `GET` | `/v1/risks/matrix` | `risk:read:org` |
+| `POST` | `/v1/risks` | `risk:create:org` |
+| `GET` | `/v1/risks/{risk_id}` | `risk:read:org` |
+| `PATCH` | `/v1/risks/{risk_id}` | `risk:update:org` |
+| `POST` | `/v1/risks/{risk_id}/signals` | `risk:update:org` |
+| `POST` | `/v1/risks/{risk_id}/signals/{signal_id}/dismiss` | `risk:update:org` |
+| `GET` | `/v1/risk-exposure` | `risk:read:org` |
+| `GET` | `/v1/risk-report` | `risk:read:org` |
+| `GET` | `/v1/risk-config` | `risk:read:org` |
+| `POST` | `/v1/risk-scenarios/run` | `risk:run:org` |
+| `GET` | `/v1/risk-scenarios` | `risk:read:org` |
+| `POST` | `/v1/risk-scenarios` | `risk:create:org` |
+| `GET` | `/v1/risk-scenarios/{scenario_id}` | `risk:read:org` |
+| `GET` | `/v1/risk-domains` | `org_settings:read:org` |
+| `POST` | `/v1/risk-domains` | `org_settings:update:org` |
+| `GET` | `/v1/risk-domains/{risk_domain_id}` | `org_settings:read:org` |
+| `PATCH` | `/v1/risk-domains/{risk_domain_id}` | `org_settings:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/risk-score-history` | `vendor:read:org` |
+
+The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
+
+Archiving a risk or a scenario, and deciding on a risk the Coverbase agent proposed, stay decisions a signed-in user makes in the app. The API does not offer them.
+
+## Errors
+
+Errors return a `detail` object with a `code` and a `message`.
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| `403` | | The key's role does not hold the permission the endpoint needs. |
+| `404` | `not_enabled` | The Risk module is not enabled for your organization. |
+| `404` | `risk_not_found` | No risk has that ID. |
+| `404` | `signal_not_found` | The risk has no signal with that ID. |
+| `404` | `scenario_not_found` | No saved scenario has that ID. |
+| `404` | `risk_domain_not_found` | No risk domain has that ID. |
+| `422` | `invalid_risk` | The risk is missing a description or a score is off the scale. |
+| `400` | `invalid_risk_domain` | The risk domain change is not valid, for example a duplicate name. |
+
+## Query the register
+
+<ParamField path="method" type="POST">
+  `POST /v1/risks/query`
+</ParamField>
+
+Returns one page of register risks that match the filters. Send an empty body to list every risk except closed ones.
+
+<ParamField body="statuses" type="string[]">
+  Any of `proposed`, `open`, `mitigating`, `accepted` and `closed`.
+</ParamField>
+
+<ParamField body="risk_domain_ids" type="string[]">
+  Risk domains to include.
+</ParamField>
+
+<ParamField body="vendor_id" type="string">
+  Only risks scoped to this vendor.
+</ParamField>
+
+<ParamField body="search" type="string">
+  Text to match in the risk description.
+</ParamField>
+
+<ParamField body="limit" type="integer" default="25">
+  Page size. The API caps it at 200.
+</ParamField>
+
+<ParamField body="offset" type="integer" default="0">
+  Rows to skip.
+</ParamField>
+
+The body also accepts `categories`, `owner_user_ids`, `owner_department_ids`, `unowned`, `appetite`, `source_types`, `institution_key`, `service_id`, `contract_id`, `finding_id`, `review_overdue`, `proposal_kinds` and `sort`.
+
+### Response
+
+```json
+{
+  "items": [
+    {
+      "id": "cbrisk_...",
+      "description": "Loss of the payments processor halts checkout",
+      "status": "open",
+      "inherent_score": 20,
+      "residual_score": 12,
+      "appetite": "outside",
+      "owner": { "user_id": "cbuser_...", "display": "Dana Lee" },
+      "signal_counts": { "open": 3, "closed": 1, "dismissed": 0 }
+    }
+  ],
+  "total": 1,
+  "limit": 25,
+  "offset": 0
+}
+```
+
+## Read the register summary and matrix
+
+<ParamField path="method" type="GET">
+  `GET /v1/risks/summary`
+</ParamField>
+
+Returns the register's headline numbers: risks outside appetite, open proposals, unowned risks, overdue reviews, open signals, and counts by domain, source and category.
+
+<ParamField path="method" type="GET">
+  `GET /v1/risks/matrix`
+</ParamField>
+
+Returns the likelihood by impact heat map with inherent and residual counts per cell.
+
+<ParamField query="institution_key" type="string">
+  Limit either view to one institution of a multi-entity organization.
+</ParamField>
+
+<ParamField query="risk_domain_id" type="string">
+  For the matrix, limit to one risk domain.
+</ParamField>
+
+## Create a risk
+
+<ParamField path="method" type="POST">
+  `POST /v1/risks`
+</ParamField>
+
+Returns `201 Created` with the new risk and its computed scores.
+
+<ParamField body="description" type="string" required>
+  What could happen.
+</ParamField>
+
+<ParamField body="risk_domain_id" type="string">
+  The risk domain the risk belongs to.
+</ParamField>
+
+<ParamField body="likelihood_level" type="integer">
+  Inherent likelihood on your organization's scale. `impact_level`, `residual_likelihood_level` and `residual_impact_level` work the same way.
+</ParamField>
+
+<ParamField body="owner_user_id" type="string">
+  The owning user. Use `owner_department_id` to name a business unit instead.
+</ParamField>
+
+<ParamField body="vendor_ids" type="string[]">
+  Vendors in scope. `service_ids`, `department_ids`, `entity_ids` and `region_codes` set the rest of the scope.
+</ParamField>
+
+The body also accepts `category`, `status`, `treatment`, `treatment_plan`, `review_at`, `accepted_until`, `institution_key` and `note`.
+
+## Get or edit a risk
+
+<ParamField path="method" type="GET">
+  `GET /v1/risks/{risk_id}`
+</ParamField>
+
+Returns one risk with its signals, history and the excerpt of the dependency chain behind it.
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/risks/{risk_id}`
+</ParamField>
+
+Takes the same fields as create. Fields you omit keep their value. Returns the updated risk.
+
+## Attach or dismiss a signal
+
+<ParamField path="method" type="POST">
+  `POST /v1/risks/{risk_id}/signals`
+</ParamField>
+
+Returns `201 Created` with the attached signal.
+
+<ParamField body="source_type" type="string" required>
+  One of `finding`, `contract`, `contract_clause`, `contract_component_gap`, `obligation`, `screening_match`, `radar_signal`, `radar_alert`, `vendor_risk_change`, `inspect_evaluation`, `assessment` and `supplier_site`.
+</ParamField>
+
+<ParamField body="source_id" type="string" required>
+  The ID of the record.
+</ParamField>
+
+<ParamField body="rationale" type="string">
+  Why the record supports this risk.
+</ParamField>
+
+<ParamField path="method" type="POST">
+  `POST /v1/risks/{risk_id}/signals/{signal_id}/dismiss`
+</ParamField>
+
+Dismisses the signal and returns it. The signal stays on the risk's history.
+
+## Read exposure, the board report and the configuration
+
+<ParamField path="method" type="GET">
+  `GET /v1/risk-exposure`
+</ParamField>
+
+Returns appetite gauges per risk domain, the loss model, the contractual cushion, and fourth party, business unit and geographic concentration. Pass `institution_key` to limit the domain gauges to one institution.
+
+<ParamField path="method" type="GET">
+  `GET /v1/risk-report`
+</ParamField>
+
+Returns the board report: KRI tiles, movers, appetite breaches, domains, framework coverage and commitments on time. Pass `period` with a key from the response's `periods` to read an earlier period.
+
+<ParamField path="method" type="GET">
+  `GET /v1/risk-config`
+</ParamField>
+
+Returns the Risk module configuration: appetite thresholds, taxonomy, quantification, likelihood and impact levels, domain appetite, signal sources and agent settings.
+
+## Run and save scenarios
+
+<ParamField path="method" type="POST">
+  `POST /v1/risk-scenarios/run`
+</ParamField>
+
+Runs a what-if scenario over the dependency chain and returns its blast radius, obligations, findings on the path and loss estimate. Nothing is saved.
+
+<ParamField body="inputs" type="object" required>
+  The scenario. Set `kind` to `event`, `change` or `offboard`, name the subject with `subject_vendor_id` or `subject_node_id`, or send a plain-English `prompt` such as "Okta is down for 24 hours".
+</ParamField>
+
+<ParamField path="method" type="POST">
+  `POST /v1/risk-scenarios`
+</ParamField>
+
+Returns `201 Created` with the saved scenario. Send `inputs`, an optional `title`, and the `result` of a run. When you omit `result`, Coverbase runs the scenario once and saves what it returns, which also needs `risk:run:org`.
+
+<ParamField path="method" type="GET">
+  `GET /v1/risk-scenarios`
+</ParamField>
+
+Lists saved scenarios, newest first, with `limit` (at most 200) and `offset`.
+
+<ParamField path="method" type="GET">
+  `GET /v1/risk-scenarios/{scenario_id}`
+</ParamField>
+
+Returns one saved scenario with its inputs and result.
+
+## Manage risk domains
+
+<ParamField path="method" type="GET">
+  `GET /v1/risk-domains`
+</ParamField>
+
+Lists your organization's risk domains with `limit` (at most 200) and `offset`. Pass `include_archived=true` to include archived domains.
+
+<ParamField path="method" type="POST">
+  `POST /v1/risk-domains`
+</ParamField>
+
+Returns `201 Created` with the new domain. Coverbase records the change on the domain's activity feed.
+
+<ParamField body="name" type="string" required>
+  The domain's name, 1 to 255 characters.
+</ParamField>
+
+<ParamField body="description" type="string">
+  What the domain covers, up to 1000 characters.
+</ParamField>
+
+<ParamField body="weight" type="number">
+  The domain's weight in the weighted roll-up, from 0 to 100.
+</ParamField>
+
+<ParamField body="reviewer_ids" type="string[]">
+  Users who review the domain. Use `department_reviewer_ids` for user groups.
+</ParamField>
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/risk-domains/{risk_domain_id}`
+</ParamField>
+
+Takes the same fields as create. Fields you omit keep their value, and an explicit `null` for `weight` takes the domain out of the roll-up. To archive a domain, a signed-in user does it in the app.
+
+## Read a vendor's risk score history
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/risk-score-history`
+</ParamField>
+
+Lists how a vendor's overall and per-domain risk scores changed, newest first, with `limit` (at most 200) and `offset`. An entry with a null `risk_domain_id` is the vendor's overall score.
