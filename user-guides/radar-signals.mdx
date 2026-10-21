@@ -272,7 +272,7 @@ A detector with no default reviewers raises alerts that nobody is told about. Th
 - **Risk register.** The register's **Signal Sources** settings can attach **Radar signals** and **Radar alerts** at or above a severity threshold to risks, and a risk's **Attach signal** button does it by hand. Turning a source off stops new attachments and leaves existing ones.
 - **Workflows.** A workflow can trigger on a Radar signal, condition on its fields, and update it. The **Monitoring signal triage** [template](/user-guides/workflow-templates#monitoring-signal-triage) opens a review and a dated task for every new signal.
 - **Dashboards.** The **Portfolio risk** chart on the Radar page plots signals over time by severity, with a **3M**, **6M**, **12M** or **All** range and vendor and tag filters; click a point for the affected vendors.
-- **API and webhooks.** Events and alerts are readable and dismissable over the [Radar API](/api-reference/radar), and `RadarEvent.*` and `RadarDetectorResult.*` webhooks fire as they change.
+- **API, MCP and webhooks.** Events, alerts, signals, cases, sources and detectors are readable and editable over the [Radar API](/api-reference/radar) and through MCP (see [Work Radar from MCP or the API](#work-radar-from-mcp-or-the-api)). `RadarEvent.*` and `RadarDetectorResult.*` webhooks fire as they change.
 
 ## Who can do what
 
@@ -283,6 +283,105 @@ A detector with no default reviewers raises alerts that nobody is told about. Th
 | **Siloed member** | Read | Read only |
 
 Radar is org-wide: a siloed member sees every signal, not only their vendors' signals. Creating a case, a finding or a reassessment from a signal also needs the permission for that record. Custom roles can change any of this; see [Permissions and roles](/user-guides/permissions-and-roles).
+
+## Work Radar from MCP or the API
+
+You can manage sources and detectors and work the signal queue from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_radar(kind=...)` and changes things with `mutate(entity=..., action=..., data={...})`. The API routes sit under `/v1/radar` and take an `ak_` API key. Each call checks the same permission as the matching dashboard action.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The write itself carries `confirm: true` inside `data`. See [Roles and permissions](/mcp/permissions#write-protection).
+
+An API key cannot archive or restore a source or a detector, delete a detector example, or archive a case or a case thread. A signed-in user does those in the dashboard or through MCP.
+
+### Sources
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| List your sources | `query_radar(kind="sources")` | [`GET /v1/radar/sources`](/api-reference/radar#list-sources) |
+| Read one source | `query_radar(kind="source_detail")` | `GET /v1/radar/sources/{source_id}` |
+| Browse the source library | `query_radar(kind="source_library")`, `kind="source_library_detail"` | `GET /v1/radar/source-library`, `GET /v1/radar/source-library/{library_id}` |
+| List the origins Radar pulls | `query_radar(kind="origins")` | `GET /v1/radar/origins` |
+| Add a source | `mutate(entity="radar_source", action="create")` | `POST /v1/radar/sources` |
+| Rename a source or change its feed | `mutate(entity="radar_source", action="update")` | `PATCH /v1/radar/sources/{source_id}` |
+| Archive or restore a source | `mutate(entity="radar_source", action="archive")` | Not available with an API key |
+| Pull a source on the next scheduler run | `mutate(entity="radar_source", action="pull")` | `POST /v1/radar/sources/{source_id}/pull` |
+| Read or configure the Black Kite monitor | `query_radar(kind="black_kite_config")`, `mutate(entity="black_kite", action="configure")` | `GET` and `PUT /v1/radar/black-kite` |
+
+Adding, editing and archiving a source need `radar_detector:update:org`. Pulling a source needs `radar_detector:run:org`.
+
+### Detectors
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| List your detectors | `query_radar(kind="detectors")` | [`GET /v1/radar/detectors`](/api-reference/radar#list-detectors) |
+| Read one detector's configuration | `query_radar(kind="detector_detail")` | `GET /v1/radar/detectors/{detector_id}` |
+| See which detectors watch a vendor | `query_radar(kind="detectors_for_vendor")` | Not available |
+| Create a detector | `mutate(entity="radar_detector", action="create")` | `POST /v1/radar/detectors` |
+| Edit a detector | `mutate(entity="radar_detector", action="update")` | `PATCH /v1/radar/detectors/{detector_id}` |
+| Back-test a detector over past events | `mutate(entity="radar_detector", action="test")` | `POST /v1/radar/detectors/{detector_id}/tests` |
+| Read a back-test's candidate alerts | `query_radar(kind="detector_test_run")` | `GET /v1/radar/detectors/{detector_id}/tests/{test_run_id}` |
+| Turn back-test candidates into real alerts | `mutate(entity="radar_detector", action="create_alerts_from_test")` | `POST /v1/radar/detectors/{detector_id}/tests/{test_run_id}/alerts` |
+| Label back-test candidates so the detector learns | `mutate(entity="radar_detector", action="teach")` | `POST /v1/radar/detectors/{detector_id}/tests/{test_run_id}/teach` |
+| List a detector's learning examples | `query_radar(kind="dismissal_examples")` | `GET /v1/radar/detectors/{detector_id}/dismissal-examples` |
+| Add, edit or remove a learning example | `mutate(entity="radar_dismissal_example", action="create")`, `action="update"`, `action="delete"` | `POST /v1/radar/detectors/{detector_id}/dismissal-examples`, `PATCH` and `DELETE /v1/radar/dismissal-examples/{example_id}` |
+| Get a suggested rewrite of a detector's instructions | `query_radar(kind="suggest_detector_instructions")` | Not available |
+
+A suggested rewrite saves nothing. To use it, send it as a detector update.
+
+### Alerts
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| List alerts, one row per detector result | `query_radar(kind="detector_alerts")` | [`GET /v1/radar/alerts`](/api-reference/radar#list-radar-alerts) |
+| Read one alert | `query_radar(kind="detector_alert_detail")` | [`GET /v1/radar/alerts/{alert_id}`](/api-reference/radar#retrieve-a-radar-alert) |
+| Dismiss alerts | `mutate(entity="radar_alert", action="dismiss")` | [`POST /v1/radar/alerts/{alert_id}/dismiss`](/api-reference/radar#dismiss-a-radar-alert) |
+| Restore a dismissed alert | `mutate(entity="radar_alert", action="undismiss")` | [`POST /v1/radar/alerts/{alert_id}/undismiss`](/api-reference/radar#restore-a-dismissed-alert) |
+| Edit an alert's summary, reasoning or confidence | `mutate(entity="radar_alert", action="update")` | [`PATCH /v1/radar/alerts/{alert_id}`](/api-reference/radar#update-a-radar-alert) |
+| Replace or clear a dismissal reason | `mutate(entity="radar_alert", action="set_dismiss_reason")` | [`PUT /v1/radar/alerts/{alert_id}/dismiss-reason`](/api-reference/radar#set-a-dismissal-reason) |
+
+Through MCP, one dismiss call takes several alerts in `alert_ids`. Each person mentioned in the reason gets a notification.
+
+### Signals
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| List signals | `query_radar(kind="signals")` | [`GET /v1/radar/signals`](/api-reference/radar#list-signals) |
+| Read one signal with its alerts | `query_radar(kind="signal_detail")` | [`GET /v1/radar/signals/{signal_id}`](/api-reference/radar#retrieve-a-signal) |
+| Move a signal to another status | `mutate(entity="radar_signal", action="set_status")` | [`PATCH /v1/radar/signals/{signal_id}`](/api-reference/radar#set-a-signals-status) |
+| Dismiss signals and their alerts | `mutate(entity="radar_signal", action="dismiss")` | [`POST /v1/radar/signals/dismiss`](/api-reference/radar#dismiss-signals) |
+| Restore dismissed signals | `mutate(entity="radar_signal", action="undismiss")` | [`POST /v1/radar/signals/undismiss`](/api-reference/radar#restore-signals) |
+| Acknowledge a signal | `mutate(entity="radar_signal", action="acknowledge")` | [`POST /v1/radar/signals/{signal_id}/acknowledge`](/api-reference/radar#acknowledge-a-signal) |
+| Accept, skip or replace the proposed risk impact | `mutate(entity="radar_signal", action="decide_risk_impact")` | [`POST /v1/radar/signals/risk-impact-decision`](/api-reference/radar#decide-a-risk-impact) |
+| Rewrite a signal's title and summary from its alerts | `mutate(entity="radar_signal", action="regenerate_summary")` | Not available |
+| Rename an event or link more vendors to it | `mutate(entity="radar_event", action="update")` | [`PATCH /v1/radar/events/{event_id}`](/api-reference/radar#update-a-radar-event) |
+| Read an event's updates | `query_radar(kind="event_updates")` | [`GET /v1/radar/events/{event_id}/updates`](/api-reference/radar#list-an-events-updates) |
+| Find out why an event did not reach you | `query_radar(kind="event_diagnostics")` | Not available |
+
+Acknowledging a signal proposes a residual-risk change for the affected vendors. The change waits until you decide it with `decide_risk_impact`. Rewriting a summary replaces any title or summary your organization edited by hand.
+
+### Cases and case threads
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| List cases | `query_radar(kind="cases")` | [`GET /v1/radar/cases`](/api-reference/radar#list-cases) |
+| Read one case | `query_radar(kind="case_detail")` | [`GET /v1/radar/cases/{case_id}`](/api-reference/radar#retrieve-a-case) |
+| Open a case | `mutate(entity="case", action="create")` | [`POST /v1/radar/cases`](/api-reference/radar#create-a-case) |
+| Draft a case description from its signals | `query_radar(kind="case_description_suggestion")` | Not available |
+| Rename, describe, assign, close or reopen a case | `mutate(entity="case", action="update")` | [`PATCH /v1/radar/cases/{case_id}`](/api-reference/radar#update-a-case) |
+| Archive a case | `mutate(entity="case", action="archive")` | Not available with an API key |
+| Link signals to a case | `mutate(entity="case", action="add_signals")` | [`POST /v1/radar/cases/{case_id}/signals`](/api-reference/radar#link-signals-to-a-case) |
+| Unlink a signal from a case | `mutate(entity="case", action="remove_signal")` | [`DELETE /v1/radar/cases/{case_id}/signals/{signal_id}`](/api-reference/radar#unlink-a-signal-from-a-case) |
+| List a case's vendor threads | `query_radar(kind="case_detail")` | [`GET /v1/radar/cases/{case_id}/threads`](/api-reference/radar#list-a-cases-threads) |
+| Read one vendor thread | `query_radar(kind="case_thread")` | [`GET /v1/radar/cases/{case_id}/threads/{thread_id}`](/api-reference/radar#retrieve-a-case-thread) |
+| Add one vendor to a case | `mutate(entity="case_thread", action="create")` | [`POST /v1/radar/cases/{case_id}/threads`](/api-reference/radar#add-a-vendor-to-a-case) |
+| Add up to 200 vendors to a case | `mutate(entity="case_thread", action="bulk_create")` | [`POST /v1/radar/cases/{case_id}/threads/bulk`](/api-reference/radar#add-vendors-to-a-case-in-bulk) |
+| Change a thread's status, owner or due date | `mutate(entity="case_thread", action="update")` | [`PATCH /v1/radar/cases/{case_id}/threads/{thread_id}`](/api-reference/radar#update-a-case-thread) |
+| Stop a thread's automatic follow-up emails | `mutate(entity="case_thread", action="pause_follow_ups")` | [`POST /v1/radar/cases/{case_id}/threads/{thread_id}/pause-follow-ups`](/api-reference/radar#pause-a-threads-follow-ups) |
+
+Closing a case as `resolved` or `wont_fix` raises the residual risk of the case's vendors, as **Finalize Case** does. Adding a vendor to a case notifies the vendor's owners and analysts, and nothing reaches the vendor. Marking a thread `email_sent` records that you emailed the vendor and sends nothing.
+
+Three case tasks stay in the dashboard: emailing a vendor from a thread, importing vendors from a spreadsheet, and sourcing missing contacts.
+
+Triage writes need `radar_alert:update:org`. Dismissing alerts or signals and archiving a case or a thread also need `radar_alert:archive:org`.
 
 ## Troubleshooting
 
