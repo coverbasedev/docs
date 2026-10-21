@@ -34,6 +34,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/agent-preferences` | `org_settings:update:org` |
 | `PATCH` | `/v1/agent-preferences/{preference_id}` | `org_settings:update:org` |
 | `GET` | `/v1/reports` | `report:read:org` |
+| `GET` | `/v1/roles` | `role:read:org` |
 
 None of these honor `Idempotency-Key`. An API key cannot archive a status, custom field section, email template, workflow or agent preference. To archive one, use Coverbase. Every list endpoint takes `limit` (1 to 500, default 100) and `offset` (default 0) and returns `items`, `total`, `limit` and `offset`.
 
@@ -379,6 +380,12 @@ To add a preference, send `POST /v1/agent-preferences` with `text` and an option
 ## Reports
 
 `GET /v1/reports` lists your organization's dashboard reports, newest first. Pass `search` to match report names. Each item has `id`, `name`, `description`, `is_org_wide`, `is_default`, `created_by_user_id`, `created_at` and `updated_at`.
+
+## Roles
+
+`GET /v1/roles` lists your organization's roles, built-in roles first. Each item has `id`, `key`, `name`, `description`, `system` (whether Coverbase defines the role), `archived_at` and `permissions` (the permission keys the role grants). Pass `include_archived=true` to include archived roles.
+
+This endpoint is read only. An API key cannot create, change or assign roles. Coverbase creates your built-in roles the first time someone opens the roles page in **Settings**, so before then the list is empty.
 
 ## Errors
 
