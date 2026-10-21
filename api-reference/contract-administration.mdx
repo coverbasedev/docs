@@ -45,6 +45,8 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `GET` | `/v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` | `contract:read:org` |
 | `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` | `contract:read:org` |
 | `GET` | `/v1/clause-sets/{clause_set_id}/export` | `contract:export:org` |
+| `POST` | `/v1/clause-sets/import` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/redline` | `contract:export:org` |
 | `POST` | `/v1/clause-set-baseline-extractions` | `contract:update:org` |
 | `GET` | `/v1/clause-set-baseline-extractions/{run_id}` | `contract:read:org` |
 | `GET` | `/v1/findings/{finding_id}/clause-match-links` | `finding:read:org` |
@@ -269,3 +271,11 @@ To have Coverbase AI build a clause set from baseline contracts or a playbook, s
 ## Clause matches linked to a finding
 
 `GET /v1/findings/{finding_id}/clause-match-links` returns `items`, one per Clause Review run, newest first. Each run lists its `matches` with `clause_match_id`, `link_id`, `reference_clause_name`, `reference_clause_public_id` and `status`. Pass `link_id` to `POST /v1/clause-match-finding-links/{association_id}/unlink` to remove a link. An unknown finding returns `404` with code `finding_not_found`.
+
+## Import clause sets
+
+To create reference clauses from a Clause Set Upload Template workbook, send `POST /v1/clause-sets/import` with `file_base64` (the .xlsx or .csv file, base64-encoded, up to 10 MB), `filename` and `dry_run`. The export above produces this format. Rows are grouped into clause sets by their `Clause Set` column, and Coverbase creates any set that does not exist yet. Send `dry_run: true` first: the response has a `summary` of rows to create, update and skip, the `problems` for each skipped row, and the `clause_set_ids` it touched. Coverbase keeps nothing on a dry run or when no row would import. A file that cannot be read returns `422` with code `workbook_rejected`, and invalid base64 returns `422` with code `invalid_base64`.
+
+## Download the redlined contract
+
+`GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}/redline` returns `download_url`, `file_name` and `expires_in_seconds` (900). The file is the contract's source Word document with each clause that asks for a change applied as a tracked change and comment, ready to send to the vendor. A review with no Word source or no clause that asks for a change returns `422` with code `nothing_to_redline`.
