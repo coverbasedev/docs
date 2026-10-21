@@ -45,6 +45,9 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `GET` | `/v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` | `contract:read:org` |
 | `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` | `contract:read:org` |
 | `GET` | `/v1/clause-sets/{clause_set_id}/export` | `contract:export:org` |
+| `POST` | `/v1/clause-set-baseline-extractions` | `contract:update:org` |
+| `GET` | `/v1/clause-set-baseline-extractions/{run_id}` | `contract:read:org` |
+| `GET` | `/v1/findings/{finding_id}/clause-match-links` | `finding:read:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
 
@@ -258,3 +261,11 @@ To record those answers, send `POST /v1/contract-records/{contract_id}/clause-re
 ## Export a clause set
 
 `GET /v1/clause-sets/{clause_set_id}/export` returns `download_url`, `file_name` and `expires_in_seconds` (900). The URL downloads the set as an Excel workbook that the clause set importer can read back. It holds current, non-archived clauses only. Fetch it before it expires; the response is not cached.
+
+## Build a clause set from documents
+
+To have Coverbase AI build a clause set from baseline contracts or a playbook, send `POST /v1/clause-set-baseline-extractions` with `org_document_ids` (1 to 10 distinct organization documents), and optionally `clause_set_name`, `clause_set_description`, `public_id_prefix` (up to 16 characters) and `import_mode` (`auto`, `playbook` or `baseline`). Coverbase creates an inactive clause set, returns `202` with the run, and extracts in the background. Poll `GET /v1/clause-set-baseline-extractions/{run_id}` until `status` is `complete` or `failed`. `created_reference_clause_ids` lists the clauses added so far. An unknown document returns `404` with code `document_not_found`.
+
+## Clause matches linked to a finding
+
+`GET /v1/findings/{finding_id}/clause-match-links` returns `items`, one per Clause Review run, newest first. Each run lists its `matches` with `clause_match_id`, `link_id`, `reference_clause_name`, `reference_clause_public_id` and `status`. Pass `link_id` to `POST /v1/clause-match-finding-links/{association_id}/unlink` to remove a link. An unknown finding returns `404` with code `finding_not_found`.
