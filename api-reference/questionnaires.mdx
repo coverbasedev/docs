@@ -38,6 +38,13 @@ All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token
 | `POST` | `/v1/questionnaires/{questionnaire_id}/conditions` | Update questionnaires |
 | `PATCH` | `/v1/questionnaire-conditions/{condition_id}` | Update questionnaires |
 | `POST` | `/v1/questionnaire-conditions/{condition_id}/archive` | Update questionnaires (not API keys) |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/question-imports` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/condition-imports` | Update questionnaires |
+| `GET` | `/v1/spreadsheet-import-jobs/{job_id}` | Read questionnaires |
+| `POST` | `/v1/emails/preview` | Read portals |
+| `POST` | `/v1/emails/suggestions` | Read portals |
+| `POST` | `/v1/portals/{portal_id}/submissions/{submission_id}/request-revision` | Update portals |
+| `POST` | `/v1/portals/{portal_id}/submissions/{submission_id}/accept` | Update portals (not API keys) |
 | `GET` | `/v1/irq-library` | Read questionnaires |
 | `POST` | `/v1/portals` | Create portals |
 | `PATCH` | `/v1/portals/{portal_id}` | Update portals |
@@ -247,11 +254,23 @@ A submission can propose changes to the vendor record, such as a tag or a contac
 <ParamField body="decision" type="string">`accepted`, `rejected`, or null to clear the verdict.</ParamField>
 <ParamField body="value" type="string">For a contact suggestion, the one address the verdict is on.</ParamField>
 
+## Preview and draft email text
+
+To see an email as the recipient will read it, send `POST /v1/emails/preview` with `subject`, `body`, and the records whose values fill its variables (`vendor_id`, `assessment_id`, `portal_id`, `case_thread_id`, `service_ids`). Variables written as `{{namespace::path}}` are filled; any that nothing can fill stay visible. Send `as_sent: true` to also get `html`, the message as the send path builds it inside your org's email layout. A portal that does not exist returns `404` with code `portal_not_found`.
+
+To have Coverbase's AI draft an email subject or body, send `POST /v1/emails/suggestions` with `field_name` (`subject` or `body`), `instruction`, and optionally the email so far (`subject`, `body`, `attachments`) and the `assessment_id`, `eval_ids`, or `vendor_id` it is about. It returns `field_name` and `text`. Nothing is saved or sent.
+
 ## Email drafts
 
 To save an unsent email about a record, send `POST /v1/emails/drafts` with `object_id`, `object_type` (`vendor`, `vendor_document`, `portal`, `contract`, `task`, `questionnaire_review`, `case`, or `case_thread`), `from_address`, and optionally `to_addresses`, `cc_emails`, `bcc_emails`, `subject`, `text_body`, and `html_body`. Each address is an object with `email` and an optional `name`. It returns `201` with `id`, `status` (`draft`), `subject`, `object_id`, and `object_type`. A person reviews and sends the draft from the record's email tab. The call needs permission to update the record. An unknown type returns `422` with code `invalid_object_type`, and a record that does not exist returns `404` with code `object_not_found`.
 
 To change a draft, send `PATCH /v1/emails/drafts/{email_id}` with the fields to change. An email that was already sent returns `409` with code `not_a_draft`.
+
+## Import questions and show rules from a workbook
+
+To create or update a questionnaire's questions from an `.xlsx` workbook, send it as a multipart upload (`file`, and `dry_run`) to `POST /v1/questionnaires/{questionnaire_id}/question-imports`. The import runs in the background: the call returns `202` with the job's `id` and `status`. To follow it, poll `GET /v1/spreadsheet-import-jobs/{job_id}` until `status` is `completed`, `rejected` (the workbook as a whole could not be imported), or `failed`. The finished job's `result` has a `summary` (rows to create, update, and skip) and `problems` (each skipped row and why). `dry_run` defaults to true, so send `false` to write.
+
+To add show rules from a workbook, send the same multipart upload to `POST /v1/questionnaires/{questionnaire_id}/condition-imports`. It runs while you wait and returns the same `summary` and `problems`. Nothing is kept from a preview, or from a workbook whose every row failed. A file that is not a workbook returns `422`.
 
 ## Add a show rule
 
@@ -367,6 +386,10 @@ To stop automatic document requests going to a vendor contact someone allowed, s
 </ParamField>
 
 Lists the rounds the vendor submitted, newest first. Each has `id`, `status`, `submitted_at`, and `submitted_by_email_address`.
+
+## Review a submitted round
+
+To send a submitted round back to the vendor, send `POST /v1/portals/{portal_id}/submissions/{submission_id}/request-revision` with `revision_message`. To accept it, send `POST /v1/portals/{portal_id}/submissions/{submission_id}/accept`. API keys cannot accept a round and get `403` with code `api_key_not_allowed`. Both return the submission. A round that is not `submitted` returns `409` with code `not_submitted`. A round that carries a findings commitment returns `409` with code `commitment_round`, because you decide it on the commitment.
 
 ## Portal templates
 
