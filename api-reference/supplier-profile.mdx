@@ -853,7 +853,7 @@ Saves a registration and returns `201 Created` with the [tax registration object
 </ParamField>
 
 <ParamField body="details" type="object">
-  The country's registration details, as an object of field key to string value. Validated against the country's rules: in Colombia `dv` must be the NIT's verification digit, and `nature` and `document_type` are required. Omitting `details` keeps the stored details, and the country's required details are still checked against them, so a new Colombian registration needs them. A Colombian NIT is sent without its verification digit, which goes in `dv`.
+  The country's registration details, as an object of field key to string value. Validated against the country's rules: in Colombia `dv` must be the NIT's verification digit, and `nature` (`J` or `N`), `legal_entity_type` (`foreign_entity`, `individual` or `legal`) and `document_type` (`13`, `31` or `43`) are required. Omitting `details` keeps the stored details, and the country's required details are still checked against them, so a new Colombian registration needs them. A Colombian NIT is sent without its verification digit, which goes in `dv`.
 </ParamField>
 
 #### Example request
@@ -1457,8 +1457,8 @@ Every country uses the same keys for the common fields, whatever the form calls 
 | `bank_name` | The bank's name | Bank name |
 | `iban` | The IBAN | IBAN |
 | `swift_bic` | The SWIFT/BIC | SWIFT/BIC |
-| `check_digit` | Check digits, where the country uses them | Check digit |
-| `account_type` | `checking` or `savings`. Required in Brazil, China, Hong Kong and the United States; not used in Japan. | Account type |
+| `check_digit` | Check digits. Collected in Brazil and France only, and read from the CLABE or CCI in Mexico and Peru. | Check digit |
+| `account_type` | `checking` or `savings`. Required in Brazil, China, Colombia, Hong Kong, Mexico and the United States; not used in Japan. Colombia's form calls `checking` Current. | Account type |
 
 Every country also takes an optional intermediary bank: `intermediary_country`, `intermediary_city`, `intermediary_account_number`, `intermediary_bank_name`, `intermediary_branch_code`, `intermediary_iban` and `intermediary_swift_bic`. When any of them is sent, `intermediary_country` and `intermediary_account_number` are required.
 
@@ -1467,9 +1467,9 @@ Eight countries add their own:
 | Country | Extra keys |
 | ------- | ---------- |
 | Brazil | `company_code` |
-| Colombia | `branch_name`, `tax_payer_id` (the bank's taxpayer ID) |
+| Colombia | `beneficiary_name` (required), `branch_name`, `tax_payer_id` (the bank's taxpayer ID) |
 | Japan | `beneficiary_name` (account holder, in half-width katakana), `bank_name_local`, `branch_name_local`, and `deposit_type` (`futsu`, `toza` or `chochiku`) in place of `account_type` |
-| Mexico | `clabe` |
+| Mexico | `clabe`, `beneficiary_name` (required), and `payment_system` (required): `spei` for a peso account, `spid` for a US dollar account. `bank_code`, `branch_code`, `account_number` and `check_digit` are read from the CLABE. |
 | Peru | `cci`, alongside `branch_code` and `account_number` as the bank prints them. `bank_code` and `check_digit` are read from the CCI. |
 | Sweden | `bankgiro` |
 | United Kingdom | `building_society_roll_number` |

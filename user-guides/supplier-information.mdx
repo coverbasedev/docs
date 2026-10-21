@@ -68,9 +68,9 @@ When you author a questionnaire on the **Know-Your-Vendor** tab of **Configurati
 
 | Question type | What the supplier fills in |
 | --- | --- |
-| **Bank Account** | Country, then that country's bank fields, the IBAN where the country issues one, the SWIFT/BIC, and an optional intermediary bank |
+| **Bank Account** | Country, then that country's bank fields, the account currency, the IBAN where the country issues one, the SWIFT/BIC, and an optional intermediary bank |
 | **Site / Address** | An address in your finance system's structure (building number, street name, city, and the postal code and state where the country uses them), and the email addresses purchase orders and remittance advice go to |
-| **Tax Registration** | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one. Countries with registration details of their own ask for them beside the number: Colombia's nature, type of legal entity, document type, DV and CIIU, and Brazil's state and municipal registrations |
+| **Tax Registration** | The tax and company identifiers that country uses, such as a VAT number or a company number, or a declared exemption in place of one. Countries with registration details of their own ask for them beside the number: Colombia's nature, type of entity, document type, DV and CIIU, and Brazil's state and municipal registrations |
 | **Diversity Record** | A business classification and, for minority owned, its subclassification; the certifying agency, certificate number, start and expiration dates, the certificate itself, and notes |
 
 They do not appear on assessments or RFPs, because there is no supplier profile behind those to write into.
@@ -110,6 +110,23 @@ Some countries ask for details the supplier has no way to look up. A Colombian f
 Where Coverbase holds a bank list for the country, the supplier picks their bank from a searchable list instead of typing its name, and the fields the list knows are filled in for them. Picking a Colombian bank fills in its code and its taxpayer ID.
 
 A bank the list has never seen is typed as free text. Nothing is filled in, because there is nothing to fill it in from, and the supplier is asked for a recent bank statement showing the account belongs to them. Colombia is the only country that asks for that statement today.
+
+### Currency and check digits
+
+Every bank account records the currency it is held in. The form opens on the bank country's own currency, euros for a French account or pesos for a Mexican one, and the supplier changes it for an account held in another currency.
+
+A separate check digit is asked for only in Brazil and France, where a payment needs it. Other countries do not show the box. Mexico and Peru still send one to your finance system, read from the CLABE or the CCI.
+
+### Mexico and Colombia
+
+Both countries' payments teams named the details a payment needs, and the form requires them:
+
+| Country | Required on the bank account |
+| --- | --- |
+| Mexico | Beneficiary name, bank name, CLABE, account type, and the payment system: SPEI for a peso account or SPID for a US dollar account. The bank code and account number are read from the CLABE. |
+| Colombia | Beneficiary name, bank name, bank code, account number, and the account type, current or savings. |
+
+The supplier's full address and tax ID are collected by their own questions, which already require them.
 
 ## What a supplier is not asked for
 
@@ -171,7 +188,7 @@ Most rules judge a field on its own. These read a second value, so they can only
 | Cross border payment | An account in a country none of your assigned legal entities pay from needs a SWIFT/BIC, because the payment goes out by wire. The supplier is told rather than blocked, and the derived payment method is stored on the account. |
 | Currency held for local suppliers only | BRL is refused on an account whose supplier is not in Brazil. The test is the supplier's own country, not the bank's, so a Brazilian supplier banking abroad still qualifies. |
 | The IBAN's country | An IBAN has to start with the bank's country code. A German account with a Spanish IBAN is refused. Accounts in the French overseas departments use French IBANs and are accepted. |
-| The IBAN and the fields inside it | Where a supplier gives both an IBAN and the bank or branch code, each code is compared with the position the IBAN registry gives it, and a mismatch blocks the submission. An account number has to appear somewhere inside the IBAN; a mismatch there is a warning, because a country's account number can include digits the IBAN stores elsewhere. |
+| The IBAN and the fields inside it | Where a supplier gives both an IBAN and the bank or branch code, each code is compared with the position the IBAN registry gives it, and a mismatch blocks the submission. An account number has to appear somewhere inside the IBAN; a mismatch there is a warning, because a country's account number can include digits the IBAN stores elsewhere. When a save is refused, each message appears under its field and every reason is also listed beside **Save**, so a supplier sees why even when the field is scrolled out of view. |
 | Peru's CCI and the account beside it | A Peruvian supplier gives the 20 digit CCI plus the branch and the account number as their bank prints them. The bank code comes from the CCI. A branch or account that does not match the CCI is a warning. |
 | A name in the local script | Twelve countries write in a script a romanized name cannot stand in for, among them Japan, China, Korea and Greece. The form asks for the legal name in that script alongside the romanized one, and warns if what is typed is not in it. |
 | A registration without its certificate | Thirteen Latin American countries ship the certificate that proves a registration. This warns rather than blocks: a supplier who has the number but not the PDF to hand can still finish. |

@@ -14,15 +14,15 @@ A supplier whose bank account is held in Colombia sees the fields below. The cou
 
 | Field | Requirement | Format | Notes |
 | --- | --- | --- | --- |
-| Bank name | Optional | up to 60 characters |  |
-| Bank code | Optional | no length limit, digits only |  |
+| Beneficiary name | Required | up to 64 characters | The full name the account is held in, exactly as the bank has it. |
+| Bank name | Required | up to 60 characters |  |
+| Bank code | Required | no length limit, digits only |  |
 | Branch code | Optional | no length limit, digits only |  |
 | Account number | Required | up to 20 characters |  |
-| Check digit | Optional | no length limit, digits only | Optional. Only if your bank statement shows a separate check digit; leave blank if it does not. |
 | Branch name | Optional | up to 60 characters | Required by Citibank Colombia when the 3-digit branch code is not supplied. |
 | Bank's taxpayer ID (NIT) | Optional | up to 15 characters, digits only, NIT verification digit | The NIT of the bank holding the account, not the supplier's own NIT. Leave blank if it is not on the bank statement. |
 | SWIFT/BIC | Optional | 8 to 11 characters, letters and digits | 8 or 11 characters, for example, BOFAUS3N. Needed for a payment by wire. |
-| Account type | Optional | no length limit, one of: checking, savings | Checking unless the bank issued the account as a savings account. |
+| Account type | Required | no length limit, one of: Current, Savings | Current unless the bank issued the account as a savings account. |
 | Intermediary bank country code | Optional | 2 characters, letters only | Two-letter country code, for example, US. |
 | Intermediary bank city | Optional | up to 60 characters |  |
 | Account number at the intermediary bank | Optional | up to 34 characters |  |
@@ -34,6 +34,10 @@ A supplier whose bank account is held in Colombia sees the fields below. The cou
 ### IBAN
 
 Colombia does not use IBANs. Accounts are identified by the fields above.
+
+### Currency
+
+Every account also records its currency. The form opens on COP, the currency of Colombia, and the supplier changes it for an account held in another currency.
 
 ## Tax and company registrations
 
@@ -47,9 +51,9 @@ Colombia collects a few fields that other countries do not. They are asked in th
 
 | Field | Requirement | Format | Notes |
 | --- | --- | --- | --- |
-| Nature (persona natural or jurídica) | Required | no length limit, one of: Persona natural (individual), Persona jurídica (company or organization) |  |
-| Type of legal entity | Suggested | no length limit, one of: Sociedad por acciones simplificada (S.A.S.), Sociedad anónima (S.A.), Sociedad limitada (Ltda.), Sociedad en comandita simple (S. en C.), Sociedad en comandita por acciones (S.C.A.), Empresa unipersonal (E.U.), Entidad sin ánimo de lucro (ESAL), Sucursal de sociedad extranjera, Entidad pública, Not applicable (persona natural), Other |  |
-| Document type | Required | no length limit, one of: 31 NIT, 13 Cédula de ciudadanía, 22 Cédula de extranjería, 41 Pasaporte, 42 Documento de identificación extranjero, 50 NIT de otro país, 12 Tarjeta de identidad, 11 Registro civil, 21 Tarjeta de extranjería, 47 Permiso especial de permanencia (PEP), 48 Permiso por protección temporal (PPT) | The DIAN code for the document the NIT was issued against. |
+| Nature (persona natural or jurídica) | Required | no length limit, one of: Legal entity (J), Natural person (N) |  |
+| Type of entity | Required | no length limit, one of: Foreign entity, Individual, Legal |  |
+| Document type | Required | no length limit, one of: 13 Cédula de ciudadanía, 31 NIT, 43 Sin identificación del exterior | The DIAN code for the document the NIT was issued against. |
 | DV (verification digit) | Required | 1 character, digits only, checked against the NIT | The single digit after the hyphen in the NIT, for example, the 8 in 890903938-8. |
 | Main economic activity (CIIU) | Suggested | 4 characters, digits only | The 4-digit CIIU code in box 46 of the RUT, for example, 6201. |
 | Tax regime | Suggested | no length limit, one of: comun, simplificado, especial |  |
@@ -65,7 +69,7 @@ Oracle Fusion Cash Management 26c CO validations; DIAN NIT checksum.
 
 The rules on this page are confirmed against a primary source, so they are enforced strictly.
 
-Configuration version `2026.10.2`. Your organization can override any of these rules for its own suppliers.
+Configuration version `2026.10.3`. Your organization can override any of these rules for its own suppliers.
 
 ## Related
 
