@@ -38,6 +38,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/assessments/{assessment_id}/significant-deficiencies` | `assessment:read:org` |
 | `GET` | `/v1/assessments/{assessment_id}/risk-domain-scores` | `assessment:read:org` |
 | `GET` | `/v1/assessments/{assessment_id}/vendor-rating` | `assessment:read:org` |
+| `POST` | `/v1/evals/{eval_id}/correct-response` | `assessment:update:org` |
 | `POST` | `/v1/evals/bulk-update` | `assessment:update:org` |
 | `POST` | `/v1/evals/bulk-score` | `assessment:update:org` |
 | `POST` | `/v1/evals/bulk-category` | `assessment:update:org` |
@@ -73,7 +74,7 @@ Every error body has a `detail` object with a `code` and a `message`.
 | `403` | `api_key_not_allowed` | An API key tried an action that stays a human decision: setting summary instructions, archiving a follow-up or an SLA, closing an issue on evals, or waiving a monitoring entry. |
 | `404` | `assessment_not_found`, `assessment_plan_not_found`, `reassessment_trigger_not_found`, `review_not_found`, `follow_up_not_found`, `follow_up_round_not_found`, `sla_not_found`, `scale_not_found`, `eval_not_found`, `scale_level_not_found`, `monitoring_record_not_found`, `monitoring_entry_not_found` | The ID does not exist in your organization. |
 | `404` | `not_enabled` | Monitoring records are not enabled for your organization. |
-| `409` | `prompt_busy`, `monitoring_record_closed`, `assessment_run_active`, `summary_conflict`, `eval_not_an_issue` | The summary prompt is being edited, the monitoring record is closed, an AI run is already active, the summary changed since you read it, or a closing outcome was sent for an eval that is not an issue. |
+| `409` | `prompt_busy`, `monitoring_record_closed`, `assessment_run_active`, `summary_conflict`, `eval_not_an_issue`, `eval_correction_rejected` | The summary prompt is being edited, the monitoring record is closed, an AI run is already active, the summary changed since you read it, a closing outcome was sent for an eval that is not an issue, or an eval cannot take an answer correction. |
 | `422` | `invalid_assessment_plan`, `invalid_reassessment_trigger`, `invalid_monitoring_entry` | The request refers to something that does not exist or breaks a rule. The message says which. |
 
 ## Assessment plans
@@ -219,6 +220,28 @@ Each endpoint takes `ids`, a non-empty list of eval IDs, and returns the IDs it 
 | `/v1/evals/bulk-score` | `ids`, `scale_level_id`, `review_note`, `include_reviewed` | Sets the same control rating and recomputes the assessment scores. Evals on another scale are skipped. Returns `409` when your organization requires approval for rating changes. |
 | `/v1/evals/bulk-category` | `ids`, `issue_category`, `include_reviewed` | Sets the issue category. |
 | `/v1/evals/bulk-review-note` | `ids`, `review_note` | Appends the note to each eval. |
+
+### Correct an eval's answer
+
+To fix the vendor answer an eval scored, send `POST /v1/evals/{eval_id}/correct-response` with the correct option. Coverbase records the answer on the assessment and re-evaluates the eval and the evals that depend on its answer. The response has the eval `id` and its corrected `response`.
+
+<ParamField body="response_option_id" type="string">
+  The correct option for a single-choice control. An explicit `null` clears the answer.
+</ParamField>
+
+<ParamField body="response_option_ids" type="string[]">
+  The correct options for a multiple-choice control.
+</ParamField>
+
+<ParamField body="reason" type="string">
+  Why the answer is corrected.
+</ParamField>
+
+<ParamField body="unlock_dependent_reviews" type="object">
+  Preserved dependent reviews to reopen, as a map of eval ID to review revision.
+</ParamField>
+
+The call returns `404` with `eval_not_found` for an unknown eval, and `409` with `eval_correction_rejected` when the eval cannot take the correction, for example because it is archived.
 
 ## Reviews
 
