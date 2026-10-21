@@ -126,6 +126,7 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `POST` | `/v1/work-queue-items/complete` | `assessment:update:org` |
 | `GET` | `/v1/findings/{finding_id}/related-findings` | `finding:read:org` |
 | `GET` | `/v1/findings/{finding_id}/jira` | `finding:read:org` |
+| `GET` | `/v1/findings/{finding_id}/jira/draft` | `finding:read:org` |
 | `POST` | `/v1/commitments/{commitment_id}/regenerate-review` | `portal:update:org` and `commitment:update:org` |
 | `POST` | `/v1/obligations/bulk-action` | `obligation:update:org`, and `obligation:archive:org` for `delete` |
 | `POST` | `/v1/obligations/extract-from-documents` | `obligation:create:org` |
@@ -154,6 +155,7 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `POST` | `/v1/agent-actions/{action_id}/decision` | `org_settings:update:org`; needs a user key |
 | `POST` | `/v1/agent-actions/decisions` | `org_settings:update:org`; needs a user key |
 | `POST` | `/v1/vendors/{vendor_id}/findings-portal` | `commitment:update:org` |
+| `POST` | `/v1/commitments/query` | `commitment:read:org`, or `commitment:read:assigned` for your own |
 | `POST` | `/v1/commitments/send-to-vendor` | `commitment:update:org` |
 | `POST` | `/v1/commitments/send-obligations-to-vendor` | `commitment:create:org` |
 | `PATCH` | `/v1/commitments/{commitment_id}` | `commitment:update:org`, or your own commitment with `commitment:update:assigned`; archiving needs `commitment:archive:org` and a user key |
@@ -648,7 +650,7 @@ These need Responsibilities enabled.
 
 ## Findings, commitments, obligations and assessments
 
-`GET /v1/findings/{finding_id}/related-findings` lists the same third party's other open findings, newest first, and needs the TPRM lifecycle. `GET /v1/findings/{finding_id}/jira` returns whether Jira is connected and the ticket linked to the finding. It needs TPRM expansion.
+`GET /v1/findings/{finding_id}/related-findings` lists the same third party's other open findings, newest first, and needs the TPRM lifecycle. `GET /v1/findings/{finding_id}/jira` returns whether Jira is connected and the ticket linked to the finding. `GET /v1/findings/{finding_id}/jira/draft` drafts a Jira ticket from the finding for you to edit and sends nothing. Both need TPRM expansion, and the draft also needs a connected Jira.
 
 `POST /v1/commitments/{commitment_id}/regenerate-review` runs the AI review of the vendor's latest round again, with your current review instructions, and returns `202 Accepted`. When the latest round is not awaiting review it returns `400` with the code `review_not_pending`.
 
@@ -717,6 +719,8 @@ A suggestion's `result` is `{"text": ...}`: the model's answer inside `<output>`
 `GET /v1/services/{service_id}/risk-score-history`, `GET /v1/engagements/{engagement_id}/risk-score-history` and `GET /v1/assessments/{assessment_id}/risk-score-history` list how a record's overall and per-domain scores changed, newest first, with `limit` and `offset`, the same way the vendor history does. The assessment history needs the TPRM lifecycle.
 
 `POST /v1/agent-actions/{action_id}/decision` records what you decided about one Agent Ledger action: `decision` is `accepted`, `edited` or `rejected`, with an optional `note`. `POST /v1/agent-actions/decisions` accepts or rejects many pending actions at once from `action_ids`; actions no longer waiting on a person come back in `skipped` with the reason. Deciding on an AI action is a person's call, so an API key gets `403` with the code `api_key_not_allowed`. Use a key created by a person whose role holds `org_settings:update:org`.
+
+`POST /v1/commitments/query` returns the commitments that match a unified filter, search and sort, one page at a time. A key that reads only assigned commitments sees its own.
 
 ## Send commitments to a vendor
 
