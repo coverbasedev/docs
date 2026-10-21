@@ -156,7 +156,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PATCH` | `/v1/branding` | `org_settings:update:org` |
 | `PUT` | `/v1/branding/logo` | `org_settings:update:org` |
 | `PUT` | `/v1/branding/icon` | `org_settings:update:org` |
-| `GET` | `/v1/activity-log` | Read access to the record |
+| `GET` | `/v1/activity-log` | Read access to the record's type, such as `vendor:read:org` or `vendor:read:assigned`; `audit_trail:read:org` with no `target_type` or for a settings record |
 | `GET` | `/v1/audit-log` | A user key, or an API key with the `audit:read` scope |
 | `GET` | `/v1/audit-log/metadata` | A user key, or an API key with the `audit:read` scope |
 | `GET` | `/v1/notes` | `note:read:org` and read access to the record |
@@ -167,35 +167,36 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/emails/{email_id}` | Read access to the record the email is about |
 | `POST` | `/v1/emails` | Update access to the record the email is about |
 | `GET` | `/v1/tprm-lifecycle-settings` | `org_settings:read:org` |
-| `GET` | `/v1/template-variables` | Any member |
-| `GET` | `/v1/risk-scales/default` | Any member |
+| `GET` | `/v1/template-variables` | `email_template:read:org` |
+| `GET` | `/v1/risk-scales/default` | `org_settings:read:org` |
 | `PUT` | `/v1/risk-scales/default/levels` | `org_settings:update:org` |
-| `GET` | `/v1/home-dashboard` | Any member |
+| `GET` | `/v1/home-dashboard` | `report:read:org` |
 | `POST` | `/v1/reports/{report_id}/charts/{chart_id}/remove` | `report:update:org` |
 | `POST` | `/v1/reports/{report_id}/scheduled-export/test` | `report:update:org` and `report:export:org` |
 | `POST` | `/v1/performance-scores/from-response` | `vendor:update:org` |
 | `GET` | `/v1/custom-fields/usage` | `custom_field:read:org` |
-| `DELETE` | `/v1/custom-fields/values/{value_id}` | Update access to the record; needs a user key |
+| `DELETE` | `/v1/custom-fields/values/{value_id}` | `custom_field:update:org` and update access to the record; needs a user key |
 | `POST` | `/v1/directory-people` | `vendor:update:org` |
 | `GET` | `/v1/roles/{role_id}/audit-log` | `role:read:org` |
 | `GET` | `/v1/licensed-connectors` | `integration:read:org` |
 | `GET` | `/v1/licensed-connectors/{connector}` | `integration:read:org` |
 | `POST` | `/v1/licensed-connectors/{connector}/test` | `integration:run:org` |
 | `GET` | `/v1/third-party-integrations/{provider}` | `integration:read:org` |
-| `POST` | `/v1/third-party-integrations/{provider}/test` | `integration:run:org` |
+| `POST` | `/v1/third-party-integrations/slack/test-message` | `integration:run:org` |
+| `POST` | `/v1/third-party-integrations/{provider}/test` | `integration:run:org`; `integration:update:org` for `screening` |
 | `POST` | `/v1/jira-tickets` | `integration:run:org` |
-| `GET` | `/v1/notification-settings` | Any member; your own settings only |
-| `GET` | `/v1/notification-settings/{setting_id}` | Any member; your own settings only |
-| `POST` | `/v1/notification-settings` | Any member; your own settings only |
-| `PATCH` | `/v1/notification-settings/{setting_id}` | Any member; your own settings only |
-| `GET` | `/v1/notification-types` | Any member |
-| `GET` | `/v1/notification-preference` | Any member; your own preference only |
-| `PUT` | `/v1/notification-preference` | Any member; your own preference only |
-| `GET` | `/v1/notifications` | Any member; your own notifications only |
-| `POST` | `/v1/notifications/mark-seen` | Any member; your own notifications only |
-| `GET` | `/v1/saved-views` | Any member |
-| `POST` | `/v1/saved-views` | Any member |
-| `PATCH` | `/v1/saved-views/{saved_view_id}` | Any member; an admin for a shared view or the default |
+| `GET` | `/v1/notification-settings` | Any member with a user key; your own settings only |
+| `GET` | `/v1/notification-settings/{setting_id}` | Any member with a user key; your own settings only |
+| `POST` | `/v1/notification-settings` | Any member with a user key; your own settings only |
+| `PATCH` | `/v1/notification-settings/{setting_id}` | Any member with a user key; your own settings only |
+| `GET` | `/v1/notification-types` | Any member with a user key |
+| `GET` | `/v1/notification-preference` | Any member with a user key; your own preference only |
+| `PUT` | `/v1/notification-preference` | Any member with a user key; your own preference only |
+| `GET` | `/v1/notifications` | Any member with a user key; your own notifications only |
+| `POST` | `/v1/notifications/mark-seen` | Any member with a user key; your own notifications only |
+| `GET` | `/v1/saved-views` | Any member with a user key |
+| `POST` | `/v1/saved-views` | Any member with a user key |
+| `PATCH` | `/v1/saved-views/{saved_view_id}` | Any member with a user key; an admin for a shared view or the default |
 | `GET` | `/v1/email-layouts` | `org_settings:read:org` |
 | `POST` | `/v1/email-layouts` | `org_settings:update:org` |
 | `POST` | `/v1/email-layouts/preview` | `org_settings:read:org` |
@@ -802,7 +803,7 @@ These endpoints read and change your [white-label branding](/user-guides/white-l
 
 ## Notifications and saved views
 
-These routes act for the person the key belongs to. You only ever read or change your own settings, notifications and views.
+These routes act for the signed-in person. You only ever read or change your own settings, notifications and views. An API key has no settings, notifications or views of its own, so every route in this section gives an API key `403 api_key_not_allowed`. Use a user key.
 
 `GET /v1/notification-settings` lists your setting for each event type and channel, with the default where you have not changed it. `POST /v1/notification-settings` turns one `event_type` on or off for one `channel` with `status`, and returns `201 Created`. `PATCH /v1/notification-settings/{setting_id}` changes a saved setting's `status`. `GET /v1/notification-settings/{setting_id}` returns one. Someone else's setting returns `404` with the code `notification_setting_not_found`. `GET /v1/notification-types` lists every event type you can configure, with its category, name and description.
 
@@ -834,7 +835,7 @@ These routes need organization settings permission. A service account key does n
 
 `GET /v1/licensed-connectors` lists the licensed data connectors and whether each is configured, and `GET /v1/licensed-connectors/{connector}` returns one. `POST /v1/licensed-connectors/{connector}/test` checks that its key still works; an unconfigured connector returns `404` with the code `connector_not_configured`. These need the TPRM lifecycle.
 
-`GET /v1/third-party-integrations/{provider}` returns a third-party integration's settings as the dashboard shows them, for `slack`, `docusign`, `dnb`, `jira`, `servicenow`, `processunity`, `valence`, `shodan`, `hibp`, `censys` or `screening`. `POST /v1/third-party-integrations/{provider}/test` checks the connection for `slack`, `servicenow`, `processunity` and `valence`. `POST /v1/jira-tickets` creates a ticket in your connected Jira project. A secret never comes back, only whether it is set. Saving a key or deleting a connection stays in Coverbase.
+`GET /v1/third-party-integrations/{provider}` returns a third-party integration's settings as the dashboard shows them, for `slack`, `docusign`, `dnb`, `jira`, `servicenow`, `processunity`, `valence`, `shodan`, `hibp`, `censys` or `screening`. `POST /v1/third-party-integrations/{provider}/test` checks the connection for `slack`, `servicenow`, `processunity`, `valence` and `screening`. The screening test needs `integration:update:org` and returns `ok` and `message`, so a key the provider rejects comes back as `ok: false` rather than an error. `POST /v1/third-party-integrations/slack/test-message` sends your `message` as a real Slack direct message, through your connected workspace, to the Slack account whose email matches the caller. It returns `204`. If Slack is not connected or no Slack account matches, you get `404` with the code `slack_not_found`. An API key acts as its service account, so the message lands only when that account's email matches a Slack user. `POST /v1/jira-tickets` creates a ticket in your connected Jira project. A secret never comes back, only whether it is set. Saving a key or deleting a connection stays in Coverbase.
 
 ## Errors
 
