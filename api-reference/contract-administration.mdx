@@ -43,6 +43,9 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/clause-match-finding-links/{association_id}/unlink` | `finding:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/follow-up-drafts` | `contract:update:org` |
 | `GET` | `/v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` | `contract:read:org` |
+| `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
 
 List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
 
@@ -242,3 +245,11 @@ To link a match to an existing finding, send `POST /v1/clause-matches/{match_id}
 ## Follow-up drafts
 
 To have Coverbase AI draft a follow-up from clause matches, send `POST /v1/contract-records/{contract_id}/follow-up-drafts` with `clause_match_ids` (1 to 200), `audience` (`vendor` or `procurement`) and `force`. Coverbase returns `202` and writes the draft in the background. Poll `GET /v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` until `status` is `completed` or `failed`, then read `draft_text`. Coverbase sends nothing to anyone. A match from another contract returns `422` with code `foreign_clause_match`.
+
+## Review rounds
+
+When the vendor returns a marked-up document, you start a new round that reads it against what the finished run asked for. To start one, send `POST /v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds`. Omit `clause_set_ids` or `document_ids` to keep the previous round's. The previous run must be `complete`, or the call returns `422` with code `round_not_ready`. Coverbase returns `202` with the new run, which you poll like any clause review.
+
+`GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` returns `total`, `queued` (clauses a person still has to look at), `asks_sent`, `asks_answered`, `asks_outstanding`, the counts by carry state in `buckets`, and `pending_dispositions`: vendor answers Coverbase would not settle on its own.
+
+To record those answers, send `POST /v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` with up to 200 `decisions`, each with `ask_id`, `status` (`accepted`, `rejected`, `countered` or `withdrawn`) and `response_text`. An ask from another round returns `422` with code `foreign_ask`. The response is the updated round summary.

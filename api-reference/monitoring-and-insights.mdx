@@ -72,6 +72,20 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `GET` | `/v1/vendor-scan-results/{scan_result_id}` | `vendor:read:org` |
 | `POST` | `/v1/document-insight-values/{data_id}/accept` | `vendor:update:org` |
 | `POST` | `/v1/document-insight-values/{data_id}/verdict` | `vendor:update:org` |
+| `POST` | `/v1/document-insight-values/{data_id}/to-example` | `org_settings:update:org` |
+| `GET` | `/v1/document-insights/{config_id}/examples` | `vendor:read:org` |
+| `POST` | `/v1/document-insights/{config_id}/examples` | `org_settings:update:org` |
+| `PATCH` | `/v1/document-insight-examples/{example_id}` | `org_settings:update:org` |
+| `DELETE` | `/v1/document-insight-examples/{example_id}` | `org_settings:update:org` |
+| `POST` | `/v1/document-insight-backfills/preview` | `vendor:read:org` |
+| `POST` | `/v1/document-insight-backfills` | `org_settings:update:org` |
+| `GET` | `/v1/document-insight-backfills` | `vendor:read:org` |
+| `GET` | `/v1/document-insight-backfills/{backfill_id}` | `vendor:read:org` |
+| `POST` | `/v1/document-insight-backfills/{backfill_id}/cancel` | `org_settings:update:org` |
+| `POST` | `/v1/dark-web/exposures/{exposure_id}/escalate` | `dark_web_exposure:update:org` |
+| `POST` | `/v1/dark-web/watchlist/sync` | `dark_web_exposure:update:org` |
+| `GET` | `/v1/dark-web/retention` | `dark_web_exposure:read:org` |
+| `PUT` | `/v1/dark-web/retention` | `dark_web_exposure:update:org`, `org_settings:update:org` |
 | `GET` | `/v1/inspections` | `integration:read:org` |
 | `GET` | `/v1/document-insights` | `vendor:read:org` |
 | `GET` | `/v1/document-insight-values` | `vendor:read:org` |
@@ -88,7 +102,7 @@ Each feature has its own gate. When your organization does not have the feature,
 
 When your organization enforces roles and the key lacks the permission, the endpoint returns `403`.
 
-Some actions stay with a signed-in person. When an API key calls one of them, the endpoint returns `403` with the code `api_key_not_allowed`. These actions are: archiving or restoring a document insight, deleting an insight group or target, stopping an Inspect schedule, removing a watchlist identifier, marking a certificate `verified`, archiving a certificate, and archiving a rule set.
+Some actions stay with a signed-in person. When an API key calls one of them, the endpoint returns `403` with the code `api_key_not_allowed`. These actions are: archiving or restoring a document insight, deleting an insight group or target, stopping an Inspect schedule, removing a watchlist identifier, marking a certificate `verified`, archiving a certificate, archiving a rule set, and deleting an insight example.
 
 ## List Inspect schedules
 
@@ -618,3 +632,53 @@ To list findings about your vendors, send `GET /v1/vendor-scan-results` with opt
 To accept an extracted value as the answer, send `POST /v1/document-insight-values/{data_id}/accept` with the value you saw in `value_string`, `value_number`, `value_date`, or `value_boolean`. A value that changed since returns `409` with `value_changed`. Accepting does not claim the quote was verified.
 
 To mark a value correct or incorrect, send `POST /v1/document-insight-values/{data_id}/verdict` with `verdict` (`correct`, `incorrect`, or null to clear).
+
+## Teach a document insight with examples
+
+A worked example shows an insight an excerpt and the answer it should give. An enabled example is part of what extraction is asked, so each change starts a new revision of the insight.
+
+- To list examples, send `GET /v1/document-insights/{config_id}/examples`.
+- To add one, send `POST /v1/document-insights/{config_id}/examples` with `document_excerpt`, `expected_value` (the answer in the insight's type, or null for "not in the document"), and optionally `explanation`, `document_id`, and `enabled`. An answer that does not fit the insight's type returns `422` with `invalid_expected_value`.
+- To change one, send `PATCH /v1/document-insight-examples/{example_id}`. Only the fields you send change.
+- To delete one, send `DELETE /v1/document-insight-examples/{example_id}`.
+- To build an example from an extracted value, send `POST /v1/document-insight-values/{data_id}/to-example` with an optional `explanation`. A value that cites no document text returns `422` with `no_cited_text`.
+
+## Re-run insights over existing documents
+
+A backfill re-extracts insights in the background and costs model calls. Manual values are never overwritten.
+
+To see what a backfill would do, send `POST /v1/document-insight-backfills/preview`. It runs nothing.
+
+<ParamField body="mode" type="string" default="never_attempted">
+  `never_attempted`, `missing_only`, `outdated_revision`, or `all`.
+</ParamField>
+
+<ParamField body="insight_config_ids" type="string[]">
+  Insights to re-run. Empty means every enabled insight.
+</ParamField>
+
+<ParamField body="document_type_slugs" type="string[]">
+  Only these document types.
+</ParamField>
+
+<ParamField body="vendor_ids" type="string[]">
+  Only these vendors' documents.
+</ParamField>
+
+<ParamField body="document_ids" type="string[]">
+  Only these documents.
+</ParamField>
+
+<ParamField body="include_manually_cleared" type="boolean" default="false">
+  Re-fill values a person emptied on purpose.
+</ParamField>
+
+The preview returns `document_count`, `insight_count`, `estimated_model_calls`, `manually_cleared_count`, and `blocked_reason` when it could not start now.
+
+To start one, send the same body to `POST /v1/document-insight-backfills`. It returns `202` with the backfill. Poll `GET /v1/document-insight-backfills/{backfill_id}` until `status` is `completed`, `failed`, or `cancelled`. A run over the per-run or per-day ceilings, or with nothing to do, returns `422`, `409`, or `429` with `backfill_refused`. To stop dispatching more documents, send `POST /v1/document-insight-backfills/{backfill_id}/cancel`. Work already started finishes.
+
+## Escalate an exposure, sync the watchlist, and set retention
+
+- To open a finding from an exposure, send `POST /v1/dark-web/exposures/{exposure_id}/escalate` with optional `title` and `assigned_to_id`. A second call returns the same `finding_id`.
+- To re-derive the watchlist from your organization and vendor records now, send `POST /v1/dark-web/watchlist/sync`. The response counts identifiers `created`, `kept`, and `archived`.
+- To read how long each class of dark web data is kept, send `GET /v1/dark-web/retention`. To change it, send `PUT /v1/dark-web/retention` with `exposures_years`, `evidence_years`, `audit_years`, and `sweep_history_years`. A shorter period purges older data at the next nightly run.
