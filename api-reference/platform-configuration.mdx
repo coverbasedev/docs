@@ -162,9 +162,9 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/notes` | `note:read:org` and read access to the record |
 | `POST` | `/v1/notes` | `note:create:org` and read access to the record |
 | `PATCH` | `/v1/notes/{note_id}` | `note:update:org`; your own notes only |
-| `GET` | `/v1/emails` | Any member |
-| `GET` | `/v1/emails/search` | Any member |
-| `GET` | `/v1/emails/{email_id}` | Any member |
+| `GET` | `/v1/emails` | Read access to the record the email is about |
+| `GET` | `/v1/emails/search` | Read access to the record the email is about |
+| `GET` | `/v1/emails/{email_id}` | Read access to the record the email is about |
 | `POST` | `/v1/emails` | Update access to the record the email is about |
 | `GET` | `/v1/tprm-lifecycle-settings` | `org_settings:read:org` |
 | `GET` | `/v1/template-variables` | Any member |
@@ -792,7 +792,7 @@ These endpoints read and change your [white-label branding](/user-guides/white-l
 
 `GET /v1/notes` lists the notes on a record with their replies, and `POST /v1/notes` adds one, or a reply with `parent_id`. People a note @mentions are notified. A note on an obligation the vendor is working in a commitment portal also emails the vendor's contacts. `PATCH /v1/notes/{note_id}` replaces the `text` of a note you wrote; people it newly mentions are notified. Archiving a note stays with a signed-in user.
 
-`GET /v1/emails` lists the emails about a record (`object_type` and `object_id`), `GET /v1/emails/search` searches them with `query`, and `GET /v1/emails/{email_id}` returns one. `POST /v1/emails` sends an email about a record from your organization's sender. It contacts the recipients: it returns `202 Accepted` with the email `status: queued`, and the email is sent in the background and shows on the record's email log.
+`GET /v1/emails` lists the emails about a record (`object_type` and `object_id`), `GET /v1/emails/search` searches them with `query`, and `GET /v1/emails/{email_id}` returns one. Each needs read access to the record the email is about: for example `vendor:read:org` for a vendor or `contract:read:org` for a contract. `POST /v1/emails` sends an email about a record from your organization's sender. It contacts the recipients: it returns `202 Accepted` with the email `status: queued`, and the email is sent in the background and shows on the record's email log.
 
 `GET /v1/tprm-lifecycle-settings` returns which user groups the TPRM lifecycle routes work to. `GET /v1/template-variables` lists the variables a template can insert; pass exactly one of `surface` or `template_type`. `GET /v1/risk-scales/default` returns your risk scale, and `PUT /v1/risk-scales/default/levels` replaces its `levels`, with a `remap` target for each removed level records still use.
 
