@@ -27,16 +27,34 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PATCH` | `/v1/email-templates/{email_template_id}` | `email_template:update:org` |
 | `GET` | `/v1/workflow-definitions/{workflow_definition_id}` | `workflow:read:org` |
 | `PATCH` | `/v1/workflow-definitions/{workflow_definition_id}` | `workflow:update:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/versions` | `workflow:read:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/schedules` | `workflow:read:org` |
+| `POST` | `/v1/workflow-schedules/{schedule_id}/cancel` | `workflow:update:org` |
+| `GET` | `/v1/workflow-templates` | `workflow:read:org` |
+| `POST` | `/v1/workflow-templates/{template_slug}/apply` | `workflow:create:org` |
+| `GET` | `/v1/rules` | `org_settings:read:org` |
+| `POST` | `/v1/rules` | `org_settings:update:org` |
+| `PATCH` | `/v1/rules/{rule_id}` | `org_settings:update:org` |
 | `GET` | `/v1/agents` | `org_settings:read:org` |
 | `POST` | `/v1/agents/{agent_id}/pause` | `org_settings:update:org` |
 | `POST` | `/v1/agents/{agent_id}/resume` | `org_settings:update:org` |
+| `GET` | `/v1/agent-templates` | `org_settings:read:org` |
+| `POST` | `/v1/agents/from-template` | `org_settings:update:org` |
+| `PUT` | `/v1/agents/paused` | `org_settings:update:org` |
+| `GET` | `/v1/agent-tool-policies` | `org_settings:update:org` |
+| `PATCH` | `/v1/agent-tool-policies` | `org_settings:update:org` |
 | `GET` | `/v1/agent-preferences` | `org_settings:read:org` |
 | `POST` | `/v1/agent-preferences` | `org_settings:update:org` |
 | `PATCH` | `/v1/agent-preferences/{preference_id}` | `org_settings:update:org` |
 | `GET` | `/v1/reports` | `report:read:org` |
+| `GET` | `/v1/reports/{report_id}` | `report:read:org` |
+| `POST` | `/v1/reports` | `report:create:org` |
+| `POST` | `/v1/reports/{report_id}/clone` | `report:create:org` |
+| `PATCH` | `/v1/reports/{report_id}` | `report:update:org` |
+| `GET` | `/v1/report-templates` | `report:read:org` |
 | `GET` | `/v1/roles` | `role:read:org` |
 
-None of these honor `Idempotency-Key`. An API key cannot archive a status, custom field section, email template, workflow or agent preference. To archive one, use Coverbase. Every list endpoint takes `limit` (1 to 500, default 100) and `offset` (default 0) and returns `items`, `total`, `limit` and `offset`.
+None of these honor `Idempotency-Key`. An API key cannot archive a status, custom field section, email template, workflow, rule, report or agent preference. To archive one, use Coverbase. Every list endpoint takes `limit` (1 to 500, default 100) and `offset` (default 0) and returns `items`, `total`, `limit` and `offset`.
 
 ## Statuses
 
@@ -349,7 +367,7 @@ A **workflow definition** is an automation your organization built in Coverbase.
 
 ### Update a workflow definition
 
-`PATCH /v1/workflow-definitions/{workflow_definition_id}` renames a workflow, changes its description, or turns it on and off. Fields you omit keep their value.
+`PATCH /v1/workflow-definitions/{workflow_definition_id}` renames a workflow, changes its description, turns it on and off, replaces its graph, or changes how it starts. Fields you omit keep their value.
 
 <ParamField body="name" type="string">
   New name.
@@ -363,7 +381,37 @@ A **workflow definition** is an automation your organization built in Coverbase.
   `false` stops the workflow from running. `true` turns it back on.
 </ParamField>
 
-To change the graph or how a workflow starts, use the workflow builder in Coverbase.
+<ParamField body="entrypoint_kind" type="string">
+  How the workflow starts. When it changes, Coverbase moves the workflow's triggers to the new kind.
+</ParamField>
+
+<ParamField body="definition_data" type="object">
+  A replacement definition graph.
+</ParamField>
+
+<ParamField body="override_cycle_warning" type="boolean" default="false">
+  Set to `true` to save a graph that would make workflows trigger each other in a loop. Without it, Coverbase returns `422 invalid_workflow_definition`.
+</ParamField>
+
+### Versions, schedules and templates
+
+`GET /v1/workflow-definitions/{workflow_definition_id}/versions` lists a workflow's saved versions, newest first. Each item has `id`, `version_number`, `created_by_user_id` and `created_at`. It takes `limit` (1 to 200, default 50) and `offset`.
+
+`GET /v1/workflow-definitions/{workflow_definition_id}/schedules` lists a workflow's pending scheduled runs, soonest first. Each item has `id`, `workflow_definition_id`, `scheduled_for`, `canceled_at` and `fired_at`.
+
+To cancel a pending scheduled run, send `POST /v1/workflow-schedules/{schedule_id}/cancel`. It returns the schedule, `404 workflow_schedule_not_found` for an unknown ID, or `409 workflow_schedule_not_pending` when the schedule already fired or was canceled.
+
+`GET /v1/workflow-templates` lists ready-made workflows: `slug`, `name`, `description`, `category`, `audience` and `use_cases`. To copy one into your organization, send `POST /v1/workflow-templates/{template_slug}/apply` with an optional `name`. It returns `201 Created` with the new workflow, which starts turned off.
+
+## Reminder rules
+
+A **rule** sends a contract or document reminder. It has a `rule_name` (for example `contract_notification`), a trigger (`trigger_config` and `trigger_value`, for example `days_before_contract_end` with `{"days": [30, 60]}`), an optional condition (`condition_config` and `condition_value`), and a command (`command_config` and `command_value`, for example `send_contract_reminder` with `{"emails": ["admin@company.com"]}`).
+
+`GET /v1/rules` lists your rules. Pass `include_archived=true` to include archived ones.
+
+To create a rule, send `POST /v1/rules` with every field above except the optional condition. Coverbase checks each value against its configuration type and returns `422 invalid_rule` when one does not fit.
+
+To change a rule, send `PATCH /v1/rules/{rule_id}` with the fields to change. A value applies only when you also send its configuration type, for example `trigger_value` with `trigger_config`. The request is refused with `422` if it contains `is_archived`.
 
 ## Coverbase AI agents and preferences
 
@@ -371,15 +419,31 @@ These endpoints return `404 not_enabled` when Coverbase Agent is not enabled for
 
 An **agent** runs Coverbase AI playbooks on a schedule or a trigger. `GET /v1/agents` lists your agents, oldest first. Each item has `id`, `name`, `instructions`, `playbooks`, `schedule_cron`, `timezone`, `enabled`, `paused`, `created_at` and `updated_at`. The response also has `agents_paused`, which is `true` when every agent in your organization is paused.
 
+`GET /v1/agent-templates` lists ready-made agents: `key`, `name`, `description`, `schedule_cron` and `playbooks`. `agent_id` is set when your organization already made an agent from the template. To make one, send `POST /v1/agents/from-template` with `template_key` and an optional `timezone` (default `UTC`). The new agent starts turned off.
+
+To pause or resume every agent at once, send `PUT /v1/agents/paused` with `paused` set to `true` or `false`. The response has `agents_paused`.
+
 To stop an agent from starting runs, send `POST /v1/agents/{agent_id}/pause`. Its live runs stop at their next turn. To let it start runs again, send `POST /v1/agents/{agent_id}/resume`. Both return the agent.
 
 A **preference** is a standing instruction every Coverbase AI run reads. `GET /v1/agent-preferences` lists them, oldest first. Each item has `id`, `text`, `source`, `playbook`, `enabled`, `created_at` and `updated_at`.
 
 To add a preference, send `POST /v1/agent-preferences` with `text` and an optional `playbook`. A preference without a playbook applies to every playbook. To change one, send `PATCH /v1/agent-preferences/{preference_id}` with any of `text`, `enabled` and `playbook`. Send `playbook: null` to apply it to every playbook again.
 
+### Tool policies
+
+`GET /v1/agent-tool-policies` lists every Coverbase AI tool that changes data. Each item has `tool`, `label`, `effect`, `policy` and `locked`. A policy is `auto` (runs without asking when a run is set to not stop), `ask` (always asks) or `off` (refused). A `locked` tool always asks.
+
+To change policies, send `PATCH /v1/agent-tool-policies` with `policies`, an object of tool name to policy. Tools you leave out keep theirs. An unknown or locked tool returns `422 invalid_tool_policy`.
+
 ## Reports
 
-`GET /v1/reports` lists your organization's dashboard reports, newest first. Pass `search` to match report names. Each item has `id`, `name`, `description`, `is_org_wide`, `is_default`, `created_by_user_id`, `created_at` and `updated_at`.
+`GET /v1/reports` lists your organization's dashboard reports, newest first. Pass `search` to match report names. Each item has `id`, `name`, `description`, `is_org_wide`, `is_default`, `created_by_user_id`, `created_at` and `updated_at`. `GET /v1/reports/{report_id}` returns one report.
+
+To create an empty report, send `POST /v1/reports` with `name`, an optional `description` and `is_org_wide` (default `true`). To copy a report or template with copies of its charts, send `POST /v1/reports/{report_id}/clone` with an optional `name`. Both return `201 Created`.
+
+To rename a report, change its description or make it the org default, send `PATCH /v1/reports/{report_id}` with `name`, `description` or `is_default`. The request is refused with `422` if it contains any other field. To change filters, layout or email schedules, use Coverbase.
+
+`GET /v1/report-templates` lists dashboard templates you can clone.
 
 ## Roles
 
@@ -401,6 +465,14 @@ Most errors return a `detail` object with a `code` and a `message`. A missing pe
 | `404` | `custom_field_section_not_found` | No section with that ID exists in your organization. |
 | `404` | `email_template_not_found` | No template with that ID exists that the API key can update. |
 | `404` | `workflow_definition_not_found` | No workflow with that ID exists in your organization. |
+| `404` | `report_not_found` | No report with that ID exists in your organization. |
+| `404` | `rule_not_found` | No rule with that ID exists in your organization. |
+| `404` | `workflow_template_not_found` | No workflow template has that slug. |
+| `404` | `workflow_schedule_not_found` | No schedule with that ID exists in your organization. |
+| `409` | `workflow_schedule_not_pending` | The schedule already fired or was canceled. |
+| `422` | `invalid_rule` | A rule value does not fit its configuration type. |
+| `422` | `invalid_agent` | The agent template cannot be used. The `message` says why. |
+| `422` | `invalid_tool_policy` | A tool is unknown or locked. |
 | `404` | `agent_not_found` | No agent with that ID exists in your organization. |
 | `404` | `agent_preference_not_found` | No preference with that ID exists in your organization. |
 | `404` | `not_enabled` | Coverbase Agent or the TPRM lifecycle is not enabled for your organization. |
