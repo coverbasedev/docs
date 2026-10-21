@@ -76,7 +76,27 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PATCH` | `/v1/report-charts/{chart_id}` | `report:update:org` |
 | `POST` | `/v1/chart-statistics` | `report:read:org` |
 | `POST` | `/v1/program-insights` | `report:read:org` |
-
+| `GET` | `/v1/performance-rubrics` | `vendor:read:org` |
+| `POST` | `/v1/performance-rubrics` | `vendor:update:org` |
+| `PATCH` | `/v1/performance-rubrics/{rubric_id}` | `vendor:update:org` |
+| `POST` | `/v1/performance-rubrics/{rubric_id}/components` | `vendor:update:org` |
+| `PATCH` | `/v1/performance-components/{component_id}` | `vendor:update:org` |
+| `POST` | `/v1/performance-rubrics/{rubric_id}/groups` | `vendor:update:org` |
+| `PATCH` | `/v1/performance-groups/{group_id}` | `vendor:update:org` |
+| `GET` | `/v1/performance-scores` | `vendor:read:org` |
+| `POST` | `/v1/performance-scores` | `vendor:update:org` |
+| `GET` | `/v1/dashboard-templates` | `report:read:org` |
+| `POST` | `/v1/dashboard-templates/{template_slug}/apply` | `report:create:org` |
+| `POST` | `/v1/reports/{report_id}/chart-templates` | `report:update:org` |
+| `POST` | `/v1/reports/{report_id}/exports` | `report:export:org` |
+| `GET` | `/v1/report-exports/{export_id}` | `report:export:org` |
+| `GET` | `/v1/recent-activity` | `vendor:read:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/graph-issues` | `workflow:read:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/versions/diff` | `workflow:read:org` |
+| `PATCH` | `/v1/custom-document-types/{custom_document_type_id}` | `org_settings:update:org` |
+| `GET` | `/v1/prompts/{prompt_name}/versions` | `org_settings:read:org` |
+| `PUT` | `/v1/prompts/{prompt_name}` | `org_settings:update:org` |
+| `POST` | `/v1/prompts/{prompt_name}/select` | `org_settings:update:org` |
 
 <Note>
 An organization API key does not hold the `org_settings`, `email_template`, `report` or `role` permissions. In an organization that enforces roles, call the routes that need them with a key created by a person whose role holds the permission.
@@ -519,6 +539,38 @@ To create an agent, send `POST /v1/agents` with `name` and `instructions`, plus 
 
 `POST /v1/program-insights` returns the TPRM program overview (KPIs, the residual risk heat grid and the pre-contract pipeline) for the level and slicers you send. It returns `404` when the TPRM lifecycle is not enabled.
 
+## Vendor performance
+
+A **performance rubric** scores a vendor's performance from weighted components, optionally grouped. `GET /v1/performance-rubrics` lists rubrics, default first, with their groups and components. `POST /v1/performance-rubrics` creates one with `name` and optional `description`, `questionnaire_id` and `is_default`. `PATCH /v1/performance-rubrics/{rubric_id}` changes it; send `null` to clear `description` or `questionnaire_id`.
+
+To add a component, send `POST /v1/performance-rubrics/{rubric_id}/components` with `name` and optional `weight` (0 to 100), `evaluation_mode`, `description`, `question_id`, `ideal_answer`, `sort_order` and `group_id`. `PATCH /v1/performance-components/{component_id}` changes it. Groups work the same way through `POST /v1/performance-rubrics/{rubric_id}/groups` and `PATCH /v1/performance-groups/{group_id}`.
+
+`GET /v1/performance-scores` lists scores, newest first, filtered by `vendor_id` or `service_id`. `POST /v1/performance-scores` records a manual score with `vendor_id`, `rubric_id`, optional `service_id`, `submitted_at` and `notes`, and `component_scores` (each `component_id`, `score` from 0 to 100, optional `value` and `notes`).
+
+An API key cannot archive a rubric, component or group: sending `is_archived` returns `403 api_key_not_allowed`.
+
+## Dashboard templates and exports
+
+`GET /v1/dashboard-templates` lists ready-made dashboards and charts. To copy a dashboard into a new report, send `POST /v1/dashboard-templates/{template_slug}/apply` with an optional `name`. To add ready-made charts to a report, send `POST /v1/reports/{report_id}/chart-templates` with `template_slugs` (1 to 25).
+
+To export a report, send `POST /v1/reports/{report_id}/exports` with `file_format` (`pdf` or `xlsx`), `export_filename` and an optional `timezone`. Coverbase returns `202 Accepted` with an export `id` and builds the file in the background. Poll `GET /v1/report-exports/{export_id}` until `status` is `complete`. The response then carries a presigned `download_url` that works for `expires_in` seconds without an `Authorization` header.
+
+To download configured data exports as JSON, CSV or XLSX, use the existing `GET /v1/export/{slug}` and `GET /v1/export/{slug}/download` endpoints.
+
+## Recent activity
+
+`GET /v1/recent-activity` returns up to three items from the last week: assessments in review and newly added vendors, limited to what the key can read.
+
+## Workflow loops and version changes
+
+`GET /v1/workflow-definitions/{workflow_definition_id}/graph-issues` lists the loops a workflow would form with others if it were enabled. Check it before you turn a workflow on. `GET /v1/workflow-definitions/{workflow_definition_id}/versions/diff?from_version_id=...&to_version_id=...` compares two versions, step by step.
+
+## Custom document types and AI prompts
+
+`PATCH /v1/custom-document-types/{custom_document_type_id}` renames, regroups or redescribes one of your document types with `name`, `description` and `classification`. A new description runs the detection check again. A name another type already uses returns `409 document_type_name_taken`.
+
+`GET /v1/prompts/{prompt_name}/versions` lists your saved versions of one AI prompt, for example `finding_creation`, with `is_selected` on the version in use. `PUT /v1/prompts/{prompt_name}` saves a new version with `prompt_text` and an optional `prompt_key` and uses it. `POST /v1/prompts/{prompt_name}/select` uses an earlier `version_num`. The organization's assessment summary returns `409 use_summary_instructions`; manage it with the summary instructions endpoints.
+
 ## Errors
 
 Most errors return a `detail` object with a `code` and a `message`. A missing permission returns `403` with `detail` set to the string `Missing required permission.`
@@ -549,6 +601,12 @@ Most errors return a `detail` object with a `code` and a `message`. A missing pe
 | `422` | `invalid_chart` | The chart is not valid. |
 | `404` | `chart_not_found` | No chart with that ID exists in your organization. |
 | `422` | `invalid_filter` | A chart filter does not compile. |
+| `422` | `invalid_performance_setup` | A rubric, component, group or score is not valid. |
+| `404` | `report_export_not_found` | No report export with that ID exists. |
+| `404` | `dashboard_template_not_found` | No dashboard template has that slug. |
+| `404` | `chart_template_not_found` | A chart template slug does not exist. |
+| `409` | `document_type_name_taken` | Another document type already has that name. |
+| `409` | `use_summary_instructions` | The assessment summary is managed with summary instructions. |
 | `422` | `invalid_rule` | A rule value does not fit its configuration type. |
 | `422` | `invalid_agent` | The agent template cannot be used. The `message` says why. |
 | `422` | `invalid_tool_policy` | A tool is unknown or locked. |
