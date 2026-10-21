@@ -25,6 +25,15 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `GET` | `/v1/engagement-records/{engagement_id}/continuity-plan` | `vendor:read:org` |
 | `PUT` | `/v1/engagement-records/{engagement_id}/continuity-plan` | `vendor:update:org` |
 | `POST` | `/v1/engagement-records/{engagement_id}/continuity-plan/submit` | `vendor:update:org` |
+| `GET` | `/v1/clause-sets` | `contract:read:org` |
+| `GET` | `/v1/clause-sets/{clause_set_id}` | `contract:read:org` |
+| `POST` | `/v1/clause-sets` | `contract:update:org` |
+| `PATCH` | `/v1/clause-sets/{clause_set_id}` | `contract:update:org` |
+| `DELETE` | `/v1/clause-sets/{clause_set_id}` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/clause-sets/{clause_set_id}/reference-clauses` | `contract:update:org` |
+| `PATCH` | `/v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` | `contract:update:org` |
+| `DELETE` | `/v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/clause-sets/{clause_set_id}/reference-clauses/reorder` | `contract:update:org` |
 
 List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
 
@@ -170,3 +179,35 @@ To create or edit the plan, send `PUT /v1/engagement-records/{engagement_id}/con
 </ParamField>
 
 To submit the plan for review, send `POST /v1/engagement-records/{engagement_id}/continuity-plan/submit`.
+
+## Clause sets
+
+A clause set is the playbook a contract clause review compares against. Each reference clause carries up to five risk-tier variants.
+
+`GET /v1/clause-sets` lists your clause sets with their current reference clauses. It takes `include_archived`, `limit` (1 to 200, default 50) and `offset`. `GET /v1/clause-sets/{clause_set_id}` returns one set. An unknown ID returns `404` with code `clause_set_not_found`.
+
+To create a set, send `POST /v1/clause-sets` with `name`, and optionally `description`, `is_active` and `library_template_id` to copy a shipped template. To change a set, send `PATCH /v1/clause-sets/{clause_set_id}` with any of `name`, `description`, `is_active` and `public_id_prefix` (up to 16 characters). An explicit `null` clears `description` or `public_id_prefix`. A change to an archived set returns `409` with code `clause_set_archived`.
+
+To add a reference clause, send `POST /v1/clause-sets/{clause_set_id}/reference-clauses`.
+
+<ParamField body="public_id" type="string" required>
+  The clause's ID in the playbook, for example `DPA-01`.
+</ParamField>
+<ParamField body="name" type="string" required>
+  The clause name.
+</ParamField>
+<ParamField body="category" type="string" required>
+  The clause category.
+</ParamField>
+<ParamField body="severity" type="string" required>
+  `low`, `medium`, `high` or `critical`.
+</ParamField>
+<ParamField body="variants" type="object[]">
+  Each variant has `risk_tier` (1 to 5), `label`, `text` and `is_archived`. Active variants need distinct tiers, or the call returns `422` with code `duplicate_risk_tier`.
+</ParamField>
+
+`PATCH /v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` saves a new version of the clause and returns it with its new `id`. Variants you send replace the current ones.
+
+To reorder, send `POST /v1/clause-sets/{clause_set_id}/reference-clauses/reorder` with `reference_clause_ids` listing every current clause once. Any other list returns `422` with code `invalid_order`.
+
+API keys cannot archive. `DELETE` on a clause set or a reference clause with an API key returns `403` with code `api_key_not_allowed`.
