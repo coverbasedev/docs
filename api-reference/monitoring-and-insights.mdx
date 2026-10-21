@@ -89,6 +89,10 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `GET` | `/v1/org-documents` | `vendor:read:org` |
 | `GET` | `/v1/org-documents/{document_id}/download` | `vendor:export:org` |
 | `PATCH` | `/v1/org-documents/{document_id}` | `vendor:update:org` |
+| `POST` | `/v1/org-documents` | `vendor:update:org` |
+| `POST` | `/v1/document-insight-values/{data_id}/correct` | `vendor:update:org` |
+| `DELETE` | `/v1/document-insight-values/{data_id}` | `vendor:update:org` |
+| `POST` | `/v1/document-insight-values/bulk-verdict` | `vendor:update:org` |
 | `GET` | `/v1/inspections` | `integration:read:org` |
 | `GET` | `/v1/document-insights` | `vendor:read:org` |
 | `GET` | `/v1/document-insight-values` | `vendor:read:org` |
@@ -105,7 +109,7 @@ Each feature has its own gate. When your organization does not have the feature,
 
 When your organization enforces roles and the key lacks the permission, the endpoint returns `403`.
 
-Some actions stay with a signed-in person. When an API key calls one of them, the endpoint returns `403` with the code `api_key_not_allowed`. These actions are: archiving or restoring a document insight, deleting an insight group or target, stopping an Inspect schedule, removing a watchlist identifier, marking a certificate `verified`, archiving a certificate, archiving a rule set, deleting an insight example, and archiving or restoring an org document.
+Some actions stay with a signed-in person. When an API key calls one of them, the endpoint returns `403` with the code `api_key_not_allowed`. These actions are: archiving or restoring a document insight, deleting an insight group or target, stopping an Inspect schedule, removing a watchlist identifier, marking a certificate `verified`, archiving a certificate, archiving a rule set, deleting an insight example or value, and archiving or restoring an org document.
 
 ## List Inspect schedules
 
@@ -693,3 +697,10 @@ Org documents are files your organization owns, such as policies, questionnaire 
 - To list them, send `GET /v1/org-documents` with optional `document_type`, `search`, `limit`, and `offset`.
 - To download one, send `GET /v1/org-documents/{document_id}/download`. The response gives a presigned `url` that is valid for `expires_in` seconds. Follow it with a plain `GET` and no auth header.
 - To rename, retype, archive, or restore one, send `PATCH /v1/org-documents/{document_id}` with any of `name`, `document_type`, and `is_archived`.
+- To upload one, send `POST /v1/org-documents` as `multipart/form-data` with `file` and optional `document_type` and `name`. It returns `201` with the document. An `assessment_report_template` must be a valid `.docx`: another extension returns `400` with `template_must_be_docx`, and a file that does not open as Word returns `400` with `invalid_template`.
+
+## Correct or remove extracted values
+
+- To replace an extracted value with the right one, send `POST /v1/document-insight-values/{data_id}/correct` with one of `value_string`, `value_number`, `value_date`, or `value_boolean`. The correction becomes a manual value that no re-extraction overwrites, and Coverbase writes it to linked fields. A value that does not fit the insight's type returns `422` with `invalid_value`.
+- To delete a value, send `DELETE /v1/document-insight-values/{data_id}`.
+- To judge many values at once, send `POST /v1/document-insight-values/bulk-verdict` with `ids` and `verdict` (`correct`, `incorrect`, or null). The response gives `updated_count` and `found_count`; a value that already holds the verdict is skipped.
