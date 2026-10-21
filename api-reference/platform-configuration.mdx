@@ -53,6 +53,34 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PATCH` | `/v1/reports/{report_id}` | `report:update:org` |
 | `GET` | `/v1/report-templates` | `report:read:org` |
 | `GET` | `/v1/roles` | `role:read:org` |
+| `GET` | `/v1/org-settings` | `org_settings:read:org` |
+| `PATCH` | `/v1/org-settings` | `org_settings:update:org` |
+| `GET` | `/v1/document-types` | `org_settings:read:org` |
+| `POST` | `/v1/document-types/set-enabled` | `org_settings:update:org` |
+| `GET` | `/v1/autofillable-fields` | `custom_field:read:org` |
+| `GET` | `/v1/summary-instructions` | `org_settings:read:org` |
+| `POST` | `/v1/summary-instructions` | `org_settings:update:org` (org admin) |
+| `POST` | `/v1/summary-instructions/{prompt_id}/revisions` | `org_settings:update:org` (org admin) |
+| `GET` | `/v1/conditions` | `workflow:read:org` |
+| `GET` | `/v1/workflow-metadata` | `workflow:read:org` |
+| `GET` | `/v1/workflow-components` | `workflow:read:org` |
+| `POST` | `/v1/workflow-components` | `workflow:update:org` |
+| `PATCH` | `/v1/workflow-components/{component_id}` | `workflow:update:org` |
+| `POST` | `/v1/agents` | `org_settings:update:org` |
+| `PATCH` | `/v1/agents/{agent_id}` | `org_settings:update:org` |
+| `GET` | `/v1/reports/{report_id}/audience` | `report:read:org` |
+| `PUT` | `/v1/reports/{report_id}/audience` | `report:update:org` |
+| `GET` | `/v1/report-charts` | `report:read:org` |
+| `GET` | `/v1/report-charts/{chart_id}` | `report:read:org` |
+| `POST` | `/v1/report-charts` | `report:create:org` |
+| `PATCH` | `/v1/report-charts/{chart_id}` | `report:update:org` |
+| `POST` | `/v1/chart-statistics` | `report:read:org` |
+| `POST` | `/v1/program-insights` | `report:read:org` |
+
+
+<Note>
+An organization API key does not hold the `org_settings`, `email_template`, `report` or `role` permissions. In an organization that enforces roles, call the routes that need them with a key created by a person whose role holds the permission.
+</Note>
 
 None of these honor `Idempotency-Key`. An API key cannot archive a status, custom field section, email template, workflow, rule, report or agent preference. To archive one, use Coverbase. Every list endpoint takes `limit` (1 to 500, default 100) and `offset` (default 0) and returns `items`, `total`, `limit` and `offset`.
 
@@ -451,6 +479,46 @@ To rename a report, change its description or make it the org default, send `PAT
 
 This endpoint is read only. An API key cannot create, change or assign roles. Coverbase creates your built-in roles the first time someone opens the roles page in **Settings**, so before then the list is empty.
 
+## Organization settings
+
+`GET /v1/org-settings` returns the settings available through the API. `PATCH /v1/org-settings` changes them, and fields you omit keep their value. The fields are `track_residual_risk`, `display_numerical_scores`, `restrict_assessment_completions`, `streamlined_assessment_creation_flow`, `enable_assessment_reviewers`, `reassessment_reminder_days`, `reassessment_collection_days`, `reassessment_review_days`, `sla_business_days`, `vendor_onboarding_reminder_days`, `vendor_onboarding_reminder_enabled`, `w9_reminder_enabled`, `w9_reminder_days_before_expiry` and `w9_expiry_years`. Any other field returns `422`. To change the organization name, sender email, status or IP allowlists, use Coverbase. Coverbase records each change in the system audit log.
+
+## Document types
+
+`GET /v1/document-types` lists every built-in document type by group, your organization's custom types, and which types are turned off.
+
+To turn types on or off, send `POST /v1/document-types/set-enabled` with `is_enabled`, `document_types` (built-in slugs) and `custom_document_type_ids`. A type turned off leaves pickers, filters and detection, and documents already labelled keep the label. Turning off an always-on type, or sending the `custom` slug, returns `422 document_type_not_toggleable`.
+
+`GET /v1/autofillable-fields` lists the document fields a custom field can fill itself from, with each field's custom field type, group and document types.
+
+## Summary instructions
+
+**Summary instructions** are named instructions Coverbase follows when it writes assessment summaries. `GET /v1/summary-instructions` lists them, and `include_archived=true` includes archived ones. Each item has `id`, `name`, `is_archived`, `latest_revision_num`, `latest_version_id` and `prompt_text`.
+
+To add instructions, send `POST /v1/summary-instructions` with `name` and `prompt_text`. To save a new revision, send `POST /v1/summary-instructions/{prompt_id}/revisions` with `prompt_text` and the `expected_revision` you read. Coverbase returns `422` when someone saved a newer revision, and `409` while another change is in progress. Both writes need a key that belongs to an org admin.
+
+## Workflow steps
+
+`GET /v1/workflow-metadata` lists the building blocks for workflow steps: each action with what it reads and writes, each condition, each trigger with what it provides, and the item variables each for-each collection offers.
+
+`GET /v1/workflow-components` lists workflow steps. Pass `workflow_definition_id` to list one workflow's steps. `GET /v1/conditions?id=...` reads the conditions steps reference; repeat `id` for each.
+
+To add a step, send `POST /v1/workflow-components` with the workflow builder's step shape: `workflow_definition_id`, `name`, `trigger_event_types`, `parent_component_ids`, `conditions`, `condition_operator`, `action_data`, and optional `editor_position`, `color`, `watched_fields`, `draft` and `override_cycle_warning`. To change one, send `PATCH /v1/workflow-components/{component_id}` with the fields to change. Send `null` for `conditions`, `editor_position`, `color` or `watched_fields` to clear it. A step that reads supplier banking details also needs `supplier_banking:read:org`. A change that would make workflows trigger each other in a loop returns `422 invalid_workflow_component`.
+
+## Agent setup
+
+To create an agent, send `POST /v1/agents` with `name` and `instructions`, plus any of `playbooks`, `schedule_cron`, `timezone`, `approval_policy`, `owner_user_id` or `owner_department_id`, `enabled`, `triggers`, `daily_spend_cap_cents`, `max_runs_per_day`, `quiet_hours_start`, `quiet_hours_end` and `escalate_after_minutes`. When you name no owner, the key's user owns the agent. To change one, send `PATCH /v1/agents/{agent_id}` with the fields to change. Naming an owner person clears the owner group, and the other way round. An invalid setup returns `422 invalid_agent`.
+
+## Report audience and charts
+
+`GET /v1/reports/{report_id}/audience` lists the user groups a report is meant for. `PUT /v1/reports/{report_id}/audience` replaces them with `audiences`, a list of `department_id` and `is_home_default`. Naming a report a group's home dashboard moves that group's home there. Who can open the report does not change.
+
+`PATCH /v1/reports/{report_id}` also takes `layout`, `color_theme`, `density`, `duration_unit`, `date_range`, `filter` (a vendor filter rule group) and `scheduled_export_config`. Send `null` for `filter` or `scheduled_export_config` to clear it. Setting a schedule also needs `report:export:org`. When a report is filtered to the person viewing it, every scheduled recipient must be a member of your organization, or Coverbase returns `422 invalid_report`.
+
+`GET /v1/report-charts` lists saved charts, and `report_id` narrows it to one report. `GET /v1/report-charts/{chart_id}` returns one chart. To save a chart, send `POST /v1/report-charts` with `name`, `chart_config`, and optional `description`, `is_org_wide` and `report_id`. To change one, send `PATCH /v1/report-charts/{chart_id}`; `report_ids` replaces the full list of reports it appears on. To compute a chart's numbers without saving it, send `POST /v1/chart-statistics` with `chart_config` and an optional `time_zone`. A chart over a gated module also needs that module's read permission.
+
+`POST /v1/program-insights` returns the TPRM program overview (KPIs, the residual risk heat grid and the pre-contract pipeline) for the level and slicers you send. It returns `404` when the TPRM lifecycle is not enabled.
+
 ## Errors
 
 Most errors return a `detail` object with a `code` and a `message`. A missing permission returns `403` with `detail` set to the string `Missing required permission.`
@@ -470,6 +538,17 @@ Most errors return a `detail` object with a `code` and a `message`. A missing pe
 | `404` | `workflow_template_not_found` | No workflow template has that slug. |
 | `404` | `workflow_schedule_not_found` | No schedule with that ID exists in your organization. |
 | `409` | `workflow_schedule_not_pending` | The schedule already fired or was canceled. |
+| `422` | `invalid_org_settings` | An organization setting has an invalid value. |
+| `422` | `document_type_not_toggleable` | The type is always on, or is the generic custom slug. |
+| `422` | `invalid_report` | A report filter does not compile, or a schedule recipient is not a member. |
+| `404` | `user_group_not_found` | An audience names a user group that does not exist. |
+| `422` | `invalid_summary_instructions` | The instructions are blank or a newer revision exists. |
+| `409` | `summary_instructions_busy` | Another change to the instructions is in progress. |
+| `422` | `invalid_workflow_component` | The step is not valid or would make workflows loop. |
+| `404` | `workflow_component_not_found` | No step with that ID exists in your organization. |
+| `422` | `invalid_chart` | The chart is not valid. |
+| `404` | `chart_not_found` | No chart with that ID exists in your organization. |
+| `422` | `invalid_filter` | A chart filter does not compile. |
 | `422` | `invalid_rule` | A rule value does not fit its configuration type. |
 | `422` | `invalid_agent` | The agent template cannot be used. The `message` says why. |
 | `422` | `invalid_tool_policy` | A tool is unknown or locked. |
