@@ -186,6 +186,16 @@ Screening has its own permission, separate from the vendor record, so the person
 
 There is no create or delete. Matches come from the provider and are closed by decision, never removed.
 
+## Work screening from MCP or the API
+
+You can read the queue, screen vendors and record decisions from an MCP client, and read and screen with an API key. An MCP client reads with `query_vendors(kind="screening")`, `query_vendors(kind="screening_matches")` and `query_vendors(kind="screening_match")`. It screens with `mutate(entity="screening", action=...)` (`rescreen_vendor`, `enroll_person`, `ad_hoc`) and records a decision with `mutate(entity="screening_match", action="disposition")`.
+
+The API routes are `GET /v1/vendors/{vendor_id}/screening`, `POST /v1/screening-matches/query`, `POST /v1/vendors/{vendor_id}/screening/rescreen`, `POST /v1/vendors/{vendor_id}/screening/people` and `POST /v1/screening/ad-hoc`. See [Screening](/api-reference/vendor-administration#screening).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#vendors-services-and-documents) lists every field.
+
+These routes need `screening_match` permission, which API keys do not hold, so use a key created by a person whose role holds it. Even then, a key cannot decide a match. Clearing a match is a decision for a person.
+
 ## Troubleshooting
 
 | Symptom | Fix |

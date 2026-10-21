@@ -194,6 +194,14 @@ Hover either mark to read its date. A lane with no notice date says so where the
 
 For the toggle and the rest of the list page, see the [Contracts workspace guide](/user-guides/contracts-workspace).
 
+## Manage reminders from MCP or the API
+
+You can read and change reminder rules and alert settings from an MCP client, and read contract dates with an API key. An MCP client reads with `query_platform(kind="rules")` and `query_engagements_contracts(kind="contract_alert_settings")`. It changes rules with `mutate(entity="rule", action=...)` (`create`, `update`), the quiet hours and weekly cap with `mutate(entity="contract_alert_settings", action="update")`, and stops alerts for one contract with `mutate(entity="contract", action="set_alert_suppression")`.
+
+The reminder rule routes are `/v1/rules`. See [Reminder rules](/api-reference/platform-configuration#reminder-rules). They need organization settings permission, which API keys do not hold, so use a key created by a person whose role holds it. Contract dates come back on `GET /v1/contract-records/{contract_id}`.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#platform-settings) lists every field.
+
 ## Troubleshooting
 
 | What you see | What is happening |

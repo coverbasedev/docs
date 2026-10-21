@@ -319,6 +319,16 @@ Reassignment and routing to a group instead of a person are covered in [Assignme
 
 How roles are assigned is in [Permissions and roles](/user-guides/permissions-and-roles). A template only appears in the library when your role can read the records its trigger uses; the rule is spelled out in [Workflow templates](/user-guides/workflow-templates#which-modules-a-template-needs).
 
+## Build workflows from MCP or the API
+
+You can read, edit, run and schedule workflows from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_platform(kind="workflows")`, `query_platform(kind="workflow_definition")`, `query_platform(kind="workflow_components")`, `query_platform(kind="workflow_metadata")` and `query_platform(kind="workflow_runs")`. It changes things with `mutate(entity="workflow", action="update")`, `mutate(entity="workflow_component", action=...)` (`create`, `update`, `archive`) and `mutate(entity="workflow_schedule", action="cancel")`.
+
+The API routes are the `/v1/workflow-definitions` and `/v1/workflow-components` routes on the [Platform configuration API](/api-reference/platform-configuration#workflow-definitions) page, and `POST /v1/workflows/{workflow_name}/run` and the run reads on the [Workflows API](/api-reference/workflows) page.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#platform-settings) lists every field.
+
+An API key cannot archive a workflow. A signed-in user does that in the dashboard or through MCP.
+
 ## Troubleshooting
 
 | What you see | What is happening |

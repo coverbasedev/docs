@@ -385,6 +385,16 @@ A bank change's webhook fires on approval, not on submission. If you are testing
 | An error that the bank or branch code does not match the IBAN | The two were taken from different documents. Have the supplier confirm which is current, usually the IBAN, and correct the other. |
 | A warning that the account number is not in the IBAN | Usually the same cause. Some countries' account numbers include digits the IBAN stores elsewhere, which is why this one only warns. |
 
+## Work supplier records from MCP or the API
+
+You can read and update supplier records from an MCP client or with an API key. An MCP client reads with `query_vendors(kind="supplier_profile")`, `query_vendors(kind="supplier_changes")` and `query_platform(kind="bank_change_reviews")`. It writes with `mutate(entity="supplier_profile", action="update")`, `mutate(entity="site", action=...)`, `mutate(entity="diversity_record", action="create")` and `mutate(entity="bank_account", action="retire")`.
+
+The API routes are the bank account, site, tax registration, diversity, contact, update request and legal entity routes under `/v1/vendors/{vendor_id}`, and `GET /v1/vendors/changes`. See the [Supplier Profile API](/api-reference/supplier-profile).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#vendors-services-and-documents) lists every field.
+
+An API key can request a bank change but cannot approve one, apply a supplier's contact changes or change Know Your Supplier settings. Full bank and tax identifiers need the `banking:read` key scope.
+
 ## Where to next
 
 <CardGroup cols={2}>

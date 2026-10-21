@@ -330,6 +330,16 @@ Dark web monitoring has its own permission, listed as **Dark web exposure** in t
 
 Exposures follow vendor access. A role that can read only some vendors sees those vendors' exposures, plus every exposure about your organization. The counters at the top of the queue still count the whole organization. Custom roles are built in [Permissions and roles](/user-guides/permissions-and-roles).
 
+## Work dark web monitoring from MCP or the API
+
+You can read the queue, triage exposures and tune the watchlist from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_platform(kind="darkweb_summary")`, `query_platform(kind="darkweb_exposures")`, `query_platform(kind="darkweb_watchlist")` and `query_platform(kind="darkweb_sweeps")`. It writes with `mutate(entity="darkweb_exposure", action=...)` (`review`, `escalate`), `mutate(entity="darkweb_watchlist", action=...)`, `mutate(entity="darkweb_config", action="update")` and `mutate(entity="darkweb", action="sweep")`.
+
+The API routes sit under `/v1/dark-web`. See [Manage dark web monitoring](/api-reference/monitoring-and-insights#manage-dark-web-monitoring).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#monitoring-insights-and-inspect) lists every field.
+
+Every route needs `dark_web_exposure` permission, which API keys do not hold, so use a key created by a person whose role holds it. Even then, a key cannot remove a watchlist identifier or reset a playbook. Recording consent and sending an exposure to Legal with a case never go through MCP or the API. Do those in the dashboard.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

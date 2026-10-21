@@ -86,6 +86,16 @@ On the **Findings** list, select findings and choose **Record decision**. Pick t
 
 Findings that are not at that step, or whose step is not yours, are skipped and stay selected. The summary reports each group, for example "12 findings accepted, 3 need a decision", so you can act on the rest next.
 
+## Work the chain from MCP or the API
+
+You can read a finding's path and record steps from an MCP client, and read paths and rules with an API key. An MCP client reads with `query_findings(kind="decision_path")`, `query_findings(kind="acceptance_rules")` and `query_findings(kind="decision_bulk_job")`. It records a step with `mutate(entity="finding", action="record_decision")` or `mutate(entity="finding", action="bulk_record_decision")`, and edits rules with `mutate(entity="finding_acceptance_rule", action=...)`.
+
+With an API key, use `GET /v1/findings/{finding_id}/decision-path` and the `/v1/finding-acceptance-rules` routes. See [Finding acceptance rules](/api-reference/risk#finding-acceptance-rules). Listing rules needs only `finding:read:org`. Changing them needs organization settings permission, which API keys do not hold, so use a key created by a person whose role holds it.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#findings-commitments-and-obligations) lists every field.
+
+The API has no route to record a step. Each step is a decision for the person it routes to.
+
 ## Troubleshooting
 
 | What you see | Cause | Fix |

@@ -316,6 +316,16 @@ Two notification types live under the **Risk** category in your personal notific
 
 Each email carries a button that opens the risk. Delivery settings are covered in [Email and notifications](/user-guides/email-notifications#who-receives-what).
 
+## Work the register from MCP or the API
+
+You can keep the register, run the agent, simulate and read the report from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `get_report(report_name=...)` (`risk_register_query`, `risk_detail`, `risk_matrix`, `risk_chain`, `risk_exposure`, `risk_board_report`). It writes with `mutate(entity="risk", action=...)`, `mutate(entity="risk_scenario", action=...)`, `mutate(entity="risk_chain", action="rebuild")` and `mutate(entity="risk_narrative", action="save")`.
+
+The API routes sit under `/v1/risks`, `/v1/risk-scenarios` and `/v1/risk-chain`, with `GET /v1/risk-exposure` and `GET /v1/risk-report`. See the [Risk API](/api-reference/risk#create-a-risk).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#risk-register-and-risk-settings) lists every field.
+
+Archiving a risk needs `risk:archive:org`, which service accounts do not hold. Changing the module configuration with `PATCH /v1/risk-config` needs organization settings permission, so use a key created by a person whose role holds it.
+
 ## Troubleshooting
 
 | What you see | What is happening |

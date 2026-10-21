@@ -142,6 +142,16 @@ A change applies the next time an assessment's residual risk is calculated. Comp
 
 On a submitted inherent risk questionnaire, **Why This Rating** explains the score: the answers that moved it most, whether the highest domain rated it (**Rated by the highest domain**) or a floor lifted it (**lifted to ... by the ... floor**), and any answers flagged for review. Answer options can be flagged so the reviewer's attention goes to them.
 
+## Configure methodology from MCP or the API
+
+You can read and change the methodology from an MCP client or with an API key, as well as on this page. An MCP client reads with `query_platform(kind=...)` (`risk_methodology`, `risk_domains`, `reviewer_matrix_rules`, `escalation_rules`, `vendor_tier_rule`). It writes with `mutate(entity="risk_methodology", action="update")`, `mutate(entity="risk_domain", action=...)`, `mutate(entity="reviewer_matrix_rule", action=...)`, `mutate(entity="escalation_rule", action=...)` and `mutate(entity="vendor_tier_rule", action="update")`.
+
+The API routes are `/v1/risk-methodology`, `/v1/risk-domains`, `/v1/reviewer-matrix-rules`, `/v1/work-queue-escalation-rules` and `/v1/vendor-tier-rule`. See [Change configuration and methodology](/api-reference/risk#change-configuration-and-methodology).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#risk-register-and-risk-settings) lists every field.
+
+Risk domains need `risk` permission, which API keys hold. The other routes need organization settings permission, which they do not, so use a key created by a person whose role holds it. A rating override that needs approval is a change request. A member of the approver group decides it with `mutate(entity="change_request", action="decide")`. The API has no change request routes.
+
 ## Troubleshooting
 
 | What you see | Cause | Fix |

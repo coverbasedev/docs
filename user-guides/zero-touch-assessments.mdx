@@ -551,10 +551,9 @@ You can do every task in this guide from an MCP client or with an API key, as we
 
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The write itself carries `confirm: true` inside `data`. See [Roles and permissions](/mcp/permissions#write-protection).
 
-An API key has two limits:
+An API key cannot archive a run or record a run's outcome. A review with `action` set to `archived`, or with an `approval_option_id`, returns `403` with code `api_key_not_allowed`. A signed-in user makes those decisions.
 
-- It cannot archive a run or record a run's outcome. A review with `action` set to `archived`, or with an `approval_option_id`, returns `403` with code `api_key_not_allowed`. A signed-in user makes those decisions.
-- It cannot add shipped templates or choose a template, because both need `control_set:create:org` and API keys do not hold it today. Use the dashboard or an MCP client signed in as a user with that permission.
+Adding shipped templates and choosing a template need `control_set:create:org`. API keys hold it, so a key can do both.
 
 ### Set up what runs evaluate
 
@@ -578,7 +577,7 @@ A run evaluates every control set marked Zero Touch eligible. To make one of you
 | List the documents a run can use for each vendor | `query_assessments(kind="zero_touch_documents")` | [`GET /v1/zero-touch-assessments/documents`](/api-reference/zero-touch-assessments#list-documents-a-run-can-use) |
 | Launch one run | `mutate(entity="assessment", action="launch_zero_touch")` | [`POST /v1/zero-touch-assessments`](/api-reference/zero-touch-assessments#launch-a-run) |
 | Launch runs for many vendors and prospects | `mutate(entity="assessment", action="launch_zero_touch_bulk")` | [`POST /v1/zero-touch-assessments/bulk`](/api-reference/zero-touch-assessments#launch-in-bulk) |
-| Move a prospect into the portfolio at the Onboarding status | `mutate(entity="vendor", action="promote_prospect")` | Not available |
+| Move a prospect into the portfolio at the Onboarding status | `mutate(entity="vendor", action="promote_prospect")` | [`POST /v1/vendors/{vendor_id}/promote-prospect`](/api-reference/zero-touch-assessments#promote-a-prospect) |
 
 A bulk launch returns the runs that started and, separately, the vendors that failed. Read both lists, because a partial success still returns `201`.
 

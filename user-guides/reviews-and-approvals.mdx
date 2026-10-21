@@ -127,7 +127,7 @@ Coverbase keeps every round rather than overwriting the last one. A returned ite
 ```text
 Round 1  submitted 12 Mar    reviewed 14 Mar   Revision requested
          "SOC 2 is for the parent entity, not the contracting entity.
-          Please provide the report covering Acme UK Ltd."
+          Send the report covering Acme UK Ltd."
 Round 2  submitted 21 Mar    reviewed 22 Mar   Revision requested
          "Report received. Section 4 exceptions have no management response."
 Round 3  submitted 28 Mar    reviewed 28 Mar   Accepted
@@ -162,6 +162,16 @@ Every transition above is attributable.
 - Role and permission changes that affect who could approve are logged on the role itself and in the organization audit trail.
 
 All of it is readable through the [audit API](/security/audit-trails) and exportable.
+
+## Work reviews from MCP or the API
+
+You can create and update reviews and manage outcomes from an MCP client, and read reviews and manage outcomes with an API key. An MCP client reads with `query_assessments(kind="reviews")`, `query_assessments(kind="review_detail")` and `query_assessments(kind="approval_options")`. It writes with `mutate(entity="review", action=...)` (`create`, `update`, `archive`) and `mutate(entity="approval_option", action=...)` (`create`, `update`, `archive`).
+
+With an API key, use `GET /v1/reviews`, `GET /v1/reviews/{review_id}` and the `/v1/approval-options` routes. See [Reviews](/api-reference/assessment-administration#reviews) and [Approval options](/api-reference/assessment-administration#approval-options).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#assessments-evals-and-follow-ups) lists every field.
+
+The API has no route to record a review decision or complete an assessment. A gate decision belongs to the person it is assigned to.
 
 ## Related
 

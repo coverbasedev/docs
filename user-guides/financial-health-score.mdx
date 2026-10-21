@@ -171,7 +171,7 @@ Watch for a step that coincides with a change of confidence tier. That is us get
 
 ## The financial vitals
 
-Open **Financial Figures**. When the vendor files statements, the figures read from its annual report come first, then the vitals: the measured figures behind the score, grouped the way a credit reviewer reads them: scale and growth, profitability and cash, liquidity and leverage, capital and ownership, corporate standing.
+Open **Financial Figures**. When the vendor files statements, the figures read from its annual report come first, then the vitals: the measured figures behind the score, grouped the way a credit reviewer reads them: scale and growth, profitability and cash, liquidity and debt, capital and ownership, corporate standing.
 
 Fields no source reported are left out rather than shown as zero. For a private company, "not reported" and "zero" are different facts, and the page will not conflate them.
 
@@ -212,6 +212,14 @@ The documents your organization uploaded for the analysis are listed in the same
 The score feeds the Financial health component of a [Zero Touch Score](/user-guides/zero-touch-assessments), carrying its tier through as the component's qualifier.
 
 If a vendor has no Financial Health Score, the Zero Touch component is left out of the composite rather than scored as zero. A vendor with no filed financials has not failed the component; it has no component.
+
+## Read financial health from MCP or the API
+
+You can read the score and the stability rating from an MCP client or with an API key. An MCP client reads with `query_vendors(kind="financial_health")`, `query_vendors(kind="financial_stability")` and `query_vendors(kind="financial_stability_peers")`, and queues a peer refresh with `mutate(entity="financial_stability_peers", action="refresh")`.
+
+With an API key, use `GET /v1/vendors/{vendor_id}/financial-stability`, `GET .../financial-stability/peers` and `POST .../financial-stability/peers/refresh`. See [Corporate family and financial stability](/api-reference/vendor-administration#corporate-family-and-financial-stability). The fact sheet from `GET /v1/vendors/{vendor_id}/fact-sheet` carries a financials section.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#vendors-services-and-documents) lists every field.
 
 ## Troubleshooting
 

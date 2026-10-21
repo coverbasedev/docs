@@ -99,6 +99,16 @@ A common financial-services arrangement:
 3. **Every SME sets their own out-of-office window** at the start of leave. The rotation steps over them for the duration, with no admin ticket and no gate waiting on an empty desk.
 4. **The `no eligible members` outcome is alerted on**, so a domain that is entirely out during a holiday period surfaces as an operational problem rather than as a quiet backlog.
 
+## Manage assignments from MCP or the API
+
+You can manage user groups and route work from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_platform(kind="departments")`, `query_platform(kind="department_detail")`, `query_platform(kind="work_queue")` and `query_platform(kind="work_queue_item")`. It changes user groups with `mutate(entity="department", action=...)` (`create`, `update`, `archive`, `add_member`, `update_member`, `remove_member`) and work with `mutate(entity="work_queue_item", action=...)` (`create`, `update`, `complete`, `bulk_reassign` and the rest). An out-of-office window is an `update_member` change.
+
+The API routes sit under `/v1/departments` and `/v1/work-queue-items`. See [Departments](/api-reference/vendor-administration#departments) and [Work queue items](/api-reference/risk#work-queue-items).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#platform-settings) lists every field.
+
+An API key cannot archive a user group or remove a member from one. The assignment log, `query_platform(kind="work_queue_routing_events")` or `GET /v1/work-queue-items/{work_queue_item_id}/routing-events`, needs `org_settings:read:org`, which API keys do not hold.
+
 ## Related
 
 <CardGroup cols={2}>

@@ -145,6 +145,14 @@ Two more cards appear when the requester filled in the matching intake steps.
 - **Budget.** Shows the request amount, its amortization and **First year's draw** against the synced budget line's remaining balance, with **Within budget** or **Exceeds budget**. Coverbase works this out from the synced line, not from figures the requester typed. A line the procurement system reports no committed figure for shows **Unknown**. If the requester asked for a budget exception, **Approve exception** or **Decline exception**, with an optional **Decision rationale**.
 - **Material Change.** For an existing vendor, lists what the requester flagged as changed, such as a new offshore location, a new AI use case or a new subprocessor, with **Needs IRQ refresh**. **Refresh IRQ** opens an IRQ refresh on the engagement's monitoring plan for its Transaction Owner to answer. See [IRQ refresh](/user-guides/monitoring-plans#step-5-refresh-an-irq).
 
+## Run the Front Door from MCP
+
+You can work the Front Door from an MCP client, as well as in the dashboard. An MCP client reads with `query_questionnaires(kind="intake_triage")` and `query_questionnaires(kind="intake_triage_config")`. It writes with `mutate(entity="intake_triage", action=...)` (`set_identifiers`, `set_disposition`, `sign_off`, `decline_signoff`, `override_block`, `send_irqs` and the rest) and `mutate(entity="intake_triage_config", action="update")`.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#questionnaires-portals-and-intake) lists every field.
+
+The public API has no Front Door routes, so an API key cannot do any of this.
+
 ## Troubleshooting
 
 | What you see | Cause | Fix |

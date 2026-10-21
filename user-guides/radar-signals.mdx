@@ -314,7 +314,7 @@ Adding, editing and archiving a source need `radar_detector:update:org`. Pulling
 | --- | --- | --- |
 | List your detectors | `query_radar(kind="detectors")` | [`GET /v1/radar/detectors`](/api-reference/radar#list-detectors) |
 | Read one detector's configuration | `query_radar(kind="detector_detail")` | `GET /v1/radar/detectors/{detector_id}` |
-| See which detectors watch a vendor | `query_radar(kind="detectors_for_vendor")` | Not available |
+| See which detectors watch a vendor | `query_radar(kind="detectors_for_vendor")` | [`GET /v1/radar/vendors/{vendor_id}/detectors`](/api-reference/radar#list-a-vendors-detectors) |
 | Create a detector | `mutate(entity="radar_detector", action="create")` | `POST /v1/radar/detectors` |
 | Edit a detector | `mutate(entity="radar_detector", action="update")` | `PATCH /v1/radar/detectors/{detector_id}` |
 | Back-test a detector over past events | `mutate(entity="radar_detector", action="test")` | `POST /v1/radar/detectors/{detector_id}/tests` |
@@ -323,7 +323,7 @@ Adding, editing and archiving a source need `radar_detector:update:org`. Pulling
 | Label back-test candidates so the detector learns | `mutate(entity="radar_detector", action="teach")` | `POST /v1/radar/detectors/{detector_id}/tests/{test_run_id}/teach` |
 | List a detector's learning examples | `query_radar(kind="dismissal_examples")` | `GET /v1/radar/detectors/{detector_id}/dismissal-examples` |
 | Add, edit or remove a learning example | `mutate(entity="radar_dismissal_example", action="create")`, `action="update"`, `action="delete"` | `POST /v1/radar/detectors/{detector_id}/dismissal-examples`, `PATCH` and `DELETE /v1/radar/dismissal-examples/{example_id}` |
-| Get a suggested rewrite of a detector's instructions | `query_radar(kind="suggest_detector_instructions")` | Not available |
+| Get a suggested rewrite of a detector's instructions | `query_radar(kind="suggest_detector_instructions")` | [`POST /v1/radar/detectors/{detector_id}/suggest-instructions`](/api-reference/radar#suggest-instructions) |
 
 A suggested rewrite saves nothing. To use it, send it as a detector update.
 
@@ -351,10 +351,10 @@ Through MCP, one dismiss call takes several alerts in `alert_ids`. Each person m
 | Restore dismissed signals | `mutate(entity="radar_signal", action="undismiss")` | [`POST /v1/radar/signals/undismiss`](/api-reference/radar#restore-signals) |
 | Acknowledge a signal | `mutate(entity="radar_signal", action="acknowledge")` | [`POST /v1/radar/signals/{signal_id}/acknowledge`](/api-reference/radar#acknowledge-a-signal) |
 | Accept, skip or replace the proposed risk impact | `mutate(entity="radar_signal", action="decide_risk_impact")` | [`POST /v1/radar/signals/risk-impact-decision`](/api-reference/radar#decide-a-risk-impact) |
-| Rewrite a signal's title and summary from its alerts | `mutate(entity="radar_signal", action="regenerate_summary")` | Not available |
+| Rewrite a signal's title and summary from its alerts | `mutate(entity="radar_signal", action="regenerate_summary")` | [`POST /v1/radar/signals/{signal_id}/regenerate-summary`](/api-reference/radar#regenerate-a-signals-summary) |
 | Rename an event or link more vendors to it | `mutate(entity="radar_event", action="update")` | [`PATCH /v1/radar/events/{event_id}`](/api-reference/radar#update-a-radar-event) |
 | Read an event's updates | `query_radar(kind="event_updates")` | [`GET /v1/radar/events/{event_id}/updates`](/api-reference/radar#list-an-events-updates) |
-| Find out why an event did not reach you | `query_radar(kind="event_diagnostics")` | Not available |
+| Find out why an event did not reach you | `query_radar(kind="event_diagnostics")` | [`GET /v1/radar/events/{event_id}/diagnostics`](/api-reference/radar#diagnose-an-event) |
 
 Acknowledging a signal proposes a residual-risk change for the affected vendors. The change waits until you decide it with `decide_risk_impact`. Rewriting a summary replaces any title or summary your organization edited by hand.
 
@@ -365,7 +365,7 @@ Acknowledging a signal proposes a residual-risk change for the affected vendors.
 | List cases | `query_radar(kind="cases")` | [`GET /v1/radar/cases`](/api-reference/radar#list-cases) |
 | Read one case | `query_radar(kind="case_detail")` | [`GET /v1/radar/cases/{case_id}`](/api-reference/radar#retrieve-a-case) |
 | Open a case | `mutate(entity="case", action="create")` | [`POST /v1/radar/cases`](/api-reference/radar#create-a-case) |
-| Draft a case description from its signals | `query_radar(kind="case_description_suggestion")` | Not available |
+| Draft a case description from its signals | `query_radar(kind="case_description_suggestion")` | [`POST /v1/radar/cases/{case_id}/description-suggestion`](/api-reference/radar#draft-a-case-description) |
 | Rename, describe, assign, close or reopen a case | `mutate(entity="case", action="update")` | [`PATCH /v1/radar/cases/{case_id}`](/api-reference/radar#update-a-case) |
 | Archive a case | `mutate(entity="case", action="archive")` | Not available with an API key |
 | Link signals to a case | `mutate(entity="case", action="add_signals")` | [`POST /v1/radar/cases/{case_id}/signals`](/api-reference/radar#link-signals-to-a-case) |
@@ -381,7 +381,7 @@ Closing a case as `resolved` or `wont_fix` raises the residual risk of the case'
 
 Three case tasks stay in the dashboard: emailing a vendor from a thread, importing vendors from a spreadsheet, and sourcing missing contacts.
 
-Triage writes need `radar_alert:update:org`. Dismissing alerts or signals and archiving a case or a thread also need `radar_alert:archive:org`.
+Triage writes need `radar_alert:update:org`. Through MCP, dismissing alerts or signals and archiving a case or a thread also need `radar_alert:archive:org`. The API dismiss routes need only `radar_alert:update:org`, which API keys hold.
 
 ## Troubleshooting
 

@@ -131,6 +131,16 @@ The address on the register is the vendor's legal address, not where its people 
 
 A **dissolved** status on a vendor you are paying needs attention. It usually means a restructure moved the business to another entity, or the company on your contract no longer exists. Ask procurement which legal entity is on the current contract, and compare it to the registered name on this page.
 
+## Correct the entity from MCP or the API
+
+You can read and correct a vendor's legal entity from an MCP client or with an API key, as well as on the vendor page. An MCP client reads with `query_vendors(kind="company_registration")` and previews a correction with `query_vendors(kind="company_registration_proposal")`. It writes with `mutate(entity="company_registration", action=...)` (`confirm`, `undo`, `rematch`).
+
+The API routes are `POST /v1/vendors/{vendor_id}/company-registration/proposal`, `.../confirm`, `.../undo` and `.../rematch`. See [Company registration](/api-reference/vendor-administration#company-registration). Parent links the registers suggest are read with `query_vendors(kind="parent_proposals")` or `GET /v1/vendor-parent-proposals`.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#vendors-services-and-documents) lists every field.
+
+An API key cannot decide a parent proposal. A signed-in user does that.
+
 ## Troubleshooting
 
 | Symptom | Fix |

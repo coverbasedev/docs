@@ -85,6 +85,16 @@ The **Workflows** section of the dashboard is a no-code designer. You compose a 
 
 Nothing about the orchestration layer is locked after go-live. A workflow can be edited, disabled, cloned or replaced by an admin at any time, and a running instance can be interrupted or redirected. See [Workflow engine](/integrations/workflow-engine).
 
+## Configure from MCP or the API
+
+You can change most of this from an MCP client or with an API key, as well as in Configuration. An MCP client reads with `query_platform(kind=...)` (`custom_fields`, `custom_field_sections`, `statuses`, `tags`, `scales`, `risk_domains`) and `query_assessments(kind="approval_options")`. It writes with `mutate(entity="custom_field", action=...)`, `mutate(entity="status", action=...)`, `mutate(entity="approval_option", action=...)`, `mutate(entity="scale", action=...)`, `mutate(entity="risk_domain", action=...)` and `mutate(entity="tag", action=...)`.
+
+The API routes are `/v1/custom-fields`, `/v1/custom-field-sections`, `/v1/statuses`, `/v1/approval-options`, `/v1/scales`, `/v1/risk-domains` and `/v1/tags`. See the [Custom Fields API](/api-reference/custom-fields) and the [Platform configuration API](/api-reference/platform-configuration).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#platform-settings) lists every field.
+
+The status routes need organization settings permission. API keys do not hold it, so use a key created by a person whose role holds it. An API key cannot archive a status or a custom field section.
+
 ## What still involves Coverbase
 
 Where the line sits between self-serve and Coverbase-assisted work, for when you are planning a program:

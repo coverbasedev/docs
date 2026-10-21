@@ -110,6 +110,16 @@ When the run finishes, the clause set says how many of the document's clauses it
 
 An imported playbook is created inactive like any other generated set. Under the default scoring, a vendor whose language matches your fallback reads as **Needs review**.
 
+## Run an extraction from MCP or the API
+
+You can start an extraction and follow it from an MCP client or with an API key, as well as in the dashboard. An MCP client starts one with `mutate(entity="clause_set", action="extract_from_documents")` and reads its progress with `query_engagements_contracts(kind="baseline_extraction")`. The API routes are `POST /v1/clause-set-baseline-extractions` and `GET /v1/clause-set-baseline-extractions/{run_id}`. See [Build a clause set from documents](/api-reference/contract-administration#build-a-clause-set-from-documents).
+
+To finish the set, edit its reference clauses with `mutate(entity="reference_clause", action="save")` or the `/v1/clause-sets/{clause_set_id}/reference-clauses` routes.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#contracts-engagements-and-procurement) lists every field.
+
+An API key cannot archive a clause set or delete a reference clause. A signed-in user does that.
+
 ## Troubleshooting
 
 | What you see | What it means |
