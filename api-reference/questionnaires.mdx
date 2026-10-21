@@ -28,6 +28,10 @@ All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token
 | `PUT` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary` | Update questionnaires |
 | `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/answer-review` | Read questionnaires |
 | `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/questions/{question_id}/versions` | Read questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill-suggestions` | Read questionnaires |
+| `GET` | `/v1/questions/{question_id}/autofill-mappings` | Read questionnaires |
+| `POST` | `/v1/questions/{question_id}/autofill-mappings` | Update questionnaires |
+| `DELETE` | `/v1/questions/{question_id}/autofill-mappings/{mapping_id}` | Update questionnaires (not API keys) |
 | `POST` | `/v1/autofill-suggestions/{suggestion_id}/decision` | Update vendors (not API keys) |
 | `POST` | `/v1/emails/drafts` | Update the record the email is about |
 | `PATCH` | `/v1/emails/drafts/{email_id}` | Update the record the email is about |
@@ -205,6 +209,30 @@ To replace the summary yourself, send `PUT /v1/questionnaires/{questionnaire_id}
 `GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/answer-review` returns `enabled`, `carried_forward` (each answer copied from an earlier submission, with `carry_forward_state` and `carried_forward_from_id`), and `edit_reviews` (each reviewer change with `original_answer_text`, `edited_answer_text`, and the vendor's `status`). When your org does not use answer review, `enabled` is false and the lists are empty.
 
 `GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/questions/{question_id}/versions` returns every version of one answer, including replaced ones (`is_archived` is true). A question with no answer returns `404` with code `answer_not_found`.
+
+## What a question writes to the record
+
+An autofill mapping says what a question's answer writes to the vendor, service, engagement, or assessment record when the submission is approved.
+
+`GET /v1/questions/{question_id}/autofill-mappings` lists a question's mappings. Each has `id`, `mode`, `target_object`, `target_property`, `custom_field_config_id`, `record_field_name`, `instruction`, `requires_review`, `prefills_answer`, and `option_rules`.
+
+To add a mapping, or replace the one named by `id`, send `POST /v1/questions/{question_id}/autofill-mappings`. It returns `201` with the mapping.
+
+<ParamField body="target_property" type="string" required>`custom_field`, `record_field`, `tag`, `contact`, or `location`.</ParamField>
+<ParamField body="target_object" type="string" default="vendor">`vendor`, `service`, `engagement`, or `assessment`.</ParamField>
+<ParamField body="mode" type="string" default="fixed">`fixed` writes by option rule or copies the answer. `ai` asks the model, and needs `instruction`.</ParamField>
+<ParamField body="custom_field_config_id" type="string">The custom field, for a `custom_field` target.</ParamField>
+<ParamField body="record_field_name" type="string">The record column, for a `record_field` target.</ParamField>
+<ParamField body="instruction" type="string">What the model should write, for `ai` mode.</ParamField>
+<ParamField body="requires_review" type="boolean" default="true">Whether a reviewer confirms the change before approval writes it.</ParamField>
+<ParamField body="prefills_answer" type="boolean" default="false">Also answer the question from the record.</ParamField>
+<ParamField body="option_rules" type="object[]">For `fixed` mode on a select question: each with `option_perma_id` and either `tag_id` or `literal_value`.</ParamField>
+
+A mapping that would save and then write nothing returns `400` with code `mapping_refused` and the reason in `message`.
+
+To remove a mapping, send `DELETE /v1/questions/{question_id}/autofill-mappings/{mapping_id}`. It returns `204`. API keys get `403` with code `api_key_not_allowed`.
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill-suggestions` lists the changes a submission proposes, each with `id`, `target_object`, `target_property`, `values`, `rejected_values`, and `decision`.
 
 ## Decide a proposed record change
 
