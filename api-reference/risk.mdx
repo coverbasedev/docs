@@ -70,6 +70,11 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `POST` | `/v1/work-queue-items` | `assessment:update:org` |
 | `PATCH` | `/v1/work-queue-items/{work_queue_item_id}` | `assessment:update:org` |
 | `POST` | `/v1/work-queue-items/reassign` | `assessment:update:org` |
+| `GET` | `/v1/finding-acceptance-rules` | `finding:read:org` |
+| `POST` | `/v1/finding-acceptance-rules` | `org_settings:update:org` |
+| `PUT` | `/v1/finding-acceptance-rules/order` | `org_settings:update:org` |
+| `PUT` | `/v1/finding-acceptance-rules/{rule_id}` | `org_settings:update:org` |
+| `GET` | `/v1/findings/{finding_id}/decision-path` | `finding:read:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -457,3 +462,17 @@ The work queue holds tasks assigned to people, such as reviewing an assessment. 
 `PATCH /v1/work-queue-items/{work_queue_item_id}` edits an item. Fields you omit keep their value, and an explicit null clears `due_at` or `assessment_id`. A new assignee is notified.
 
 `POST /v1/work-queue-items/reassign` moves `work_queue_item_ids` to `assignee_id`, a user or a round-robin user group. A round-robin group spreads the items across its members. An assign-to-all group returns `422`. The response gives `reassigned_count` and the assignee.
+
+## Finding acceptance rules
+
+Acceptance rules decide who recommends, who decides and who approves when a finding's risk is accepted. The first rule that matches a finding's severity routes it. The rule endpoints need the TPRM lifecycle and return `404` with the code `not_enabled` otherwise.
+
+`GET /v1/finding-acceptance-rules` lists the rules in the order they are checked.
+
+`POST /v1/finding-acceptance-rules` returns `201 Created` with a new rule. Send `name`, and optionally `match_level_ids` (severity level IDs; empty matches every severity), `recommender_department_id`, `decider_department_id`, `extended_acceptance_days` with `extended_approver_user_id`, and `sort_order`. Without `sort_order` the rule is checked last. A user group or approver that does not exist, or a threshold sent without an approver, returns `400` with the code `invalid_rule`.
+
+`PUT /v1/finding-acceptance-rules/{rule_id}` replaces a rule with the same body. A field you leave out is cleared, so send every value the rule should keep. `PUT /v1/finding-acceptance-rules/order` takes `rule_ids`, every live rule in the new order.
+
+`GET /v1/findings/{finding_id}/decision-path` returns where a finding stands: `phase`, the routing rule in `route`, the `decisions` so far, and `can_recommend`, `can_decide` and `can_approve` for the key's user. Without the TPRM lifecycle it returns `enabled: false`.
+
+Recording a decision and accepting a risk stay with a signed-in user in the app, and archiving a rule does too. The API does not offer them.
