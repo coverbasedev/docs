@@ -46,48 +46,22 @@ Retrieves the data for the specified report. Authenticate with an `ak_` API key 
   For `radar_run` reports only: include runs that started before this Unix timestamp (seconds). Ignored for other base objects.
 </ParamField>
 
+<ParamField query="assessment_id" type="string">
+  For `eval` reports only: return just the evaluations of this assessment. `total_count` reflects the filtered result. Sending it for any other report returns `400`.
+</ParamField>
+
 A negative `limit` or `offset` returns `400`. An unknown slug returns `404` with `{"detail": "Export report not found"}`.
 
-These are the only filters the endpoint accepts. Any other query parameter is ignored and the full report comes back. A column in the report, such as **Assessment ID**, is not a filter: `?assessment_id=...` returns every row, not one assessment's rows.
+These are the only filters the endpoint accepts. Any other query parameter is ignored. A column in the report is not a filter unless it is listed above.
 
-### Get one assessment's rows
+### Get one assessment's evaluations
 
-To pull the evaluations for a single assessment, page through the report and keep the rows whose assessment column matches. Use the column name as it appears in the report's `mapping` (the key in each `data` object), not the Coverbase field name.
+Add `assessment_id` to an evaluation report's URL:
 
-```python Python
-import os
-import requests
-
-API_KEY = os.getenv("COVERBASE_API_KEY", "<api-key>")
-BASE_URL = "https://api.coverbase.app"
-
-slug = "evaluation-export"
-assessment_id = "cbassmt_..."
-column = "Assessment ID"
-page_size = 5000
-
-headers = {"Authorization": f"Bearer {API_KEY}"}
-
-rows = []
-offset = 0
-while True:
-    resp = requests.get(
-        f"{BASE_URL}/v1/export/{slug}",
-        params={"limit": page_size, "offset": offset},
-        headers=headers,
-        timeout=120,
-    )
-    resp.raise_for_status()
-    page = resp.json()
-    rows.extend(r for r in page["data"] if r.get(column) == assessment_id)
-    offset += page_size
-    if offset >= page["total_count"]:
-        break
-
-print(f"{len(rows)} rows for {assessment_id}")
+```bash cURL
+curl -X GET "https://api.coverbase.app/v1/export/evaluation-export?assessment_id=<assessment-id>" \
+  -H "Authorization: Bearer <api-key>"
 ```
-
-You can do the same with the CSV download: fetch `/v1/export/{slug}/download?format=csv` and filter on the assessment column in your spreadsheet or script.
 
 ### Example request
 
@@ -213,7 +187,7 @@ Returns the same data as a CSV or Excel file instead of JSON. The columns are th
   `csv` or `xlsx`.
 </ParamField>
 
-The `limit`, `offset`, `supplier_name`, `start_ts`, and `end_ts` parameters work as above. One request returns at most 100,000 rows; page with `limit` and `offset` for larger reports.
+The `limit`, `offset`, `supplier_name`, `assessment_id`, `start_ts`, and `end_ts` parameters work as above. One request returns at most 100,000 rows; page with `limit` and `offset` for larger reports.
 
 ```bash cURL
 curl -L -o vendor-custom-report.xlsx \
