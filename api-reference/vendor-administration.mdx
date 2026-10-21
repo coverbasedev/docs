@@ -1,0 +1,366 @@
+---
+title: "Vendor administration API"
+description: "Archive, merge and bulk-edit vendors, manage risk profiles, subprocessors, departments, tags, budgets and discovered vendors."
+icon: "building-gear"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints manage vendors and services beyond the basic create, read and update calls in the [Vendors API](/api-reference/vendors). Each endpoint needs the same permission as the matching screen in the dashboard, and returns the same data the dashboard shows.
+
+All endpoints are scoped to the API key's organization. See [API conventions](/conventions) for shared behavior. None of these endpoints honor `Idempotency-Key`.
+
+## Errors
+
+Every error body has this shape:
+
+```json
+{ "detail": { "code": "vendor_not_found", "message": "No such vendor" } }
+```
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `invalid_request`, `invalid_bulk_action`, `invalid_merge` | The request names something that does not exist or cannot be applied. |
+| `403` | `forbidden` | The key's role does not hold the permission the endpoint needs. |
+| `403` | `api_key_not_allowed` | The action stays a human decision. A signed-in user must do it. |
+| `404` | `vendor_not_found`, `service_not_found`, `department_not_found`, `not_enabled`, and others | The record does not exist in your organization, or the feature is not enabled. |
+| `409` | `conflict` | The record changed under you, for example a discovery was already reviewed. |
+| `422` | `invalid_request`, `score_override_rationale_required` | The body did not validate. A location error also carries `validation`. |
+
+### Actions an API key cannot take
+
+To protect decisions that need a person, an API key gets `403 api_key_not_allowed` on every endpoint that archives, deletes or approves. A signed-in user calling the same endpoint with their own token is allowed. These are:
+
+- `POST /v1/vendors/{vendor_id}/archive`
+- `POST /v1/vendors/{vendor_id}/merge` and `POST /v1/vendors/bulk-merge`, because a merge archives the source
+- `POST /v1/vendors/bulk-action` with `action: "archive"`
+- `DELETE /v1/vendors/{vendor_id}/subprocessors/{subprocessor_id}`
+- `POST /v1/vendors/{vendor_id}/subprocessor-proposals/decide`
+- `POST /v1/vendor-parent-proposals/decide`
+- `POST /v1/services/{service_id}/merge` and `POST /v1/services/{service_id}/promote`, because both archive a service
+- `DELETE /v1/departments/{department_id}` and `DELETE /v1/departments/{department_id}/members/{user_id}`
+- `POST /v1/vendor-discoveries/approve` and `POST /v1/vendor-discoveries/dismiss`
+
+## Endpoints
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `POST` | `/v1/vendors/{vendor_id}/archive` | `vendor:archive:org` |
+| `POST` | `/v1/vendors/{vendor_id}/merge` | `vendor:update:org`, `vendor:archive:org` |
+| `POST` | `/v1/vendors/bulk-merge` | `vendor:update:org`, `vendor:archive:org` |
+| `POST` | `/v1/vendors/bulk-action` | Depends on the action |
+| `GET` | `/v1/vendor-duplicate-groups` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/nth-parties` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/risk-profile` | `vendor:read:org` |
+| `PUT` | `/v1/vendors/{vendor_id}/risk-profile` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/business-unit-dependencies` | `vendor:read:org` |
+| `PUT` | `/v1/vendors/{vendor_id}/business-unit-dependencies/{department_id}` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/subprocessors` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/subprocessors` | `vendor:update:org` |
+| `PATCH` | `/v1/vendors/{vendor_id}/subprocessors/{subprocessor_id}` | `vendor:update:org` |
+| `PATCH` | `/v1/vendors/{vendor_id}/subprocessors/{subprocessor_id}/relationship` | `vendor:update:org` |
+| `DELETE` | `/v1/vendors/{vendor_id}/subprocessors/{subprocessor_id}` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/subprocessor-proposals` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/subprocessor-proposals/refresh` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/subprocessor-proposals/decide` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/fourth-party-coverage` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/corporate-family` | `vendor:read:org` |
+| `GET` | `/v1/vendor-parent-proposals` | `vendor:read:org` |
+| `POST` | `/v1/vendor-parent-proposals/decide` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/financial-stability` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/financial-stability/peers` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/financial-stability/peers/refresh` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/risk-domain-scores` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/risk-domain-scores/{risk_domain_id}` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/risk-domain-scores` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/risk-changes` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/budget` | `contract:read:org` |
+| `PUT` | `/v1/vendors/{vendor_id}/budget` | `contract:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/budget-summary` | `contract:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/budget-request` | `contract:update:org` |
+| `POST` | `/v1/services/{service_id}/merge` | `service:update:org`, `service:archive:org` |
+| `POST` | `/v1/services/{service_id}/relink` | `service:update:org` |
+| `POST` | `/v1/services/{service_id}/relink/confirm` | `service:update:org` |
+| `POST` | `/v1/services/{service_id}/promote` | `vendor:create:org`, `service:update:org`, `service:archive:org` |
+| `GET` | `/v1/services/{service_id}/risk-domain-scores` | `service:read:org` |
+| `POST` | `/v1/services/{service_id}/risk-domain-scores` | `service:update:org` |
+| `GET` | `/v1/departments` | `user:read:org` |
+| `POST` | `/v1/departments` | `user:update:org` |
+| `GET` | `/v1/departments/{department_id}` | `user:read:org` |
+| `PATCH` | `/v1/departments/{department_id}` | `user:update:org` |
+| `DELETE` | `/v1/departments/{department_id}` | `user:update:org` |
+| `POST` | `/v1/departments/{department_id}/members` | `user:update:org` |
+| `PATCH` | `/v1/departments/{department_id}/members/{user_id}` | `user:update:org` |
+| `DELETE` | `/v1/departments/{department_id}/members/{user_id}` | `user:update:org` |
+| `GET` | `/v1/tags` | `tag:read:org` |
+| `POST` | `/v1/tags` | `tag:create:org` |
+| `PATCH` | `/v1/tags/{tag_id}` | `tag:update:org` |
+| `GET` | `/v1/tag-group-settings` | `tag:read:org` |
+| `PUT` | `/v1/tag-group-settings` | `tag:update:org` |
+| `GET` | `/v1/vendor-discoveries` | `vendor:read:org` |
+| `POST` | `/v1/vendor-discoveries/approve` | `vendor:create:org` |
+| `POST` | `/v1/vendor-discoveries/dismiss` | `vendor:create:org` |
+| `GET` | `/v1/vendors/{vendor_id}/discoveries` | `vendor:read:org` |
+
+List endpoints that take `limit` and `offset` return `items`, `total`, `limit` and `offset`. `limit` defaults to `50` and accepts `1` to `200`.
+
+## Archive, merge and bulk-edit vendors
+
+### Archive a vendor
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/archive`
+</ParamField>
+
+Archives the vendor together with its assessments, documents and obligations. The vendor then leaves every list. Returns `vendor_id`, `name` and `is_archived: true`.
+
+### Merge two vendors
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/merge`
+</ParamField>
+
+Merges another vendor into the path vendor. Every record on the source moves to the path vendor, an empty field takes the source's value, and the source is archived.
+
+<ParamField body="source_vendor_id" type="string" required>
+  The vendor to merge in and archive (`cbvndr_...`).
+</ParamField>
+
+Returns `vendor_id`, `name` and `source_vendor_id`. Returns `400 invalid_merge` when the two vendors cannot be merged, for example when they are the same vendor.
+
+### Run several merges
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/bulk-merge`
+</ParamField>
+
+Runs up to 100 merges in order. Each pair is its own transaction, so a failed pair is reported and does not undo the pairs before it. Running the same request again is safe: a pair that already merged the same way reports success.
+
+<ParamField body="merges" type="object[]" required>
+  Each item has `target_vendor_id`, `source_vendor_id` and an optional `strategy`. Use `merge_equal` (the default) to merge and archive the source, `make_service` to turn the source into a service under the target, or `delete_source` to archive the source without moving anything. `make_service` also needs `service:create:org`.
+</ParamField>
+
+Returns `results` (one per pair, with `success` and `error`), `success_count` and `failure_count`.
+
+To find candidate pairs, call `GET /v1/vendor-duplicate-groups`. It returns groups of live vendors that share a domain, a brand or a similar name, with each vendor's `assessment_count`.
+
+### Change many vendors at once
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/bulk-action`
+</ParamField>
+
+Applies one change to up to 100 vendors. Nothing is written when any vendor, tag, user or status in the request does not exist (`400 invalid_bulk_action`).
+
+<ParamField body="vendor_ids" type="string[]" required>
+  Between 1 and 100 vendor IDs.
+</ParamField>
+
+<ParamField body="action" type="string" required>
+  One of `tag`, `assign-relationship-owner`, `assign-risk-analyst`, `update-status`, `archive`, `set-next-assessment-date`.
+</ParamField>
+
+<ParamField body="tag_ids" type="string[]">
+  For `tag`: up to 15 tags. Required for that action.
+</ParamField>
+
+<ParamField body="operation" type="string" default="add">
+  For `tag`: `add` or `remove`.
+</ParamField>
+
+<ParamField body="user_id" type="string">
+  For the two assign actions: the user to add. Required for those actions.
+</ParamField>
+
+<ParamField body="status_id" type="string">
+  For `update-status`: a vendor status ID. Required for that action.
+</ParamField>
+
+<ParamField body="next_assessment_date" type="integer | null">
+  For `set-next-assessment-date`: unix seconds, or `null` to clear.
+</ParamField>
+
+The `tag`, `update-status` and `set-next-assessment-date` actions need `vendor:update:org`. The assign actions need `vendor:assign:org`. `archive` needs `vendor:archive:org` and a signed-in user. Returns `action` and `vendor_count`.
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/vendors/bulk-action" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vendor_ids": ["cbvndr_e448ba62882143f3ba0c140bb2e30162"],
+    "action": "tag",
+    "tag_ids": ["cbtag_5f1c0a3e9b2d4c7a8e6f1a2b3c4d5e6f"]
+  }'
+```
+
+## Risk profile and business units
+
+`GET /v1/vendors/{vendor_id}/risk-profile` returns the vendor's portfolio risk profile: `bcp_documented`, `bcp_last_tested_at`, `rto_hours`, `rpo_hours`, `meets_rto_rpo`, `dr_plan_documented`, `pen_test_last_at`, `ir_plan_documented`, `subprocessor_list_current`, `ai_usage_disclosed`, `ai_data_types`, `data_processing_regions`, `data_types_processed`, `integration_depth` (`deep`, `moderate` or `shallow`), `viable_alternatives_count`, `substitutability_score` and `is_user_edited`. Fields read as their defaults until the profile is saved or extracted from a completed assessment.
+
+`PUT /v1/vendors/{vendor_id}/risk-profile` replaces the editable fields with the body you send. It is a full replace, so an omitted field resets to its default. To change one field, read the profile, change the field and send the whole profile back. A save sets `is_user_edited`, and the automatic extraction never overwrites a user-edited profile.
+
+`GET /v1/vendors/{vendor_id}/business-unit-dependencies` lists the departments that depend on the vendor, each with `criticality` and `usage_description`. Dependencies are derived nightly from the vendor's services.
+
+`PUT /v1/vendors/{vendor_id}/business-unit-dependencies/{department_id}` sets one dependency.
+
+<ParamField body="criticality" type="string" required>
+  `critical`, `high`, `elevated` or `acceptable`.
+</ParamField>
+
+<ParamField body="usage_description" type="string">
+  What the business unit uses the vendor for.
+</ParamField>
+
+Returns `404` when the department is not a live department of your organization.
+
+## Subprocessors
+
+`GET /v1/vendors/{vendor_id}/subprocessors` returns `subprocessors`, the fourth parties the vendor depends on. `is_user_edited` separates links a person manages from links the subprocessor-list crawl found.
+
+`POST /v1/vendors/{vendor_id}/subprocessors` links a subprocessor. Send either `subprocessor_id` (an existing catalog entry) or `name` (an unknown name creates the entry). Optional fields are `category`, `hq_location`, `inherent_risk_level_id`, `tag_ids`, and `entity_id` or `entity_website` to resolve the company. Send `entity_id` or `entity_website`, not both.
+
+`PATCH /v1/vendors/{vendor_id}/subprocessors/{subprocessor_id}` edits the catalog entry, which every vendor in your organization that links it shares. Send `inherent_risk_level_id: null` to clear the level and `tag_ids: []` to clear the tags.
+
+`PATCH /v1/vendors/{vendor_id}/subprocessors/{subprocessor_id}/relationship` edits your organization's record of the dependency: `is_active`, `dependency_type`, `dependency_detail`, `mode`, `data_scopes`, `description`, `data_class_ids`, `service_ids` and `transfer_regions`. Only the fields you send change. After you edit, the nightly inheritance stops proposing changes to the link.
+
+`DELETE /v1/vendors/{vendor_id}/subprocessors/{subprocessor_id}` unlinks the subprocessor. The link is archived, so the crawl cannot add it back.
+
+Each of these write endpoints returns the vendor's full subprocessor list.
+
+### Subprocessor proposals
+
+`GET /v1/vendors/{vendor_id}/subprocessor-proposals` lists the subprocessors the shared data suggests for the vendor. An organization that inherits automatically has an empty list. `POST .../subprocessor-proposals/refresh` re-scans the vendor now instead of overnight.
+
+`POST /v1/vendors/{vendor_id}/subprocessor-proposals/decide` accepts or rejects proposals.
+
+<ParamField body="accept" type="boolean" required>
+  `true` links each subprocessor, `false` records a durable rejection.
+</ParamField>
+
+<ParamField body="proposal_ids" type="string[]">
+  The proposals to decide. Omit to decide every pending proposal on the vendor.
+</ParamField>
+
+<ParamField body="rejection_reason" type="string">
+  Why, when rejecting.
+</ParamField>
+
+Returns `decided_count`, `accepted_count`, `rejected_count` and `remaining_count`.
+
+`GET /v1/vendors/{vendor_id}/fourth-party-coverage` says how complete and how fresh the vendor's fourth-party list is, per source.
+
+## Corporate family and financial stability
+
+`GET /v1/vendors/{vendor_id}/corporate-family` returns the vendor's ultimate parent and every vendor under it, with the family's engagements, highest residual risk and contract value. It needs the engagement record feature, or it returns `404 not_enabled`.
+
+`GET /v1/vendor-parent-proposals?status=pending` lists parent links the company registers suggest. `status` is `pending` (the default), `accepted` or `rejected`. `POST /v1/vendor-parent-proposals/decide` takes `ids` and a `decision` of `accepted` or `rejected`. An accepted link that would loop the family refuses the whole batch with `422`.
+
+`GET /v1/vendors/{vendor_id}/financial-stability` rates the vendor under your organization's financial stability methodology and returns the filed ratios behind the rating. `GET .../financial-stability/peers` rates the vendor's security peers the same way, and `needs_refresh` says a refresh would read newer SEC figures. `POST .../financial-stability/peers/refresh` returns `202` with `queued`, the number of peers whose figures were queued for reading. These three need Zero Touch Assessments, or they return `404`.
+
+## Risk domain scores and risk changes
+
+`GET /v1/vendors/{vendor_id}/risk-domain-scores` returns `data`, one entry per risk domain with the inherent and residual score and level and the `score_source`. `GET .../risk-domain-scores/{risk_domain_id}` returns one domain.
+
+`POST /v1/vendors/{vendor_id}/risk-domain-scores` creates or updates one domain's score and recomputes the vendor's tier.
+
+<ParamField body="risk_domain_id" type="string" required>
+  The risk domain.
+</ParamField>
+
+<ParamField body="score_source" type="string" required>
+  Where the score comes from, for example `manual` for a score you set by hand or `assessment`.
+</ParamField>
+
+<ParamField body="inherent_risk_score" type="number | null">
+  Send `null` to clear. The same applies to `inherent_risk_level_id`, `residual_risk_score` and `residual_risk_level_id`.
+</ParamField>
+
+<ParamField body="note" type="string">
+  Required when a `manual` score changes a value. Without it the request returns `422 score_override_rationale_required`.
+</ParamField>
+
+`GET /v1/services/{service_id}/risk-domain-scores` and `POST /v1/services/{service_id}/risk-domain-scores` do the same for a service, and the write recomputes the vendor rollup.
+
+`GET /v1/vendors/{vendor_id}/risk-changes` returns the vendor's risk-change history, newest first, as `data` and `total_count`. Filter with `risk_type` (`inherent_risk` or `residual_risk`) and pass `include_dismissed=true` to include dismissed changes.
+
+## Budgets
+
+`GET /v1/vendors/{vendor_id}/budget?year=2026` returns the vendor's budget for the year, or `null`.
+
+`PUT /v1/vendors/{vendor_id}/budget?year=2026` sets the budget, replacing the one there.
+
+<ParamField body="amount" type="string | null" required>
+  The amount, with up to two decimals. `null` clears the budget and the response is `null`.
+</ParamField>
+
+<ParamField body="currency" type="string">
+  ISO currency code. Without it, the existing budget's currency or your organization's base currency applies.
+</ParamField>
+
+<ParamField body="note" type="string">
+  A note, up to 2000 characters.
+</ParamField>
+
+<ParamField body="cpi_pct" type="string">
+  The CPI rate used to price next year's request.
+</ParamField>
+
+`GET /v1/vendors/{vendor_id}/budget-summary?year=2026` reads the budget against the contracts that count towards it: `committed_amount`, `remaining_amount`, `percent_used`, `is_over_budget`, the counted `contracts`, and `next_year_request`. Pass `cpi_pct` to price the request at another rate.
+
+`POST /v1/vendors/{vendor_id}/budget-request` saves next year's budget as this year's committed spend raised by CPI. Send `year` and `cpi_pct`. It returns `422` when no CPI rate is available.
+
+## Services
+
+`POST /v1/services/{service_id}/merge` merges `source_service_id` into the path service and archives the source.
+
+`POST /v1/services/{service_id}/relink` moves the service to `target_vendor_id`. A service with no records of its own moves at once and the response is the moved service. Otherwise nothing moves and the response carries `record_counts`. To move the service with the records exclusive to it, send the same body to `POST /v1/services/{service_id}/relink/confirm`.
+
+`POST /v1/services/{service_id}/promote` turns the service into a standalone vendor and archives the service. Send the new vendor's fields under `vendor` (at least `name`). Most records stay with the original vendor, and `moved_record_counts` and `retained_record_counts` say what moved.
+
+## Departments
+
+Departments are business units and user groups. `GET /v1/departments` lists them (pass `include_archived=true` for archived ones) and `GET /v1/departments/{department_id}` returns one with its lead and members.
+
+`POST /v1/departments` returns `201` and takes `name`, `description`, `assignment_strategy` and `lead_user_id`. `PATCH /v1/departments/{department_id}` changes the fields you send; send `description: null` or `lead_user_id: null` to clear one.
+
+`POST /v1/departments/{department_id}/members` adds `user_id` with an optional `rotation_order`, and returns `400` when the user already belongs. `PATCH .../members/{user_id}` changes `member_status`, `inactive_from`, `inactive_to` or `rotation_order`; send `null` for an `inactive_` field to clear the out-of-office window. Every write is recorded on the department's activity feed.
+
+## Tags and tag groups
+
+`GET /v1/tags` lists live tags. `POST /v1/tags` returns `201` and takes `key` (the group), `value` and an optional `color`. It returns `400` when the tag already exists. `PATCH /v1/tags/{tag_id}` changes `key`, `value` or `color`. To archive a tag, use the dashboard.
+
+`GET /v1/tag-group-settings` lists every tag group with a setting: `key`, `rollup_mode`, `ranked_tag_ids` (riskiest first) and `category`.
+
+`PUT /v1/tag-group-settings` sets one group.
+
+<ParamField body="key" type="string" required>
+  The tag group. A blank key returns `400`.
+</ParamField>
+
+<ParamField body="rollup_mode" type="string">
+  How service tags reach the vendor. `union` leaves vendor tags to whoever writes them. `highest_rank` keeps only the riskiest tag across the vendor's active services.
+</ParamField>
+
+<ParamField body="ranked_tag_ids" type="string[]">
+  The group's tags, riskiest first. Tags you leave out become unranked.
+</ParamField>
+
+<ParamField body="category" type="string | null">
+  The heading the group is filed under. `null` or blank clears it.
+</ParamField>
+
+Omitted fields keep their values. Changing `rollup_mode` or `ranked_tag_ids` recomputes vendor tags.
+
+## Discovered vendors
+
+These endpoints need the vendor discovery integration, or they return `404`.
+
+`GET /v1/vendor-discoveries` lists vendors your integrations discovered, one row per vendor across sources. Filter with `review_status` (`pending` by default, `approved` or `dismissed`) and `search`.
+
+`POST /v1/vendor-discoveries/approve` takes `discovery_ids` and an optional `target_vendor_id`. Each discovery links to a matching vendor, merges onto `target_vendor_id`, or creates a vendor. The response lists `approved_discovery_ids`, `created_vendor_ids` and `linked_vendor_ids`.
+
+`POST /v1/vendor-discoveries/dismiss` takes `discovery_ids` and an optional `reason`.
+
+Both are all or nothing and return `409` when a discovery was already reviewed. `GET /v1/vendors/{vendor_id}/discoveries` lists every integration that discovered the vendor, with its records.
