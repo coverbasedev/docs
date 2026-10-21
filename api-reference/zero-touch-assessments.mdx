@@ -1,6 +1,6 @@
 ---
 title: "Zero Touch Assessments API"
-description: "Launch lightweight, no-outreach triage runs, rank a portfolio by the resulting score, and read a single run's composite and evidence."
+description: "Launch triage runs that contact no one, rank a portfolio by the resulting score, review and revise a run, and configure how runs score."
 icon: "bolt"
 ---
 
@@ -8,76 +8,111 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-A Zero Touch Assessment is a lightweight triage run assembled entirely from open-source research, with no document request, no questionnaire and no vendor contact. It produces a single 0-100 **Zero Touch Score** so a portfolio can be ranked before real review effort is spent.
+You use these endpoints to launch Zero Touch Assessments with an API key, read and rank their results, review them, and change how they score. A Zero Touch Assessment is a triage run built from open-source research and the documents Coverbase already holds, with no document request, no questionnaire and no vendor contact. It produces one 0 to 100 **Zero Touch Score**, so you can rank a portfolio before you spend review effort.
 
 For the concepts behind the score, see [Zero Touch Assessments](/user-guides/zero-touch-assessments).
 
 <Note>
-  Every endpoint below is behind the `zero-touch-assessments` module. If it is not enabled for your organization, these routes return `404`. Contact your Coverbase representative to have it turned on.
+  Every endpoint below is behind the `zero-touch-assessments` module. If the module is not enabled for your organization, every route returns `404` with code `zero_touch_not_enabled`. Contact your Coverbase representative to have it turned on.
 </Note>
 
-All endpoints are org-scoped. They are the endpoints the dashboard's Zero Touch pages use, so they take a signed-in user's dashboard session token (a JWT); an `ak_` API key is rejected with `401 Unauthorized role.` Most error bodies carry a free-form `error` key rather than a code. See [API conventions](/conventions) for IDs, timestamps, and the error envelope.
+Every endpoint takes an `ak_` API key or a signed-in user's token, and every endpoint is scoped to your organization. Errors return `{"detail": {"code": "...", "message": "..."}}`. See [API conventions](/conventions) for IDs, timestamps, and authentication.
+
+The older `/v1/zero_touch_assessment` paths remain for the Coverbase dashboard and need a signed-in user, so an API key gets `401` there.
+
+## Permissions
+
+Each endpoint checks the same permission the dashboard checks. Where an endpoint says it needs update or read access to the assessment, a caller with the organization-wide permission (`assessment:update:org` or `assessment:read:org`) reaches every run, and a caller with the assigned permission reaches only the runs assigned to them.
+
+<Warning>
+  An API key cannot archive a run or record a run's outcome. A review or bulk review with `action` set to `archived`, or with an `approval_option_id`, returns `403` with code `api_key_not_allowed` for an API key. A signed-in user must make those decisions.
+</Warning>
 
 ## Launch a run
 
 <ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment`
+  `POST /v1/zero-touch-assessments`
 </ParamField>
 
-Starts a Zero Touch Assessment for one vendor.
-
-### Request body
+Starts a Zero Touch Assessment for one vendor. The run works in the background. Needs `assessment:create:org`.
 
 <ParamField body="vendor_id" type="string" required>
   The vendor ID (`cbvndr_...`) to assess.
 </ParamField>
 
 <ParamField body="service_ids" type="string[]">
-  Restrict the run to specific services. Omit to run against the vendor as a whole.
+  The vendor's services the run is about. Omit to assess the vendor as a whole.
 </ParamField>
 
-<ParamField body="template_key" type="string">
-  Switch your organization's Zero Touch scope to this template before launching. Omit to launch against whatever is already configured, which is what a caller with no opinion means.
-
-  <Warning>
-    This is an organization-level setting, not a per-run one. Passing it changes what **every subsequent run** evaluates, including runs launched from the dashboard.
-  </Warning>
+<ParamField body="control_set_ids" type="string[]">
+  Zero Touch eligible control sets the run evaluates. Omit to evaluate every eligible set.
 </ParamField>
 
 <ParamField body="instruction" type="string">
-  A correction in plain language, up to 2000 characters, applied to the vendor before the run starts. Use it when the vendor record points at the wrong company or website: research reads the vendor's website at launch, so a correction made afterwards does not change what the run read.
+  A correction in plain language, up to 2000 characters, applied to the vendor before the run starts. Use it when the vendor record points at the wrong company or website. Research reads the vendor's website at launch, so a correction made afterwards does not change what the run read.
 </ParamField>
 
-### Responses
+<ParamField body="excluded_sections" type="string[]">
+  Parts of the run to leave out, from `controls`, `security`, `financial_health`, `registration`, `people`, `reputation` and `licenses`. At least one section must run. Defaults to none.
+</ParamField>
+
+<ParamField body="refresh_vendor_intelligence" type="boolean">
+  Whether the vendor's research is refreshed before the run grades. `false` grades on the research already on file. Defaults to `true`.
+</ParamField>
+
+<ParamField body="vendor_document_ids" type="string[]">
+  The vendor's own documents the run judges its controls on, from [List documents a run can use](#list-documents-a-run-can-use). If you omit both document lists, the run uses every document on offer. Pass `[]` for both to use none. Naming any document needs Documents Evidence in ZTA.
+</ParamField>
+
+<ParamField body="library_document_ids" type="string[]">
+  Coverbase library documents the run uses. They are copied into the vendor's documents before the run reads them.
+</ParamField>
 
 | Status | Meaning |
 | --- | --- |
-| `200` | The run was created. The body is the run summary. |
-| `400` | The vendor ID is unknown or belongs to another organization, or `template_key` is not a shipped template. |
-| `404` | The module is not enabled. |
-| `409` | No Zero Touch control sets are designated for your organization. |
+| `201` | The run was created. The body is the run summary. |
+| `400` | Every section is excluded (`no_sections`), or the vendor, a control set, or a document cannot be used (`invalid_launch`). |
+| `409` | No Zero Touch control sets are designated for your organization (`no_eligible_control_sets`). |
 
-<Note>
-  Organizations are provisioned the shipped templates on first use, so a `409` is unusual. It means every template has since been un-designated or archived, which is a deliberate act that provisioning will not undo.
-</Note>
+To change which template every later run evaluates, use [Choose a template](#list-and-choose-templates) before you launch.
 
 ## Launch in bulk
 
 <ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment/bulk`
+  `POST /v1/zero-touch-assessments/bulk`
 </ParamField>
 
-Starts a run for many vendors in one call. Vendor IDs are deduplicated.
+Starts a run for each of many vendors in one call. Vendor IDs are deduplicated. Needs `assessment:create:org`.
 
-<ParamField body="vendor_ids" type="string[]" required>
-  Vendor IDs to assess, from 1 to 200.
+<ParamField body="vendor_ids" type="string[]">
+  Vendor IDs to assess, up to 200. Name at least one vendor or one prospect.
 </ParamField>
 
-<ParamField body="template_key" type="string">
-  Switch your organization's Zero Touch scope to this template before launching, as on a single launch.
+<ParamField body="prospects" type="object[]">
+  Up to 50 companies that are not yet vendors, each `{"name": "...", "website": "..."}` (`website` is optional). Each becomes a vendor with the Prospect status, or reuses your vendor on the same website, and is launched with the batch. Needs the TPRM expansion (otherwise `404`, code `not_enabled`) and `vendor:create:org`.
 </ParamField>
 
-**Partial success is the normal outcome and returns `200`.** The response separates the two:
+<ParamField body="control_set_ids" type="string[]">
+  Zero Touch eligible control sets every run evaluates. Omit to evaluate every eligible set.
+</ParamField>
+
+<ParamField body="excluded_sections" type="string[]">
+  Sections every run leaves out, from the same list as a single launch.
+</ParamField>
+
+<ParamField body="refresh_vendor_intelligence" type="boolean">
+  Applied to every run in the batch. Defaults to `true`.
+</ParamField>
+
+<ParamField body="use_existing_documents" type="boolean">
+  Whether each run uses every document on offer for its vendor. `false` uses none. Ignored without Documents Evidence in ZTA. Defaults to `true`.
+</ParamField>
+
+<ParamField body="document_choices" type="object[]">
+  Per-vendor picks, each `{"vendor_id": "...", "vendor_document_ids": [...], "library_document_ids": [...]}`. A vendor named here uses exactly those documents, whatever `use_existing_documents` says. Each `vendor_id` must appear in `vendor_ids`, and only once. Needs Documents Evidence in ZTA (otherwise `404`, code `documents_evidence_not_enabled`).
+</ParamField>
+
+**A partial success returns `201`.** The response separates the two outcomes:
 
 <ResponseField name="created" type="object[]">
   Run summaries for the vendors that launched.
@@ -87,38 +122,50 @@ Starts a run for many vendors in one call. Vendor IDs are deduplicated.
   One entry per vendor that could not launch, each with `vendor_id` and `error`.
 </ResponseField>
 
-One archived or unknown vendor in a selection of forty does not cost you the other thirty-nine. Always read `failed`. A `200` does not mean every vendor launched.
+One archived or unknown vendor in a batch of forty does not stop the other thirty-nine. Always read `failed`, because a `201` does not mean every vendor launched.
 
 ## Read a run
 
 <ParamField path="method" type="GET">
-  `GET /v1/zero_touch_assessment/{assessment_id}`
+  `GET /v1/zero-touch-assessments/{assessment_id}`
 </ParamField>
 
-Returns the single-page result: who the vendor is, what turned up against its name, the composite, the components behind it, control-set coverage, open issues with their evidence, and every source cited.
+Returns the single-page result: who the vendor is, what turned up against its name, the composite, the components behind it, control set coverage, controls grouped by section, open issues with their evidence, the briefing, what to ask the vendor for, and every source cited. A run that has not finished is scored on the fly. A full assessment ID returns `404` (`zero_touch_assessment_not_found`).
+
+<ParamField query="version" type="integer">
+  An earlier version of a revised result to read instead of the current one. A version the run does not have returns `404` (`version_not_found`).
+</ParamField>
+
+<ResponseField name="status" type="string">
+  The run's status. A run held for its automated review reads `automated_review`, and its result fields are empty until the review reports.
+</ResponseField>
+
+<ResponseField name="review_status" type="string">
+  `pending`, `approved` or `escalated`.
+</ResponseField>
 
 <ResponseField name="result.profile" type="object | null">
-  The researched company profile: `company_name`, `url`, `description`, `industry`, `use_case`, `services`, `hq_location`, and `confidence`, which is how sure the run is it profiled the right company. `null` until the research completes, which happens shortly after launch and independently of the controls.
+  The researched company profile: `company_name`, `url`, `description`, `industry`, `use_case`, `services`, `hq_location`, and `confidence`, which is how sure the run is it profiled the right company. `null` until the research completes, which happens shortly after launch and separately from the controls.
 </ResponseField>
 
 <ResponseField name="result.profile.risk_tier" type="string | null">
   `critical`, `high`, `moderate`, `low` or `minimal`, with `risk_tier_confidence`, a one-line `risk_tier_reasoning` and the full `risk_tier_detailed_reasoning`.
 
   <Warning>
-    This is its own scale, not your organization's risk levels. Those are calibrated against a completed questionnaire; this is judged from public evidence. Do not map one onto the other.
+    This is its own scale, not your organization's risk levels. Those are calibrated against a completed questionnaire, and this one is judged from public evidence. Do not map one onto the other.
   </Warning>
 </ResponseField>
 
 <ResponseField name="result.composite_score" type="number | null">
-  The Zero Touch Score, 0-100, higher is healthier. `null` when nothing has resolved yet.
+  The Zero Touch Score, 0 to 100, higher is healthier. `null` when nothing has resolved yet.
 </ResponseField>
 
 <ResponseField name="result.components" type="object[]">
-  One entry per component (`controls`, `financial_health`, `security`, `registration`, `people`), each with `status` (`scored` / `unavailable` / `disabled`), its own `score`, the `configured_weight` set for your org, and the `weight` it carried.
+  One entry per component (`controls`, `financial_health`, `security`, `registration`, `people`), each with `status` (`scored`, `unavailable` or `disabled`), its own `score`, the `configured_weight` set for your organization, and the `weight` it carried.
 </ResponseField>
 
 <ResponseField name="result.reputation" type="object | null">
-  What the run found against the vendor's name, gathered from adverse media, open watchlist matches and the run's own `ZT-REP-*` controls. Carries an overall `standing`, a one-line `headline`, `finding_count` and `material_count`, a `dimensions` array, and a `findings` array. `null` on a run scored before this section existed, which means the run never assembled one rather than that the vendor is clear.
+  What the run found against the vendor's name, from adverse media, open watchlist matches and the run's own `ZT-REP-*` controls. Carries an overall `standing`, a one-line `headline`, `finding_count` and `material_count`, a `dimensions` array, and a `findings` array. `null` on a run scored before this section existed, which means the run never assembled one, not that the vendor is clear.
 </ResponseField>
 
 <ResponseField name="result.reputation.dimensions" type="object[]">
@@ -126,144 +173,76 @@ Returns the single-page result: who the vendor is, what turned up against its na
 </ResponseField>
 
 <ResponseField name="result.reputation.findings" type="object[]">
-  One entry per reputational matter, ordered material first then by severity. Each carries the `origin` that raised it (`adverse_media`, `screening`, `control`), the `dimension` it is filed under, a `headline` and `summary`, the `subject` it attaches to (`null` for the company itself), a `severity`, an `outcome`, `publisher`, `published_at`, `jurisdiction`, `source_urls`, `is_disputed` and `is_resolved`.
+  One entry per reputational matter, material first and then by severity. Each carries the `origin` that raised it (`adverse_media`, `screening`, `control`), the `dimension` it is filed under, a `headline` and `summary`, the `subject` it attaches to (`null` for the company itself), a `severity`, an `outcome`, `publisher`, `published_at`, `jurisdiction`, `source_urls`, `is_disputed` and `is_resolved`.
 </ResponseField>
 
 <Warning>
-  **A dimension nothing searched reads `not_screened`, never `clear`.** The four standings are `adverse`, `watch`, `clear` and `not_screened`. `clear` means something searched and found nothing; `not_screened` means nothing searched, and carries no information about the vendor. `coverage_note` names every unscreened dimension. Do not treat an empty `findings` array as a clean record without reading `dimensions`.
+  **A dimension nothing searched reads `not_screened`, never `clear`.** The four standings are `adverse`, `watch`, `clear` and `not_screened`. `clear` means something searched and found nothing. `not_screened` means nothing searched, and it carries no information about the vendor. `coverage_note` names every unscreened dimension. Do not treat an empty `findings` array as a clean record without reading `dimensions`.
 </Warning>
 
 <ResponseField name="result.sources" type="object[]">
   Every place the run drew evidence from, grouped by `kind`: `web`, `registry`, `infrastructure`, `document`.
 </ResponseField>
 
-<Warning>
-  **A component with no data is excluded from the composite, never counted as zero.** Weights renormalise over whatever resolved, which is why `weight` and `configured_weight` differ. A vendor scored on one component is not comparable to a vendor scored on three, so read `components` before ranking on `composite_score`.
-</Warning>
+<ResponseField name="sections" type="object[]">
+  The evaluated controls grouped by section. Each control carries its `eval_id`, `code`, `title`, `outcome` (`validated`, `partially_validated`, `not_validated`, `not_enough_information` or `not_applicable`), `is_issue`, `is_resolved`, `review_notes`, `source_urls` and `finding_ids`. Use `eval_id` to [triage a control](#triage-controls).
+</ResponseField>
 
-A run that has not finished is scored on the fly, so this endpoint is useful before completion. Only completion and an explicit rescore persist the snapshot.
+<ResponseField name="vendor_requests" type="object[]">
+  What to ask the vendor for, one line each, with the `key` you edit it by, `text`, `original_text`, `status` (`open` or `dismissed`) and `is_edited`.
+</ResponseField>
+
+<ResponseField name="revision" type="object | null">
+  For a revised result, the `version_number` you are reading, the `current_version_number`, and the analyst provenance and rerun flags. `null` until the result is first revised.
+</ResponseField>
+
+<Warning>
+  **A component with no data is excluded from the composite, never counted as zero.** Weights renormalise over whatever resolved, which is why `weight` and `configured_weight` differ. A vendor scored on one component is not comparable to a vendor scored on three, so read `components` before you rank on `composite_score`.
+</Warning>
 
 ## Rank a portfolio
 
 <ParamField path="method" type="GET">
-  `GET /v1/zero_touch_assessment/leaderboard`
+  `GET /v1/zero-touch-assessments/leaderboard`
 </ParamField>
 
-Returns one row per vendor, its most recent run, ranked by composite score. Supports `limit`, `offset` and `search`.
+Returns one row per vendor, at its most recent run, ranked by composite score, highest first. This is also how you list runs: a run is an assessment, and the leaderboard is the list of each vendor's latest run.
 
-Ranking is computed across the whole organization before the page is sliced, so paging through the leaderboard gives a true global ranking. Unscored runs sort last rather than as zero.
+<ParamField query="limit" type="integer">
+  Rows per page, 1 to 200. Defaults to 50.
+</ParamField>
 
-## List and choose templates
+<ParamField query="offset" type="integer">
+  Rows to skip. Defaults to 0.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Only vendors whose name matches this text.
+</ParamField>
+
+The response carries `items` (run summaries), `total`, `limit` and `offset`. The ranking covers every vendor before the page is cut, so paging gives a true global ranking. Unscored runs sort last, not as zero.
+
+## Read the module counters
 
 <ParamField path="method" type="GET">
-  `GET /v1/zero_touch_assessment/templates`
+  `GET /v1/zero-touch-assessments/pulse`
 </ParamField>
 
-<ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment/template`
-</ParamField>
+Returns `total_runs`, `recent_runs` (runs created in the last 30 days), `vendors_covered` and `issues_surfaced`. Every counter is an exact count.
 
-The `GET` returns the shipped templates with their control counts and domains, plus `active_template_key`, the one your runs currently evaluate. It is `null` when your organization runs a control set of its own, or when more than one shipped template is designated; both are states to show rather than resolve arbitrarily.
-
-The `POST` takes `{"template_key": "..."}` and points future runs at that template. It only ever re-designates control sets this module provisioned, so a set designated for you by Coverbase is never disturbed. An unknown key returns `400`; an organization that runs a control set of its own gets `409`.
-
-## Re-source a run's vendor profile
-
-<ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment/{assessment_id}/reprofile`
-</ParamField>
-
-Re-researches the company behind the run and replaces the profile on it. Separate from re-scoring because they answer different questions: a correction that repoints a run at the right company leaves the score valid while the profile still describes somebody else.
-
-Re-scoring deliberately carries an existing profile forward, so this is the only call that refreshes it.
-
-## Re-score a run
-
-<ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment/{assessment_id}/rescore`
-</ParamField>
-
-Recomputes the composite against today's inputs and re-applies the configured score push, without re-running the controls. Use this when the financial or security inputs have refreshed, or after changing your scoring configuration.
-
-## Review a run
-
-<ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment/{assessment_id}/review`
-</ParamField>
-
-Records a decision against a run without changing what it was built on.
-
-<ParamField body="action" type="string" required>
-  `approved`, `escalated`, `archived`, or `note`.
-</ParamField>
-
-<ParamField body="note" type="string">
-  Free text, up to 4000 characters.
-</ParamField>
-
-<ParamField body="vendor_status_id" type="string">
-  Optional. A vendor status (`cbst_...`) to set on the vendor along with the decision. Requires permission to update the vendor.
-</ParamField>
-
-Escalating records the judgement; it does not launch a full assessment. Archiving takes the run out of the working set and needs permission to archive assessments.
-
-## Correct a run's inputs
-
-<ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment/{assessment_id}/correct`
-</ParamField>
-
-<ParamField body="instruction" type="string" required>
-  The correction in plain language, up to 2000 characters.
-</ParamField>
-
-The instruction is read into a fixed set of correctable fields (the vendor's website and name), applied, and the run re-scored against them. Returns the re-scored run.
-
-<Note>
-  An instruction that yields no concrete change still returns `200` and still writes an audit entry with an empty `changes` array. Read `changes` to see what moved.
-</Note>
-
-## Read the audit trail
+## Read and set the scoring configuration
 
 <ParamField path="method" type="GET">
-  `GET /v1/zero_touch_assessment/{assessment_id}/audit`
+  `GET /v1/zero-touch-assessments/config`
 </ParamField>
 
-Every review action on a run, in the order taken.
+Returns whether the module can run (`is_ready`), the `assessment_plan_id`, the control sets in scope with their `control_count`, and the current configuration under `scoring`. The first read provisions the shipped templates for an organization that has never used the module.
 
-<ResponseField name="data[].action" type="string">
-  `approved`, `escalated`, `corrected`, `rescored`, `revised`, `restored`, `rerun_requested`, `note`, or `archived`.
-</ResponseField>
-
-<ResponseField name="data[].instruction" type="string | null">
-  The reviewer's own words, stored verbatim, for `corrected` entries.
-</ResponseField>
-
-<ResponseField name="data[].changes" type="object[]">
-  One entry per field the action changed, each with `field`, `before` and `after`. Empty for approvals, notes, and corrections that resolved to nothing.
-</ResponseField>
-
-<ResponseField name="data[].composite_before / composite_after" type="number | null">
-  The Zero Touch Score either side of the action.
-</ResponseField>
-
-<Warning>
-  The trail is append-only. There is no update or delete endpoint, by design. A Zero Touch Score can be pushed onto a vendor's risk score, so the record of who changed the inputs behind it must be one nobody can rewrite.
-</Warning>
-
-## Read and set scoring configuration
-
-<ParamField path="method" type="GET">
-  `GET /v1/zero_touch_assessment/config`
+<ParamField path="method" type="PUT">
+  `PUT /v1/zero-touch-assessments/config`
 </ParamField>
 
-Returns whether the module can run (`is_ready`), the control sets in scope, and the current scoring configuration.
-
-<ParamField path="method" type="POST">
-  `POST /v1/zero_touch_assessment/config`
-</ParamField>
-
-Sets what counts toward the score and where the score goes.
+Changes what counts toward the score and where the score goes. Omitted fields keep their value. Returns the configuration. Needs `assessment:create:org`.
 
 <ParamField body="include_financial_health" type="boolean">
   Whether the Financial Health Score is a component.
@@ -273,32 +252,32 @@ Sets what counts toward the score and where the score goes.
   Whether the outside-in security rating is a component.
 </ParamField>
 
-<ParamField body="control_weight" type="integer">
-  Relative weight of the control evaluation. Weights are relative, not percentages. They renormalise over whichever components resolve.
-</ParamField>
-
-<ParamField body="financial_health_weight" type="integer">
-  Relative weight of the financial health component.
-</ParamField>
-
-<ParamField body="security_weight" type="integer">
-  Relative weight of the security component.
-</ParamField>
-
 <ParamField body="include_registration" type="boolean">
-  Whether corporate-registration standing is a component.
-</ParamField>
-
-<ParamField body="registration_weight" type="integer">
-  Relative weight of the registration component.
+  Whether corporate registration standing is a component.
 </ParamField>
 
 <ParamField body="include_people" type="boolean">
   Whether the leadership dossier is a component.
 </ParamField>
 
+<ParamField body="control_weight" type="integer">
+  Relative weight of the control evaluation, 0 to 100. Weights are relative, not percentages, and they renormalise over whichever components resolve.
+</ParamField>
+
+<ParamField body="financial_health_weight" type="integer">
+  Relative weight of the financial health component, 0 to 100.
+</ParamField>
+
+<ParamField body="security_weight" type="integer">
+  Relative weight of the security component, 0 to 100.
+</ParamField>
+
+<ParamField body="registration_weight" type="integer">
+  Relative weight of the registration component, 0 to 100.
+</ParamField>
+
 <ParamField body="people_weight" type="integer">
-  Relative weight of the people component.
+  Relative weight of the people component, 0 to 100.
 </ParamField>
 
 <Warning>
@@ -309,36 +288,363 @@ Sets what counts toward the score and where the score goes.
   Where a completed run writes its score: `none`, `vendor_inherent`, `vendor_residual`, `service_inherent`, or `service_residual`.
 </ParamField>
 
-Only the axis you choose is written, so a Zero Touch run can never overwrite an inherent score your team set deliberately from an intake questionnaire. A vendor-scoped run configured for a service target writes nothing and reports why in `result.push_skipped_reason`.
+Only the axis you choose is written, so a Zero Touch run never overwrites an inherent score your team set from an intake questionnaire. A vendor-scoped run configured for a service target writes nothing and reports why in `result.push_skipped_reason`.
 
 <ParamField body="push_risk_tier_to_vendor" type="boolean">
   Whether a completed run writes its **risk tier** onto vendor inherent risk. Off by default.
 </ParamField>
 
+The tier is a triage read from public evidence, so an organization that has not asked for it never finds a vendor's inherent risk moved by one. Even when enabled, the push stands down if `score_target` is already `vendor_inherent`, because two writers on one field would let run order decide the vendor's risk. It reports why in `result.risk_tier_push_skipped_reason`.
+
 <ParamField body="auto_review" type="boolean">
   Whether a finished run is checked a second time against the vendor's own pages, with the supported changes applied as a new version of the result. On by default.
 </ParamField>
 
-The tier is a triage read from public evidence, so an organization that has not asked for it never finds a vendor's inherent risk moved by one. Even when enabled, the push stands down if `score_target` is already `vendor_inherent`, because two writers on one field would let run order decide the vendor's risk, and reports why in `result.risk_tier_push_skipped_reason`.
+<ParamField body="financial_stability_policy" type="object">
+  Replaces your organization's financial stability methodology: the bands for `customer_concentration`, `current_ratio`, `debt_to_worth` and `ebitda_coverage`, their bases, `require_audit_for_low`, `show_diligence_estimates`, `combination`, `considerations_enabled` and `sector_profiles`. The `GET` returns the methodology in use and `financial_stability_policy_is_default`.
+</ParamField>
 
-## Listing runs
+<ParamField body="reset_financial_stability_policy" type="boolean">
+  Set to `true` to return to the FSA standard preset instead of sending a policy.
+</ParamField>
 
-There is no separate list endpoint, deliberately. A Zero Touch run is an assessment. Use the assessment query endpoint, `POST /v1/assessment/query`, with a rule on the `is_zero_touch` filter path (see the [field catalog](/fields/catalog#assessments)):
+<ParamField body="risk_tier_level_map" type="object">
+  Maps a Zero Touch risk tier (`critical`, `high`, `moderate`, `low`, `minimal`) to a risk level ID on your organization's risk scale. Runs label the tier with the mapped level, and the tier push writes it. An explicit `null` clears the map, back to fixed scores. Written only for an organization with the TPRM expansion.
+</ParamField>
 
-- `is_zero_touch: true` returns triage runs only
-- `is_zero_touch: false` returns full assessments only
-- omitted returns both
+## List and choose templates
 
-A second read path would be free to drift from the first.
+<ParamField path="method" type="GET">
+  `GET /v1/zero-touch-assessments/templates`
+</ParamField>
+
+Returns the shipped templates under `data`, each with `key`, `name`, `description`, `control_count`, `domains`, `is_default`, `control_set_id` and `is_added`, plus `active_template_key`, the one template your runs currently evaluate. `active_template_key` is `null` when your organization runs a control set of its own, or when more than one shipped template is designated.
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/template`
+</ParamField>
+
+<ParamField body="template_key" type="string" required>
+  The shipped template future runs evaluate.
+</ParamField>
+
+Points future runs at that template, and only that one. It re-designates only control sets this module provisioned, so a set designated for you by Coverbase is never changed. Returns the same body as the `GET`. Needs `control_set:create:org`.
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Future runs evaluate the template. |
+| `400` | The key is not a shipped template (`unknown_template`). |
+| `409` | Your organization runs a control set of its own (`org_control_set_designated`). |
+
+<Warning>
+  This is an organization setting. It changes what **every later run** evaluates, including runs launched from the dashboard.
+</Warning>
+
+## Add templates from the library
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/library`
+</ParamField>
+
+<ParamField body="template_keys" type="string[]" required>
+  One to 20 shipped template keys.
+</ParamField>
+
+Adds each template as a Zero Touch eligible control set, alongside any already designated. A template your organization already holds is reused, and brought back if archived. Returns `control_set_ids`. An unknown key returns `400` (`unknown_template`). Needs `control_set:create:org`.
+
+## List documents a run can use
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero-touch-assessments/documents`
+</ParamField>
+
+<ParamField query="vendor_id" type="string" required>
+  The vendor to look up.
+</ParamField>
+
+Returns `documents`, the existing documents a run for this vendor can use, the vendor's own first. Each carries `id`, `source` (`vendor_document` or `library_document`), `name`, `document_type`, `document_type_name`, `dated_at` and `expires_at`. Needs read access to the vendor. An unknown vendor returns `404` (`vendor_not_found`).
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/documents/summary`
+</ParamField>
+
+<ParamField body="vendor_ids" type="string[]" required>
+  One to 200 vendors to check.
+</ParamField>
+
+Returns `vendors_with_documents` and `vendors`, the vendors among these that have documents a run can use, each with its documents. Vendors you cannot read are left out.
+
+Both endpoints need Documents Evidence in ZTA. Without it they return `404` (`documents_evidence_not_enabled`).
+
+## Re-score a run
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/rescore`
+</ParamField>
+
+Recomputes the composite against today's inputs and re-applies the configured score push, without re-running the controls. Use it when the financial or security inputs have refreshed, or after you change the scoring configuration. Returns the run. Needs `assessment:create:org`.
+
+## Run the automated review again
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/auto-review`
+</ParamField>
+
+Runs the automated review of a finished run again. The result is held back until the new review reports, as when the run first completed. A run that cannot be reviewed returns `409` (`auto_review_not_runnable`). Needs `assessment:create:org`.
+
+## Re-source a run's vendor profile
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/reprofile`
+</ParamField>
+
+Re-researches the company behind the run and replaces the profile on it. This is separate from re-scoring because a correction that repoints a run at the right company leaves the score valid while the profile still describes another company. Re-scoring carries an existing profile forward, so this is the only call that refreshes it. Returns the run. Needs update access to the assessment.
+
+## Review a run
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/review`
+</ParamField>
+
+Records a decision against a run without changing what it was built on. Returns the review event. Needs update access to the assessment.
+
+<ParamField body="action" type="string" required>
+  `approved`, `escalated`, `archived`, or `note`. Archiving takes the run out of the working set and needs `assessment:archive:org`.
+</ParamField>
+
+<ParamField body="note" type="string">
+  Free text, up to 4000 characters.
+</ParamField>
+
+<ParamField body="vendor_status_id" type="string">
+  Approvals only. A vendor status (`cbst_...`) to settle the vendor on. Needs update access to the vendor.
+</ParamField>
+
+<ParamField body="approval_option_id" type="string">
+  Approvals only. Your organization's approval option, recorded as the run's outcome. Needs `assessment:approve:org`.
+</ParamField>
+
+<ParamField body="escalated_assessment_id" type="string">
+  Escalations only. The full assessment of the run's vendor this run escalated into. Needs update access to that assessment.
+</ParamField>
+
+Escalating records the judgement. It does not launch a full assessment. A decision the run cannot take, for example an outcome on a run that is still working, returns `422` (`invalid_review`). An API key that archives or sends an `approval_option_id` gets `403` (`api_key_not_allowed`).
+
+## Review runs in bulk
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/bulk-review`
+</ParamField>
+
+Records one decision against each run in a batch, with one review event per run. Needs `assessment:update:org`.
+
+<ParamField body="assessment_ids" type="string[]" required>
+  One to 500 run IDs.
+</ParamField>
+
+<ParamField body="action" type="string" required>
+  `approved`, `escalated`, `archived`, or `note`. Archiving needs `assessment:archive:org`.
+</ParamField>
+
+<ParamField body="note" type="string">
+  Free text written on every run, up to 4000 characters.
+</ParamField>
+
+<ParamField body="approval_option_id" type="string">
+  Approvals only. The outcome every run records. Needs `assessment:approve:org`. Any other action with an outcome returns `422` (`invalid_review`).
+</ParamField>
+
+Returns `reviewed_ids` and `skipped_ids`. An ID that is not a Zero Touch run, or a run that cannot take the outcome because it is still working or held for its review, is skipped. An API key that archives or sends an `approval_option_id` gets `403` (`api_key_not_allowed`).
+
+## Triage controls
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/triage`
+</ParamField>
+
+Confirms or dismisses what the run concluded about one or more controls, or leaves a note on them. The verdict is written to the evals, so the assessment page, the export and any finding raised from the control read the same fact. Needs update access to the assessment.
+
+<ParamField body="eval_ids" type="string[]" required>
+  One to 200 eval IDs from the run's `sections`.
+</ParamField>
+
+<ParamField body="verdict" type="string">
+  `confirmed` keeps an issue standing or reopens a dismissed one. `dismissed` marks the issue resolved.
+</ParamField>
+
+<ParamField body="note" type="string">
+  Review notes written on each eval, up to 4000 characters.
+</ParamField>
+
+Returns `updated_ids` and `skipped_ids`. An eval ID that is not on this run is skipped. A request with neither a verdict nor a note returns `400` (`empty_triage`).
+
+## Correct a run's inputs
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/correct`
+</ParamField>
+
+<ParamField body="instruction" type="string" required>
+  The correction in plain language, 1 to 2000 characters.
+</ParamField>
+
+Coverbase reads the instruction into a fixed set of correctable fields (the vendor's website and name), applies them, and re-scores the run. A website correction also queues a refresh of the vendor's research, because the stored research came from the site you rejected. Returns the re-scored run. Needs update access to the assessment.
+
+<Note>
+  An instruction that yields no concrete change still returns `200` and still writes an audit entry with an empty `changes` array. Read `changes` to see what moved.
+</Note>
+
+## Read the audit trail
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero-touch-assessments/{assessment_id}/audit`
+</ParamField>
+
+Returns every review action on a run, oldest first, as `items` with `total`, `limit` and `offset`. Needs read access to the assessment.
+
+<ResponseField name="items[].action" type="string">
+  `approved`, `escalated`, `corrected`, `rescored`, `revised`, `restored`, `rerun_requested`, `note`, or `archived`.
+</ResponseField>
+
+<ResponseField name="items[].instruction" type="string | null">
+  The reviewer's own words, stored verbatim, for `corrected` entries.
+</ResponseField>
+
+<ResponseField name="items[].changes" type="object[]">
+  One entry per field the action changed, each with `field`, `before` and `after`. Empty for approvals, notes, and corrections that resolved to nothing.
+</ResponseField>
+
+<ResponseField name="items[].composite_before / composite_after" type="number | null">
+  The Zero Touch Score before and after the action.
+</ResponseField>
+
+<Warning>
+  The trail is append-only. There is no update or delete endpoint. A Zero Touch Score can be pushed onto a vendor's risk score, so nobody can rewrite the record of who changed the inputs behind it.
+</Warning>
+
+## Revise a result from analyst text
+
+To revise a result, you propose analyst text, read the change set it produces, optionally preview a subset, and apply the changes you accept. Every step needs access to the assessment: read access for the reads and the preview, update access for the rest.
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/revisions`
+</ParamField>
+
+<ParamField body="text" type="string" required>
+  The analyst's text, 1 to 20000 characters.
+</ParamField>
+
+Starts reading the text against the result and returns `202` with the proposal: `proposal_id`, `status` (`queued`, `reading`, `reconciling`, `ready` or `failed`), `parts_done`, `parts_total` and `failure_reason`. Nothing about the result changes yet.
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero-touch-assessments/{assessment_id}/revisions/{proposal_id}`
+</ParamField>
+
+Returns the proposal's progress. Once `status` is `ready`, `proposal` carries the `summary`, the proposed `changes` (each with an `id`, `section`, `target`, `operation`, `old_value`, `new_value`, `rationale`, `evidence`, `confidence` and `derived_from`), the `rejected` changes, the `ignored_instructions`, and `current_scores` and `proposed_scores` with every change accepted.
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/revisions/{proposal_id}/preview`
+</ParamField>
+
+<ParamField body="accepted_change_ids" type="string[]">
+  The change IDs to score as accepted.
+</ParamField>
+
+Returns `current_scores` and `proposed_scores` for that subset. Writes nothing.
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/revisions/{proposal_id}/apply`
+</ParamField>
+
+<ParamField body="accepted_change_ids" type="string[]" required>
+  The change IDs to apply. Only IDs are taken: the changes come from the stored, validated proposal.
+</ParamField>
+
+Applies the accepted changes as a new version of the result and returns the run.
+
+| Status | Meaning |
+| --- | --- |
+| `400` | The selection applies nothing, for example only derived changes whose parent you rejected (`nothing_to_apply`). |
+| `404` | The proposal is not on this run (`revision_proposal_not_found`). |
+| `409` | The proposal is still being read (`proposal_not_ready`), or the result changed after it was proposed (`revision_conflict`). |
+| `422` | An ID is not part of the proposal (`unknown_changes`, with `change_ids`). |
+
+## List and restore versions
+
+<ParamField path="method" type="GET">
+  `GET /v1/zero-touch-assessments/{assessment_id}/versions`
+</ParamField>
+
+Returns every version of a revised result, newest first, as `items` with `total`, `limit` and `offset`. Each version carries `version_number`, `kind`, `actor`, `created_at`, `pasted_text`, `applied_changes`, `restored_from_version_number`, `composite_before`, `composite_after` and `is_current`. The list is empty until an analyst first revises the result. Needs read access to the assessment.
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/versions/{version_number}/restore`
+</ParamField>
+
+Makes an earlier version current again. It writes a new version and keeps the history between the two. Returns the run. A version the run does not have returns `404` (`version_not_found`). Needs update access to the assessment.
+
+## Rerun flagged stages
+
+<ParamField path="method" type="POST">
+  `POST /v1/zero-touch-assessments/{assessment_id}/rerun`
+</ParamField>
+
+<ParamField body="stages" type="string[]" required>
+  Stages the current revision flagged, from `registration`, `sanctions`, `people`, `financial` and `security`.
+</ParamField>
+
+Reruns those pipeline stages against the corrected company. When the stages include `registration`, the first legal entity the revision recorded becomes the registry search name. The rerun lands on the vendor's shared research, so rescore the run afterwards. Returns `dispatched_stages` and `legal_name`. A stage the revision did not flag, a stage left out of the run, or a vendor with no research record returns `422` (`rerun_refused`, with `stages`). Needs update access to the assessment.
+
+## Edit what to ask the vendor for
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/zero-touch-assessments/{assessment_id}/vendor-requests`
+</ParamField>
+
+<ParamField body="items" type="object[]" required>
+  One to 200 edits, each `{"key": "...", "text": "...", "status": "open", "is_deleted": false}`. `key` comes from the run's `vendor_requests`. Every other field is optional and a field you leave out keeps its value. `status` is `open` or `dismissed`.
+</ParamField>
+
+Returns the run's lines as they now read, as `items` with `total`, `limit` and `offset`. A key the run does not list returns `422` (`unknown_vendor_requests`, with `keys`) and nothing is written. Needs update access to the assessment.
 
 ## Via MCP
 
-The same data is available to agents through the Coverbase MCP server:
+Agents reach the same operations through the Coverbase MCP server. Reads go through `query_assessments`:
 
 ```
-query_assessments(kind="zero_touch", assessment_id="cbqsrw_...")
-query_assessments(kind="zero_touch_leaderboard", limit=25)
+query_assessments(kind="zero_touch", assessment_id="cbqsrw_...", params={"version": 2})
+query_assessments(kind="zero_touch_leaderboard", limit=25, params={"offset": 25, "search": "acme"})
 query_assessments(kind="zero_touch_audit", assessment_id="cbqsrw_...")
+query_assessments(kind="zero_touch_config")
+query_assessments(kind="zero_touch_templates")
+query_assessments(kind="zero_touch_pulse")
+query_assessments(kind="zero_touch_documents", params={"vendor_ids": ["cbvndr_..."]})
+query_assessments(kind="zero_touch_versions", assessment_id="cbqsrw_...")
+query_assessments(kind="zero_touch_revision", assessment_id="cbqsrw_...", params={"proposal_id": "..."})
+query_assessments(kind="zero_touch_revision_preview", assessment_id="cbqsrw_...", params={"proposal_id": "...", "accepted_change_ids": ["..."]})
 ```
 
-All three are read-only and org-scoped to the authenticated user. See the [MCP overview](/mcp/overview).
+Writes go through `mutate` and need a write-scoped token and `confirm: true` in `data`:
+
+| Entity | Action | What it does |
+| --- | --- | --- |
+| `assessment` | `launch_zero_touch` | Launches one run, with the same options as `POST /v1/zero-touch-assessments`. |
+| `assessment` | `launch_zero_touch_bulk` | Launches runs for many vendors and prospects. |
+| `zero_touch` | `configure` | Changes the scoring configuration. |
+| `zero_touch` | `add_templates` | Adds shipped templates as eligible control sets. |
+| `zero_touch` | `set_template` | Points future runs at one shipped template. |
+| `zero_touch` | `rescore` | Re-scores a run. |
+| `zero_touch` | `auto_review` | Runs the automated review again. |
+| `zero_touch` | `reprofile` | Re-sources a run's vendor profile. |
+| `zero_touch` | `review` | Approves, escalates, archives, or notes a run. |
+| `zero_touch` | `bulk_review` | Records one decision on a batch of runs. |
+| `zero_touch` | `triage` | Confirms or dismisses controls, or notes them. |
+| `zero_touch` | `correct` | Corrects a run's inputs in plain language. |
+| `zero_touch` | `propose_revision` | Starts reading analyst text against a result. |
+| `zero_touch` | `apply_revision` | Applies accepted changes as a new version. |
+| `zero_touch` | `restore_version` | Makes an earlier version current. |
+| `zero_touch` | `rerun_revision` | Reruns the stages a revision flagged. |
+| `zero_touch` | `set_vendor_requests` | Edits what to ask the vendor for. |
+| `vendor` | `promote_prospect` | Moves a prospect into the portfolio at Onboarding. |
+
+Every read and write is scoped to the authenticated user's organization and checks the same permissions as the endpoints above. See the [MCP overview](/mcp/overview).
