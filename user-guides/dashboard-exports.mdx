@@ -263,11 +263,11 @@ Anyone else sees **Schedule export** grayed out, with "Your user role doesn't ha
 
 ## Export from MCP or the API
 
-You can start an export and fetch the file from an MCP client or with an API key. An MCP client starts one with `mutate(entity="report", action="export")` and polls it with `query_platform(kind="report_export")`. It changes a report's email schedule with `mutate(entity="report", action="update")`. The API routes are `POST /v1/reports/{report_id}/exports` and `GET /v1/report-exports/{export_id}`. See [Dashboard templates and exports](/api-reference/platform-configuration#dashboard-templates-and-exports).
+You can start an export and fetch the file from an MCP client or with an API key. An MCP client starts one with `mutate(entity="report", action="export")` and polls it with `query_platform(kind="report_export")`. It changes a report's email schedule with `mutate(entity="report", action="update")`. The API routes are `POST /v1/reports/{report_id}/exports` and `GET /v1/report-exports/{export_id}`. See [Dashboard templates and exports](/api-reference/platform-configuration#dashboard-templates-and-exports). Assessment reports and workbooks export the same way: `mutate(entity="assessment", action="export")` or `POST /v1/assessments/{assessment_id}/exports/pdf`, polled with `query_assessments(kind="export")` or `GET /v1/assessment-exports/{export_id}`. See [Assessment exports](/api-reference/assessment-administration#assessment-exports).
 
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#platform-settings) lists every field.
 
-These calls need `report` permission. API keys do not hold it, so use a key created by a person whose role holds it.
+Starting and fetching an export needs `report:export:org`, which organization API keys hold. Changing a schedule needs `report:update:org`. API keys do not hold it, so for that use a key created by a person whose role holds it.
 
 ## Troubleshooting
 

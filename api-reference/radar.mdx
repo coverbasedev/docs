@@ -84,12 +84,52 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/radar/detectors/{detector_id}/dismissal-examples` |
 | `PATCH` | `/v1/radar/dismissal-examples/{example_id}` |
 | `DELETE` | `/v1/radar/dismissal-examples/{example_id}` |
+| `POST` | `/v1/radar/alerts` |
+| `GET` | `/v1/radar/events/{event_id}/data-items` |
+| `GET` | `/v1/radar/events/{event_id}/time-to-signal` |
+| `GET` | `/v1/radar/events/{event_id}/exposure-vendors` |
+| `POST` | `/v1/radar/events/{event_id}/detector-runs` |
+| `GET` | `/v1/radar/signals/{signal_id}/alerts` |
+| `GET` | `/v1/radar/vendors/{vendor_id}/stories` |
+| `GET` | `/v1/radar/vendors/{vendor_id}/stories/{event_id}` |
+| `GET` | `/v1/radar/data` |
+| `GET` | `/v1/radar/data/categories` |
+| `GET` | `/v1/radar/data/{data_id}` |
+| `GET` | `/v1/radar/data/{data_id}/content` |
+| `GET` | `/v1/radar/data/{data_id}/event` |
+| `GET` | `/v1/radar/runs` |
+| `GET` | `/v1/radar/runs/{run_id}` |
+| `GET` | `/v1/radar/sources/{source_id}/snapshot` |
+| `GET` | `/v1/radar/sources/{source_id}/snapshot/page` |
+| `POST` | `/v1/radar/sources/{source_id}/test` |
+| `GET` | `/v1/radar/sources/{source_id}/extractor` |
+| `POST` | `/v1/radar/sources/{source_id}/extractor/accept` |
+| `POST` | `/v1/radar/sources/{source_id}/extractor/reject` |
+| `GET` | `/v1/radar/detector-library/sources` |
+| `PUT` | `/v1/radar/vendors/{vendor_id}/black-kite/domains` |
+| `POST` | `/v1/radar/vendors/{vendor_id}/black-kite/scan` |
+| `GET` | `/v1/radar/cases/{case_id}/export` |
+| `POST` | `/v1/radar/cases/{case_id}/threads/source-contacts` |
+| `GET` | `/v1/radar/cases/{case_id}/contact-search` |
+| `POST` | `/v1/radar/cases/{case_id}/threads/{thread_id}/emails` |
+| `POST` | `/v1/radar/detector-replays` |
+| `GET` | `/v1/radar/detector-replays` |
+| `GET` | `/v1/radar/detector-replays/{replay_id}` |
+| `POST` | `/v1/radar/alert-purges/preview` |
+| `POST` | `/v1/radar/alert-purges` |
+| `GET` | `/v1/radar/alert-purges` |
+| `GET` | `/v1/radar/alert-purges/{purge_id}` |
+| `POST` | `/v1/radar/alert-purges/{purge_id}/cancel` |
 
 None of these honor `Idempotency-Key`.
 
 The read routes need the `radar_alert:read:org` permission, and the routes that change something need `radar_alert:update:org`. API keys hold both. You cannot archive a case or a case thread through the API.
 
 The source and detector routes use the Radar detector permissions instead: reads need `radar_detector:read:org`, creating a detector needs `radar_detector:create:org`, and edits, back-tests and examples need `radar_detector:update:org`. Pulling a source needs `radar_detector:run:org`, and saving Black Kite settings needs `integration:update:org`. API keys hold all of them. An API key cannot archive or restore a source or a detector, or delete an example: those requests return `403 api_key_not_allowed`, and a signed-in user must make them.
+
+Radar data, the case export, the case contact search, stories, snapshots and signal alerts need `radar_alert:read:org`. Writing an alert by hand, filling case contacts and emailing a vendor from a case need `radar_alert:update:org`. Runs, the detector library sources and extractor runs need `radar_detector:read:org`. Testing a source, accepting or rejecting an extractor, and running a detector on an event need `radar_detector:update:org`. Changing a vendor's Black Kite domains needs `vendor:update:org`, and a Black Kite scan needs `integration:run:org`. Story reads also check that you can read the vendor. API keys hold all of these permissions.
+
+An API key cannot accept a generated extractor. Detector replays and alert purges are for Coverbase staff only: any other caller gets `403 coverbase_staff_only`, and an API key gets `403 api_key_not_allowed` on every purge route.
 
 ## Create a radar event
 
@@ -1408,6 +1448,168 @@ Replaces the example's `reason` and returns the [example](#dismissal-example-obj
 </ParamField>
 
 Returns `204 No Content`. API keys get `403 api_key_not_allowed`, so a signed-in user must delete examples.
+
+## Write an alert by hand
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/alerts`
+</ParamField>
+
+Returns `201 Created` with the [alert](#radar-alert-object). Use it to record a detector's verdict on one radar data item for one vendor yourself. Send `vendor_id`, `source_id`, `detector_id`, `radar_data_id`, `summary` and `reasoning`, plus `should_alert` (default `true`), `severity` and `confidence` (default `medium`). Set `notify_default_reviewers` to email the detector's default reviewers. Radar signs the alert the way the detector signs its own, so a later run finds it instead of adding a duplicate. An unknown detector or data item returns `404 not_found`, and a result that changed since you read it returns `409 result_conflict`.
+
+## Read an event's data items
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/events/{event_id}/data-items`
+</ParamField>
+
+Lists the raw items behind the event, each with `data`, `association_type`, `confidence`, `created_by` and `origin_type`. Items from sources your organization does not read are left out but still count in `total`. Pages with `limit` and `offset`; `include_archived` adds unlinked items. An unknown event returns `404 event_not_found`.
+
+## Read an event's time to signal
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/events/{event_id}/time-to-signal`
+</ParamField>
+
+Returns `time_to_signal` with when the event happened (`temporal_start`), was first published, and alerted your organization, plus the lag between each. `time_to_signal` is `null` when the event never became a signal for your organization.
+
+## List an event's exposed vendors
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/events/{event_id}/exposure-vendors`
+</ParamField>
+
+Lists your vendors the event exposes, directly or through their suppliers, including vendors that did not alert. Each row has the vendor's risk, `exposure_level`, `alerted`, any bill of materials match, and internal incidents with a `relevance` judgment. Set `include_prior_exposure=true` to also scan each vendor's alerts on other events over the last year.
+
+## Run a detector on an event
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/events/{event_id}/detector-runs`
+</ParamField>
+
+Returns `202 Accepted` with a `test_run_id`. Radar back-tests the enabled detector in `detector_id` against this one event. Read the results at [read back-test results](#read-back-test-results). An event you cannot see or a disabled detector returns `422 detector_not_runnable`.
+
+## List a signal's alerts
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/signals/{signal_id}/alerts`
+</ParamField>
+
+Lists the signal's active alerts, the set that acknowledging or dismissing the signal acts on. Each is an [alert](#radar-alert-object) with `is_acknowledged`.
+
+## Read a vendor's stories
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/vendors/{vendor_id}/stories`
+</ParamField>
+
+Lists the Radar stories that reached the vendor in the last year, most recent first. A story is one event, or several events Radar Ops filed together, with its milestones and the suppliers it came through. `GET /v1/radar/vendors/{vendor_id}/stories/{event_id}` returns the story that holds one event, with the sources behind it. An unknown vendor returns `404 vendor_not_found`, and an event in no story returns `404 story_not_found`.
+
+## Read radar data
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/data`
+</ParamField>
+
+Lists the raw items Radar pulled (articles, advisories, API records), each under a source your organization reads. Give at least one filter: `source_id`, `data_id` (both repeatable), `search`, `category` (repeatable), or `require_event=true`. Otherwise you get `400 filter_required`. Pages with `limit` and `offset`. A source you do not have returns `404 source_not_found`.
+
+`GET /v1/radar/data/{data_id}` returns one item, `GET /v1/radar/data/{data_id}/content` returns its stored text, and `GET /v1/radar/data/{data_id}/event` returns the newest event it belongs to, or `null`. `GET /v1/radar/data/categories` lists the impact categories with a description of each. The storage location of an item is never returned.
+
+## Read radar runs
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/runs`
+</ParamField>
+
+Lists Radar pull runs, newest first, with their status and the sources and origins each read. Filter with `start_ts` and `end_ts` (Unix seconds) and `origin_id`. Metrics count only the sources or origins you name with `source_id` or `origin_id`. `GET /v1/radar/runs/{run_id}` returns one run with its log entries. A start after the end returns `400 invalid_window`, and an unknown run `404 run_not_found`.
+
+## Read a source's snapshot
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/sources/{source_id}/snapshot`
+</ParamField>
+
+Returns what Radar last captured at a snapshot source and what changed since the capture before it. A page capture carries the text and a line `diff`; a list capture carries `entries` and an `entry_delta`. Pass `observation_id` to read a past capture. `raw_artifact_url` downloads the raw capture and expires in five minutes, so the response is never cached. `unsupported` is `true` for a source that does not capture snapshots.
+
+`GET /v1/radar/sources/{source_id}/snapshot/page` returns the captured page as `html` stripped to markup that is safe to show in a sandboxed frame, or an `unavailable_reason`. A capture that cannot be read returns `502 snapshot_unavailable`.
+
+## Test a source
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/sources/{source_id}/test`
+</ParamField>
+
+Calls an API source's endpoint once with its saved settings and returns what came back: `status` is `success` with a payload preview and the first mapped items, or `error` with an `error_code`. Send `vendor_id` when the request reads vendor fields. Nothing is stored.
+
+## Review a generated extractor
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/sources/{source_id}/extractor`
+</ParamField>
+
+Returns the latest extractor generation for a source that reads a web page: its `status`, why it stopped, and the `proposed_config`. `run` is `null` before the first one. You start a generation from the source's page in Coverbase.
+
+`POST /v1/radar/sources/{source_id}/extractor/accept` adopts the proposed extractor, and Radar reads the page with it from the next pull. A source that reads an RSS feed returns `422 source_reads_rss_feed`, and a run with no proposal yet returns `409 no_proposed_extractor`. An API key gets `403 api_key_not_allowed`.
+
+`POST /v1/radar/sources/{source_id}/extractor/reject` sends Coverbase your `message` about what the extractor gets wrong and returns `204 No Content`. The source keeps its settings.
+
+## List detector library sources
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/detector-library/sources`
+</ParamField>
+
+Lists each detector library template with the library sources it deploys with, and the `source_id` your organization already has for each, or `null`.
+
+## Link a vendor to Black Kite
+
+<ParamField path="method" type="PUT">
+  `PUT /v1/radar/vendors/{vendor_id}/black-kite/domains`
+</ParamField>
+
+Replaces the Black Kite domains you maintain for a vendor with `domains` (up to 50). A domain you leave out is removed. Domains a scan learned are kept apart in `company_domains`. Returns the vendor's match, including `in_monitoring_scope`.
+
+`POST /v1/radar/vendors/{vendor_id}/black-kite/scan` looks the vendor up in Black Kite now and ingests what it finds. Findings reach alerts only through your detectors. It returns `matched`, `findings_ingested` and `requests_spent`. A second scan within a minute returns `429 scan_too_soon`, and an organization without Black Kite returns `422 black_kite_not_configured`.
+
+## Export a case
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/cases/{case_id}/export`
+</ParamField>
+
+Builds a zip with the case workbook and one workbook for each questionnaire the case sent a vendor. Returns `download_url`, `file_name` and `expires_in`. Follow the link with a plain `GET`; it expires after an hour.
+
+## Fill case contacts
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/cases/{case_id}/threads/source-contacts`
+</ParamField>
+
+Fills every case thread that has no contacts, from the vendor's other case threads, its vendor record, or a public security email, then starts a background web search at the vendor's own domain for the rest. It sends nothing. Returns how many threads each step filled. Poll `GET /v1/radar/cases/{case_id}/contact-search` for the search's `searching`, `found`, `not_found` and `failed` counts. An archived case returns `422 case_archived`, and a search already running returns `409 contact_search_running`.
+
+## Email a vendor from a case
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/cases/{case_id}/threads/{thread_id}/emails`
+</ParamField>
+
+This contacts the vendor. Returns `202 Accepted` with the `email_id`. Send `subject`, a plain text `text_body`, and `to_addresses`, with optional `cc_emails` and `bcc_emails` (each `{ "email": "...", "name": "..." }`). Coverbase adds the thread's open portal link, queues the email, and marks the thread as emailed. An archived case returns `422 case_archived`.
+
+## Replay a detector
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detector-replays`
+</ParamField>
+
+Coverbase staff only. Returns `201 Created`. Radar samples the detector's past results (`max_items`, `lookback_days`) and replays them with its current instructions and the proposed `instructions`, without changing the detector. `GET /v1/radar/detector-replays` lists replays (filter with `detector_id`), and `GET /v1/radar/detector-replays/{replay_id}` returns one with its scores and items.
+
+## Purge the alert queue
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/alert-purges`
+</ParamField>
+
+Coverbase staff only, and never an API key. A purge archives every open, untriaged alert created between `created_after` and `created_before` (Unix seconds), and the signals it leaves empty. Detectors, sources and events are not touched. Preview the window first with `POST /v1/radar/alert-purges/preview`, which clears nothing and returns `alert_count`, `signal_count` and the `resolved_created_before` to send. One run clears at most 50,000 alerts. A window with no open alerts or over the limit returns `422 purge_rejected`, and a purge already running returns `409 purge_running`. Follow a purge with `GET /v1/radar/alert-purges/{purge_id}`, list recent ones with `GET /v1/radar/alert-purges`, and stop one with `POST /v1/radar/alert-purges/{purge_id}/cancel`. Alerts it already archived stay archived.
 
 ## Related
 

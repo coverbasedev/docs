@@ -111,6 +111,14 @@ A requisition or sourcing event opens a draft intake request. The requester sees
 - **Configuration → Vendor Master Data** shows supplier master records from SAP Ariba or Coupa, with the steward queue and the sync log.
 - A vendor's procurement tab shows its **Approved Supplier Lists** status from each connected system: **Approved**, **Not approved** or **Not stated**.
 
+## Work the hub from MCP or the API
+
+You can read your connections, start syncs and work the steward queue from an MCP client or with an API key. An MCP client reads with `query_platform(kind=...)` (`integrations`, `integration_sync_runs`, `integration_sync_records`, `integration_conflicts`, `integration_conflict_bulk_job`, `integration_mismatches`). It writes with `mutate(entity="integration", action=...)` (`set_status`, `set_mappings`, `sync`), `mutate(entity="integration_conflict", action=...)` (`resolve`, `dismiss`, `bulk`) and `mutate(entity="integration_mismatch", action="resolve")`.
+
+The API routes sit under `/v1/integrations`, `/v1/integration-conflicts` and `/v1/integration-mismatches`. See [Integration hub](/api-reference/platform-configuration#integration-hub).
+
+Connections show as metadata only. Connecting a provider, rotating its webhook secret and disconnecting it handle a credential, so you do those here in the dashboard. Before an MCP client sends a write, it shows you the change and waits for you to confirm it.
+
 ## Troubleshooting
 
 | What you see | Cause | Fix |

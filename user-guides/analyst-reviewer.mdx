@@ -315,11 +315,11 @@ As a reviewer, you validate extractions against source language, assign owners a
 
 You can triage, correct and follow up from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_assessments(kind="evals")`, `query_assessments(kind="eval_detail")`, `query_assessments(kind="follow_up_sections")` and `query_assessments(kind="reviews")`. It corrects the AI with `mutate(entity="eval", action=...)` (`update`, `bulk_update`, `correct_response`, `rerun`, `accept_rerun`) and follows up with `mutate(entity="follow_up", action="create")` and `mutate(entity="follow_up_section", action="send")`.
 
-The API covers the bulk eval routes under `/v1/evals`, `POST /v1/evals/{eval_id}/rerun`, and the `/v1/follow-ups` and `/v1/follow-up-rounds` routes. See the [Assessment administration API](/api-reference/assessment-administration#evals-in-bulk).
+The API covers the bulk eval routes under `/v1/evals`, `POST /v1/evals/{eval_id}/rerun`, and the `/v1/follow-ups` and `/v1/follow-up-rounds` routes. AI follow-up suggestions (`POST /v1/assessments/{assessment_id}/follow-up-suggestions`, or `mutate(entity="follow_up", action="suggest")`) and claim checks (`/v1/questionnaire-responses/{response_id}/claim-checks`, or `query_questionnaires(kind="claim_checks")`) run in the background. Poll the suggestion job, and read the claim check verdicts back when the run ends. See the [Assessment administration API](/api-reference/assessment-administration#evals-in-bulk).
 
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#assessments-evals-and-follow-ups) lists every field.
 
-Some steps stay with a person. An API key cannot close an issue on evals or archive a follow-up. Accepting an eval rerun's result works only through MCP, because the API has no route for it. Completing an assessment and recording its outcome have no API route either.
+Some steps stay with a person. An API key cannot close an issue on evals or archive a follow-up. Accepting an eval rerun's result works only through MCP, because the API has no route for it. An API key cannot complete an assessment or record its outcome either; `POST /v1/assessments/{assessment_id}/complete` takes a signed-in person's token.
 
 ---
 

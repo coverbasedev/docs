@@ -34,6 +34,8 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/reassessments/{reassessment_id}/confirm` |
 | `POST` | `/v1/reassessments/{reassessment_id}/dismiss` |
 | `POST` | `/v1/reassessments/{reassessment_id}/run` |
+| `GET` | `/v1/reassessment-rules` |
+| `PUT` | `/v1/reassessment-rules` |
 
 None of these honor `Idempotency-Key`.
 
@@ -188,6 +190,20 @@ All three return the refreshed [reassessment object](#reassessment-object).
 | 404 | `{"detail": {"code": "reassessment_not_found", ...}}` | Not found / not in the API key's org. |
 | 422 | `{"detail": {"code": "reassessment_immutable", ...}}` | Editing or running a `run`/`dismissed` reassessment. |
 | 422 | `{"detail": {"code": "invalid_reassessment", ...}}` | The request was rejected, for example a vendor or plan that does not resolve. |
+
+## Reassessment rules
+
+<ParamField path="method" type="GET">
+  `GET /v1/reassessment-rules`
+</ParamField>
+
+Returns how often vendors are reassessed: `risk_basis`, the organization's default timeline in `org_timeline`, and for each assessment plan its `rules` (`risk_level_ids` and `interval_months`) and its own `timeline`. It also returns a `revision`. Reading needs `org_settings:read:org`.
+
+<ParamField path="method" type="PUT">
+  `PUT /v1/reassessment-rules`
+</ParamField>
+
+Replaces every rule and timeline. Send the `revision` from your last read, the `risk_basis`, and every plan in `plans`; send `plans: []` to clear the rules. A `revision` that changed since you read it returns `409 revision_conflict`, and a configuration Coverbase rejects returns `422 invalid_reassessment_rules`. Replacing needs a key created by a person whose role holds `org_settings:update:org`.
 
 ## Related
 

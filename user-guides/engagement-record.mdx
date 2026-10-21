@@ -121,9 +121,9 @@ Vendors and engagements can also carry a **Business Unit**, which the reviewer m
 
 ## Work engagements from MCP or the API
 
-You can read engagements, link due diligence and record the Risk Summary from an MCP client, and read engagements with an API key. An MCP client reads with `query_engagements_contracts(kind="engagements")`, `query_engagements_contracts(kind="engagement_detail")` and `query_engagements_contracts(kind="engagement_lifecycle")`. It writes with `mutate(entity="engagement", action=...)` (`create`, `update`, `archive`, `link_assessment`), `mutate(entity="risk_summary", action="update")` and `mutate(entity="tprm_lifecycle_settings", action="update")`.
+You can create, read and archive engagements, link due diligence, approve access scopes and read the Risk Summary from an MCP client or with an API key. An MCP client reads with `query_engagements_contracts(kind="engagements")`, `query_engagements_contracts(kind="engagement_detail")` and `query_engagements_contracts(kind="engagement_lifecycle")`. It also reads `other_engagements` and `engagement_access_scope`. It writes with `mutate(entity="engagement", action=...)` (`create`, `update`, `archive`, `bulk_archive`, `link_assessment`), `mutate(entity="engagement_access_scope", action="approve")`, `mutate(entity="risk_summary", action="update")` and `mutate(entity="tprm_lifecycle_settings", action="update")`.
 
-With an API key, use `GET /v1/engagement-records` and `GET /v1/engagement-records/{engagement_id}`. See the [Engagement records API](/api-reference/engagement-records). The API has no route for the Risk Summary.
+With an API key, use `/v1/engagement-records` and the routes under `/v1/engagement-records/{engagement_id}`, including `lifecycle`, `assessment-links`, `other-engagements`, `risk-summary`, `risk-domain-scores` and `access-scope`. See the [Engagement records API](/api-reference/engagement-records) and [Engagement records](/api-reference/contract-administration#engagement-records). Archiving engagements or removing a linked assessment needs a signed-in user.
 
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#contracts-engagements-and-procurement) lists every field.
 

@@ -1,6 +1,6 @@
 ---
 title: "Platform configuration API"
-description: "Manage statuses, custom field sections, email templates, workflows, Coverbase AI agents and preferences, reports, and the TPRM lifecycle configuration."
+description: "Manage statuses, custom fields and sections, email templates and layouts, notifications, saved views, workflows, Coverbase AI agents, runs and preferences, reports, RFPs, billing and the TPRM lifecycle configuration."
 icon: "sliders"
 ---
 
@@ -102,9 +102,111 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PUT` | `/v1/prompts/{prompt_name}` | `org_settings:update:org` |
 | `POST` | `/v1/prompts/{prompt_name}/select` | `org_settings:update:org` |
 | `PATCH` | `/v1/prompts/{prompt_name}/versions/{version_num}` | `org_settings:update:org`; archiving needs a user key |
+| `GET` | `/v1/agent-playbooks` | Any member |
+| `GET` | `/v1/agent-setup` | Any member |
+| `POST` | `/v1/agent-runs` | Any member; `approval_policy: auto` needs a user key |
+| `GET` | `/v1/agent-runs` | Any member, own runs only |
+| `GET` | `/v1/agent-runs/{run_id}` | Any member, own runs only |
+| `GET` | `/v1/agent-runs/{run_id}/history` | Any member, own runs only |
+| `GET` | `/v1/agent-runs/{run_id}/export` | Any member, own runs only |
+| `POST` | `/v1/agent-runs/{run_id}/answer` | Any member, own runs only; accepting or rejecting a proposal needs a user key |
+| `POST` | `/v1/agent-runs/{run_id}/instruct` | Any member, own runs only; withdrawing a proposal needs a user key |
+| `POST` | `/v1/agent-runs/{run_id}/stop` | Any member, own runs only |
+| `POST` | `/v1/agent-runs/{run_id}/mode` | Any member, own runs only |
+| `GET` | `/v1/billing-overview` | `billing:read:org` |
+| `GET` | `/v1/rfp-categories` | `rfp:read:org` |
+| `PATCH` | `/v1/rfp-records/{rfp_id}` | `rfp:update:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/set-status` | `rfp:update:org`; `archived` and `awarded` need a user key |
+| `POST` | `/v1/rfp-records/{rfp_id}/pause` | `rfp:update:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/cancel` | `rfp:update:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/submissions/rank` | `rfp_evaluation:update:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/lock-rubric` | `rfp:update:org` |
+| `GET` | `/v1/rfp-records/{rfp_id}/invitations` | `rfp:read:org` |
+| `PATCH` | `/v1/rfp-records/{rfp_id}/invitations/{invitation_id}` | `rfp:update:org` |
+| `GET` | `/v1/rfp-records/{rfp_id}/submissions` | `rfp:read:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/submissions` | `rfp:update:org` |
+| `GET` | `/v1/workflow-definitions` | `workflow:read:org` |
+| `GET` | `/v1/lifecycle-requirements` | `workflow:read:org` |
+| `GET` | `/v1/integrations` | `integration:read:org` |
+| `PUT` | `/v1/integrations/{provider}/status` | `integration:update:org` |
+| `PUT` | `/v1/integrations/{provider}/mappings` | `integration:update:org` |
+| `POST` | `/v1/integrations/{provider}/syncs` | `integration:run:org` |
+| `GET` | `/v1/integrations/{provider}/sync-runs` | `integration:read:org` |
+| `GET` | `/v1/integrations/{provider}/sync-records` | `integration:read:org` |
+| `GET` | `/v1/integration-conflicts` | `integration:read:org` |
+| `POST` | `/v1/integration-conflicts/{conflict_id}/resolve` | `integration:update:org` |
+| `POST` | `/v1/integration-conflicts/{conflict_id}/dismiss` | `integration:update:org` |
+| `POST` | `/v1/integration-conflicts/bulk-jobs` | `integration:update:org` |
+| `GET` | `/v1/integration-conflicts/bulk-jobs/{job_id}` | `integration:read:org` |
+| `GET` | `/v1/integration-mismatches` | `integration:read:org` |
+| `POST` | `/v1/integration-mismatches/{mismatch_id}/resolve` | `integration:update:org` |
+| `GET` | `/v1/monitoring-cadence` | `org_settings:read:org` |
+| `PUT` | `/v1/monitoring-cadence` | `org_settings:update:org` |
+| `GET` | `/v1/monitoring-plans` | Vendor read access |
+| `GET` | `/v1/monitoring-plans/{plan_id}` | Read access to the plan's engagement or vendor |
+| `GET` | `/v1/monitoring-plans/{plan_id}/events` | Read access to the plan's engagement or vendor |
+| `GET` | `/v1/engagements/{engagement_id}/monitoring-plan` | Read access to the engagement |
+| `GET` | `/v1/services/{service_id}/monitoring-plan` | Read access to the service's vendor |
+| `POST` | `/v1/engagements/{engagement_id}/monitoring-plan/generate` | TPRM Office (org-wide `vendor:update:org`) |
+| `POST` | `/v1/services/{service_id}/monitoring-plan/generate` | TPRM Office (org-wide `vendor:update:org`) |
+| `GET` | `/v1/monitoring-activities` | Vendor read access |
+| `PATCH` | `/v1/monitoring-plans/{plan_id}/activities/{activity_id}` | TPRM Office (org-wide `vendor:update:org`) |
+| `POST` | `/v1/monitoring-plans/{plan_id}/activities/{activity_id}/complete` | Update access to the plan's engagement or vendor |
+| `GET` | `/v1/branding` | `org_settings:read:org` |
+| `PATCH` | `/v1/branding` | `org_settings:update:org` |
+| `PUT` | `/v1/branding/logo` | `org_settings:update:org` |
+| `PUT` | `/v1/branding/icon` | `org_settings:update:org` |
+| `GET` | `/v1/activity-log` | Read access to the record |
+| `GET` | `/v1/audit-log` | A user key, or an API key with the `audit:read` scope |
+| `GET` | `/v1/audit-log/metadata` | A user key, or an API key with the `audit:read` scope |
+| `GET` | `/v1/notes` | `note:read:org` and read access to the record |
+| `POST` | `/v1/notes` | `note:create:org` and read access to the record |
+| `PATCH` | `/v1/notes/{note_id}` | `note:update:org`; your own notes only |
+| `GET` | `/v1/emails` | Any member |
+| `GET` | `/v1/emails/search` | Any member |
+| `GET` | `/v1/emails/{email_id}` | Any member |
+| `POST` | `/v1/emails` | Update access to the record the email is about |
+| `GET` | `/v1/tprm-lifecycle-settings` | `org_settings:read:org` |
+| `GET` | `/v1/template-variables` | Any member |
+| `GET` | `/v1/risk-scales/default` | Any member |
+| `PUT` | `/v1/risk-scales/default/levels` | `org_settings:update:org` |
+| `GET` | `/v1/home-dashboard` | Any member |
+| `POST` | `/v1/reports/{report_id}/charts/{chart_id}/remove` | `report:update:org` |
+| `POST` | `/v1/reports/{report_id}/scheduled-export/test` | `report:update:org` and `report:export:org` |
+| `POST` | `/v1/performance-scores/from-response` | `vendor:update:org` |
+| `GET` | `/v1/custom-fields/usage` | `custom_field:read:org` |
+| `DELETE` | `/v1/custom-fields/values/{value_id}` | Update access to the record; needs a user key |
+| `POST` | `/v1/directory-people` | `vendor:update:org` |
+| `GET` | `/v1/roles/{role_id}/audit-log` | `role:read:org` |
+| `GET` | `/v1/licensed-connectors` | `integration:read:org` |
+| `GET` | `/v1/licensed-connectors/{connector}` | `integration:read:org` |
+| `POST` | `/v1/licensed-connectors/{connector}/test` | `integration:run:org` |
+| `GET` | `/v1/third-party-integrations/{provider}` | `integration:read:org` |
+| `POST` | `/v1/third-party-integrations/{provider}/test` | `integration:run:org` |
+| `POST` | `/v1/jira-tickets` | `integration:run:org` |
+| `GET` | `/v1/notification-settings` | Any member; your own settings only |
+| `GET` | `/v1/notification-settings/{setting_id}` | Any member; your own settings only |
+| `POST` | `/v1/notification-settings` | Any member; your own settings only |
+| `PATCH` | `/v1/notification-settings/{setting_id}` | Any member; your own settings only |
+| `GET` | `/v1/notification-types` | Any member |
+| `GET` | `/v1/notification-preference` | Any member; your own preference only |
+| `PUT` | `/v1/notification-preference` | Any member; your own preference only |
+| `GET` | `/v1/notifications` | Any member; your own notifications only |
+| `POST` | `/v1/notifications/mark-seen` | Any member; your own notifications only |
+| `GET` | `/v1/saved-views` | Any member |
+| `POST` | `/v1/saved-views` | Any member |
+| `PATCH` | `/v1/saved-views/{saved_view_id}` | Any member; an admin for a shared view or the default |
+| `GET` | `/v1/email-layouts` | `org_settings:read:org` |
+| `POST` | `/v1/email-layouts` | `org_settings:update:org` |
+| `POST` | `/v1/email-layouts/preview` | `org_settings:read:org` |
+| `PATCH` | `/v1/email-layouts/{layout_id}` | `org_settings:update:org` |
+| `GET` | `/v1/email-layouts/{layout_id}/preview` | `org_settings:read:org` |
+| `POST` | `/v1/email-layouts/{layout_id}/dry-run` | `org_settings:update:org`; needs a user key |
+| `POST` | `/v1/custom-fields` | `custom_field:create:org` |
+| `PATCH` | `/v1/custom-fields/{custom_field_id}` | `custom_field:update:org` |
 
 <Note>
-An organization API key does not hold the `org_settings`, `email_template`, `report` or `role` permissions. In an organization that enforces roles, call the routes that need them with a key created by a person whose role holds the permission.
+An organization API key can read roles, email templates and reports, and export reports. It does not hold the `org_settings` permissions, `email_template` write permissions, `report` create, update or archive permissions, `role` write permissions or `billing:read:org`. In an organization that enforces roles, call the routes that need them with a key created by a person whose role holds the permission.
 </Note>
 
 None of these honor `Idempotency-Key`. An API key cannot archive a status, custom field section, email template, workflow, rule, report or agent preference. To archive one, use Coverbase. Every list endpoint takes `limit` (1 to 500, default 100) and `offset` (default 0) and returns `items`, `total`, `limit` and `offset`.
@@ -600,6 +702,140 @@ The detection check can pull in vendor documents that look like your new type. S
 
 `PATCH /v1/prompts/{prompt_name}/versions/{version_num}` renames a version with `name`, or archives it or brings it back with `is_archived`. When you archive the version in use, Coverbase uses `new_selected_version_num`, or your newest unarchived version when you leave it out. Archiving and unarchiving need a user key: an API key gets `403 api_key_not_allowed`. An unknown version returns `404 prompt_version_not_found`.
 
+## Coverbase AI runs
+
+A **run** is one instruction Coverbase AI carries out, such as "Onboard Figma for design collaboration". A run belongs to whoever started it. With an API key, that is the key, so each key sees only its own runs. Every route here returns `404 not_enabled` when Coverbase AI is off for your organization.
+
+`GET /v1/agent-playbooks` lists the jobs Coverbase AI knows how to do. Each item has `playbook`, `title`, `description`, `steps` and an `example` instruction that starts it. `GET /v1/agent-setup` returns each setup step with `done`, the `instruction` that starts the guided setup, and `complete`.
+
+### Start and follow a run
+
+To start a run, send `POST /v1/agent-runs` with `instruction`. Optional fields are `mode` (`background`, the default, or `guided`) and `approval_policy` (`ask`, the default, or `auto`). Coverbase returns `201 Created` with the run. The run works in the background and stops before any change it proposes, so a person can accept or reject it. An API key cannot start a run with `approval_policy: auto`, because that run approves its own changes.
+
+`GET /v1/agent-runs` lists your runs, newest first. Filter with `active`, `archived`, `search` and `status` (repeat it for several), and page with `limit` (1 to 50, default 20) and `offset`. `GET /v1/agent-runs/{run_id}` returns one run with its `status`, `plan`, `needs_you`, `report` and `error`.
+
+To follow a live run, poll `GET /v1/agent-runs/{run_id}/history` with `after_sequence` set to the last `sequence` you saw. It returns the events logged since then.
+
+To download the whole log, send `GET /v1/agent-runs/{run_id}/export` with `format` set to `json` (default) or `csv`. The response carries a presigned `download_url` that works for `expires_in` seconds (five minutes) without an `Authorization` header. The response is never cached.
+
+### Answer and steer a run
+
+When a run's `status` is `needs_you`, `needs_you.kind` says what it waits on. To answer, send `POST /v1/agent-runs/{run_id}/answer` with `option_key`, `text` or, for a batch, `accepted_keys`. An API key can answer a `question`. Accepting or rejecting a `checkpoint`, `batch`, `risk_review` or `failure` is a decision for a person, so an API key gets `403 api_key_not_allowed`.
+
+To change a run's course, send `POST /v1/agent-runs/{run_id}/instruct` with `text` and an optional `idempotency_key`. A running run reads it at its next step, and a finished run continues from it. An instruction withdraws a pending proposal, so an API key cannot send one while the run waits on a decision.
+
+`POST /v1/agent-runs/{run_id}/stop` stops a run. `POST /v1/agent-runs/{run_id}/mode` with `mode` switches a live run between `guided` and `background`. Archiving and deleting a run stay in Coverbase.
+
+## Billing overview
+
+`GET /v1/billing-overview` returns your billing `contracts`, each usage `metrics` entry with its limit and usage history, and `as_of`. It is read only. It returns `404 not_enabled` when billing is off for your organization. It needs `billing:read:org`, which API keys do not hold, so use a key created by a person whose role holds it.
+
+## RFPs
+
+These routes change an RFP and work its responses after you create it. To list, read, create, invite, publish, compare or award, use the [RFPs API](/api-reference/rfps). None of these routes emails a vendor.
+
+`GET /v1/rfp-categories` lists the categories your RFPs use, so a new RFP can reuse one.
+
+To change an RFP, send `PATCH /v1/rfp-records/{rfp_id}`. Fields you omit keep their value. Send `null` for a timeline field, `owner_id`, `service_id` or `passing_threshold` to clear it.
+
+`POST /v1/rfp-records/{rfp_id}/pause` puts an RFP back to draft, and `POST .../cancel` cancels it. `POST .../set-status` with `status` moves it to any lifecycle status, such as `in_review` or `shortlisted`. Moving it to `archived` also needs `rfp:archive:org`, and to `awarded` needs `rfp:approve:org`. Both are decisions for a person, so an API key gets `403 api_key_not_allowed`.
+
+`GET /v1/rfp-records/{rfp_id}/invitations` lists the invited vendors. `PATCH .../invitations/{invitation_id}` with `status` and an optional `disqualification_reason` moves one along, for example to `declined` or `disqualified`.
+
+To record a response, send `POST /v1/rfp-records/{rfp_id}/submissions` with `invitation_id` and an optional `response_session_id`. This marks the invitation submitted. `GET .../submissions` lists responses. `POST .../submissions/rank` with `submission_ids`, best first, ranks them by hand; responses you leave out follow in their old order. `POST .../lock-rubric` with an optional `weighting_set_name` and `weights_json` freezes the scoring rubric as a new version.
+
+## Workflow list and lifecycle requirements
+
+`GET /v1/workflow-definitions` lists your automation workflows. Filter with `is_archived` and `is_enabled`, and page with `limit` and `offset`.
+
+`GET /v1/lifecycle-requirements` with `target_type` (such as `vendor`) and `target_id` returns what the record still needs before each workflow-gated status change.
+
+## Integration hub
+
+These endpoints work the [integration hub](/user-guides/integration-hub): your procure-to-pay, CLM and HR connections, their syncs and the steward queue. They need the TPRM lifecycle; without it they return `404` with the code `not_enabled`. `{provider}` is a provider key such as `coupa` or `ironclad`.
+
+`GET /v1/integrations` lists every provider offered to your organization. A connected provider carries its `connection`: `status`, `last_synced_at`, `last_sync_status`, `last_error` and its open conflict and mismatch counts. No credential is ever returned. Connecting a provider, rotating its webhook secret and disconnecting it store or delete a credential, so you do those in Coverbase.
+
+`PUT /v1/integrations/{provider}/status` pauses or resumes a connection with `status` set to `paused` or `active`. `PUT /v1/integrations/{provider}/mappings` replaces its `field_mappings`. A provider you have not connected returns `404` with the code `connection_not_found`, and one not offered to you returns `provider_not_offered`.
+
+`POST /v1/integrations/{provider}/syncs` starts a sync and returns `202 Accepted` with `queued`. Send an optional `object_type` to sync one kind of record. Follow it with `GET /v1/integrations/{provider}/sync-runs`, and see what each run did with every provider record in `GET /v1/integrations/{provider}/sync-records` (filter by `run_id`, `outcome` and `object_type`).
+
+`GET /v1/integration-conflicts` is the steward queue: provider suppliers a sync could not match to one vendor, with their `candidates`. It lists open conflicts unless you pass `status`. `POST .../resolve` links a conflict to the `vendor_id` you send, and the supplier's contracts sync again. `POST .../dismiss` takes it off the queue. `POST /v1/integration-conflicts/bulk-jobs` resolves or dismisses up to 500 conflicts in the background; poll `GET /v1/integration-conflicts/bulk-jobs/{job_id}`.
+
+`GET /v1/integration-mismatches` lists linked supplier fields whose provider value differs from Coverbase's. `POST /v1/integration-mismatches/{mismatch_id}/resolve` settles one with `choice` set to `external`, `coverbase` or `dismiss`. These two need TPRM expansion.
+
+## Monitoring plans
+
+These endpoints work [monitoring plans](/user-guides/monitoring-plans). They need the TPRM lifecycle; without it they return `404` with the code `not_enabled`.
+
+`GET /v1/monitoring-cadence` returns the cadence matrix: for each risk tier (`levels`) and activity, the `interval_months` between runs and the `owner_role`, the reassessment interval per tier, the TPRM Office group and the plan `settings`. `PUT /v1/monitoring-cadence` replaces it with `cells`, `settings` and `tprm_office_department_id`. A cell on a risk level your scale does not have returns `422` with the code `unknown_risk_levels`. Existing plans pick up the new cadence on their next re-plan; an activity someone edited keeps its own interval. Changing the cadence needs `org_settings:update:org`, so use a key created by a person whose role holds it.
+
+`GET /v1/monitoring-plans` lists live plans with each one's next due activity and overdue count. `GET /v1/monitoring-plans/{plan_id}` returns one plan with its `activities`, recent `events`, pending signal moves and last owner attestation. `GET /v1/engagements/{engagement_id}/monitoring-plan` and `GET /v1/services/{service_id}/monitoring-plan` find the plan for a subject; `plan` is null until it is live. `GET /v1/monitoring-plans/{plan_id}/events` returns the plan's history. `GET /v1/monitoring-activities` lists scheduled activities across plans; filter with `activity_types`, `due_window` and `mine`.
+
+`POST .../monitoring-plan/generate` generates a plan now, or re-plans it from the cadence. A service that a live engagement covers returns `409` with the code `covered_by_engagement`, and a paused subject returns `409` with `monitoring_paused`. `PATCH /v1/monitoring-plans/{plan_id}/activities/{activity_id}` changes an activity's `interval_months`, `next_due_at`, `owner_user_id` or `is_enabled`; only the fields you send change. Generating and editing are the TPRM Office's: a caller without org-wide vendor update access gets `403` with the code `not_tprm_office`. `POST .../complete` marks a contract review or evidence request done; other activities complete from their own workflow and return `400` with the code `not_manually_completed`.
+
+Owner attestations, IRQ refreshes, signal moves and scorecards stay in Coverbase.
+
+## Branding
+
+These endpoints read and change your [white-label branding](/user-guides/white-labeling): the logo vendors see on portals and emails, the square icon, the brand color and the vendor portal title. Changes need `org_settings:update:org`, so use a key created by a person whose role holds it.
+
+`GET /v1/branding` returns `full_logo_url`, `icon_url`, `primary_color` and `portal_title`. The logo URLs are public.
+
+`PATCH /v1/branding` changes `primary_color` (a 6-digit hex such as `#0052ff`) or `portal_title`, and removes the logo or icon with `remove_full_logo` or `remove_icon`. A field you omit keeps its value; `null` clears it.
+
+`PUT /v1/branding/logo` and `PUT /v1/branding/icon` upload an image as multipart form data with `file`: PNG, JPG, SVG or WebP, up to 5 MB. Coverbase writes the resized copies vendors see. Any other file returns `422` with the code `invalid_image`. The icon is also your organization's logo at sign-in.
+
+## Workspace logs, notes, email and settings
+
+`GET /v1/activity-log` returns a record's activity log, newest first: field changes, creations, notes and emails. Pass `target_type` and `target_id`, and `related_activity=true` to add the activity of its related records. `GET /v1/audit-log` returns the system audit log (sign-ins, role and permission changes, settings changes, exports and API calls), filtered by time, `event_groups`, `event_types` and `search`, with the total in the `X-Total-Count` header. `GET /v1/audit-log/metadata` lists the groups and types it filters on. An API key needs the `audit:read` scope for both.
+
+`GET /v1/notes` lists the notes on a record with their replies, and `POST /v1/notes` adds one, or a reply with `parent_id`. People a note @mentions are notified. A note on an obligation the vendor is working in a commitment portal also emails the vendor's contacts. `PATCH /v1/notes/{note_id}` replaces the `text` of a note you wrote; people it newly mentions are notified. Archiving a note stays with a signed-in user.
+
+`GET /v1/emails` lists the emails about a record (`object_type` and `object_id`), `GET /v1/emails/search` searches them with `query`, and `GET /v1/emails/{email_id}` returns one. `POST /v1/emails` sends an email about a record from your organization's sender. It contacts the recipients: it returns `202 Accepted` with the email `status: queued`, and the email is sent in the background and shows on the record's email log.
+
+`GET /v1/tprm-lifecycle-settings` returns which user groups the TPRM lifecycle routes work to. `GET /v1/template-variables` lists the variables a template can insert; pass exactly one of `surface` or `template_type`. `GET /v1/risk-scales/default` returns your risk scale, and `PUT /v1/risk-scales/default/levels` replaces its `levels`, with a `remap` target for each removed level records still use.
+
+`GET /v1/home-dashboard` names the dashboard you land on at home. `POST /v1/reports/{report_id}/charts/{chart_id}/remove` takes a chart off a dashboard. `POST /v1/reports/{report_id}/scheduled-export/test` sends a dashboard's scheduled export once, to your own address only, from the draft `config` you send.
+
+`POST /v1/performance-scores/from-response` scores a vendor against a rubric from a submitted questionnaire response; Coverbase AI reads the answers and saves the score. `GET /v1/custom-fields/usage` counts how many records hold a value for each custom field. `DELETE /v1/custom-fields/values/{value_id}` clears one value and needs a user key. `POST /v1/directory-people` adds a person who can be named on records and get their email but cannot sign in. `GET /v1/roles/{role_id}/audit-log` lists changes to a role. Creating, changing and archiving roles stays in Coverbase.
+
+## Notifications and saved views
+
+These routes act for the person the key belongs to. You only ever read or change your own settings, notifications and views.
+
+`GET /v1/notification-settings` lists your setting for each event type and channel, with the default where you have not changed it. `POST /v1/notification-settings` turns one `event_type` on or off for one `channel` with `status`, and returns `201 Created`. `PATCH /v1/notification-settings/{setting_id}` changes a saved setting's `status`. `GET /v1/notification-settings/{setting_id}` returns one. Someone else's setting returns `404` with the code `notification_setting_not_found`. `GET /v1/notification-types` lists every event type you can configure, with its category, name and description.
+
+`GET /v1/notification-preference` says how your email notifications arrive: `delivery_format` is `immediate` or `digest`, with `digest_hour`, `timezone` and `urgent_bypass`. `PUT /v1/notification-preference` sets all four.
+
+`GET /v1/notifications` lists your in-app notifications, with optional `statuses`, `offset` and `limit`. `POST /v1/notifications/mark-seen` marks the `notification_ids` you send as seen. An ID that is not yours returns `404` with the code `notification_not_found`.
+
+`GET /v1/saved-views` lists your saved views of one list, named by `object_type`, and the views shared with your organization. `POST /v1/saved-views` saves a filter, sort and search as a view you own and returns `201 Created`. `PATCH /v1/saved-views/{saved_view_id}` changes one. Only an admin changes a shared view or your organization's default view; anyone else gets `403` with the code `saved_view_not_editable`.
+
+## Email layouts
+
+An email layout is the frame your outgoing emails wear: one for vendors (`external`) and one for your team (`internal`).
+
+`GET /v1/email-layouts` lists the saved layouts. `POST /v1/email-layouts` saves the layout for its `layout_type`, replacing the current one, and returns `201 Created`. `PATCH /v1/email-layouts/{layout_id}` replaces a saved layout's settings.
+
+`GET /v1/email-layouts/{layout_id}/preview` returns the saved layout rendered as `html`, the way a real email renders it, branding included. `POST /v1/email-layouts/preview` renders a layout you have not saved: send its settings with the `logo_url` and `primary_color` filled in. Neither saves or sends anything.
+
+`POST /v1/email-layouts/{layout_id}/dry-run` emails the saved layout's preview to you, and nobody else. It returns `202 Accepted` and the email goes out in the background. An API key has no inbox, so it gets `403` with the code `api_key_not_allowed`.
+
+These routes need organization settings permission. A service account key does not hold it, so use a key created by a person whose role holds it.
+
+## Create and change custom fields
+
+`POST /v1/custom-fields` defines a custom field: `field_name`, `properties` (its `field_type` and settings), and the `applied_to_*` record types it shows on. It returns `201 Created`. A `default_value` in `properties` is filled onto the records the field applies to, and an autofilled field starts filling itself in.
+
+`PATCH /v1/custom-fields/{custom_field_id}` changes the field's name, settings, record types or order. A field you omit keeps its value. `section_id: null` takes the field out of its section. Changing an autofilled field refills it unless you send `backfill: false`. An unknown field returns `404` with the code `custom_field_not_found`.
+
+## Connector settings
+
+`GET /v1/licensed-connectors` lists the licensed data connectors and whether each is configured, and `GET /v1/licensed-connectors/{connector}` returns one. `POST /v1/licensed-connectors/{connector}/test` checks that its key still works; an unconfigured connector returns `404` with the code `connector_not_configured`. These need the TPRM lifecycle.
+
+`GET /v1/third-party-integrations/{provider}` returns a third-party integration's settings as the dashboard shows them, for `slack`, `docusign`, `dnb`, `jira`, `servicenow`, `processunity`, `valence`, `shodan`, `hibp`, `censys` or `screening`. `POST /v1/third-party-integrations/{provider}/test` checks the connection for `slack`, `servicenow`, `processunity` and `valence`. `POST /v1/jira-tickets` creates a ticket in your connected Jira project. A secret never comes back, only whether it is set. Saving a key or deleting a connection stays in Coverbase.
+
 ## Errors
 
 Most errors return a `detail` object with a `code` and a `message`. A missing permission returns `403` with `detail` set to the string `Missing required permission.`
@@ -645,3 +881,42 @@ Most errors return a `detail` object with a `code` and a `message`. A missing pe
 | `422` | `invalid_custom_field_section` | The section change is not allowed. The `message` says why. |
 | `422` | `invalid_email_template` | The template is not valid. The `message` says why. |
 | `422` | `invalid_workflow_definition` | The workflow change is not allowed. The `message` says why. |
+| `404` | `agent_run_not_found` | No run with that ID belongs to the caller. |
+| `409` | `agent_run_conflict` | The run cannot do that in its current state. |
+| `422` | `invalid_agent_run_answer` | The answer does not fit what the run waits on. |
+| `403` | `api_key_not_allowed` | An API key tried to accept or reject a run's proposal, or to award or archive an RFP. |
+| `404` | `rfp_not_found` | No RFP with that ID exists in your organization. |
+| `404` | `rfp_invitation_not_found` | No invitation with that ID exists on the RFP. |
+| `404` | `connection_not_found` | The integration provider is not connected. |
+| `404` | `provider_not_offered` | The integration provider is not offered to your organization. |
+| `404` | `bulk_job_not_found` | No steward bulk job with that ID exists. |
+| `422` | `invalid_integration_config` | A status or field mapping is not valid. The `field` names it. |
+| `404` | `plan_not_found` | No monitoring plan with that ID exists. |
+| `404` | `engagement_not_found` | No engagement with that ID exists. |
+| `404` | `service_not_found` | No service with that ID exists. |
+| `403` | `not_tprm_office` | Only an org-wide vendor editor can change a monitoring plan. |
+| `409` | `covered_by_engagement` | The service is monitored under its engagement's plan. |
+| `409` | `monitoring_paused` | Monitoring is paused for the subject. |
+| `422` | `unknown_risk_levels` | A cadence cell names a risk level your scale does not have. |
+| `400` | `not_manually_completed` | The activity completes from its own workflow. |
+| `422` | `invalid_image` | The uploaded logo or icon is not a supported image. |
+| `404` | `note_not_found` | No note with that ID exists in your organization. |
+| `403` | `note_not_yours` | You can edit only notes you wrote. |
+| `422` | `invalid_reply` | A reply's `object_type` and `object_id` differ from its parent's. |
+| `404` | `email_not_found` | No email with that ID exists in your organization. |
+| `422` | `email_not_queued` | The email's record was not found, or email is off for your organization. |
+| `404` | `custom_field_value_not_found` | No custom field value with that ID exists. |
+| `400` | `directory_person_refused` | The person cannot be added, for example their email belongs to a member. |
+| `404` | `role_not_found` | No role with that ID exists in your organization. |
+| `404` | `connector_not_configured` | The licensed connector has no key. |
+| `404` | `provider_not_found` | The integration is unknown or has no connection test. |
+| `404` | `notification_setting_not_found` | No notification setting with that ID is yours. |
+| `400` | `notification_type_retired` | The setting names a retired channel or event type. |
+| `400` | `notification_channel_not_configurable` | That channel cannot be changed for that event type. |
+| `400` | `invalid_preference` | The notification preference is not valid, for example an unknown `timezone`. |
+| `404` | `notification_not_found` | A notification ID is not yours. |
+| `404` | `saved_view_not_found` | No saved view with that ID is visible to you. |
+| `403` | `saved_view_not_editable` | You cannot change that saved view. |
+| `400` | `invalid_saved_view` | The saved view's filter, sort or name is not valid. The `message` says why. |
+| `404` | `email_layout_not_found` | No email layout with that ID exists in your organization. |
+| `404` | `custom_field_not_found` | No custom field with that ID exists in your organization. |

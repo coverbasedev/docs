@@ -45,6 +45,16 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 - `POST /v1/screening-matches/{match_id}/disposition`
 - `POST /v1/bills-of-materials/{bom_id}/archive`
 - `POST /v1/documents/bulk-action` with `action: "archive"`
+- `POST /v1/services/bulk-action` with `action: "archive"`
+- `DELETE /v1/vendor-kyc/{kyc_id}`, and `PATCH /v1/vendor-kyc-fields/{field_id}` with `is_archived: true`
+- `DELETE /v1/vendor-discovery/aliases/{alias_id}`
+- `PATCH /v1/data-classes/{data_class_id}` when it archives or restores a class
+- `POST /v1/vendors/{vendor_id}/intelligence/{surface}/revision/{proposal_id}/apply`
+- `POST /v1/prequalification-evaluations/{evaluation_id}/override`
+- `POST /v1/record-drift/{drift_id}/decide`
+- `POST /v1/supplier_reviews/{review_id}/reject` and `POST /v1/legal_entity_assignments/{assignment_id}/reject`
+- `DELETE /v1/vendors/{vendor_id}/financial-statements`
+- `PUT /v1/vendor-sso/settings`, which needs an organization admin and returns `403 admin_required` to a key
 
 ## Endpoints
 
@@ -169,6 +179,121 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `PATCH` | `/v1/legal_entities/{legal_entity_id}` | `org_settings:update:org` |
 | `POST` | `/v1/legal_entities/{legal_entity_id}/archive` | `org_settings:update:org` |
 | `GET` | `/v1/supplier_reviews` | `supplier_banking:approve:org` |
+| `POST` | `/v1/supplier_reviews/{review_id}/reject` | `supplier_banking:approve:org` |
+| `POST` | `/v1/legal_entity_assignments/{assignment_id}/reject` | `supplier_profile:approve:org` |
+| `POST` | `/v1/legal_entities/import` | `org_settings:update:org` |
+| `POST` | `/v1/vendor-kyc` | `vendor:update:org` |
+| `GET` | `/v1/vendor-kyc/{kyc_id}` | `vendor:read:org` |
+| `PATCH` | `/v1/vendor-kyc/{kyc_id}` | `vendor:update:org` |
+| `DELETE` | `/v1/vendor-kyc/{kyc_id}` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/kyc` | `vendor:read:org` |
+| `POST` | `/v1/vendor-kyc-fields` | `vendor:update:org` |
+| `GET` | `/v1/vendor-kyc-fields` | `vendor:read:org` |
+| `GET` | `/v1/vendor-kyc-fields/{field_id}` | `vendor:read:org` |
+| `PATCH` | `/v1/vendor-kyc-fields/{field_id}` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/kyc-verifications` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/kyc-verifications/history` | `vendor:read:org` |
+| `GET` | `/v1/kyc-verifications/{verification_id}` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/kyc/rerun` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/portal-bank-accounts` | `vendor:read:org` |
+| `GET` | `/v1/portal-bank-accounts/{bank_account_id}` | `vendor:read:org` |
+| `GET` | `/v1/vendor-discovery/aliases` | `vendor:read:org` |
+| `POST` | `/v1/vendor-discovery/aliases` | `vendor:create:org` |
+| `PATCH` | `/v1/vendor-discovery/aliases/{alias_id}` | `vendor:update:org` |
+| `DELETE` | `/v1/vendor-discovery/aliases/{alias_id}` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/intelligence/{surface}/revision` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/intelligence/{surface}/revision/propose` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/intelligence/{surface}/revision/{proposal_id}/preview` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/intelligence/{surface}/revision/{proposal_id}/apply` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/intelligence/{surface}/versions` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/intelligence/{surface}/versions/{version_number}/restore` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/intelligence/review` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/intelligence-feedback` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/intelligence-refresh-status` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/intel-refresh` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/intel-refresh/{request_id}` | `vendor:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/vendor-outreach-request` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/vendor-outreach-handoff` | `assessment:read:org` |
+| `POST` | `/v1/assessments/{assessment_id}/vendor-outreach-handoff/send-once` | `portal:update:org`, `portal:create:org` |
+| `GET` | `/v1/vendors/{vendor_id}/data-flows` | `vendor:read:org` |
+| `GET` | `/v1/data-flow/label-mapping` | `integration:read:org` |
+| `PUT` | `/v1/data-flow/label-mapping` | `integration:update:org` |
+| `GET` | `/v1/data-flow/unmatched-apps` | `integration:read:org` |
+| `PUT` | `/v1/data-flow/app-link` | `integration:update:org` |
+| `PUT` | `/v1/engagements/{engagement_id}/data-scope` | `engagement:update:org` |
+| `GET` | `/v1/services/{service_id}/risk-profile` | `service:read:org` |
+| `PUT` | `/v1/services/{service_id}/risk-profile` | `service:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/service-risk-attributes` | `vendor:read:org` |
+| `GET` | `/v1/data-classes` | `service:read:org` |
+| `POST` | `/v1/data-classes` | `org_settings:update:org` |
+| `PATCH` | `/v1/data-classes/{data_class_id}` | `org_settings:update:org` |
+| `POST` | `/v1/service-risk-profiles/tag-mapping/preview` | `org_settings:update:org` |
+| `POST` | `/v1/service-risk-profiles/tag-mapping/apply` | `org_settings:update:org` |
+| `POST` | `/v1/nth-parties/filter` | `vendor:read:org` |
+| `PATCH` | `/v1/nth-parties/{entity_id}` | `vendor:update:org` |
+| `GET` | `/v1/bills-of-materials/latest` | `vendor:read:org` |
+| `GET` | `/v1/bills-of-materials` | `vendor:read:org` |
+| `GET` | `/v1/bills-of-materials/components` | `vendor:read:org` |
+| `GET` | `/v1/ai-inventory` | `vendor:read:org` |
+| `POST` | `/v1/vendors/query` | `vendor:read:org` |
+| `POST` | `/v1/vendors/filter` | `vendor:read:org` |
+| `POST` | `/v1/vendors/name-summaries` | `vendor:read:org` |
+| `GET` | `/v1/vendor-status-counts` | `vendor:read:org` |
+| `GET` | `/v1/subprocessor-proposals` | `vendor:read:org` |
+| `GET` | `/v1/services` | `service:read:org` |
+| `GET` | `/v1/services/{service_id}` | `service:read:org` |
+| `POST` | `/v1/services/query` | `service:read:org` |
+| `POST` | `/v1/services/filter` | `service:read:org` |
+| `POST` | `/v1/services/bulk-action` | Depends on the action |
+| `GET` | `/v1/entities` | `vendor:read:org` |
+| `POST` | `/v1/entities/query` | `vendor:read:org` |
+| `GET` | `/v1/entities/{entity_id}` | `vendor:read:org` |
+| `GET` | `/v1/entities/{entity_id}/product-lines` | `vendor:read:org` |
+| `GET` | `/v1/portfolio-risk` | `vendor:read:org` |
+| `POST` | `/v1/assessments/{assessment_id}/scores/compute` | `assessment:update:org` |
+| `PUT` | `/v1/vendor-sso/settings` | `vendor:update:org`, organization admin |
+| `POST` | `/v1/vendors/{vendor_id}/exports/pdf` | `vendor:export:org` |
+| `POST` | `/v1/vendors/{vendor_id}/exports/xlsx` | `vendor:export:org` |
+| `POST` | `/v1/services/{service_id}/exports/pdf` | `service:export:org` |
+| `POST` | `/v1/services/{service_id}/exports/xlsx` | `service:export:org` |
+| `POST` | `/v1/vendors/exports` | `vendor:export:org` |
+| `POST` | `/v1/services/exports` | `service:export:org` |
+| `POST` | `/v1/vendors/portfolio-exports` | `vendor:export:org` |
+| `POST` | `/v1/services/portfolio-exports` | `service:export:org` |
+| `GET` | `/v1/vendor-exports/{export_id}` | `vendor:export:org` or `service:export:org` |
+| `POST` | `/v1/vendors/imports` | `vendor:create:org` |
+| `GET` | `/v1/vendor-info-web-search` | `vendor:create:org` |
+| `GET` | `/v1/vendor-certificate-summary` | `vendor:read:org` |
+| `POST` | `/v1/prequalification-evaluations/{evaluation_id}/override` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/risk-ratings` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/company-registration` | `vendor:read:org` |
+| `GET` | `/v1/dnb-integration/entitlements` | `integration:run:org` |
+| `GET` | `/v1/vendors/{vendor_id}/financial-health` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/do-not-use` | `vendor:read:org` |
+| `PUT` | `/v1/vendors/{vendor_id}/do-not-use` | `vendor:update:org` |
+| `GET` | `/v1/document-type-groups` | `org_settings:read:org` |
+| `POST` | `/v1/document-type-groups/enable` | `org_settings:update:org` |
+| `GET` | `/v1/passive-assessment-configs` | `vendor:read:org` |
+| `GET` | `/v1/passive-assessment-configs/{config_id}` | `vendor:read:org` |
+| `POST` | `/v1/passive-assessment-configs` | `org_settings:update:org` |
+| `PATCH` | `/v1/passive-assessment-configs/{config_id}` | `org_settings:update:org` |
+| `GET` | `/v1/passive-assessment-groups` | `vendor:read:org` |
+| `POST` | `/v1/passive-assessment-groups` | `org_settings:update:org` |
+| `PATCH` | `/v1/passive-assessment-groups/{group_id}` | `org_settings:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/passive-assessment` | `vendor:read:org` |
+| `POST` | `/v1/passive-assessment-data` | `vendor:update:org` |
+| `GET` | `/v1/record-drift` | `vendor:read:org` |
+| `POST` | `/v1/record-drift/{drift_id}/decide` | `vendor:update:org` |
+| `PUT` | `/v1/screening/settings` | `integration:update:org` |
+| `GET` | `/v1/screening-profile-groups` | `integration:update:org` |
+| `GET` | `/v1/screening/evidence-export` | `screening_match:export:org` |
+| `GET` | `/v1/vendors/{vendor_id}/status-page-components` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/financial-statements` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/financial-statements` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/financial-statements/analyze` | `vendor:update:org` |
+| `DELETE` | `/v1/vendors/{vendor_id}/financial-statements/documents/{document_id}` | `vendor:update:org` |
+| `DELETE` | `/v1/vendors/{vendor_id}/financial-statements` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/financial-statements/export` | `vendor:read:org` |
 
 List endpoints that take `limit` and `offset` return `items`, `total`, `limit` and `offset`. `limit` defaults to `50` and accepts `1` to `200`.
 
@@ -447,7 +572,7 @@ To screen one name once, send `POST /v1/screening/ad-hoc` with `name` and `kind`
 
 `GET /v1/vendor-sso/summary` counts the vendors your identity provider shows in use and how many enforce SSO. `GET /v1/vendors/{vendor_id}/sso` lists the applications linked to one vendor. `GET /v1/vendor-sso/applications` lists applications; pass `unlinked=true` or `suggested=true` to narrow it.
 
-To link an application to a vendor, send `PUT /v1/vendor-sso/applications/{application_id}/vendor`. To accept several suggested matches at once, send `POST /v1/vendor-sso/applications/confirm`. To clear a link so matching runs again, send `POST /v1/vendor-sso/applications/{application_id}/vendor/reset`. `GET /v1/vendor-sso/settings` reads the settings; changing them stays an admin action in the dashboard.
+To link an application to a vendor, send `PUT /v1/vendor-sso/applications/{application_id}/vendor`. To accept several suggested matches at once, send `POST /v1/vendor-sso/applications/confirm`. To clear a link so matching runs again, send `POST /v1/vendor-sso/applications/{application_id}/vendor/reset`. `GET /v1/vendor-sso/settings` reads the settings. `PUT /v1/vendor-sso/settings` replaces them, and only an organization admin can call it, so an API key gets `403 admin_required`. A change to matching or findings checks every vendor again.
 
 To open an unassigned finding for each approved vendor without SSO that has none yet, send `POST /v1/vendor-sso/findings/open`. Pass `vendor_ids` to limit it and `due_days` to set the due date. The response says how many were `opened`.
 
@@ -483,7 +608,7 @@ To record a company named in a document as one of the vendor's subprocessors, se
 
 `POST /v1/documents/bulk-action` takes `action: "archive"` with `ids`, `action: "update_services"` with `ids` and `service_ids`, or `action: "update_services_granular"` with `items` of `id` and `service_ids`. It returns `updated_count`. Archiving refuses API keys.
 
-To unlock a password-protected document, send `POST /v1/documents/{document_id}/unlock` with `password`. The unlock runs in the background and the request returns `202`; a document that is not locked returns `400`.
+To open a password-protected document, send `POST /v1/documents/{document_id}/unlock` with `password`. The unlock runs in the background and the request returns `202`; a document that is not locked returns `400`.
 
 To extract document insights, send `POST /v1/documents/{document_id}/extract-insights`, optionally with `insight_config_ids`. It returns `202` with the queued `insight_extraction` state. Poll `GET /v1/documents/{document_id}` until the state is no longer `running`. A request while an extraction is already running returns `409` with `insight_extraction_running`.
 
@@ -513,4 +638,82 @@ To record a diversity classification or certification, send `POST /v1/vendors/{v
 
 To add a legal entity that suppliers can be assigned to, send `POST /v1/legal_entities` with `name` and `entity_code`; a code already in use returns `409 duplicate_entity_code`. `PATCH /v1/legal_entities/{legal_entity_id}` changes its name, code, country, description or `active` flag. `POST /v1/legal_entities/{legal_entity_id}/archive` archives it and keeps the assignments suppliers already hold; API keys are refused.
 
-`GET /v1/supplier_reviews` lists the bank changes waiting for a reviewer, optionally for one `vendor_id` or with `include_decided=true`. Approving or rejecting a change, and revealing a full account number, happen only in the dashboard.
+`GET /v1/supplier_reviews` lists the bank changes waiting for a reviewer, optionally for one `vendor_id` or with `include_decided=true`. A signed-in user rejects one with `POST /v1/supplier_reviews/{review_id}/reject` and a `reason`; API keys are refused. Approving a change, and revealing a full account number, happen only in the dashboard, because an approval redirects payments. `POST /v1/legal_entity_assignments/{assignment_id}/reject` rejects a requested legal entity assignment, and API keys are refused there too.
+
+To import legal entities, send a CSV as multipart `file` to `POST /v1/legal_entities/import`. It needs `name` and `entity_code` columns and may carry `country_code` and `description`. Rows upsert on `entity_code`. `dry_run` defaults to `true` and reports `created`, `updated`, `skipped` and per-row `rows` without writing; send `dry_run=false` to write. A file with a missing column or a CSV that does not parse writes nothing and comes back in `schema_errors`. This needs `org_settings:update:org`, which API keys do not hold, so use a key created by a person whose role holds it.
+
+## Know your customer (KYC)
+
+A vendor's KYC record points at three field values: its TIN, business name and business address. Every response masks a TIN to its last four characters, including inside a verification's `input_data`.
+
+`GET /v1/vendors/{vendor_id}/kyc` returns the record, or `404 kyc_record_not_found`. `GET`, `PATCH` and `DELETE /v1/vendor-kyc/{kyc_id}` read, repoint and delete it, and `POST /v1/vendor-kyc` creates one from existing field ids. A vendor has one record; a second returns `400`. Deleting refuses API keys.
+
+`POST /v1/vendor-kyc-fields` records a value, and `GET /v1/vendor-kyc-fields` lists them with `vendor_id`, `field_name` and `is_archived`. `PATCH /v1/vendor-kyc-fields/{field_id}` changes one; archiving refuses API keys.
+
+`GET /v1/vendors/{vendor_id}/kyc-verifications` lists the TIN, OFAC, PEP, watchlist and bank account checks. Add `/history?verification_type=tin` for every run of one type. `GET /v1/kyc-verifications/{verification_id}` returns one.
+
+To rerun the checks from the current values, send `POST /v1/vendors/{vendor_id}/kyc/rerun`. It returns `202`, or `400 kyc_incomplete` without a TIN and business name. The TIN is never stored with the queued run, so if the run does not start, send the request again.
+
+## Portal bank accounts
+
+`GET /v1/vendors/{vendor_id}/portal-bank-accounts` lists the bank accounts a vendor submitted through a portal, and `GET /v1/portal-bank-accounts/{bank_account_id}` returns one. You get metadata only: the account name, payment method, currencies and each detail's type and label with its last four characters. A full account number, routing number, IBAN or Plaid token is never returned.
+
+## Discovery aliases
+
+An alias tells vendor discovery which domain and products a discovered vendor name means. `GET /v1/vendor-discovery/aliases` lists your overrides. `POST` adds one with `source`, `vendor_entity`, `domain` and `product_patterns`, and returns `409 alias_exists` for a duplicate. `PATCH /v1/vendor-discovery/aliases/{alias_id}` changes one, and an explicit `null` clears its domain. `DELETE` removes it and refuses API keys.
+
+## Vendor intelligence revisions, feedback and refresh
+
+`{surface}` is `security` or `financial`. `GET .../intelligence/{surface}/revision` returns your organization's current reading with revised and stored scores. To revise it from text, send `POST .../revision/propose` with `text`. That writes a proposal only. `POST .../revision/{proposal_id}/preview` with `accepted_change_ids` returns the scores the chosen changes would give. `POST .../revision/{proposal_id}/apply` accepts them as a new version and refuses API keys. `GET .../versions` lists versions, and `POST .../versions/{version_number}/restore` makes an earlier one current. `POST /v1/vendors/{vendor_id}/intelligence/review` queues the automated check against the vendor's own site.
+
+To tell Coverbase a tab describes the wrong company or facts, send `POST /v1/vendors/{vendor_id}/intelligence-feedback` with `surface` and `note`, and optionally `website` or `legal_name`. A corrected website or legal name rebuilds every surface. The note is stored on the shared company record.
+
+`POST /v1/vendors/{vendor_id}/intel-refresh` with `surfaces` rebuilds them, skipping any built in the last six hours. Poll `GET /v1/vendors/{vendor_id}/intel-refresh/{request_id}` or `GET /v1/vendors/{vendor_id}/intelligence-refresh-status`.
+
+## Vendor outreach
+
+`GET /v1/assessments/{assessment_id}/vendor-outreach-request` returns the outreach request waiting on an assessment. `GET .../vendor-outreach-handoff` says why a collection was handed to a person because outreach is off. `POST .../vendor-outreach-handoff/send-once` prepares the ask once without turning outreach on. Sending it contacts the vendor, and that stays a person's decision through `POST /v1/vendor-outreach-requests/{request_id}/decision`.
+
+## Data flows
+
+These endpoints need data flow monitoring, or they return `404`. `GET /v1/vendors/{vendor_id}/data-flows` returns 90 days of the vendor's daily flows, the data its engagement declares, and open data-flow findings. `GET` and `PUT /v1/data-flow/label-mapping` read and replace the label-to-data-class mapping. `PUT /v1/engagements/{engagement_id}/data-scope` declares the data classes an engagement may send. `GET /v1/data-flow/unmatched-apps` lists apps no vendor claims, and `PUT /v1/data-flow/app-link` ties one to a vendor. Every change checks the flows again.
+
+## Service risk profiles and data classes
+
+These endpoints need the engagement record feature, or they return `404 not_enabled`. `GET` and `PUT /v1/services/{service_id}/risk-profile` read and set a service's data classes, access level, criticality, regulatory scopes and AI flag. `GET /v1/vendors/{vendor_id}/service-risk-attributes` combines them across a vendor's services. `GET /v1/data-classes` lists your data classes, `POST` adds or renames them by code, and `PATCH /v1/data-classes/{data_class_id}` changes one. `POST /v1/service-risk-profiles/tag-mapping/preview` shows what mapping tags to attributes would change, and `.../apply` backfills it. The data class writes and tag mapping need `org_settings:update:org`, which API keys do not hold, so use a key created by a person whose role holds it.
+
+## More vendor and service reads
+
+`POST /v1/nth-parties/filter` filters nth parties by name or dependent vendor, and `PATCH /v1/nth-parties/{entity_id}` replaces an nth party's tags. `GET /v1/bills-of-materials/latest` and `GET /v1/bills-of-materials` take exactly one of `vendor_id` and `service_id`. `GET /v1/bills-of-materials/components?vendor_id=` searches components across a vendor's bills. `GET /v1/ai-inventory` groups every AI model, provider or dataset on your applied AI bills by `group_by`.
+
+`POST /v1/vendors/query` and `POST /v1/services/query` take the unified filter body. `POST /v1/vendors/filter` and `POST /v1/services/filter` take the structured filters. `GET /v1/vendor-status-counts` counts live vendors by status, `POST /v1/vendors/name-summaries` names vendors by id, and `GET /v1/subprocessor-proposals` pages pending proposals across vendors. `GET /v1/services` lists services, and `GET /v1/services/{service_id}` returns one.
+
+`GET /v1/entities` searches the company directory, `POST /v1/entities/query` takes long id lists in the body, `GET /v1/entities/{entity_id}` returns a company, and `.../product-lines` lists its product lines.
+
+`GET /v1/portfolio-risk` returns risk over time across the portfolio, one series per vendor whose risk changed, filtered by `vendor_id`, `tag_id`, `risk_type`, `source`, `since` and `until`. `POST /v1/assessments/{assessment_id}/scores/compute` recomputes an assessment's scores.
+
+`GET /v1/vendor-certificate-summary`, `GET /v1/vendors/{vendor_id}/risk-ratings`, `GET /v1/vendors/{vendor_id}/company-registration`, `GET /v1/vendors/{vendor_id}/financial-health` and `GET /v1/vendors/{vendor_id}/status-page-components` return what the vendor page shows. `GET /v1/dnb-integration/entitlements` lists your Dun & Bradstreet entitlements.
+
+## Change many services at once
+
+`POST /v1/services/bulk-action` applies one change to up to 100 `service_ids`. `action` is `tag` (up to 15 `tag_ids`, `operation` `add` or `remove`), `assign-relationship-owner` or `assign-watcher` (`user_id`), `update-status` (`status_id`), `set-next-assessment-date` (`next_assessment_date`) or `archive`. Nothing is written when a service, user, status or tag does not exist; that returns `400 invalid_bulk_action`. Every action needs `service:update:org`. Assigning an owner also needs `service:assign:org`, and archiving needs `service:archive:org` and refuses API keys.
+
+## Exports and imports
+
+Exports run in the background. `POST /v1/vendors/{vendor_id}/exports/pdf` and `/exports/xlsx`, and the same under `/v1/services/{service_id}`, return an `odoc_id`. `POST /v1/vendors/exports?file_name=` starts the workbook of every vendor, optionally narrowed by a filter body, and `POST /v1/services/exports` does the same for services. `POST /v1/vendors/portfolio-exports` and `/v1/services/portfolio-exports` start the portfolio PDF. Poll `GET /v1/vendor-exports/{export_id}`. Once `status` is `complete`, it carries a presigned `download_url` valid for `expires_in` seconds, and it is sent with `Cache-Control: no-store`.
+
+To import vendors, services and locations, send the dashboard's vendor workbook as multipart `file` with `timezone` to `POST /v1/vendors/imports`. `dry_run` defaults to `true`. Poll `GET /v1/spreadsheet-import-jobs/{job_id}` for the result.
+
+`GET /v1/vendor-info-web-search?vendor_name=` researches a company on the web before you add it.
+
+## Do Not Use, record drift and settings
+
+`GET` and `PUT /v1/vendors/{vendor_id}/do-not-use` read and set whether a vendor is on the Do Not Use list. A change needs a `reason`. `GET /v1/record-drift` lists vendors whose outside records changed, and `POST /v1/record-drift/{drift_id}/decide` accepts, updates or dismisses each change. Deciding refuses API keys. `POST /v1/prequalification-evaluations/{evaluation_id}/override` overrides a failed prequalification with a `rationale` and refuses API keys.
+
+`GET /v1/document-type-groups` lists document type groups, and `POST /v1/document-type-groups/enable` turns optional ones on. The passive assessment routes read and edit the fields Coverbase fills in from public sources: `/v1/passive-assessment-configs`, `/v1/passive-assessment-groups`, `GET /v1/vendors/{vendor_id}/passive-assessment` and `POST /v1/passive-assessment-data`. The settings writes need `org_settings:update:org`, which API keys do not hold.
+
+`PUT /v1/screening/settings` changes the screening policy, `GET /v1/screening-profile-groups` lists the provider's profile groups, and `GET /v1/screening/evidence-export` returns a CSV of every screened vendor's first and last screen.
+
+## Submitted financial statements
+
+`GET /v1/vendors/{vendor_id}/financial-statements` returns the documents the vendor's financial analysis reads and the analysis, or `null`. `POST` the same path with up to five `document_ids` sets them and analyzes them unless `analyze` is `false`. `POST .../analyze` runs it again. `DELETE .../documents/{document_id}` stops reading one document. `DELETE .../financial-statements` withdraws the submission and refuses API keys. `GET .../export` returns the analysis workbook with `Cache-Control: no-store`, or `404` before an analysis exists.

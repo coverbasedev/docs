@@ -1,0 +1,81 @@
+---
+title: "RFPs API"
+description: "Read and run RFPs: draft them with AI, create, invite, publish, research silently, compare and award."
+icon: "file-signature"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints run an RFP from a first draft to a decision. Each response uses the same shape the Coverbase dashboard reads.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior. None of these endpoints contacts a vendor: inviting a vendor records the invitation and sends no email, and publishing sends nothing. A person sends invitations from the RFP's Vendors tab.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/rfp-records` | `rfp:read:org` |
+| `POST` | `/v1/rfp-records` | `rfp:create:org` |
+| `GET` | `/v1/rfp-records/{rfp_id}` | `rfp:read:org` |
+| `GET` | `/v1/rfp-records/{rfp_id}/submissions/{submission_id}` | `rfp:read:org` |
+| `GET` | `/v1/rfp-records/{rfp_id}/comparison` | `rfp_evaluation:read:org` |
+| `GET` | `/v1/rfp-records/{rfp_id}/events` | `rfp:read:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/invitations` | `rfp:update:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/publish` | `rfp:update:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/silent-runs` | `rfp:run:org` |
+| `GET` | `/v1/rfp-records/{rfp_id}/silent-runs/latest` | `rfp:read:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/comparison-jobs` | `rfp:run:org` |
+| `POST` | `/v1/rfp-records/{rfp_id}/award` | `rfp:approve:org`, not with an API key |
+| `POST` | `/v1/rfp-drafts/brief` | `rfp:run:org` |
+| `POST` | `/v1/rfp-drafts/vendor-research` | `rfp:run:org` |
+| `POST` | `/v1/rfp-drafts/requirements` | `rfp:run:org` |
+| `POST` | `/v1/rfp-drafts/questions` | `rfp:run:org` |
+| `GET` | `/v1/ai-jobs/{job_id}` | `rfp:run:org` for an RFP job |
+
+## Errors
+
+Every error body has a `detail` object with a `code` and a `message`.
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| `400` | `rfp_not_draft`, `nothing_to_research` | You tried to publish an RFP that is not a draft, or a silent RFP has no rubric or no vendor left to research. |
+| `403` | `api_key_not_allowed` | An API key tried to award an RFP. Awarding is a decision a person makes. |
+| `404` | `rfp_not_found`, `submission_not_found`, `ai_job_not_found` | The ID does not exist in your organization. |
+| `422` | | The request body breaks a rule, for example a vendor without a `vendor_id`. |
+
+## Read RFPs
+
+`GET /v1/rfp-records` lists your RFPs, newest first. Filter with `search`, and page with `limit` (1 to 200, default 50) and `offset`. It returns `items`, `total`, `limit` and `offset`.
+
+`GET /v1/rfp-records/{rfp_id}` returns one RFP with its timeline, rubric, invited vendors and submissions. `GET /v1/rfp-records/{rfp_id}/submissions/{submission_id}` returns one submission with its answers. `is_ai_simulated` marks a researched estimate from a silent RFP, never the vendor's own words. `GET /v1/rfp-records/{rfp_id}/events` lists the RFP's activity.
+
+`GET /v1/rfp-records/{rfp_id}/comparison` returns the stored AI comparison and when it was generated. `comparison` is `null` until one runs.
+
+## Draft with AI
+
+The drafting steps write nothing. Each returns `202 Accepted` with a job. Poll `GET /v1/ai-jobs/{job_id}` until `status` leaves `pending`; the draft is in `result`. Only the key that started a job reads it back.
+
+- `POST /v1/rfp-drafts/brief` drafts an RFP from a `brief` in plain language, with an optional `category` and `intake_answers`.
+- `POST /v1/rfp-drafts/vendor-research` researches 5 to 10 vendors that could bid (`target_count`), with analyst coverage when available. It contacts no vendor and creates no vendor record.
+- `POST /v1/rfp-drafts/requirements` proposes the weighted rubric. Send `brief`, and optionally `description`, `category` and `focus_areas`.
+- `POST /v1/rfp-drafts/questions` writes the vendor questionnaire mapped onto a rubric. Send `brief`, `groups` and `target_count` (5 to 60).
+
+## Create an RFP
+
+`POST /v1/rfp-records` creates the RFP, its rubric, its vendor questionnaire and its invitations in one transaction. It lands as a draft. The body takes `name`, `description`, `proposal_narrative`, `category`, `sourcing_brief`, `timeline`, `collect_pricing`, `blind_scoring`, `qa_enabled`, `rubric_groups` and `questions`, in the shapes the drafting steps return. Every entry in `vendors` names the `vendor_id` of an existing vendor: the API never creates a vendor. Returns `201 Created` with the RFP's `rfp_id` and counts.
+
+## Invite and publish
+
+`POST /v1/rfp-records/{rfp_id}/invitations` adds existing vendors by `vendor_ids`, with an optional `contact_email` and `response_due_at`. No email is sent.
+
+`POST /v1/rfp-records/{rfp_id}/publish` moves a draft RFP to open.
+
+## Silent RFP
+
+`POST /v1/rfp-records/{rfp_id}/silent-runs` researches how each invited vendor would most plausibly answer, without contacting any vendor. Send `vendor_ids` to limit it, up to 10. A vendor with a real response is skipped. The answers are Coverbase's research, never a vendor's words. Poll `GET /v1/rfp-records/{rfp_id}/silent-runs/latest` for each vendor's progress. A second start while one runs returns the run already going.
+
+## Compare and award
+
+`POST /v1/rfp-records/{rfp_id}/comparison-jobs` compares every submission against the rubric and each other. It returns a job. When the job completes, the comparison is stored on the RFP and re-ranks its submissions. It needs at least two submissions.
+
+`POST /v1/rfp-records/{rfp_id}/award` awards the RFP to the invited vendors in `vendor_ids`. Awarding is a decision a person makes, so an API key gets `403` with `api_key_not_allowed`. Award from Coverbase.
