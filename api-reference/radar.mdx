@@ -1,6 +1,6 @@
 ---
 title: "Radar API"
-description: "Create and edit radar events, triage radar alerts and signals, and track incidents in cases."
+description: "Create and edit radar events, triage radar alerts and signals, track incidents in cases, and configure the sources and detectors Radar runs."
 icon: "satellite-dish"
 ---
 
@@ -15,6 +15,9 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 - A **signal** (`cbrag_...`) is one radar event as it affects your organization. It rolls up the event's alerts into one row with your organization's status, title, and summary. You can list, dismiss, restore, and acknowledge signals, and move them between your organization's statuses.
 - A **case** (`cbcase_...`) tracks one incident across the vendors it may affect. Each vendor on a case has a **case thread** (`cbcseth_...`) that records whether that vendor was affected and what was done about it.
+
+- A **source** (`cbradarsrc_...`) is something Radar watches for your organization: a website, an RSS feed, an API, or a snapshot of a page or list. Each source reads an **origin**, the URL Radar pulls. An origin is private to your organization or shared from the Coverbase source library.
+- A **detector** (`cbrdrdet_...`) decides which events matter to which vendors. You can create and tune detectors, back-test them against past events, and teach them with **examples** of events they should and should not alert on.
 
 Read the event for what happened, the signal for where your organization stands on it, and the alerts for which detector flagged which vendor. See the Supplier Radar [key concepts](/products/supplier-radar#key-concepts).
 
@@ -55,10 +58,35 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/radar/cases/{case_id}/threads/{thread_id}/pause-follow-ups` |
 | `GET` | `/v1/radar/detectors` |
 | `GET` | `/v1/radar/sources` |
+| `POST` | `/v1/radar/sources` |
+| `GET` | `/v1/radar/sources/{source_id}` |
+| `PATCH` | `/v1/radar/sources/{source_id}` |
+| `POST` | `/v1/radar/sources/{source_id}/pull` |
+| `GET` | `/v1/radar/source-library` |
+| `GET` | `/v1/radar/source-library/{library_id}` |
+| `GET` | `/v1/radar/origins` |
+| `GET` | `/v1/radar/black-kite` |
+| `PUT` | `/v1/radar/black-kite` |
+| `POST` | `/v1/radar/detectors` |
+| `GET` | `/v1/radar/detectors/{detector_id}` |
+| `PATCH` | `/v1/radar/detectors/{detector_id}` |
+| `GET` | `/v1/radar/vendors/{vendor_id}/detectors` |
+| `POST` | `/v1/radar/detectors/suggest-risk-domains` |
+| `POST` | `/v1/radar/detectors/{detector_id}/suggest-instructions` |
+| `POST` | `/v1/radar/detectors/{detector_id}/tests` |
+| `GET` | `/v1/radar/detectors/{detector_id}/tests/{test_run_id}` |
+| `POST` | `/v1/radar/detectors/{detector_id}/tests/{test_run_id}/alerts` |
+| `POST` | `/v1/radar/detectors/{detector_id}/tests/{test_run_id}/teach` |
+| `GET` | `/v1/radar/detectors/{detector_id}/dismissal-examples` |
+| `POST` | `/v1/radar/detectors/{detector_id}/dismissal-examples` |
+| `PATCH` | `/v1/radar/dismissal-examples/{example_id}` |
+| `DELETE` | `/v1/radar/dismissal-examples/{example_id}` |
 
 None of these honor `Idempotency-Key`.
 
 The read routes need the `radar_alert:read:org` permission, and the routes that change something need `radar_alert:update:org`. API keys hold both. You cannot archive a case or a case thread through the API.
+
+The source and detector routes use the Radar detector permissions instead: reads need `radar_detector:read:org`, creating a detector needs `radar_detector:create:org`, and edits, back-tests and examples need `radar_detector:update:org`. Pulling a source needs `radar_detector:run:org`, and saving Black Kite settings needs `integration:update:org`. API keys hold all of them. An API key cannot archive or restore a source or a detector, or delete an example: those requests return `403 api_key_not_allowed`, and a signed-in user must make them.
 
 ## Create a radar event
 
@@ -912,6 +940,428 @@ Each source carries `id` (`cbradarsrc_...`), `name`, `is_archived`, `created_at`
 `is_manual_events`, which is `true` on the source that events created through this
 API land on. Add that source to a source-limited detector if you want it to evaluate
 API events.
+
+## Source object
+
+`GET /v1/radar/sources/{source_id}` and the source write routes return the fields of a [listed source](#list-sources) plus these:
+
+| Field | Description |
+| ----- | ----------- |
+| `origin_id` | The origin the source reads. |
+| `origin_canonical_url` | The URL Radar pulls. |
+| `is_shared_origin` | `true` when the origin comes from the Coverbase source library. Coverbase pulls a shared origin once for every subscriber. |
+| `source_type` | How Radar reads the origin, for example `rss_feed`, `api`, `snapshot`, or `null` for a page that still needs an extractor. |
+| `canonical_rss_feed_url` | The feed a website source reads, or `null`. |
+| `cb_vendor_metadata` | The metadata object you stored on the source. |
+| `last_pulled_at` | When Radar last pulled the origin successfully. |
+| `pull_requested_at` | When someone last asked for an on-demand pull. |
+
+## Create a source
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/sources`
+</ParamField>
+
+Returns `201 Created` with the [source object](#source-object). To have Radar watch a website, send its URL. Radar looks for an RSS feed on the site unless you name one.
+
+<ParamField body="origin_canonical_url" type="string" required>
+  The website, page, or API URL to watch.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  Display name.
+</ParamField>
+
+<ParamField body="private" type="boolean">
+  Default `true`: the origin belongs to your organization. Send `false` to subscribe to the shared library origin for this URL.
+</ParamField>
+
+<ParamField body="source_type" type="string">
+  One of `generic_website`, `vendor_website`, `websearch`, `api`, `webhook`, or `snapshot`.
+</ParamField>
+
+<ParamField body="canonical_rss_feed_url" type="string">
+  The site's RSS feed. Not allowed on an API source.
+</ParamField>
+
+<ParamField body="cb_vendor_metadata" type="object">
+  Free-form metadata stored on the source.
+</ParamField>
+
+<ParamField body="api_config" type="object">
+  Required for an API source. Fields: `method` (`GET` or `POST`), `query_params`, `headers`, `body`, `items_path`, `id_path`, `updated_at_path`, `title_path`, `content_path`, `summary_path`, `published_at_path`, `source_url_path`, `canonical_id_path`, and `metadata_map`. Values in `query_params`, `headers`, and `body` can use vendor placeholders.
+</ParamField>
+
+<ParamField body="snapshot_config" type="object">
+  Required for a snapshot source. Fields: `preprocessor` (`type` is `generic_snapshot` or `snapshot_list_json`), `interval_seconds`, `retention` (`keep_versions`, `keep_days`), `query_params`, and `headers`.
+</ParamField>
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 403 | `shared_origin_not_allowed` | `private` is `false` on an API source whose shared origin does not exist. Only Coverbase creates shared origins. |
+| 409 | `source_exists` | Your organization already has a live source for this origin. |
+| 422 | `invalid_source` | The URL, the API settings, or the snapshot settings are invalid. |
+
+## Retrieve a source
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/sources/{source_id}`
+</ParamField>
+
+Returns the [source object](#source-object), or `404 source_not_found`.
+
+## Update a source
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/radar/sources/{source_id}`
+</ParamField>
+
+Changes the fields you send and returns the [source object](#source-object). If you edit the API settings of a shared origin, your organization gets a private copy, and other subscribers keep the library version.
+
+<ParamField body="name" type="string">
+  New display name.
+</ParamField>
+
+<ParamField body="is_archived" type="boolean">
+  Archive or restore the source. API keys get `403 api_key_not_allowed`.
+</ParamField>
+
+<ParamField body="cb_vendor_metadata" type="object">
+  Replacement metadata.
+</ParamField>
+
+<ParamField body="api_config" type="object">
+  The API settings to change. Fields you leave out keep their value, and `null` clears one.
+</ParamField>
+
+<ParamField body="snapshot_config" type="object">
+  The snapshot settings to change, with the fields of the create request. Send `retention: null` to keep every capture.
+</ParamField>
+
+<ParamField body="canonical_rss_feed_url" type="string | null">
+  Point a website source at this feed. Send `null` to read the page itself.
+</ParamField>
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 403 | `api_key_not_allowed` | An API key sent `is_archived`. |
+| 404 | `source_not_found` | Not found, or not in the API key's org. |
+| 400, 422 | `invalid_source_update` | The source cannot take the change, or it collides with another of your sources. |
+
+## Pull a source now
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/sources/{source_id}/pull`
+</ParamField>
+
+Returns `202 Accepted` with `source_id` and `pull_requested_at`. Radar pulls the origin on its next scheduler run.
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 403 | `shared_origin_not_allowed` | The source reads a shared origin. Coverbase pulls those for every subscriber. |
+| 404 | `source_not_found` | Not found, or not in the API key's org. |
+| 409 | `pull_in_flight` | A run for this origin is already in progress. |
+
+## List source libraries
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/source-library`
+</ParamField>
+
+Lists the Coverbase source libraries: curated sets of shared origins. Each item has `id`, `name`, `description`, and `origin_ids`. To subscribe to an origin, create a source for its URL with `private: false`. Pages with `limit` and `offset`; pass `include_archived=true` to include archived libraries.
+
+## Retrieve a source library
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/source-library/{library_id}`
+</ParamField>
+
+Returns one library, or `404 source_library_not_found`.
+
+## List origins
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/origins`
+</ParamField>
+
+Lists the origins your organization can see. Each item has `id`, `canonical_url`, `is_shared`, `is_enabled`, and `last_pulled_at`. Pass `private_only=true` to leave out shared origins. Pages with `limit` and `offset`.
+
+## Retrieve Black Kite settings
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/black-kite`
+</ParamField>
+
+Returns `integration_configured`, the `source_id` of your Black Kite portfolio monitor (or `null`), and its `config`.
+
+## Save Black Kite settings
+
+<ParamField path="method" type="PUT">
+  `PUT /v1/radar/black-kite`
+</ParamField>
+
+Creates or replaces your Black Kite portfolio monitor and returns the same body as the read. Every save replaces all settings, so send the full set. Connect the Black Kite integration first, or the request returns `422 integration_not_configured`.
+
+<ParamField body="name" type="string">
+  Source display name.
+</ParamField>
+
+<ParamField body="ransomware_index_threshold" type="number | null">
+  Default `0.5`. Radar looks closer at companies whose Ransomware Susceptibility Index is above this value, from `0` to `1`. Send `null` to turn this check off.
+</ParamField>
+
+<ParamField body="include_kev_findings" type="boolean">
+  Default `true`. Ingest known exploited vulnerability findings.
+</ParamField>
+
+<ParamField body="include_focus_tag_findings" type="boolean">
+  Default `true`. Ingest focus tag findings.
+</ParamField>
+
+<ParamField body="focus_tag_names" type="string[]">
+  Focus tags that qualify a company.
+</ParamField>
+
+<ParamField body="grade_letters" type="string[]">
+  Cyber rating grades that qualify a company.
+</ParamField>
+
+<ParamField body="vendor_filter" type="object | null">
+  A [filter](/conventions) rule group that limits which vendors count.
+</ParamField>
+
+<ParamField body="max_drilldown_companies_per_run" type="integer">
+  Default `250`, range `1` to `5000`.
+</ParamField>
+
+<ParamField body="max_findings_per_company" type="integer">
+  Default `50`, range `1` to `500`.
+</ParamField>
+
+## Detector object
+
+`GET /v1/radar/detectors/{detector_id}` and the detector write routes return the fields of a [listed detector](#list-detectors) plus `instructions`, `detector_type`, `detector_config`, `library_slug`, `default_reviewer_user_ids`, `default_reviewer_group_ids`, `vendor_tag_filters`, `risk_domain_ids`, `risk_impact_config`, and `outreach_config`.
+
+## Create a detector
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detectors`
+</ParamField>
+
+Returns `201 Created` with the [detector object](#detector-object). A standard detector needs `instructions` or a `severity_threshold`.
+
+<ParamField body="name" type="string" required>
+  Detector name.
+</ParamField>
+
+<ParamField body="instructions" type="string">
+  What the detector should alert on, in plain language.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Description for your team.
+</ParamField>
+
+<ParamField body="detector_type" type="string">
+  `standard` (default), `watchlist`, `black_kite`, or `risk_rating`. A `risk_rating` detector needs the engagement record feature.
+</ParamField>
+
+<ParamField body="detector_config" type="object">
+  Settings for the type. Its `detector_type` must match.
+</ParamField>
+
+<ParamField body="enabled" type="boolean">
+  Default `false`.
+</ParamField>
+
+<ParamField body="applies_to_all_vendors" type="boolean">
+  Default `false`. Monitor every vendor.
+</ParamField>
+
+<ParamField body="source_ids" type="string[]">
+  Sources the detector reads. Empty means every source.
+</ParamField>
+
+<ParamField body="library_slug" type="string">
+  The detector library template this detector comes from.
+</ParamField>
+
+<ParamField body="attach_library_sources" type="boolean">
+  With `library_slug`, also subscribe your organization to the template's library sources. This needs `radar_detector:update:org`.
+</ParamField>
+
+<ParamField body="category_filters" type="string[]">
+  Impact categories the detector considers, from the list on [create a radar event](#create-a-radar-event).
+</ParamField>
+
+<ParamField body="severity_threshold" type="string">
+  `high`, `medium`, `low`, or `informational`.
+</ParamField>
+
+<ParamField body="default_reviewer_user_ids" type="string[]">
+  Users notified of each alert.
+</ParamField>
+
+<ParamField body="default_reviewer_group_ids" type="string[]">
+  Groups notified of each alert.
+</ParamField>
+
+<ParamField body="vendor_tag_filters" type="string[][]">
+  Tag groups. A vendor matches when it has every tag in any one group.
+</ParamField>
+
+<ParamField body="included_vendor_ids" type="string[]">
+  Vendors the detector always monitors.
+</ParamField>
+
+<ParamField body="excluded_vendor_ids" type="string[]">
+  Vendors the detector never monitors.
+</ParamField>
+
+<ParamField body="risk_domain_ids" type="string[]">
+  Risk domains the detector maps to.
+</ParamField>
+
+<ParamField body="risk_impact_config" type="object">
+  How a confirmed alert raises residual risk: `enabled`, `min_score_impact`, `max_score_impact`, and `affect_overall`.
+</ParamField>
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| 400 | `invalid_detector` | The settings do not fit the detector type. |
+| 422 | validation error | Neither `instructions` nor `severity_threshold` was sent for a standard detector. |
+
+## Retrieve a detector
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/detectors/{detector_id}`
+</ParamField>
+
+Returns the [detector object](#detector-object), or `404 detector_not_found`.
+
+## Update a detector
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/radar/detectors/{detector_id}`
+</ParamField>
+
+Changes the fields you send and returns the [detector object](#detector-object). It takes the create fields except `library_slug` and `attach_library_sources`, plus these:
+
+<ParamField body="add_default_reviewer_user_ids" type="string[]">
+  Users to add as reviewers, keeping the current ones.
+</ParamField>
+
+<ParamField body="add_default_reviewer_group_ids" type="string[]">
+  Groups to add as reviewers, keeping the current ones.
+</ParamField>
+
+<ParamField body="severity_threshold" type="string">
+  Also accepts `NO_THRESHOLD`, which needs `instructions`.
+</ParamField>
+
+<ParamField body="risk_impact_config" type="object | null">
+  Send `null` to remove it.
+</ParamField>
+
+<ParamField body="outreach_config" type="object | null">
+  When Coverbase AI may email vendors about this detector's alerts: `enabled`, `min_severity`, `vendor_tiers`, and `follow_up_days`. Send `null` to turn outreach off. It applies only where vendor outreach is available.
+</ParamField>
+
+<ParamField body="is_archived" type="boolean">
+  Archive or restore the detector. API keys get `403 api_key_not_allowed`.
+</ParamField>
+
+## List a vendor's detectors
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/vendors/{vendor_id}/detectors`
+</ParamField>
+
+Lists the detectors that monitor one vendor, by their tag, include, and exclude rules, with the fields of a [listed detector](#list-detectors). Pass `include_disabled=true` to also list detectors that are off. Pages with `limit` and `offset`. Returns `404 vendor_not_found` for an unknown vendor.
+
+## Suggest risk domains
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detectors/suggest-risk-domains`
+</ParamField>
+
+Returns `risk_domain_ids`: your organization's risk domains that match a detector configuration. Nothing is saved. To use them, send them as `risk_domain_ids` when you create or update the detector. The body takes `name` (required), `description`, `instructions`, and `category_filters`.
+
+## Suggest instructions
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detectors/{detector_id}/suggest-instructions`
+</ParamField>
+
+Drafts new instructions from the detector's examples and returns `current_instructions`, `suggested_instructions`, and `rationale`. Nothing is saved. `suggested_instructions` is `null` when the detector has no examples yet. To use the draft, send it as `instructions` in [update a detector](#update-a-detector).
+
+## Back-test a detector
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detectors/{detector_id}/tests`
+</ParamField>
+
+Returns `202 Accepted` with a `test_run_id`. Radar runs the detector against the events created between `created_at_from` and `created_at_to` (Unix seconds) in the background, up to `max_events` (default `50`, range `1` to `200`). A back-test creates no alerts.
+
+## Read back-test results
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/detectors/{detector_id}/tests/{test_run_id}`
+</ParamField>
+
+Returns `is_complete` and the `items` found so far. Each item has `id`, `vendor_id`, `event_id`, `event_created_at`, `should_alert`, `severity`, `summary`, `already_alerted`, and `created_at`. `already_alerted` is `true` when the detector already raised an alert for that vendor and event.
+
+## Create alerts from a back-test
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detectors/{detector_id}/tests/{test_run_id}/alerts`
+</ParamField>
+
+Turns the results in `result_ids` into real alerts and notifies the detector's default reviewers. Returns `alert_ids` and `skipped_already_alerted`, the number of results skipped because the detector already alerted on them. A result from another detector or run returns `400 result_not_in_test_run`.
+
+## Teach a detector from a back-test
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detectors/{detector_id}/tests/{test_run_id}/teach`
+</ParamField>
+
+Adds the event of each result in `should_alert_result_ids` as a positive example, and each in `should_not_alert_result_ids` as a negative one. Labelling an event again moves it to the other side. Returns `applied_count`, `positive_example_count`, and `negative_example_count`. A result from another detector or run returns `400 result_not_in_test_run`.
+
+## Dismissal example object
+
+An example is an event a detector should (`positive`) or should not (`negative`) alert on. It has `id`, `detector_id`, `kind`, `event_id`, `alert_id`, `example_summary`, `reason`, `dismiss_code`, `created_at`, and `updated_at`. Coverbase classifies the reason on a new negative example and fills in `dismiss_code`.
+
+## List a detector's examples
+
+<ParamField path="method" type="GET">
+  `GET /v1/radar/detectors/{detector_id}/dismissal-examples`
+</ParamField>
+
+Lists the detector's examples, newest first. Filter with `kind` (`negative` or `positive`); pages with `limit` and `offset`.
+
+## Add an example
+
+<ParamField path="method" type="POST">
+  `POST /v1/radar/detectors/{detector_id}/dismissal-examples`
+</ParamField>
+
+Returns `201 Created` with the [example](#dismissal-example-object). The body takes `event_id` and `example_summary` (both required), `kind` (default `negative`), `reason`, and `alert_id`. An event your organization cannot see returns `404 event_not_found`.
+
+## Update an example
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/radar/dismissal-examples/{example_id}`
+</ParamField>
+
+Replaces the example's `reason` and returns the [example](#dismissal-example-object). Send `null` to clear it. Returns `404 dismissal_example_not_found` for an unknown example.
+
+## Delete an example
+
+<ParamField path="method" type="DELETE">
+  `DELETE /v1/radar/dismissal-examples/{example_id}`
+</ParamField>
+
+Returns `204 No Content`. API keys get `403 api_key_not_allowed`, so a signed-in user must delete examples.
 
 ## Related
 
