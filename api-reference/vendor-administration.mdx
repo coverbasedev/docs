@@ -42,6 +42,8 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 - `POST /v1/services/{service_id}/merge` and `POST /v1/services/{service_id}/promote`, because both archive a service
 - `DELETE /v1/departments/{department_id}` and `DELETE /v1/departments/{department_id}/members/{user_id}`
 - `POST /v1/vendor-discoveries/approve` and `POST /v1/vendor-discoveries/dismiss`
+- `POST /v1/screening-matches/{match_id}/disposition`
+- `POST /v1/bills-of-materials/{bom_id}/archive`
 
 ## Endpoints
 
@@ -103,6 +105,32 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `POST` | `/v1/vendor-discoveries/approve` | `vendor:create:org` |
 | `POST` | `/v1/vendor-discoveries/dismiss` | `vendor:create:org` |
 | `GET` | `/v1/vendors/{vendor_id}/discoveries` | `vendor:read:org` |
+| `GET` | `/v1/screening/settings` | `integration:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/screening` | `screening_match:read:org` |
+| `PATCH` | `/v1/screening-subjects/{subject_id}` | `screening_match:update:org` |
+| `GET` | `/v1/screening-runs` | `screening_match:read:org` |
+| `POST` | `/v1/screening-matches/query` | `screening_match:read:org` |
+| `GET` | `/v1/screening-matches/{match_id}` | `screening_match:read:org` |
+| `POST` | `/v1/screening-matches/{match_id}/disposition` | `screening_match:update:org` |
+| `GET` | `/v1/vendor-sso/summary` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/sso` | `vendor:read:org` |
+| `GET` | `/v1/vendor-sso/applications` | `vendor:read:org` |
+| `PUT` | `/v1/vendor-sso/applications/{application_id}/vendor` | `vendor:update:org` |
+| `POST` | `/v1/vendor-sso/applications/confirm` | `vendor:update:org` |
+| `POST` | `/v1/vendor-sso/applications/{application_id}/vendor/reset` | `vendor:update:org` |
+| `GET` | `/v1/vendor-sso/settings` | `vendor:read:org` |
+| `GET` | `/v1/data-quality-rules` | `vendor:read:org` |
+| `PUT` | `/v1/data-quality-rules` | `integration:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/data-quality-score` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/company-registration/proposal` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/company-registration/confirm` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/company-registration/undo` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/company-registration/rematch` | `vendor:update:org` |
+| `POST` | `/v1/nth-parties/query` | `vendor:read:org` |
+| `GET` | `/v1/bills-of-materials/{bom_id}` | `vendor:read:org` |
+| `GET` | `/v1/bills-of-materials/{bom_id}/components` | `vendor:read:org` |
+| `POST` | `/v1/bills-of-materials/{bom_id}/archive` | `vendor:update:org` |
+| `POST` | `/v1/bills-of-materials/{bom_id}/promote` | `vendor:update:org` |
 
 List endpoints that take `limit` and `offset` return `items`, `total`, `limit` and `offset`. `limit` defaults to `50` and accepts `1` to `200`.
 
@@ -364,3 +392,37 @@ These endpoints need the vendor discovery integration, or they return `404`.
 `POST /v1/vendor-discoveries/dismiss` takes `discovery_ids` and an optional `reason`.
 
 Both are all or nothing and return `409` when a discovery was already reviewed. `GET /v1/vendors/{vendor_id}/discoveries` lists every integration that discovered the vendor, with its records.
+
+## Screening
+
+These endpoints need sanctions screening, or they return `404 not_found`.
+
+`GET /v1/screening/settings` returns your screening configuration. `GET /v1/vendors/{vendor_id}/screening` returns the vendor's screening subjects (the company and the people you enrolled), their latest runs and their open matches. `GET /v1/screening-runs` lists runs, newest first, and takes `vendor_id`, `subject_id`, `limit` and `offset`.
+
+`POST /v1/screening-matches/query` filters matches, and `GET /v1/screening-matches/{match_id}` returns one match with its evidence and history. To record a decision on a match, a signed-in user sends `POST /v1/screening-matches/{match_id}/disposition`. API keys get `403 api_key_not_allowed`.
+
+`PATCH /v1/screening-subjects/{subject_id}` edits a subject, for example whether it is monitored.
+
+## Vendor SSO
+
+`GET /v1/vendor-sso/summary` counts the vendors your identity provider shows in use and how many enforce SSO. `GET /v1/vendors/{vendor_id}/sso` lists the applications linked to one vendor. `GET /v1/vendor-sso/applications` lists applications; pass `unlinked=true` or `suggested=true` to narrow it.
+
+To link an application to a vendor, send `PUT /v1/vendor-sso/applications/{application_id}/vendor`. To accept several suggested matches at once, send `POST /v1/vendor-sso/applications/confirm`. To clear a link so matching runs again, send `POST /v1/vendor-sso/applications/{application_id}/vendor/reset`. `GET /v1/vendor-sso/settings` reads the settings; changing them stays an admin action in the dashboard.
+
+## Data quality
+
+These endpoints need the engagement record feature, or they return `404 not_enabled`.
+
+`GET /v1/data-quality-rules` returns the per-tier rules: which fields count, how old a value may be, and the score threshold. `PUT /v1/data-quality-rules` replaces them, and saving any rule turns the daily check on. It returns `422` for an unknown field or a tier listed twice.
+
+`GET /v1/vendors/{vendor_id}/data-quality-score` returns the vendor's latest score and the reasons behind it, or `null` before the daily check has scored it.
+
+## Company registration
+
+`POST /v1/vendors/{vendor_id}/company-registration/proposal` searches the company registers for the vendor's legal entity and returns candidates. Nothing is saved. `POST .../company-registration/confirm` saves one candidate as the vendor's registered company. `POST .../company-registration/undo` reverts the last confirmation, and `POST .../company-registration/rematch` runs the match again. The last three return the saved registration profile.
+
+## Nth parties and bills of materials
+
+`POST /v1/nth-parties/query` filters, sorts and pages the companies your vendors depend on, with the same unified filter body the dashboard uses (`filter`, `sort`, `search`, `limit`, `offset`).
+
+`GET /v1/bills-of-materials/{bom_id}` returns one software or AI bill of materials, and `GET .../components` pages its components with `search` and `component_type`. `POST .../promote` makes it the current bill for its vendor or service. `POST .../archive` archives it and refuses API keys.

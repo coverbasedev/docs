@@ -20,6 +20,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/control-sets` | `control_set:create:org` |
 | `GET` | `/v1/control-sets/{control_set_id}` | `control_set:read:org` |
 | `PATCH` | `/v1/control-sets/{control_set_id}` | `control_set:update:org` |
+| `PATCH` | `/v1/control-sets/bulk` | `control_set:update:org` |
 | `GET` | `/v1/control-sets/{control_set_id}/stats` | `control_set:read:org` |
 | `GET` | `/v1/control-sets/{control_set_id}/sections` | `control_set:read:org` |
 | `POST` | `/v1/control-sets/{control_set_id}/sections` | `control_set:update:org` |
@@ -28,6 +29,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/control-sets/{control_set_id}/controls` | `control:create:org` |
 | `GET` | `/v1/controls/{control_id}` | `control:read:org` |
 | `PATCH` | `/v1/controls/{control_id}` | `control:update:org` |
+| `PATCH` | `/v1/controls/bulk` | `control:update:org` |
 | `GET` | `/v1/controls/{control_id}/history` | `control:read:org` |
 | `POST` | `/v1/controls/bulk-action` | `control:update:org` |
 | `PATCH` | `/v1/controls/{control_id}/framework-references/{index}` | `control:update:org` |
@@ -35,6 +37,8 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/control-set-library/updates` | `control_set:read:org` |
 | `POST` | `/v1/control-sets/{control_set_id}/apply-library-update` | `control_set:update:org` |
 | `POST` | `/v1/control-sets/{control_set_id}/reassess-affected` | `control_set:update:org` |
+| `POST` | `/v1/control-sets/{control_set_id}/crosswalk` | `control_set:update:org` |
+| `GET` | `/v1/control-sets/{control_set_id}/crosswalk` | `control_set:read:org` |
 
 Archiving or unarchiving a set or section also needs `control_set:archive:org`, and archiving a control needs `control:archive:org`. Archiving and unarchiving stay with signed-in users: in every organization, a request made with an API key that archives or unarchives returns `403 api_key_not_allowed`.
 
@@ -162,6 +166,18 @@ Every create field except `control_set_type` and `use_library`, plus:
 
 Lists you send (`applied_to_tag_ids`, `evidence_sources`, `document_requirement`, `watcher_ids`) replace the stored list. A `scale_id` applies to every live control.
 
+## Update many control sets
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/control-sets/bulk`
+</ParamField>
+
+Applies up to 200 updates in one call. If any update fails, none is applied, and the error names the failing item in `detail.id`. Each control set may appear once per call.
+
+<ParamField body="updates" type="object[]" required>From 1 to 200 items. Each item takes `control_set_id` and the fields of [Update a control set](#update-a-control-set), with the same rules.</ParamField>
+
+Returns an `items` array of the updated [control set objects](#control-set-object), in request order.
+
 ## Get control set stats
 
 <ParamField path="method" type="GET">
@@ -203,7 +219,7 @@ Returns an `items` array of [section objects](#section-object) in display order,
   `POST /v1/control-sets/{control_set_id}/sections`
 </ParamField>
 
-Returns `201 Created` with the [section object](#section-object).
+Returns `201 Created` with the [section object](#section-object). An archived set returns `409 control_set_archived`. Every watcher must be a member of your organization, or the request returns `422 invalid_watcher`.
 
 <ParamField body="name" type="string" required>Name.</ParamField>
 <ParamField body="external_idx" type="string" required>Section reference.</ParamField>
@@ -269,7 +285,7 @@ Returns the latest version of each control as an `items` array of [control objec
   `POST /v1/control-sets/{control_set_id}/controls`
 </ParamField>
 
-Returns `201 Created` with version 1 of the [control object](#control-object). To set `evidence_requirement` or the significant-deficiency floor, send a `PATCH` afterwards.
+Returns `201 Created` with version 1 of the [control object](#control-object). An archived set returns `409 control_set_archived`. To set `evidence_requirement` or the significant-deficiency floor, send a `PATCH` afterwards.
 
 <ParamField body="expectation" type="string" required>What the vendor must do.</ParamField>
 <ParamField body="control_section_id" type="string">A live section of the same set.</ParamField>
@@ -328,6 +344,18 @@ curl -X PATCH "https://api.coverbase.app/v1/controls/cbctrl_1234" \
   }'
 ```
 
+## Update many controls
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/controls/bulk`
+</ParamField>
+
+Applies up to 200 control updates in one call. If any update fails, none is applied, and the error names the failing item in `detail.id`. Each control may appear once per call.
+
+<ParamField body="updates" type="object[]" required>From 1 to 200 items. Each item takes `control_id` and the fields of [Update a control](#update-a-control), with the same rules.</ParamField>
+
+Returns an `items` array in request order. Each item has `previous_id` (the ID you sent) and `control` (the resulting [control object](#control-object)). A material change gives `control` a new `id`.
+
 ## Get control history
 
 <ParamField path="method" type="GET">
@@ -345,7 +373,7 @@ Returns an `items` array of [control objects](#control-object), newest version f
   `POST /v1/controls/bulk-action`
 </ParamField>
 
-Moves many controls into one section, or archives or unarchives them. If any control fails, nothing changes. Each moved control takes a new version. Returns `{ "action": "add_to_section", "control_count": 2 }`.
+Moves many controls into one section, or archives or unarchives them. If any control fails, nothing changes. The section must belong to the same control set as every control, or the request returns `422 invalid_bulk_action`. Unarchiving an earlier version of a control returns `409 control_superseded`, because a newer version is live. Each moved control takes a new version. Returns `{ "action": "add_to_section", "control_count": 2 }`.
 
 <ParamField body="action" type="string" required>`add_to_section`, `archive` or `unarchive`. Archiving and unarchiving needs `control:archive:org`, and an API key gets `403 api_key_not_allowed`.</ParamField>
 <ParamField body="control_ids" type="string[]" required>From 1 to 500 control IDs.</ParamField>
@@ -362,6 +390,26 @@ Accepts or rejects a suggested framework reference on a control. Only an accepte
 <ParamField body="action" type="string" required>`accept`, `reject` (removes the reference) or `no_clause` (records that the framework has no matching clause).</ParamField>
 
 Returns `framework_references`, the control's references after the change, or `404 framework_reference_not_found`.
+
+## Start a crosswalk
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets/{control_set_id}/crosswalk`
+</ParamField>
+
+Returns `202 Accepted`. Suggests, in the background, a reference in each target framework for every control of the set. A suggestion counts toward coverage only once you [accept it](#review-a-framework-reference).
+
+<ParamField body="target_control_set_ids" type="string[]" required>From 1 to 50 framework control sets to map onto. Each must be a live control set of your organization other than this one, or the request returns `422 invalid_crosswalk_targets` and nothing is queued.</ParamField>
+
+Returns `queued` and `target_control_set_ids`, the distinct targets that were queued. An archived subject set returns `409 control_set_archived`.
+
+## Read a crosswalk
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-sets/{control_set_id}/crosswalk`
+</ParamField>
+
+Returns `frameworks` and `rows`. Each framework has `framework`, `control_set_id`, `accepted_clauses`, `total_clauses` and `suggested`. Each row has `control_id`, `external_idx`, `expectation`, `section` and `refs`. Each reference has `index` (the value a review takes), `framework`, `reference`, `rationale` and `review_state` (`suggested` or `accepted`).
 
 ## List library templates
 
@@ -406,15 +454,19 @@ Returns `201 Created` with `reassessment_id` and `vendor_count`. Drafts one [rea
 | 404 | `{"detail": {"code": "control_set_not_found", ...}}` | The set does not exist in the API key's org. |
 | 404 | `{"detail": {"code": "control_section_not_found", ...}}` | The section does not exist. |
 | 404 | `{"detail": {"code": "control_not_found", ...}}` | The control does not exist. |
-| 409 | `{"detail": {"code": "control_set_archived", ...}}` | Editing an archived set. |
+| 409 | `{"detail": {"code": "control_set_archived", ...}}` | Editing an archived set, or adding a section or control to one. |
 | 409 | `{"detail": {"code": "duplicate_external_idx", ...}}` | The set already has a control with that `external_idx`. |
-| 409 | `{"detail": {"code": "control_superseded", ...}}` | Editing an earlier version of a control. |
+| 409 | `{"detail": {"code": "control_superseded", ...}}` | Editing or unarchiving an earlier version of a control. |
 | 409 | `{"detail": {"code": "no_library_update", ...}}` | The set has no newer template revision. |
 | 422 | `{"detail": {"code": "invalid_control_set", ...}}` | The set was rejected, for example an unknown library slug or risk domain. |
 | 422 | `{"detail": {"code": "invalid_control_section", ...}}` | The section is not a live section of the same set. |
 | 422 | `{"detail": {"code": "invalid_control_option", ...}}` | An answer choice has no name, or an edited choice has no `perma_id`. |
 | 422 | `{"detail": {"code": "invalid_control_update", ...}}` | The control cannot take the change, for example an archived version. |
 | 422 | `{"detail": {"code": "no_assessed_vendors", ...}}` | None of the vendors were assessed with the set. |
+| 422 | `{"detail": {"code": "invalid_watcher", ...}}` | A section watcher is not a member of your organization. |
+| 422 | `{"detail": {"code": "invalid_bulk_action", ...}}` | A bulk move names a missing section or one in another control set. |
+| 422 | `{"detail": {"code": "invalid_crosswalk_targets", ...}}` | A crosswalk target is missing, archived, in another organization, or the set itself. |
+| 422 | `{"detail": {"code": "duplicate_bulk_item", ...}}` | A bulk update names the same ID twice. |
 
 ## Related
 

@@ -130,7 +130,7 @@ One archived or unknown vendor in a batch of forty does not stop the other thirt
   `GET /v1/zero-touch-assessments/{assessment_id}`
 </ParamField>
 
-Returns the single-page result: who the vendor is, what turned up against its name, the composite, the components behind it, control set coverage, controls grouped by section, open issues with their evidence, the briefing, what to ask the vendor for, and every source cited. A run that has not finished is scored on the fly. A full assessment ID returns `404` (`zero_touch_assessment_not_found`).
+Returns the single-page result: who the vendor is, what turned up against its name, the composite, the components behind it, control set coverage, controls grouped by section, open issues with their evidence, the briefing, what to ask the vendor for, and every source cited. A run that has not finished is scored on the fly. A full assessment ID returns `404` (`zero_touch_assessment_not_found`). Needs read access to the assessment.
 
 <ParamField query="version" type="integer">
   An earlier version of a revised result to read instead of the current one. A version the run does not have returns `404` (`version_not_found`).
@@ -199,6 +199,20 @@ Returns the single-page result: who the vendor is, what turned up against its na
 <Warning>
   **A component with no data is excluded from the composite, never counted as zero.** Weights renormalise over whatever resolved, which is why `weight` and `configured_weight` differ. A vendor scored on one component is not comparable to a vendor scored on three, so read `components` before you rank on `composite_score`.
 </Warning>
+
+## Promote a prospect
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendors/{vendor_id}/promote-prospect`
+</ParamField>
+
+Adds a prospect to your portfolio and moves it to the Onboarding status. A prospect is a company you launched a run on before it was a vendor, for example through `prospects` on a bulk launch. Returns the vendor, in the same shape as `GET /v1/vendors/{vendor_id}`. Needs the TPRM expansion (otherwise `404`, code `not_enabled`) and `vendor:update:org`.
+
+| Status | Meaning |
+| --- | --- |
+| `200` | The vendor is now in the portfolio at Onboarding. |
+| `404` | The vendor does not exist (`vendor_not_found`). |
+| `409` | The vendor is not a prospect, or your organization has no Onboarding status (`not_a_prospect`). |
 
 ## Rank a portfolio
 
@@ -328,7 +342,7 @@ Returns the shipped templates under `data`, each with `key`, `name`, `descriptio
   The shipped template future runs evaluate.
 </ParamField>
 
-Points future runs at that template, and only that one. It re-designates only control sets this module provisioned, so a set designated for you by Coverbase is never changed. Returns the same body as the `GET`. Needs `control_set:create:org`.
+Points future runs at that template, and only that one. It re-designates only control sets this module provisioned, so a set designated for you by Coverbase is never changed. Returns the same body as the `GET`. Needs `control_set:create:org`, which API keys hold.
 
 | Status | Meaning |
 | --- | --- |
@@ -382,7 +396,7 @@ Both endpoints need Documents Evidence in ZTA. Without it they return `404` (`do
   `POST /v1/zero-touch-assessments/{assessment_id}/rescore`
 </ParamField>
 
-Recomputes the composite against today's inputs and re-applies the configured score push, without re-running the controls. Use it when the financial or security inputs have refreshed, or after you change the scoring configuration. Returns the run. Needs `assessment:create:org`.
+Recomputes the composite against today's inputs and re-applies the configured score push, without re-running the controls. Use it when the financial or security inputs have refreshed, or after you change the scoring configuration. Returns the run. A run still working, or held for its automated review, returns `409` (`run_not_finished`), because rescoring it would publish a partial score. Needs `assessment:create:org`.
 
 ## Run the automated review again
 

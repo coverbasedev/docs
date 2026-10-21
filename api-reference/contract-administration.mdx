@@ -1,0 +1,172 @@
+---
+title: "Contract administration API"
+description: "Read cost centers and business units, manage purchase orders, read procurements, and run offboarding and continuity plans on engagements."
+icon: "file-contract"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints extend the [contract records](/api-reference/contract-records) and [engagement records](/api-reference/engagement-records) APIs. Every endpoint is scoped to the organization that owns the API key. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/cost-centers` | `contract:read:org` |
+| `GET` | `/v1/business-units` | `contract:read:org` |
+| `GET` | `/v1/procurements` | `vendor:read:org` |
+| `GET` | `/v1/procurements/{procurement_id}` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/purchase-orders` | `vendor:read:org` |
+| `GET` | `/v1/purchase-orders/{purchase_order_id}` | `vendor:read:org` |
+| `POST` | `/v1/purchase-orders` | `vendor:update:org` |
+| `POST` | `/v1/purchase-orders/{purchase_order_id}/issue` | `vendor:update:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/offboarding` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding` | `vendor:update:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/continuity-plan` | `vendor:read:org` |
+| `PUT` | `/v1/engagement-records/{engagement_id}/continuity-plan` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/continuity-plan/submit` | `vendor:update:org` |
+
+List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
+
+## List cost centers
+
+`GET /v1/cost-centers` returns the cost center codes your contracts can carry.
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Include archived codes.
+</ParamField>
+<ParamField query="limit" type="integer" default="200">
+  Page size, 1 to 2000.
+</ParamField>
+<ParamField query="offset" type="integer" default="0">
+  Rows to skip.
+</ParamField>
+
+Each item has `id`, `code`, `description` and `is_archived`.
+
+## List business units
+
+`GET /v1/business-units` returns your business units in the order your organization set. It takes the same parameters as the cost center list. Each item has `id`, `code`, `name`, `parent_id` and `is_archived`.
+
+## List procurements
+
+`GET /v1/procurements` returns procurement requests, newest first.
+
+<ParamField query="vendor_id" type="string">
+  Only procurements for this vendor.
+</ParamField>
+<ParamField query="status_id" type="string">
+  Only procurements in this workflow status.
+</ParamField>
+<ParamField query="search" type="string">
+  Text to match in the title.
+</ParamField>
+<ParamField query="include_archived" type="boolean" default="false">
+  Include archived procurements.
+</ParamField>
+<ParamField query="limit" type="integer" default="50">
+  Page size, 1 to 500.
+</ParamField>
+
+Each item has `id`, `title`, `description`, `vendor_id`, `status_id`, `status`, `priority`, `assignee_id`, `assignee_group_id`, `assessment_ids`, `contract_ids`, `intake_session_ids`, `is_archived`, `created_at` and `updated_at`.
+
+## Get a procurement
+
+`GET /v1/procurements/{procurement_id}` returns one procurement in the same shape. An unknown ID returns `404` with code `procurement_not_found`.
+
+## List a vendor's purchase orders
+
+`GET /v1/vendors/{vendor_id}/purchase-orders` returns the vendor's purchase orders, newest first. `total` counts all of the vendor's purchase orders.
+
+<ParamField query="limit" type="integer" default="25">
+  Page size, 1 to 200.
+</ParamField>
+
+## Get a purchase order
+
+`GET /v1/purchase-orders/{purchase_order_id}` returns one purchase order with its three-way match. Each entry in `lines` compares the PO amount with the first receipt line and the first invoice line that carry the same line number. A line is `matched` when all three amounts agree within one cent, `open` while a receipt or invoice amount is missing, and `exception` otherwise. `match_status` is `exception` when any line is, `matched` when every line is, and `open` otherwise. An unknown ID returns `404` with code `purchase_order_not_found`.
+
+## Create a purchase order
+
+`POST /v1/purchase-orders` creates a draft purchase order and returns `201`.
+
+<ParamField body="vendor_id" type="string" required>
+  The vendor ID.
+</ParamField>
+<ParamField body="po_number" type="string">
+  The PO number. It must be unique in your organization.
+</ParamField>
+<ParamField body="assessment_id" type="string">
+  The assessment the purchase order follows from.
+</ParamField>
+<ParamField body="total_amount" type="string">
+  The total as a decimal string, for example `"1200.00"`.
+</ParamField>
+<ParamField body="currency" type="string" default="USD">
+  ISO currency code.
+</ParamField>
+<ParamField body="line_items" type="object[]">
+  Each line has `description`, `quantity`, `unit_price` and `amount`.
+</ParamField>
+<ParamField body="external_system" type="string">
+  The system of record that also holds the purchase order.
+</ParamField>
+
+Errors: `400` with code `vendor_not_found`, and `409` with code `po_number_taken`.
+
+## Issue a purchase order
+
+`POST /v1/purchase-orders/{purchase_order_id}/issue` moves a draft to issued.
+
+<ParamField body="po_number_format" type="string">
+  The format for a generated PO number, for example `PO-{YEAR}-{SEQ}`.
+</ParamField>
+
+Coverbase refuses the call with `409` while the vendor fails a blocking prequalification rule.
+
+## Read and file offboarding
+
+The engagement lifecycle endpoints return `404` with code `not_enabled` when your organization does not have the engagement lifecycle, and `404` with code `engagement_not_found` for an unknown engagement.
+
+`GET /v1/engagement-records/{engagement_id}/offboarding` returns `request`, the latest offboarding request, or `null`. The request has `id`, `status`, `reason_category`, `justification`, `requested_date`, `required_approval_roles`, the approval times, and the start, completion and cancel times.
+
+To file an offboarding request, send `POST /v1/engagement-records/{engagement_id}/offboarding`. Coverbase notifies the approvers and returns `201` with the new state.
+
+<ParamField body="reason_category" type="string" required>
+  One of `consolidation`, `contract_end`, `no_longer_needed`, `performance`, `risk`, `cost` or `other`.
+</ParamField>
+<ParamField body="justification" type="string" required>
+  Why the engagement ends, up to 4000 characters.
+</ParamField>
+<ParamField body="requested_date" type="integer">
+  When offboarding should happen, in Unix seconds.
+</ParamField>
+
+A request the lifecycle refuses, for example a second open request, returns the refusal's `code` and `message`.
+
+## Continuity plan
+
+`GET /v1/engagement-records/{engagement_id}/continuity-plan` returns the plan. Before anyone saves one, every field except `engagement_id` is empty.
+
+To create or edit the plan, send `PUT /v1/engagement-records/{engagement_id}/continuity-plan`. Fields you leave out stay as they are. An explicit `null` for `rto_hours` clears it.
+
+<ParamField body="owner_user_id" type="string">
+  The plan owner. The user must belong to your organization, or the call returns `400` with code `user_not_in_org`.
+</ParamField>
+<ParamField body="backup_suppliers" type="object[]">
+  Up to 20 entries, each with `name`, `vendor_id` and `notes`.
+</ParamField>
+<ParamField body="exit_strategy" type="string">
+  How you would exit the vendor, up to 10000 characters.
+</ParamField>
+<ParamField body="rto_hours" type="integer">
+  Recovery time objective in hours, 0 to 8760.
+</ParamField>
+<ParamField body="resiliency_notes" type="string">
+  Free-form notes, up to 10000 characters.
+</ParamField>
+<ParamField body="transition_steps" type="string[]">
+  Up to 50 ordered steps.
+</ParamField>
+
+To submit the plan for review, send `POST /v1/engagement-records/{engagement_id}/continuity-plan/submit`.

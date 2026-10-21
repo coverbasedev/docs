@@ -1,0 +1,268 @@
+---
+title: "Assessment administration API"
+description: "Manage assessment plans, reassessment triggers, SLAs, evals, follow-ups and monitoring records."
+icon: "sliders"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints manage what surrounds an assessment: the plans new assessments start from, the triggers that open reassessments, assessment SLAs and missing documents, risk results, evals in bulk, reviews, follow-ups to vendors, vendor SLAs, scales, and monitoring records. Each response uses the same shape the Coverbase dashboard reads.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior. List endpoints take `limit` (1 to 200, default 50) and `offset` (default 0) and return `items`, `total`, `limit` and `offset`. None of these endpoints honor `Idempotency-Key`.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/assessment-plans` | `assessment:read:org` |
+| `POST` | `/v1/assessment-plans` | `assessment:update:org` |
+| `GET` | `/v1/assessment-plans/{assessment_plan_id}` | `assessment:read:org` |
+| `PATCH` | `/v1/assessment-plans/{assessment_plan_id}` | `assessment:update:org` |
+| `PUT` | `/v1/assessment-plans/{assessment_plan_id}/default` | `assessment:update:org` |
+| `GET` | `/v1/approval-options` | `assessment:read:org` |
+| `GET` | `/v1/reassessment-triggers` | `assessment:read:org` |
+| `POST` | `/v1/reassessment-triggers` | `assessment:update:org` |
+| `GET` | `/v1/reassessment-triggers/{trigger_id}` | `assessment:read:org` |
+| `PATCH` | `/v1/reassessment-triggers/{trigger_id}` | `assessment:update:org` |
+| `POST` | `/v1/assessments/{assessment_id}/clone` | `assessment:create:org` |
+| `POST` | `/v1/assessments/{assessment_id}/rerun-failed-evals` | `assessment:run:org` |
+| `GET` | `/v1/assessments/{assessment_id}/sla` | `assessment:read:org` |
+| `PATCH` | `/v1/assessments/{assessment_id}/sla` | `assessment:update:org` |
+| `PUT` | `/v1/assessments/{assessment_id}/missing-documents/{document_type}` | `assessment:update:org` |
+| `DELETE` | `/v1/assessments/{assessment_id}/missing-documents/{document_type}` | `assessment:update:org` |
+| `GET` | `/v1/assessments/{assessment_id}/risk-results` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/significant-deficiencies` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/risk-domain-scores` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/vendor-rating` | `assessment:read:org` |
+| `POST` | `/v1/evals/bulk-score` | `assessment:update:org` |
+| `POST` | `/v1/evals/bulk-category` | `assessment:update:org` |
+| `POST` | `/v1/evals/bulk-review-note` | `assessment:update:org` |
+| `GET` | `/v1/reviews` | `assessment:read:org` |
+| `GET` | `/v1/reviews/{review_id}` | `assessment:read:org` |
+| `GET` | `/v1/follow-ups` | `follow_up:read:org` |
+| `POST` | `/v1/follow-ups` | `follow_up:create:org` |
+| `GET` | `/v1/follow-ups/{follow_up_id}` | `follow_up:read:org` |
+| `PATCH` | `/v1/follow-ups/{follow_up_id}` | `follow_up:update:org` |
+| `GET` | `/v1/follow-up-rounds` | `follow_up:read:org` |
+| `GET` | `/v1/follow-up-rounds/{round_id}` | `follow_up:read:org` |
+| `GET` | `/v1/slas` | `vendor:read:org` |
+| `GET` | `/v1/slas/{sla_id}` | `vendor:read:org` |
+| `GET` | `/v1/slas/{sla_id}/measurements` | `vendor:read:org` |
+| `GET` | `/v1/scales` | `assessment:read:org` |
+| `GET` | `/v1/scales/{scale_id}` | `assessment:read:org` |
+| `POST` | `/v1/monitoring-records/{record_id}/entries` | `radar_alert:update:org` |
+| `POST` | `/v1/monitoring-records/{record_id}/entries/{entry_id}/disposition` | `radar_alert:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/monitoring-record/refresh` | `radar_alert:update:org` |
+
+## Errors
+
+Every error body has a `detail` object with a `code` and a `message`.
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| `403` | `api_key_not_allowed` | An API key tried an action that stays a human decision: setting summary instructions, archiving a follow-up, or waiving a monitoring entry. |
+| `404` | `assessment_not_found`, `assessment_plan_not_found`, `reassessment_trigger_not_found`, `review_not_found`, `follow_up_not_found`, `follow_up_round_not_found`, `sla_not_found`, `scale_not_found`, `eval_not_found`, `scale_level_not_found`, `monitoring_record_not_found`, `monitoring_entry_not_found` | The ID does not exist in your organization. |
+| `404` | `not_enabled` | Monitoring records are not enabled for your organization. |
+| `409` | `prompt_busy`, `monitoring_record_closed` | The summary prompt is being edited, or the monitoring record is closed. |
+| `422` | `invalid_assessment_plan`, `invalid_reassessment_trigger`, `invalid_monitoring_entry` | The request refers to something that does not exist or breaks a rule. The message says which. |
+
+## Assessment plans
+
+An **assessment plan** is the template a new assessment starts from: its control sets, questionnaires, document collection mode, reviewer and naming.
+
+### List plans
+
+<ParamField path="method" type="GET">
+  `GET /v1/assessment-plans`
+</ParamField>
+
+<ParamField query="include_archived" type="boolean">
+  Set to `true` to include archived plans. Default `false`.
+</ParamField>
+
+### Create a plan
+
+<ParamField path="method" type="POST">
+  `POST /v1/assessment-plans`
+</ParamField>
+
+Returns `201 Created` with the plan.
+
+<ParamField body="name" type="string" required>
+  The plan name.
+</ParamField>
+
+<ParamField body="control_set_ids" type="string[]">
+  Control sets every assessment from this plan includes.
+</ParamField>
+
+<ParamField body="questionnaire_ids" type="string[]">
+  Questionnaires every assessment from this plan sends.
+</ParamField>
+
+<ParamField body="doc_collection_mode" type="string">
+  `manual` (default), `auto` or `none`.
+</ParamField>
+
+<ParamField body="assignee_id" type="string">
+  The default reviewer. Use `assignee_group_id` for a user group instead.
+</ParamField>
+
+The body also accepts `description`, `risk_type`, `questionnaire_fill_mode`, `portal_due_days`, `assessment_name_format`, `control_set_rules`, `portal_template_id`, `doc_collection_settings`, `follow_up_settings`, `irq_review_questionnaire_id`, `irq_review_due_days` and `recheck_unresolved_controls`, with the same meaning as in the dashboard. An API key cannot set `summary_instructions`.
+
+### Get, update and set the default
+
+`GET /v1/assessment-plans/{assessment_plan_id}` returns one plan. `PATCH` takes the same fields as create. An omitted field keeps its value, and an explicit `null` clears a clearable field. A list replaces the plan's control sets or questionnaires.
+
+To make a plan the org default, send `PUT /v1/assessment-plans/{assessment_plan_id}/default` with `{"is_default": true}`. Send `false` to stop it being the default.
+
+## Approval options
+
+`GET /v1/approval-options` lists the outcomes a reviewer picks from when completing an assessment. Set `include_archived=true` to include archived options.
+
+## Reassessment triggers
+
+A **reassessment trigger** opens a draft [reassessment](/api-reference/reassessments) when a radar event matches its rules and vendor scope.
+
+### Create a trigger
+
+<ParamField path="method" type="POST">
+  `POST /v1/reassessment-triggers`
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  The trigger name.
+</ParamField>
+
+<ParamField body="assessment_plan_id" type="string" required>
+  The plan the reassessment runs.
+</ParamField>
+
+<ParamField body="enabled" type="boolean">
+  Whether the trigger fires. Default `true`.
+</ParamField>
+
+The body also accepts `description`, `assignee_id`, `applies_to_all_vendors`, `scope_vendor_ids`, `scope_tag_ids`, `scope_tiers`, `notify_user_ids`, `ai_instruction` and `rules`.
+
+### List, get and update
+
+`GET /v1/reassessment-triggers` lists triggers (`include_archived` includes archived ones). `GET /v1/reassessment-triggers/{trigger_id}` returns one. `PATCH` updates it: an omitted field keeps its value, and `null` clears `description`, `assignee_id`, `scope_tag_ids`, `scope_tiers`, `ai_instruction` or `rules`.
+
+## Assessment actions and reads
+
+### Clone an assessment
+
+`POST /v1/assessments/{assessment_id}/clone` copies an assessment with its scope and documents and starts the copy's AI run. Returns `201 Created` with the new `id`, `name`, `vendor_id` and `run_started`.
+
+### Rerun failed evals
+
+`POST /v1/assessments/{assessment_id}/rerun-failed-evals` reruns every eval that failed and clears the run errors. Returns `202 Accepted`.
+
+### SLA
+
+`GET /v1/assessments/{assessment_id}/sla` returns each SLA stage's target, elapsed time and status, overall and per risk domain.
+
+To override targets or measured response times, send `PATCH /v1/assessments/{assessment_id}/sla`. Values are in days. An omitted field keeps its value, and `null` clears the override.
+
+<ParamField body="doc_submission_days" type="integer">
+  Target for document submission. `review_days`, `follow_up_days` and `commitment_days` set the other targets.
+</ParamField>
+
+<ParamField body="review_response_days" type="integer">
+  Measured review time to record instead of the computed one. `doc_submission_response_days`, `follow_up_response_days` and `commitment_response_days` work the same way.
+</ParamField>
+
+<ParamField body="business_days" type="boolean">
+  `true` counts weekdays only. `false` counts calendar days.
+</ParamField>
+
+### Missing documents
+
+To record why a requested document is not provided, send `PUT /v1/assessments/{assessment_id}/missing-documents/{document_type}` with a `reason`. `document_type` is a document type slug, for example `soc2_type2`. `DELETE` on the same path removes the reason and returns `204 No Content`. The `PUT` returns `403` with `missing_document_reasons_disabled` when your organization turned the feature off, and `404` with `document_type_not_requested` when the assessment does not ask for that document.
+
+### Risk reads
+
+| Path | Returns |
+| ---- | ------- |
+| `/v1/assessments/{assessment_id}/risk-results` | The scores completing the assessment pushes, or pushed, to its vendor or services. |
+| `/v1/assessments/{assessment_id}/significant-deficiencies` | Controls whose failure currently floors the risk score. |
+| `/v1/assessments/{assessment_id}/risk-domain-scores` | Inherent and residual risk per risk domain, as a list. |
+| `/v1/assessments/{assessment_id}/vendor-rating` | Each weighted control set's level and the vendor rating they combine into. |
+
+## Evals in bulk
+
+Each endpoint takes `ids`, a non-empty list of eval IDs, and returns the IDs it changed and the IDs it skipped. An eval a person already reviewed is skipped unless `include_reviewed` is `true`.
+
+| Path | Body | Effect |
+| ---- | ---- | ------ |
+| `/v1/evals/bulk-score` | `ids`, `scale_level_id`, `review_note`, `include_reviewed` | Sets the same control rating and recomputes the assessment scores. Evals on another scale are skipped. Returns `409` when your organization requires approval for rating changes. |
+| `/v1/evals/bulk-category` | `ids`, `issue_category`, `include_reviewed` | Sets the issue category. |
+| `/v1/evals/bulk-review-note` | `ids`, `review_note` | Appends the note to each eval. |
+
+## Reviews
+
+`GET /v1/reviews` lists reviews (sign-offs). Filter with `assessment_id`, `risk_domain_id`, `assignee_id` or `contract_id`, and set `include_archived=true` to include archived reviews. `GET /v1/reviews/{review_id}` returns one review.
+
+## Follow-ups
+
+A **follow-up** is a question to the vendor about one eval. Follow-ups are sent in **follow-up rounds**.
+
+### Create a follow-up
+
+<ParamField path="method" type="POST">
+  `POST /v1/follow-ups`
+</ParamField>
+
+Returns `201 Created`. The follow-up joins the assessment's current round.
+
+<ParamField body="eval_id" type="string" required>
+  The eval the question is about.
+</ParamField>
+
+<ParamField body="question" type="string" required>
+  The question to the vendor.
+</ParamField>
+
+<ParamField body="required_document_types" type="string[]">
+  Document type slugs the vendor must upload.
+</ParamField>
+
+The body also accepts `additional_instructions` and `use_control_question`.
+
+### List, get and update
+
+`GET /v1/follow-ups` lists follow-ups (filter with `assessment_id` or `eval_id`). `GET /v1/follow-ups/{follow_up_id}` returns one with the vendor's response. `PATCH` changes `question`, `additional_instructions`, `required_document_types` or `use_control_question`. An API key cannot change `is_archived`.
+
+`GET /v1/follow-up-rounds` lists rounds (filter with `assessment_id`), and `GET /v1/follow-up-rounds/{round_id}` returns one round with its follow-ups.
+
+## Vendor SLAs
+
+`GET /v1/slas` lists service level agreements tracked on vendors. Filter with `vendor_id`, `service_id` or `status` (`on_track`, `at_risk`, `breached`, `met`), and set `include_archived=true` to include archived ones. `GET /v1/slas/{sla_id}` returns one SLA, and `GET /v1/slas/{sla_id}/measurements` returns the measurement periods of a status-page SLA, newest first.
+
+## Scales
+
+`GET /v1/scales` lists control scales with their levels (`include_archived` includes archived ones). `GET /v1/scales/{scale_id}` returns one scale.
+
+## Monitoring records
+
+A **monitoring record** collects what monitoring observed about a vendor between two assessments. These endpoints return the record's `id`, `vendor_id`, `status`, `verdict` and `qualifying_count`.
+
+To add an event you observed, send `POST /v1/monitoring-records/{record_id}/entries`.
+
+<ParamField body="occurred_at" type="integer" required>
+  When it happened, as a Unix timestamp inside the record's window.
+</ParamField>
+
+<ParamField body="title" type="string" required>
+  What happened.
+</ParamField>
+
+<ParamField body="counts" type="boolean">
+  `false` records the event as informational. Default `true`.
+</ParamField>
+
+The body also accepts `severity` and `note`.
+
+To change how an entry counts, send `POST /v1/monitoring-records/{record_id}/entries/{entry_id}/disposition` with `disposition` set to `counts`, `informational` or `null` (back to the policy). An API key cannot send `waived`.
+
+To re-sync a vendor's record now, send `POST /v1/vendors/{vendor_id}/monitoring-record/refresh`. It returns `null` when the vendor has no completed assessment to monitor from.

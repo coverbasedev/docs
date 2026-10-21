@@ -1,0 +1,226 @@
+---
+title: "Platform configuration API"
+description: "Manage your organization's status options and the TPRM lifecycle configuration."
+icon: "sliders"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints let you manage two pieces of organization configuration: the **status** options each record type moves through, and the **TPRM lifecycle configuration** that names your TPRM Office and decides who past-due vendor reminders copy.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior. For custom fields, see the [Custom fields API](/api-reference/custom-fields). For workflows, see the [Workflows API](/api-reference/workflows).
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/statuses` | `org_settings:read:org` |
+| `POST` | `/v1/statuses` | `org_settings:update:org` |
+| `PATCH` | `/v1/statuses/{status_id}` | `org_settings:update:org` |
+| `GET` | `/v1/tprm-lifecycle-config` | `org_settings:read:org` |
+| `PUT` | `/v1/tprm-lifecycle-config` | `org_settings:update:org` |
+
+None of these honor `Idempotency-Key`. You cannot archive a status through the API. To archive one, use **Settings** in Coverbase.
+
+## Statuses
+
+A **status** (`cbstatus_...`) is one option a record type can be in, for example a finding's "Awaiting vendor". Each record type has its own ordered list. Every status belongs to one of four groups: `unstarted`, `started`, `completed` or `canceled`.
+
+The `target_type` names the record type. It is one of `assessment`, `procurement`, `engagement`, `vendor`, `service`, `contract_review`, `procurement_review`, `assessment_review`, `assessment_risk_domain_review`, `radar_signal_review`, `finding`, `rfp`, `contract`, `radar_event` or `dark_web_exposure`.
+
+The `color` is one of `gray`, `green`, `red`, `yellow`, `blue`, `plum`, `orange`, `purple`, `brown` or `pink`. The `icon` is one of `circle`, `progress`, `check`, `subtract`, `close`, `flag`, `survey`, `question`, `clock` or `eye`.
+
+### List statuses
+
+<ParamField path="method" type="GET">
+  `GET /v1/statuses`
+</ParamField>
+
+Returns the statuses for one record type in display order.
+
+<ParamField query="target_type" type="string" required>
+  The record type to list statuses for.
+</ParamField>
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Set to `true` to include archived statuses.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Maximum number of statuses to return, from 1 to 500.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of statuses to skip.
+</ParamField>
+
+```bash cURL
+curl "https://api.coverbase.app/v1/statuses?target_type=finding" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+The response has `items` (an array of [status objects](#status-object)), `total`, `limit` and `offset`.
+
+### Create a status
+
+<ParamField path="method" type="POST">
+  `POST /v1/statuses`
+</ParamField>
+
+Returns `201 Created` with the new [status object](#status-object). The new status goes to the end of the list unless you pass `sort_order`.
+
+<ParamField body="target_type" type="string" required>
+  The record type the status belongs to.
+</ParamField>
+
+<ParamField body="label" type="string" required>
+  The name people see.
+</ParamField>
+
+<ParamField body="color" type="string" required>
+  The status color.
+</ParamField>
+
+<ParamField body="icon" type="string" required>
+  The status icon.
+</ParamField>
+
+<ParamField body="description" type="string" default="&quot;&quot;">
+  What the status means.
+</ParamField>
+
+<ParamField body="group" type="string" default="unstarted">
+  `unstarted`, `started`, `completed` or `canceled`.
+</ParamField>
+
+<ParamField body="sort_order" type="string">
+  A fractional order key. Copy one from a listed status to place the new status next to it.
+</ParamField>
+
+<ParamField body="is_default" type="boolean" default="false">
+  Set to `true` to make this the status new records start in.
+</ParamField>
+
+<ParamField body="on_standard_path" type="boolean" default="true">
+  Whether the status is part of the normal progression.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Settings specific to the record type.
+</ParamField>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/statuses" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_type": "finding",
+    "label": "Awaiting vendor",
+    "color": "yellow",
+    "icon": "progress",
+    "group": "started"
+  }'
+```
+
+### Update a status
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/statuses/{status_id}`
+</ParamField>
+
+Returns the updated [status object](#status-object). Fields you omit keep their value. You cannot change a status where `system_managed` is `true`.
+
+<ParamField path="status_id" type="string" required>
+  The status ID (`cbstatus_...`).
+</ParamField>
+
+The body takes the same fields as [Create a status](#create-a-status) except `target_type`. Every field is optional.
+
+### Status object
+
+<ResponseField name="id" type="string">Status ID (`cbstatus_...`).</ResponseField>
+<ResponseField name="target_type" type="string">The record type.</ResponseField>
+<ResponseField name="key" type="string | null">A stable reference for a built-in status. `null` for statuses your organization created.</ResponseField>
+<ResponseField name="label" type="string">The name people see.</ResponseField>
+<ResponseField name="color" type="string">The status color.</ResponseField>
+<ResponseField name="icon" type="string">The status icon.</ResponseField>
+<ResponseField name="description" type="string">What the status means.</ResponseField>
+<ResponseField name="group" type="string">`unstarted`, `started`, `completed` or `canceled`.</ResponseField>
+<ResponseField name="sort_order" type="string">The fractional order key.</ResponseField>
+<ResponseField name="is_default" type="boolean">Whether new records start in this status.</ResponseField>
+<ResponseField name="on_standard_path" type="boolean">Whether the status is part of the normal progression.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the status is archived.</ResponseField>
+<ResponseField name="system_managed" type="boolean">Whether Coverbase manages the status. You cannot change it.</ResponseField>
+<ResponseField name="metadata" type="object">Settings specific to the record type.</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## TPRM lifecycle configuration
+
+The TPRM lifecycle configuration names the user group that acts as your TPRM Office and decides who past-due vendor reminders copy. These endpoints return `404` when the TPRM lifecycle is not enabled for your organization.
+
+### Get the configuration
+
+<ParamField path="method" type="GET">
+  `GET /v1/tprm-lifecycle-config`
+</ParamField>
+
+Returns the [configuration object](#configuration-object). Before your organization saves a configuration, `is_configured` is `false` and every reminder setting is `true`.
+
+```bash cURL
+curl "https://api.coverbase.app/v1/tprm-lifecycle-config" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Replace the configuration
+
+<ParamField path="method" type="PUT">
+  `PUT /v1/tprm-lifecycle-config`
+</ParamField>
+
+Returns the saved [configuration object](#configuration-object). This call sets every field. To keep the current TPRM Office, send its ID again.
+
+<ParamField body="tprm_office_department_id" type="string">
+  The user group that is the TPRM Office. Omit it or send `null` to clear the TPRM Office.
+</ParamField>
+
+<ParamField body="past_due_reminder_cc_tprm_office" type="boolean" default="true">
+  Copy the TPRM Office on past-due reminders.
+</ParamField>
+
+<ParamField body="past_due_reminder_cc_relationship_owners" type="boolean" default="true">
+  Copy the vendor's relationship owners on past-due reminders.
+</ParamField>
+
+<ParamField body="past_due_reminder_cc_requester" type="boolean" default="true">
+  Copy the person who requested the vendor on past-due reminders.
+</ParamField>
+
+```bash cURL
+curl -X PUT "https://api.coverbase.app/v1/tprm-lifecycle-config" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tprm_office_department_id": "cbdept_0f6c1d2e3a4b5c6d7e8f9a0b1c2d3e4f",
+    "past_due_reminder_cc_requester": false
+  }'
+```
+
+### Configuration object
+
+<ResponseField name="is_configured" type="boolean">Whether your organization has saved a configuration.</ResponseField>
+<ResponseField name="tprm_office" type="object | null">The TPRM Office as `id` and `name`, or `null` when none is set.</ResponseField>
+<ResponseField name="past_due_reminder_cc_tprm_office" type="boolean">Whether past-due reminders copy the TPRM Office.</ResponseField>
+<ResponseField name="past_due_reminder_cc_relationship_owners" type="boolean">Whether past-due reminders copy the relationship owners.</ResponseField>
+<ResponseField name="past_due_reminder_cc_requester" type="boolean">Whether past-due reminders copy the requester.</ResponseField>
+
+## Errors
+
+Most errors return a `detail` object with a `code` and a `message`. A missing permission returns `403` with `detail` set to the string `Missing required permission.`
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| `403` | | The API key does not hold the permission the endpoint needs. |
+| `404` | `status_not_found` | No status with that ID exists in your organization. |
+| `404` | `not_enabled` | The TPRM lifecycle is not enabled for your organization. |
+| `422` | `invalid_status` | The status change is not allowed, for example on a system-managed status. The `message` says why. |
+| `422` | `user_group_not_found` | The TPRM Office is not one of your user groups. |
