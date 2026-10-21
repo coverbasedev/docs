@@ -67,6 +67,9 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `GET` | `/v1/work-queue-items/{work_queue_item_id}` | `assessment:read:org` |
 | `POST` | `/v1/work-queue-items/{work_queue_item_id}/complete` | `assessment:update:org` |
 | `POST` | `/v1/work-queue-items/{work_queue_item_id}/reopen` | `assessment:update:org` |
+| `POST` | `/v1/work-queue-items` | `assessment:update:org` |
+| `PATCH` | `/v1/work-queue-items/{work_queue_item_id}` | `assessment:update:org` |
+| `POST` | `/v1/work-queue-items/reassign` | `assessment:update:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -448,3 +451,9 @@ The work queue holds tasks assigned to people, such as reviewing an assessment. 
 `GET /v1/work-queue-items` lists items, newest first. Filter with `statuses`, `types`, `vendor_id` and `assessment_id`, and page with `limit` (at most 200) and `offset`. `GET /v1/work-queue-items/{work_queue_item_id}` returns one item. An item the key cannot reach returns `403` with the code `work_queue_item_forbidden`.
 
 `POST /v1/work-queue-items/{work_queue_item_id}/complete` marks an item complete. An item a record owns resolves with that record and returns `409` with the code `work_queue_item_conflict`. `POST /v1/work-queue-items/{work_queue_item_id}/reopen` puts a completed item back to pending.
+
+`POST /v1/work-queue-items` returns `201 Created` with a new item and notifies its assignee. Send `title`, `description`, `instructions`, `url`, `vendor_id` and `assigned_user_id`, and optionally `type`, `assessment_id` (an assessment of the same vendor) and `due_at`. An unknown vendor, user or assessment returns `400` with the code `invalid_work_queue_item`.
+
+`PATCH /v1/work-queue-items/{work_queue_item_id}` edits an item. Fields you omit keep their value, and an explicit null clears `due_at` or `assessment_id`. A new assignee is notified.
+
+`POST /v1/work-queue-items/reassign` moves `work_queue_item_ids` to `assignee_id`, a user or a round-robin user group. A round-robin group spreads the items across its members. An assign-to-all group returns `422`. The response gives `reassigned_count` and the assignee.
