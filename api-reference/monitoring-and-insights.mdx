@@ -1,6 +1,6 @@
 ---
 title: "Monitoring and insights API"
-description: "Read Inspect schedules, document insight review items, dark web exposures, and vendor certificates, and pause or resume Inspect schedules."
+description: "Read Inspect applications, inspections and schedules, document insights, document insight review items, dark web exposures, and vendor certificates, and pause or resume Inspect schedules."
 icon: "radar"
 ---
 
@@ -21,6 +21,10 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `GET` | `/v1/dark-web/summary` | `dark_web_exposure:read:org` |
 | `GET` | `/v1/dark-web/exposures` | `dark_web_exposure:read:org` |
 | `GET` | `/v1/vendor-certificates` | `vendor:read:org` |
+| `GET` | `/v1/inspect-applications` | `integration:read:org` |
+| `GET` | `/v1/inspections` | `integration:read:org` |
+| `GET` | `/v1/document-insights` | `vendor:read:org` |
+| `GET` | `/v1/document-insight-values` | `vendor:read:org` |
 
 Each feature has its own gate. When your organization does not have the feature, its endpoints return `404` with one of these codes:
 
@@ -259,3 +263,91 @@ Returns the vendor certificates in the Certificate Vault, soonest-expiring first
     <ResponseField name="verification_status" type="string">Whether a person verified it.</ResponseField>
   </Expandable>
 </ResponseField>
+
+## List Inspect applications
+
+<ParamField path="method" type="GET">
+  `GET /v1/inspect-applications`
+</ParamField>
+
+Returns the applications Inspect monitors, most recently updated first.
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Set to `true` to include archived applications.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Page size, from 1 to 500.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of applications to skip.
+</ParamField>
+
+Each item has `id`, `display_name`, `auth_method`, `platform_key`, `vendor_id`, and `is_archived`.
+
+## List inspections
+
+<ParamField path="method" type="GET">
+  `GET /v1/inspections`
+</ParamField>
+
+Returns Inspect inspections, newest first.
+
+<ParamField query="target_id" type="string">
+  Only inspections of this application.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Page size, from 1 to 500.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of inspections to skip.
+</ParamField>
+
+Each item has `id`, `target_id`, `app_name`, `purpose`, `status`, `is_archived`, `started_at`, `finished_at`, and `created_at`.
+
+## List document insights
+
+<ParamField path="method" type="GET">
+  `GET /v1/document-insights`
+</ParamField>
+
+Returns your document insights: the fields Coverbase extracts from documents.
+
+<ParamField query="search" type="string">
+  Text match on the insight name.
+</ParamField>
+
+<ParamField query="enabled" type="boolean">
+  Only enabled (`true`) or disabled (`false`) insights.
+</ParamField>
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Set to `true` to include archived insights.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Page size, from 1 to 500.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of insights to skip.
+</ParamField>
+
+Each item has `id`, `field_name`, `field_key`, `field_description`, `field_type`, `field_mode`, `enabled`, `is_archived`, `document_types`, and `update_policy`.
+
+## List a document's insight values
+
+<ParamField path="method" type="GET">
+  `GET /v1/document-insight-values`
+</ParamField>
+
+Returns the insight values Coverbase extracted from one document. The response has `items` and `total`.
+
+<ParamField query="document_id" type="string" required>
+  The vendor document ID.
+</ParamField>
+
+Each item has `id`, `config_id`, `field_name`, `value`, `source_quote`, `source_page_number`, `confidence`, `source_type`, and `answer_accepted_at`.
