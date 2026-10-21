@@ -149,6 +149,10 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `POST` | `/v1/documents/{document_id}/unlock` | `vendor:update:org` |
 | `POST` | `/v1/documents/{document_id}/extract-insights` | `vendor:update:org` |
 | `POST` | `/v1/documents/bulk-upload` | `vendor:update:org` |
+| `POST` | `/v1/documents/infer-type` | `vendor:update:org` |
+| `POST` | `/v1/documents/infer-control-set` | `vendor:update:org` |
+| `POST` | `/v1/documents/{document_id}/infer` | `vendor:update:org` |
+| `POST` | `/v1/documents/{document_id}/recreate-assessment-report` | `vendor:update:org` |
 
 List endpoints that take `limit` and `offset` return `items`, `total`, `limit` and `offset`. `limit` defaults to `50` and accepts `1` to `200`.
 
@@ -465,6 +469,12 @@ To record a company named in a document as one of the vendor's subprocessors, se
 
 To unlock a password-protected document, send `POST /v1/documents/{document_id}/unlock` with `password`. The unlock runs in the background and the request returns `202`; a document that is not locked returns `400`.
 
-To extract document insights, send `POST /v1/documents/{document_id}/extract-insights`, optionally with `insight_config_ids`. It returns `202` with the queued `insight_extraction` state. Poll `GET /v1/documents/{document_id}` until the state is no longer `running`.
+To extract document insights, send `POST /v1/documents/{document_id}/extract-insights`, optionally with `insight_config_ids`. It returns `202` with the queued `insight_extraction` state. Poll `GET /v1/documents/{document_id}` until the state is no longer `running`. A request while an extraction is already running returns `409` with `insight_extraction_running`.
+
+To classify a file before you upload it, send `POST /v1/documents/infer-type` with `filename` and `text_content`, and optionally `allowed_document_slugs` to narrow the answer. `POST /v1/documents/infer-control-set` takes the same body and returns the questionnaire `control_set_id` the file answers, or `null` when none matches.
+
+To rerun inference of one field on a processed document, send `POST /v1/documents/{document_id}/infer` with `field` and optionally `reanalyze: true` to read the content again. It returns the document, and `400` while the document is still processing.
+
+`POST /v1/documents/{document_id}/recreate-assessment-report` rebuilds a Word assessment report document from its template with the placeholder values you send in `vendor_data`, `services_data`, `assessment_data`, `reviews_data`, `agent_data` and `intelligence_data`. It replaces the stored file and returns the document.
 
 To add many documents at once, upload a ZIP with one folder per vendor and send its `org_document_id` to `POST /v1/documents/bulk-upload`. Each folder name must match exactly one vendor and the ZIP may hold no loose files. The response says whether validation passed and lists the matched vendors or the errors; on success the documents are added in the background.
