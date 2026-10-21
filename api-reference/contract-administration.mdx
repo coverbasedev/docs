@@ -75,6 +75,10 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/contract-records/{contract_id}/spend-lines` | `contract:update:org` |
 | `PATCH` | `/v1/contract-records/{contract_id}/spend-lines/{line_id}` | `contract:update:org` |
 | `DELETE` | `/v1/contract-records/{contract_id}/spend-lines/{line_id}` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/contract-records/{contract_id}/component-analysis` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/document-intake` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/document-intake/confirm` | `contract:update:org` |
+| `PUT` | `/v1/contract-records/{contract_id}/documents/{document_id}/components` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
 
@@ -332,3 +336,11 @@ A component policy says which components a matching contract must carry. `GET /v
 `GET /v1/contract-fx-rates` returns the pinned rate table: `base_currency`, `as_of` and `rates` (`currency`, `rate_to_base`). To replace it, send `PUT /v1/contract-fx-rates` with the whole table. `GET /v1/contract-value` returns what the portfolio, or one vendor with `vendor_id`, is committed to in the base currency, with currencies that have no rate listed in `unconverted`.
 
 `GET /v1/contract-records/{contract_id}/spend-lines` returns the live pricing lines, the `superseded` lines a later amendment re-priced, `annual_total`, `one_time_total`, `currency` and `mixed_currencies`. To add a line, send `POST` with `description`, `amount`, `currency` (ISO 4217), `frequency` (`one_time`, `monthly`, `quarterly`, `annual` or `usage`), and optionally `effective_date`, `document_id`, `page_number` and `line_key`. `PATCH .../spend-lines/{line_id}` corrects a line; `DELETE` archives it so re-extraction cannot bring it back, and an API key cannot do that. An unknown currency returns `422` with code `invalid_currency`.
+
+## Analyze and classify contract documents
+
+To have Coverbase AI read a contract's documents for components and priced lines, send `POST /v1/contract-records/{contract_id}/component-analysis`. Coverbase returns `202` with `document_count` and runs the read in the background; poll the components and spend lines endpoints for the results. A contract with no documents returns `422` with code `no_documents`.
+
+`GET /v1/contract-records/{contract_id}/document-intake` proposes what each document is (`role`: `root`, `amendment`, `restatement`, `sow`, `order_form`, `exhibit`, `evidence` or `redline_draft`) and how it relates to another document, with `confidence`, `rationale` and `needs_confirmation`. Pass `document_ids` to read only those against the rest. It writes nothing. To record the answer, send `POST .../document-intake/confirm` with `decisions`, each with `document_id`, `role`, `relation` and `related_document_id`. Coverbase stores each decision at full confidence and rebuilds the component slots. A document that is not on the contract, or one that relates to itself, returns `422` with code `invalid_decision`.
+
+To correct which components a document carries, send `PUT /v1/contract-records/{contract_id}/documents/{document_id}/components` with the whole set in `carries` (`component_type`, `effective_date`). The response lists what was `added`, `removed` and `redated`, and `reextraction_queued` says whether Coverbase queued the document to be read again.
