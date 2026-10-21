@@ -119,6 +119,7 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `POST` | `/v1/vendor-sso/applications/confirm` | `vendor:update:org` |
 | `POST` | `/v1/vendor-sso/applications/{application_id}/vendor/reset` | `vendor:update:org` |
 | `GET` | `/v1/vendor-sso/settings` | `vendor:read:org` |
+| `POST` | `/v1/vendor-sso/findings/open` | `finding:create:org` |
 | `GET` | `/v1/data-quality-rules` | `vendor:read:org` |
 | `PUT` | `/v1/data-quality-rules` | `integration:update:org` |
 | `GET` | `/v1/vendors/{vendor_id}/data-quality-score` | `vendor:read:org` |
@@ -395,7 +396,7 @@ Both are all or nothing and return `409` when a discovery was already reviewed. 
 
 ## Screening
 
-These endpoints need sanctions screening, or they return `404 not_found`.
+These endpoints need sanctions screening, or they return `404 not_found`. They also need `screening_match` permissions, which API keys do not hold, so call them with a signed-in user's token.
 
 `GET /v1/screening/settings` returns your screening configuration. `GET /v1/vendors/{vendor_id}/screening` returns the vendor's screening subjects (the company and the people you enrolled), their latest runs and their open matches. `GET /v1/screening-runs` lists runs, newest first, and takes `vendor_id`, `subject_id`, `limit` and `offset`.
 
@@ -408,6 +409,8 @@ These endpoints need sanctions screening, or they return `404 not_found`.
 `GET /v1/vendor-sso/summary` counts the vendors your identity provider shows in use and how many enforce SSO. `GET /v1/vendors/{vendor_id}/sso` lists the applications linked to one vendor. `GET /v1/vendor-sso/applications` lists applications; pass `unlinked=true` or `suggested=true` to narrow it.
 
 To link an application to a vendor, send `PUT /v1/vendor-sso/applications/{application_id}/vendor`. To accept several suggested matches at once, send `POST /v1/vendor-sso/applications/confirm`. To clear a link so matching runs again, send `POST /v1/vendor-sso/applications/{application_id}/vendor/reset`. `GET /v1/vendor-sso/settings` reads the settings; changing them stays an admin action in the dashboard.
+
+To open an unassigned finding for each approved vendor without SSO that has none yet, send `POST /v1/vendor-sso/findings/open`. Pass `vendor_ids` to limit it and `due_days` to set the due date. The response says how many were `opened`.
 
 ## Data quality
 

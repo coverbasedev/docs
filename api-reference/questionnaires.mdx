@@ -27,6 +27,7 @@ All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token
 | `POST` | `/v1/questionnaire-conditions/{condition_id}/archive` | Update questionnaires (not API keys) |
 | `GET` | `/v1/irq-library` | Read questionnaires |
 | `POST` | `/v1/portals` | Create portals |
+| `PATCH` | `/v1/portals/{portal_id}` | Update portals |
 | `POST` | `/v1/portals/{portal_id}/pause` | Update portals |
 | `POST` | `/v1/portals/{portal_id}/resume` | Update portals |
 | `POST` | `/v1/portals/{portal_id}/invitations` | Update portals |
@@ -229,6 +230,17 @@ Opens a request that asks one vendor to answer questionnaires, and returns `201`
 <ParamField body="engagement_id" type="string">Scope an IRQ to this engagement. Do not send it with `service_ids`.</ParamField>
 
 A vendor with engagements needs `engagement_id` or `service_ids` for an IRQ, or the call returns `400` with code `request_refused`.
+
+## Update a request
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/portals/{portal_id}`
+</ParamField>
+
+Changes the request's due date or the message the vendor sees on it, and returns the request. Fields you leave out stay as they are.
+
+<ParamField body="due_at" type="integer">Unix timestamp the vendor should answer by.</ParamField>
+<ParamField body="displayed_message" type="string">Message the vendor sees on the request.</ParamField>
 
 ## Pause and resume a request
 

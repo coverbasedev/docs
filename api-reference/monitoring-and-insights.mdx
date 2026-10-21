@@ -61,9 +61,22 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `GET` | `/v1/vendors/{vendor_id}/prequalification` | `vendor:read:org` |
 | `POST` | `/v1/vendors/{vendor_id}/prequalification/refresh` | `vendor:update:org` |
 | `GET` | `/v1/vendors/{vendor_id}/security-benchmark` | `vendor:read:org` |
+| `POST` | `/v1/vendor-certificates/query` | `vendor:read:org` |
+| `GET` | `/v1/certificate-networks` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/external-security/rescan` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/external-security/estate-reviews` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/external-security/estate-assets` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/external-security/peers` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/external-security/peers/refresh` | `vendor:read:org`, or `vendor:update:org` with `force` |
+| `GET` | `/v1/vendor-scan-results` | `vendor:read:org` |
+| `GET` | `/v1/vendor-scan-results/{scan_result_id}` | `vendor:read:org` |
+| `POST` | `/v1/document-insight-values/{data_id}/accept` | `vendor:update:org` |
+| `POST` | `/v1/document-insight-values/{data_id}/verdict` | `vendor:update:org` |
 | `GET` | `/v1/inspections` | `integration:read:org` |
 | `GET` | `/v1/document-insights` | `vendor:read:org` |
 | `GET` | `/v1/document-insight-values` | `vendor:read:org` |
+
+Routes that need `dark_web_exposure:read:org`, `dark_web_exposure:update:org`, or `org_settings:update:org` work with a user API key only. Service account keys do not hold those permissions.
 
 Each feature has its own gate. When your organization does not have the feature, its endpoints return `404` with one of these codes:
 
@@ -546,3 +559,62 @@ To see where a vendor stands, send `GET /v1/vendors/{vendor_id}/prequalification
 </ParamField>
 
 Returns where the vendor's outside-in security score sits among your other rated vendors: `score`, `rated_vendors`, `percentile` (null until enough vendors are rated), and `grade_counts`.
+
+## Query the Certificate Vault
+
+<ParamField path="method" type="POST">
+  `POST /v1/vendor-certificates/query`
+</ParamField>
+
+Returns certificates that match a unified filter, in the same shape as the list endpoint.
+
+<ParamField body="vendor_id" type="string">
+  Only this vendor's certificates.
+</ParamField>
+
+<ParamField body="search" type="string">
+  Text match on the certificate or vendor name.
+</ParamField>
+
+<ParamField body="filter" type="object">
+  A unified filter rule group, the same DSL the other `/query` endpoints take.
+</ParamField>
+
+<ParamField body="sort_by" type="string">
+  One of `vendor_name`, `name`, `certificate_type`, `source`, `valid_to`, `created_at`.
+</ParamField>
+
+<ParamField body="sort_desc" type="boolean" default="false">
+  Sort descending.
+</ParamField>
+
+<ParamField body="limit" type="integer" default="50">
+  Page size, from 1 to 500.
+</ParamField>
+
+<ParamField body="offset" type="integer" default="0">
+  Number of certificates to skip.
+</ParamField>
+
+To see which certificate networks you connected, send `GET /v1/certificate-networks`. Each item has `network`, `display_name`, `is_connected`, `certificate_count`, and `last_synced_at`. Credentials are never returned.
+
+## Correct a vendor's external security scan
+
+These endpoints change what the outside-in scan sees. The scan target belongs to the company, so every org linked to it sees the correction. Each write that changes the scan starts a rescan; `rescan_started` false means the rescan is queued, not dropped.
+
+- To point the scan at the right domain, send `POST /v1/vendors/{vendor_id}/external-security/rescan` with `domain`. The response gives the host it reduced to.
+- To record whether an attributed asset is the vendor's, send `POST /v1/vendors/{vendor_id}/external-security/estate-reviews` with `kind` (`domain` or `host`), `identifier`, `review` (`unreviewed`, `confirmed`, `disputed`), and an optional `note`. Only a change into or out of `disputed` starts a rescan.
+- To add hosts or addresses the scan missed, send `POST /v1/vendors/{vendor_id}/external-security/estate-assets` with `identifiers` and an optional `note`. The response lists `added`, `already_present`, and `rejected`.
+- To see the companies the rating is compared against, send `GET /v1/vendors/{vendor_id}/external-security/peers`. To queue the work a stale comparison needs, send `POST /v1/vendors/{vendor_id}/external-security/peers/refresh`. Set `force` to re-choose the peers.
+
+Errors use the codes `not_found`, `forbidden`, and `invalid`.
+
+## List continuous monitoring findings
+
+To list findings about your vendors, send `GET /v1/vendor-scan-results` with optional `vendor_id`, `risk_category`, `severity_low`, `severity_high`, `limit`, and `offset`. To get one, send `GET /v1/vendor-scan-results/{scan_result_id}`. Each item has `title`, `summary`, `risk_category`, `severity`, `urls`, and `published_at`.
+
+## Review an extracted insight value
+
+To accept an extracted value as the answer, send `POST /v1/document-insight-values/{data_id}/accept` with the value you saw in `value_string`, `value_number`, `value_date`, or `value_boolean`. A value that changed since returns `409` with `value_changed`. Accepting does not claim the quote was verified.
+
+To mark a value correct or incorrect, send `POST /v1/document-insight-values/{data_id}/verdict` with `verdict` (`correct`, `incorrect`, or null to clear).
