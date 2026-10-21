@@ -1,0 +1,647 @@
+---
+title: "Platform configuration API"
+description: "Manage statuses, custom field sections, email templates, workflows, Coverbase AI agents and preferences, reports, and the TPRM lifecycle configuration."
+icon: "sliders"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints let you manage your organization's configuration: the **status** options each record type moves through, **custom field sections**, **email templates**, **workflow definitions**, **Coverbase AI agents** and their **preferences**, **reports**, and the **TPRM lifecycle configuration** that names your TPRM Office and decides who past-due vendor reminders copy.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior. For custom fields, see the [Custom fields API](/api-reference/custom-fields). For workflows, see the [Workflows API](/api-reference/workflows).
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/statuses` | `org_settings:read:org` |
+| `POST` | `/v1/statuses` | `org_settings:update:org` |
+| `PATCH` | `/v1/statuses/{status_id}` | `org_settings:update:org` |
+| `GET` | `/v1/tprm-lifecycle-config` | `org_settings:read:org` |
+| `PUT` | `/v1/tprm-lifecycle-config` | `org_settings:update:org` |
+| `GET` | `/v1/custom-field-sections` | `custom_field:read:org` |
+| `POST` | `/v1/custom-field-sections` | `custom_field:create:org` |
+| `PATCH` | `/v1/custom-field-sections/{section_id}` | `custom_field:update:org` |
+| `GET` | `/v1/email-templates` | `email_template:read:org` |
+| `POST` | `/v1/email-templates` | `email_template:create:org` |
+| `PATCH` | `/v1/email-templates/{email_template_id}` | `email_template:update:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}` | `workflow:read:org` |
+| `PATCH` | `/v1/workflow-definitions/{workflow_definition_id}` | `workflow:update:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/versions` | `workflow:read:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/schedules` | `workflow:read:org` |
+| `POST` | `/v1/workflow-schedules/{schedule_id}/cancel` | `workflow:update:org` |
+| `GET` | `/v1/workflow-templates` | `workflow:read:org` |
+| `POST` | `/v1/workflow-templates/{template_slug}/apply` | `workflow:create:org` |
+| `GET` | `/v1/rules` | `org_settings:read:org` |
+| `POST` | `/v1/rules` | `org_settings:update:org` |
+| `PATCH` | `/v1/rules/{rule_id}` | `org_settings:update:org` |
+| `GET` | `/v1/agents` | `org_settings:read:org` |
+| `POST` | `/v1/agents/{agent_id}/pause` | `org_settings:update:org` |
+| `POST` | `/v1/agents/{agent_id}/resume` | `org_settings:update:org` |
+| `GET` | `/v1/agent-templates` | `org_settings:read:org` |
+| `POST` | `/v1/agents/from-template` | `org_settings:update:org` |
+| `PUT` | `/v1/agents/paused` | `org_settings:update:org` |
+| `GET` | `/v1/agent-tool-policies` | `org_settings:update:org` |
+| `PATCH` | `/v1/agent-tool-policies` | `org_settings:update:org` |
+| `GET` | `/v1/agent-preferences` | `org_settings:read:org` |
+| `POST` | `/v1/agent-preferences` | `org_settings:update:org` |
+| `PATCH` | `/v1/agent-preferences/{preference_id}` | `org_settings:update:org` |
+| `GET` | `/v1/reports` | `report:read:org` |
+| `GET` | `/v1/reports/{report_id}` | `report:read:org` |
+| `POST` | `/v1/reports` | `report:create:org` |
+| `POST` | `/v1/reports/{report_id}/clone` | `report:create:org` |
+| `PATCH` | `/v1/reports/{report_id}` | `report:update:org` |
+| `GET` | `/v1/report-templates` | `report:read:org` |
+| `GET` | `/v1/roles` | `role:read:org` |
+| `GET` | `/v1/org-settings` | `org_settings:read:org` |
+| `PATCH` | `/v1/org-settings` | `org_settings:update:org` |
+| `GET` | `/v1/document-type-settings` | `org_settings:read:org` |
+| `POST` | `/v1/document-type-settings/set-enabled` | `org_settings:update:org` |
+| `GET` | `/v1/autofillable-fields` | `custom_field:read:org` |
+| `GET` | `/v1/summary-instructions` | `org_settings:read:org` |
+| `POST` | `/v1/summary-instructions` | `org_settings:update:org` (org admin) |
+| `POST` | `/v1/summary-instructions/{prompt_id}/revisions` | `org_settings:update:org` (org admin) |
+| `GET` | `/v1/conditions` | `workflow:read:org` |
+| `GET` | `/v1/workflow-metadata` | `workflow:read:org` |
+| `GET` | `/v1/workflow-components` | `workflow:read:org` |
+| `POST` | `/v1/workflow-components` | `workflow:update:org` |
+| `PATCH` | `/v1/workflow-components/{component_id}` | `workflow:update:org` |
+| `POST` | `/v1/agents` | `org_settings:update:org` |
+| `PATCH` | `/v1/agents/{agent_id}` | `org_settings:update:org` |
+| `GET` | `/v1/reports/{report_id}/audience` | `report:read:org` |
+| `PUT` | `/v1/reports/{report_id}/audience` | `report:update:org` |
+| `GET` | `/v1/report-charts` | `report:read:org` |
+| `GET` | `/v1/report-charts/{chart_id}` | `report:read:org` |
+| `POST` | `/v1/report-charts` | `report:create:org` |
+| `PATCH` | `/v1/report-charts/{chart_id}` | `report:update:org` |
+| `POST` | `/v1/chart-statistics` | `report:read:org` |
+| `POST` | `/v1/program-insights` | `report:read:org` |
+| `GET` | `/v1/performance-rubrics` | `vendor:read:org` |
+| `POST` | `/v1/performance-rubrics` | `vendor:update:org` |
+| `PATCH` | `/v1/performance-rubrics/{rubric_id}` | `vendor:update:org` |
+| `POST` | `/v1/performance-rubrics/{rubric_id}/components` | `vendor:update:org` |
+| `PATCH` | `/v1/performance-components/{component_id}` | `vendor:update:org` |
+| `POST` | `/v1/performance-rubrics/{rubric_id}/groups` | `vendor:update:org` |
+| `PATCH` | `/v1/performance-groups/{group_id}` | `vendor:update:org` |
+| `GET` | `/v1/performance-scores` | `vendor:read:org` |
+| `POST` | `/v1/performance-scores` | `vendor:update:org` |
+| `GET` | `/v1/dashboard-templates` | `report:read:org` |
+| `POST` | `/v1/dashboard-templates/{template_slug}/apply` | `report:create:org` |
+| `POST` | `/v1/reports/{report_id}/chart-templates` | `report:update:org` |
+| `POST` | `/v1/reports/{report_id}/exports` | `report:export:org` |
+| `GET` | `/v1/report-exports/{export_id}` | `report:export:org` |
+| `GET` | `/v1/recent-activity` | `vendor:read:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/graph-issues` | `workflow:read:org` |
+| `GET` | `/v1/workflow-definitions/{workflow_definition_id}/versions/diff` | `workflow:read:org` |
+| `PATCH` | `/v1/custom-document-types/{custom_document_type_id}` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types/draft` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types/{custom_document_type_id}/examples` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types/{custom_document_type_id}/lookalikes/{vendor_document_id}/decision` | `org_settings:update:org` |
+| `GET` | `/v1/prompts/{prompt_name}/versions` | `org_settings:read:org` |
+| `PUT` | `/v1/prompts/{prompt_name}` | `org_settings:update:org` |
+| `POST` | `/v1/prompts/{prompt_name}/select` | `org_settings:update:org` |
+| `PATCH` | `/v1/prompts/{prompt_name}/versions/{version_num}` | `org_settings:update:org`; archiving needs a user key |
+
+<Note>
+An organization API key does not hold the `org_settings`, `email_template`, `report` or `role` permissions. In an organization that enforces roles, call the routes that need them with a key created by a person whose role holds the permission.
+</Note>
+
+None of these honor `Idempotency-Key`. An API key cannot archive a status, custom field section, email template, workflow, rule, report or agent preference. To archive one, use Coverbase. Every list endpoint takes `limit` (1 to 500, default 100) and `offset` (default 0) and returns `items`, `total`, `limit` and `offset`.
+
+## Statuses
+
+A **status** (`cbstatus_...`) is one option a record type can be in, for example a finding's "Awaiting vendor". Each record type has its own ordered list. Every status belongs to one of four groups: `unstarted`, `started`, `completed` or `canceled`.
+
+The `target_type` names the record type. It is one of `assessment`, `procurement`, `engagement`, `vendor`, `service`, `contract_review`, `procurement_review`, `assessment_review`, `assessment_risk_domain_review`, `radar_signal_review`, `finding`, `rfp`, `contract`, `radar_event` or `dark_web_exposure`.
+
+The `color` is one of `gray`, `green`, `red`, `yellow`, `blue`, `plum`, `orange`, `purple`, `brown` or `pink`. The `icon` is one of `circle`, `progress`, `check`, `subtract`, `close`, `flag`, `survey`, `question`, `clock` or `eye`.
+
+### List statuses
+
+<ParamField path="method" type="GET">
+  `GET /v1/statuses`
+</ParamField>
+
+Returns the statuses for one record type in display order.
+
+<ParamField query="target_type" type="string" required>
+  The record type to list statuses for.
+</ParamField>
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Set to `true` to include archived statuses.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">
+  Maximum number of statuses to return, from 1 to 500.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of statuses to skip.
+</ParamField>
+
+```bash cURL
+curl "https://api.coverbase.app/v1/statuses?target_type=finding" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+The response has `items` (an array of [status objects](#status-object)), `total`, `limit` and `offset`.
+
+### Create a status
+
+<ParamField path="method" type="POST">
+  `POST /v1/statuses`
+</ParamField>
+
+Returns `201 Created` with the new [status object](#status-object). The new status goes to the end of the list unless you pass `sort_order`.
+
+<ParamField body="target_type" type="string" required>
+  The record type the status belongs to.
+</ParamField>
+
+<ParamField body="label" type="string" required>
+  The name people see.
+</ParamField>
+
+<ParamField body="color" type="string" required>
+  The status color.
+</ParamField>
+
+<ParamField body="icon" type="string" required>
+  The status icon.
+</ParamField>
+
+<ParamField body="description" type="string" default="&quot;&quot;">
+  What the status means.
+</ParamField>
+
+<ParamField body="group" type="string" default="unstarted">
+  `unstarted`, `started`, `completed` or `canceled`.
+</ParamField>
+
+<ParamField body="sort_order" type="string">
+  A fractional order key. Copy one from a listed status to place the new status next to it.
+</ParamField>
+
+<ParamField body="is_default" type="boolean" default="false">
+  Set to `true` to make this the status new records start in.
+</ParamField>
+
+<ParamField body="on_standard_path" type="boolean" default="true">
+  Whether the status is part of the normal progression.
+</ParamField>
+
+<ParamField body="metadata" type="object">
+  Settings specific to the record type.
+</ParamField>
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/statuses" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target_type": "finding",
+    "label": "Awaiting vendor",
+    "color": "yellow",
+    "icon": "progress",
+    "group": "started"
+  }'
+```
+
+### Update a status
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/statuses/{status_id}`
+</ParamField>
+
+Returns the updated [status object](#status-object). Fields you omit keep their value. You cannot change a status where `system_managed` is `true`.
+
+<ParamField path="status_id" type="string" required>
+  The status ID (`cbstatus_...`).
+</ParamField>
+
+The body takes the same fields as [Create a status](#create-a-status) except `target_type`. Every field is optional.
+
+### Status object
+
+<ResponseField name="id" type="string">Status ID (`cbstatus_...`).</ResponseField>
+<ResponseField name="target_type" type="string">The record type.</ResponseField>
+<ResponseField name="key" type="string | null">A stable reference for a built-in status. `null` for statuses your organization created.</ResponseField>
+<ResponseField name="label" type="string">The name people see.</ResponseField>
+<ResponseField name="color" type="string">The status color.</ResponseField>
+<ResponseField name="icon" type="string">The status icon.</ResponseField>
+<ResponseField name="description" type="string">What the status means.</ResponseField>
+<ResponseField name="group" type="string">`unstarted`, `started`, `completed` or `canceled`.</ResponseField>
+<ResponseField name="sort_order" type="string">The fractional order key.</ResponseField>
+<ResponseField name="is_default" type="boolean">Whether new records start in this status.</ResponseField>
+<ResponseField name="on_standard_path" type="boolean">Whether the status is part of the normal progression.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the status is archived.</ResponseField>
+<ResponseField name="system_managed" type="boolean">Whether Coverbase manages the status. You cannot change it.</ResponseField>
+<ResponseField name="metadata" type="object">Settings specific to the record type.</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## TPRM lifecycle configuration
+
+The TPRM lifecycle configuration names the user group that acts as your TPRM Office and decides who past-due vendor reminders copy. These endpoints return `404` when the TPRM lifecycle is not enabled for your organization.
+
+### Get the configuration
+
+<ParamField path="method" type="GET">
+  `GET /v1/tprm-lifecycle-config`
+</ParamField>
+
+Returns the [configuration object](#configuration-object). Before your organization saves a configuration, `is_configured` is `false` and every reminder setting is `true`.
+
+```bash cURL
+curl "https://api.coverbase.app/v1/tprm-lifecycle-config" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Replace the configuration
+
+<ParamField path="method" type="PUT">
+  `PUT /v1/tprm-lifecycle-config`
+</ParamField>
+
+Returns the saved [configuration object](#configuration-object). This call sets every field. To keep the current TPRM Office, send its ID again.
+
+<ParamField body="tprm_office_department_id" type="string">
+  The user group that is the TPRM Office. Omit it or send `null` to clear the TPRM Office.
+</ParamField>
+
+<ParamField body="past_due_reminder_cc_tprm_office" type="boolean" default="true">
+  Copy the TPRM Office on past-due reminders.
+</ParamField>
+
+<ParamField body="past_due_reminder_cc_relationship_owners" type="boolean" default="true">
+  Copy the vendor's relationship owners on past-due reminders.
+</ParamField>
+
+<ParamField body="past_due_reminder_cc_requester" type="boolean" default="true">
+  Copy the person who requested the vendor on past-due reminders.
+</ParamField>
+
+```bash cURL
+curl -X PUT "https://api.coverbase.app/v1/tprm-lifecycle-config" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tprm_office_department_id": "cbdept_0f6c1d2e3a4b5c6d7e8f9a0b1c2d3e4f",
+    "past_due_reminder_cc_requester": false
+  }'
+```
+
+### Configuration object
+
+<ResponseField name="is_configured" type="boolean">Whether your organization has saved a configuration.</ResponseField>
+<ResponseField name="tprm_office" type="object | null">The TPRM Office as `id` and `name`, or `null` when none is set.</ResponseField>
+<ResponseField name="past_due_reminder_cc_tprm_office" type="boolean">Whether past-due reminders copy the TPRM Office.</ResponseField>
+<ResponseField name="past_due_reminder_cc_relationship_owners" type="boolean">Whether past-due reminders copy the relationship owners.</ResponseField>
+<ResponseField name="past_due_reminder_cc_requester" type="boolean">Whether past-due reminders copy the requester.</ResponseField>
+
+## Custom field sections
+
+A **custom field section** groups custom fields on record pages. The `applied_to_*` flags choose which record pages show it: `applied_to_vendor`, `applied_to_service`, `applied_to_assessment`, `applied_to_control`, `applied_to_eval`, `applied_to_contract`, `applied_to_task`, `applied_to_review` and `applied_to_engagement`.
+
+### List sections
+
+`GET /v1/custom-field-sections` returns sections in display order.
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Set to `true` to include archived sections.
+</ParamField>
+
+### Create a section
+
+`POST /v1/custom-field-sections` returns `201 Created` with the section.
+
+<ParamField body="name" type="string" required>
+  The section name.
+</ParamField>
+
+<ParamField body="description" type="string">
+  What the section holds.
+</ParamField>
+
+<ParamField body="external_idx" type="string">
+  Your own reference for the section.
+</ParamField>
+
+<ParamField body="sort_order" type="string">
+  A fractional order key. The section goes last when you omit it.
+</ParamField>
+
+<ParamField body="visibility_condition" type="object">
+  A rule that decides when the section shows.
+</ParamField>
+
+<ParamField body="column_span" type="integer">
+  How many layout columns the section spans.
+</ParamField>
+
+### Update a section
+
+`PATCH /v1/custom-field-sections/{section_id}` takes the same fields. Fields you omit keep their value. To clear the visibility rule, send `visibility_condition: null`. An API key that sends `is_archived` gets `403 api_key_not_allowed`.
+
+### Section object
+
+<ResponseField name="id" type="string">Section ID.</ResponseField>
+<ResponseField name="name" type="string">Section name.</ResponseField>
+<ResponseField name="description" type="string | null">Description.</ResponseField>
+<ResponseField name="sort_order" type="string">Fractional order key.</ResponseField>
+<ResponseField name="external_idx" type="string | null">Your reference.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the section is archived.</ResponseField>
+<ResponseField name="applied_to_vendor" type="boolean">One flag per record type, as listed above.</ResponseField>
+<ResponseField name="visibility_condition" type="object | null">The visibility rule.</ResponseField>
+<ResponseField name="column_span" type="integer">Layout columns.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## Email templates
+
+An **email template** is a reusable email people send from Coverbase. A template with `org_wide: true` is shared with your organization. A private template belongs to whoever created it, so a template the API key creates privately is visible only to the API key.
+
+### List templates
+
+`GET /v1/email-templates` returns org-wide templates and the API key's own templates.
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Set to `true` to include archived templates.
+</ParamField>
+
+### Create a template
+
+`POST /v1/email-templates` returns `201 Created` with the template.
+
+<ParamField body="name" type="string" required>
+  Template name.
+</ParamField>
+
+<ParamField body="subject" type="string" required>
+  Email subject. Template variables are allowed.
+</ParamField>
+
+<ParamField body="body" type="string" required>
+  Email body. Template variables are allowed.
+</ParamField>
+
+<ParamField body="org_wide" type="boolean" required>
+  `true` shares the template with your organization.
+</ParamField>
+
+<ParamField body="template_type" type="string" default="general">
+  The kind of email, for example `general`, `follow_up` or `assessment_portal_invitation`.
+</ParamField>
+
+<ParamField body="default_recipients" type="object">
+  Default `to`, `cc` and `bcc` recipients.
+</ParamField>
+
+<ParamField body="ai_instructions" type="string">
+  Guidance Coverbase AI follows when it drafts from this template.
+</ParamField>
+
+<ParamField body="reminder_content" type="object">
+  Reminder settings for a reminder template.
+</ParamField>
+
+### Update a template
+
+`PATCH /v1/email-templates/{email_template_id}` takes the same fields, all optional. Fields you omit keep their value. You can update org-wide templates and the API key's own templates. The request is refused with `422` if it contains `is_archived`. To manage attachments, use Coverbase.
+
+## Workflow definitions
+
+A **workflow definition** is an automation your organization built in Coverbase. To start a workflow run, see the [Workflows API](/api-reference/workflows).
+
+### Get a workflow definition
+
+`GET /v1/workflow-definitions/{workflow_definition_id}` returns the workflow: `id`, `name`, `description`, `is_enabled`, `is_archived`, `entrypoint_kind`, `definition_data` (the graph), `created_at` and `updated_at`.
+
+### Update a workflow definition
+
+`PATCH /v1/workflow-definitions/{workflow_definition_id}` renames a workflow, changes its description, turns it on and off, replaces its graph, or changes how it starts. Fields you omit keep their value.
+
+<ParamField body="name" type="string">
+  New name.
+</ParamField>
+
+<ParamField body="description" type="string | null">
+  New description. Send `null` to clear it.
+</ParamField>
+
+<ParamField body="is_enabled" type="boolean">
+  `false` stops the workflow from running. `true` turns it back on.
+</ParamField>
+
+<ParamField body="entrypoint_kind" type="string">
+  How the workflow starts. When it changes, Coverbase moves the workflow's triggers to the new kind.
+</ParamField>
+
+<ParamField body="definition_data" type="object">
+  A replacement definition graph.
+</ParamField>
+
+<ParamField body="override_cycle_warning" type="boolean" default="false">
+  Set to `true` to save a graph that would make workflows trigger each other in a loop. Without it, Coverbase returns `422 invalid_workflow_definition`.
+</ParamField>
+
+### Versions, schedules and templates
+
+`GET /v1/workflow-definitions/{workflow_definition_id}/versions` lists a workflow's saved versions, newest first. Each item has `id`, `version_number`, `created_by_user_id` and `created_at`. It takes `limit` (1 to 200, default 50) and `offset`.
+
+`GET /v1/workflow-definitions/{workflow_definition_id}/schedules` lists a workflow's pending scheduled runs, soonest first. Each item has `id`, `workflow_definition_id`, `scheduled_for`, `canceled_at` and `fired_at`.
+
+To cancel a pending scheduled run, send `POST /v1/workflow-schedules/{schedule_id}/cancel`. It returns the schedule, `404 workflow_schedule_not_found` for an unknown ID, or `409 workflow_schedule_not_pending` when the schedule already fired or was canceled.
+
+`GET /v1/workflow-templates` lists ready-made workflows: `slug`, `name`, `description`, `category`, `audience` and `use_cases`. To copy one into your organization, send `POST /v1/workflow-templates/{template_slug}/apply` with an optional `name`. It returns `201 Created` with the new workflow, which starts turned off.
+
+## Reminder rules
+
+A **rule** sends a contract or document reminder. It has a `rule_name` (for example `contract_notification`), a trigger (`trigger_config` and `trigger_value`, for example `days_before_contract_end` with `{"days": [30, 60]}`), an optional condition (`condition_config` and `condition_value`), and a command (`command_config` and `command_value`, for example `send_contract_reminder` with `{"emails": ["admin@company.com"]}`).
+
+`GET /v1/rules` lists your rules. Pass `include_archived=true` to include archived ones.
+
+To create a rule, send `POST /v1/rules` with every field above except the optional condition. Coverbase checks each value against its configuration type and returns `422 invalid_rule` when one does not fit.
+
+To change a rule, send `PATCH /v1/rules/{rule_id}` with the fields to change. A value applies only when you also send its configuration type, for example `trigger_value` with `trigger_config`. The request is refused with `422` if it contains `is_archived`.
+
+## Coverbase AI agents and preferences
+
+These endpoints return `404 not_enabled` when Coverbase Agent is not enabled for your organization.
+
+An **agent** runs Coverbase AI playbooks on a schedule or a trigger. `GET /v1/agents` lists your agents, oldest first. Each item has `id`, `name`, `instructions`, `playbooks`, `schedule_cron`, `timezone`, `enabled`, `paused`, `created_at` and `updated_at`. The response also has `agents_paused`, which is `true` when every agent in your organization is paused.
+
+`GET /v1/agent-templates` lists ready-made agents: `key`, `name`, `description`, `schedule_cron` and `playbooks`. `agent_id` is set when your organization already made an agent from the template. To make one, send `POST /v1/agents/from-template` with `template_key` and an optional `timezone` (default `UTC`). The new agent starts turned off.
+
+To pause or resume every agent at once, send `PUT /v1/agents/paused` with `paused` set to `true` or `false`. The response has `agents_paused`.
+
+To stop an agent from starting runs, send `POST /v1/agents/{agent_id}/pause`. Its live runs stop at their next turn. To let it start runs again, send `POST /v1/agents/{agent_id}/resume`. Both return the agent.
+
+A **preference** is a standing instruction every Coverbase AI run reads. `GET /v1/agent-preferences` lists them, oldest first. Each item has `id`, `text`, `source`, `playbook`, `enabled`, `created_at` and `updated_at`.
+
+To add a preference, send `POST /v1/agent-preferences` with `text` and an optional `playbook`. A preference without a playbook applies to every playbook. To change one, send `PATCH /v1/agent-preferences/{preference_id}` with any of `text`, `enabled` and `playbook`. Send `playbook: null` to apply it to every playbook again.
+
+### Tool policies
+
+`GET /v1/agent-tool-policies` lists every Coverbase AI tool that changes data. Each item has `tool`, `label`, `effect`, `policy` and `locked`. A policy is `auto` (runs without asking when a run is set to not stop), `ask` (always asks) or `off` (refused). A `locked` tool always asks.
+
+To change policies, send `PATCH /v1/agent-tool-policies` with `policies`, an object of tool name to policy. Tools you leave out keep theirs. An unknown or locked tool returns `422 invalid_tool_policy`.
+
+## Reports
+
+`GET /v1/reports` lists your organization's dashboard reports, newest first. Pass `search` to match report names. Each item has `id`, `name`, `description`, `is_org_wide`, `is_default`, `created_by_user_id`, `created_at` and `updated_at`. `GET /v1/reports/{report_id}` returns one report.
+
+To create an empty report, send `POST /v1/reports` with `name`, an optional `description` and `is_org_wide` (default `true`). To copy a report or template with copies of its charts, send `POST /v1/reports/{report_id}/clone` with an optional `name`. Both return `201 Created`.
+
+To rename a report, change its description or make it the org default, send `PATCH /v1/reports/{report_id}` with `name`, `description` or `is_default`. The request is refused with `422` if it contains any other field. To change filters, layout or email schedules, use Coverbase.
+
+`GET /v1/report-templates` lists dashboard templates you can clone.
+
+## Roles
+
+`GET /v1/roles` lists your organization's roles, built-in roles first. Each item has `id`, `key`, `name`, `description`, `system` (whether Coverbase defines the role), `archived_at` and `permissions` (the permission keys the role grants). Pass `include_archived=true` to include archived roles.
+
+This endpoint is read only. An API key cannot create, change or assign roles. Coverbase creates your built-in roles the first time someone opens the roles page in **Settings**, so before then the list is empty.
+
+## Organization settings
+
+`GET /v1/org-settings` returns the settings available through the API. `PATCH /v1/org-settings` changes them, and fields you omit keep their value. The fields are `track_residual_risk`, `display_numerical_scores`, `restrict_assessment_completions`, `streamlined_assessment_creation_flow`, `enable_assessment_reviewers`, `reassessment_reminder_days`, `reassessment_collection_days`, `reassessment_review_days`, `sla_business_days`, `vendor_onboarding_reminder_days`, `vendor_onboarding_reminder_enabled`, `w9_reminder_enabled`, `w9_reminder_days_before_expiry` and `w9_expiry_years`. Any other field returns `422`. To change the organization name, sender email, status or IP allowlists, use Coverbase. Coverbase records each change in the system audit log.
+
+## Document types
+
+`GET /v1/document-type-settings` lists every built-in document type by group, your organization's custom types, and which types are turned off.
+
+To turn types on or off, send `POST /v1/document-type-settings/set-enabled` with `is_enabled`, `document_types` (built-in slugs) and `custom_document_type_ids`. A type turned off leaves pickers, filters and detection, and documents already labelled keep the label. Turning off an always-on type, or sending the `custom` slug, returns `422 document_type_not_toggleable`.
+
+`GET /v1/autofillable-fields` lists the document fields a custom field can fill itself from, with each field's custom field type, group and document types.
+
+## Summary instructions
+
+**Summary instructions** are named instructions Coverbase follows when it writes assessment summaries. `GET /v1/summary-instructions` lists them, and `include_archived=true` includes archived ones. Each item has `id`, `name`, `is_archived`, `latest_revision_num`, `latest_version_id` and `prompt_text`.
+
+To add instructions, send `POST /v1/summary-instructions` with `name` and `prompt_text`. To save a new revision, send `POST /v1/summary-instructions/{prompt_id}/revisions` with `prompt_text` and the `expected_revision` you read. Coverbase returns `422` when someone saved a newer revision, and `409` while another change is in progress. Both writes need a key that belongs to an org admin.
+
+## Workflow steps
+
+`GET /v1/workflow-metadata` lists the building blocks for workflow steps: each action with what it reads and writes, each condition, each trigger with what it provides, and the item variables each for-each collection offers.
+
+`GET /v1/workflow-components` lists workflow steps. Pass `workflow_definition_id` to list one workflow's steps. `GET /v1/conditions?id=...` reads the conditions steps reference; repeat `id` for each.
+
+To add a step, send `POST /v1/workflow-components` with the workflow builder's step shape: `workflow_definition_id`, `name`, `trigger_event_types`, `parent_component_ids`, `conditions`, `condition_operator`, `action_data`, and optional `editor_position`, `color`, `watched_fields`, `draft` and `override_cycle_warning`. To change one, send `PATCH /v1/workflow-components/{component_id}` with the fields to change. Send `null` for `conditions`, `editor_position`, `color` or `watched_fields` to clear it. A step that reads supplier banking details also needs `supplier_banking:read:org`. A change that would make workflows trigger each other in a loop returns `422 invalid_workflow_component`.
+
+## Agent setup
+
+To create an agent, send `POST /v1/agents` with `name` and `instructions`, plus any of `playbooks`, `schedule_cron`, `timezone`, `approval_policy`, `owner_user_id` or `owner_department_id`, `enabled`, `triggers`, `daily_spend_cap_cents`, `max_runs_per_day`, `quiet_hours_start`, `quiet_hours_end` and `escalate_after_minutes`. When you name no owner, the key's user owns the agent. To change one, send `PATCH /v1/agents/{agent_id}` with the fields to change. Naming an owner person clears the owner group, and the other way round. An invalid setup returns `422 invalid_agent`.
+
+## Report audience and charts
+
+`GET /v1/reports/{report_id}/audience` lists the user groups a report is meant for. `PUT /v1/reports/{report_id}/audience` replaces them with `audiences`, a list of `department_id` and `is_home_default`. Naming a report a group's home dashboard moves that group's home there. Who can open the report does not change.
+
+`PATCH /v1/reports/{report_id}` also takes `layout`, `color_theme`, `density`, `duration_unit`, `date_range`, `filter` (a vendor filter rule group) and `scheduled_export_config`. Send `null` for `filter` or `scheduled_export_config` to clear it. Setting a schedule also needs `report:export:org`. When a report is filtered to the person viewing it, every scheduled recipient must be a member of your organization, or Coverbase returns `422 invalid_report`.
+
+`GET /v1/report-charts` lists saved charts, and `report_id` narrows it to one report. `GET /v1/report-charts/{chart_id}` returns one chart. To save a chart, send `POST /v1/report-charts` with `name`, `chart_config`, and optional `description`, `is_org_wide` and `report_id`. To change one, send `PATCH /v1/report-charts/{chart_id}`; `report_ids` replaces the full list of reports it appears on. To compute a chart's numbers without saving it, send `POST /v1/chart-statistics` with `chart_config` and an optional `time_zone`. A chart over a gated module also needs that module's read permission.
+
+`POST /v1/program-insights` returns the TPRM program overview (KPIs, the residual risk heat grid and the pre-contract pipeline) for the level and slicers you send. It returns `404` when the TPRM lifecycle is not enabled.
+
+## Vendor performance
+
+A **performance rubric** scores a vendor's performance from weighted components, optionally grouped. `GET /v1/performance-rubrics` lists rubrics, default first, with their groups and components. `POST /v1/performance-rubrics` creates one with `name` and optional `description`, `questionnaire_id` and `is_default`. `PATCH /v1/performance-rubrics/{rubric_id}` changes it; send `null` to clear `description` or `questionnaire_id`.
+
+To add a component, send `POST /v1/performance-rubrics/{rubric_id}/components` with `name` and optional `weight` (0 to 100), `evaluation_mode`, `description`, `question_id`, `ideal_answer`, `sort_order` and `group_id`. `PATCH /v1/performance-components/{component_id}` changes it. Groups work the same way through `POST /v1/performance-rubrics/{rubric_id}/groups` and `PATCH /v1/performance-groups/{group_id}`.
+
+`GET /v1/performance-scores` lists scores, newest first, filtered by `vendor_id` or `service_id`. `POST /v1/performance-scores` records a manual score with `vendor_id`, `rubric_id`, optional `service_id`, `submitted_at` and `notes`, and `component_scores` (each `component_id`, `score` from 0 to 100, optional `value` and `notes`).
+
+An API key cannot archive a rubric, component or group: sending `is_archived` returns `403 api_key_not_allowed`.
+
+## Dashboard templates and exports
+
+`GET /v1/dashboard-templates` lists ready-made dashboards and charts. To copy a dashboard into a new report, send `POST /v1/dashboard-templates/{template_slug}/apply` with an optional `name`. To add ready-made charts to a report, send `POST /v1/reports/{report_id}/chart-templates` with `template_slugs` (1 to 25).
+
+To export a report, send `POST /v1/reports/{report_id}/exports` with `file_format` (`pdf` or `xlsx`), `export_filename` and an optional `timezone`. Coverbase returns `202 Accepted` with an export `id` and builds the file in the background. Poll `GET /v1/report-exports/{export_id}` until `status` is `complete`. The response then carries a presigned `download_url` that works for `expires_in` seconds without an `Authorization` header.
+
+To download configured data exports as JSON, CSV or XLSX, use the existing `GET /v1/export/{slug}` and `GET /v1/export/{slug}/download` endpoints.
+
+## Recent activity
+
+`GET /v1/recent-activity` returns up to three items from the last week: assessments in review and newly added vendors, limited to what the key can read.
+
+## Workflow loops and version changes
+
+`GET /v1/workflow-definitions/{workflow_definition_id}/graph-issues` lists the loops a workflow would form with others if it were enabled. Check it before you turn a workflow on. `GET /v1/workflow-definitions/{workflow_definition_id}/versions/diff?from_version_id=...&to_version_id=...` compares two versions, step by step.
+
+## Custom document types and AI prompts
+
+`PATCH /v1/custom-document-types/{custom_document_type_id}` renames, regroups or redescribes one of your document types with `name`, `description` and `classification`. A new description runs the detection check again. A name another type already uses returns `409 document_type_name_taken`.
+
+### Create a custom document type from example files
+
+The draft, create and add-examples endpoints take `multipart/form-data`. Send each example file as its own `files` field, from 1 to 10 per request. Each file follows the same type and size limits as a vendor document upload, and a file outside them returns `400` or `413` before anything is stored.
+
+1. `POST /v1/custom-document-types/draft` with `name` and `files` returns a suggested `description`, `classification` and `confusable_document_types`, plus `existing_document_type` when your examples already match a built-in type and `unreadable_examples` for files with no readable text. Nothing is saved.
+2. `POST /v1/custom-document-types` with `name`, `description`, `classification`, up to 3 `confusable_document_types` fields and `files` creates the type, returns `201` and starts its detection check. A name another type already uses returns `409 document_type_name_taken`.
+3. `POST /v1/custom-document-types/{custom_document_type_id}/examples` with `files` adds examples and runs the check again. A type holds at most 10 examples; more returns `422 too_many_examples`.
+
+```bash
+curl -X POST "$BASE_URL/v1/custom-document-types" \
+  -H "Authorization: Bearer $API_KEY" \
+  -F "name=Modern Slavery Statement" \
+  -F "description=Annual statement under the UK Modern Slavery Act." \
+  -F "classification=esg" \
+  -F "files=@statement-2024.pdf" \
+  -F "files=@statement-2025.pdf"
+```
+
+The detection check can pull in vendor documents that look like your new type. Settle each one with `POST /v1/custom-document-types/{custom_document_type_id}/lookalikes/{vendor_document_id}/decision` and a `decision` of `keep`, which leaves the document's type, or `relabel`, which moves it to your type. A document the check did not pull in returns `404 lookalike_not_found`.
+
+### AI prompts
+
+`GET /v1/prompts/{prompt_name}/versions` lists your saved versions of one AI prompt, for example `finding_creation`, with `is_selected` on the version in use. `PUT /v1/prompts/{prompt_name}` saves a new version with `prompt_text` and an optional `prompt_key` and uses it. `POST /v1/prompts/{prompt_name}/select` uses an earlier `version_num`. The organization's assessment summary returns `409 use_summary_instructions`; manage it with the summary instructions endpoints.
+
+`PATCH /v1/prompts/{prompt_name}/versions/{version_num}` renames a version with `name`, or archives it or brings it back with `is_archived`. When you archive the version in use, Coverbase uses `new_selected_version_num`, or your newest unarchived version when you leave it out. Archiving and unarchiving need a user key: an API key gets `403 api_key_not_allowed`. An unknown version returns `404 prompt_version_not_found`.
+
+## Errors
+
+Most errors return a `detail` object with a `code` and a `message`. A missing permission returns `403` with `detail` set to the string `Missing required permission.`
+
+| Status | Code | When |
+| ------ | ---- | ---- |
+| `403` | | The API key does not hold the permission the endpoint needs. |
+| `404` | `status_not_found` | No status with that ID exists in your organization. |
+| `422` | `invalid_status` | The status change is not allowed, for example on a system-managed status. The `message` says why. |
+| `422` | `user_group_not_found` | The TPRM Office is not one of your user groups. |
+| `403` | `api_key_not_allowed` | An API key tried to archive a custom field section. |
+| `404` | `custom_field_section_not_found` | No section with that ID exists in your organization. |
+| `404` | `email_template_not_found` | No template with that ID exists that the API key can update. |
+| `404` | `workflow_definition_not_found` | No workflow with that ID exists in your organization. |
+| `404` | `report_not_found` | No report with that ID exists in your organization. |
+| `404` | `rule_not_found` | No rule with that ID exists in your organization. |
+| `404` | `workflow_template_not_found` | No workflow template has that slug. |
+| `404` | `workflow_schedule_not_found` | No schedule with that ID exists in your organization. |
+| `409` | `workflow_schedule_not_pending` | The schedule already fired or was canceled. |
+| `422` | `invalid_org_settings` | An organization setting has an invalid value. |
+| `422` | `document_type_not_toggleable` | The type is always on, or is the generic custom slug. |
+| `422` | `invalid_report` | A report filter does not compile, or a schedule recipient is not a member. |
+| `404` | `user_group_not_found` | An audience names a user group that does not exist. |
+| `422` | `invalid_summary_instructions` | The instructions are blank or a newer revision exists. |
+| `409` | `summary_instructions_busy` | Another change to the instructions is in progress. |
+| `422` | `invalid_workflow_component` | The step is not valid or would make workflows loop. |
+| `404` | `workflow_component_not_found` | No step with that ID exists in your organization. |
+| `422` | `invalid_chart` | The chart is not valid. |
+| `404` | `chart_not_found` | No chart with that ID exists in your organization. |
+| `422` | `invalid_filter` | A chart filter does not compile. |
+| `422` | `invalid_performance_setup` | A rubric, component, group or score is not valid. |
+| `404` | `report_export_not_found` | No report export with that ID exists. |
+| `404` | `dashboard_template_not_found` | No dashboard template has that slug. |
+| `404` | `chart_template_not_found` | A chart template slug does not exist. |
+| `409` | `document_type_name_taken` | Another document type already has that name. |
+| `409` | `use_summary_instructions` | The assessment summary is managed with summary instructions. |
+| `422` | `invalid_rule` | A rule value does not fit its configuration type. |
+| `422` | `invalid_agent` | The agent template cannot be used. The `message` says why. |
+| `422` | `invalid_tool_policy` | A tool is unknown or locked. |
+| `404` | `agent_not_found` | No agent with that ID exists in your organization. |
+| `404` | `agent_preference_not_found` | No preference with that ID exists in your organization. |
+| `404` | `not_enabled` | Coverbase Agent or the TPRM lifecycle is not enabled for your organization. |
+| `422` | `invalid_custom_field_section` | The section change is not allowed. The `message` says why. |
+| `422` | `invalid_email_template` | The template is not valid. The `message` says why. |
+| `422` | `invalid_workflow_definition` | The workflow change is not allowed. The `message` says why. |

@@ -90,7 +90,7 @@ Intake determines how much risk a vendor introduces before anyone looks at their
 Intake is completed by the requester (the business owner asking for the vendor) through a portal separate from the main dashboard. It runs in three steps: **Select Vendor**, **Additional Information**, **Review Questionnaires**.
 
 <Warning>
-  You need your organization's intake link. Opening the intake path without it returns "Unable to identify intake portal. Please use the link provided by your organization." Find the link under **Intake → Request new vendor**.
+  You need your organization's intake link. Opening the intake path without it returns **Unable to identify intake portal**, with a request to use the link your organization provided. Find the link under **Intake → Request new vendor**.
 </Warning>
 
 <Steps>
@@ -411,7 +411,7 @@ Follow-ups are drafted individually and sent together, so the vendor gets one co
   <Step title="Draft the follow-up">
     From a result, draft a follow-up question. **AI Autofill** writes a first pass that references what the evidence already showed and asks only for the gap, which is usually better than starting from scratch. **Use control question and response** reuses the original control wording instead.
 
-    Under **Required document types** you can name what the vendor should attach, so the request is specific rather than "please send evidence".
+    Under **Required document types** you can name what the vendor should attach, so the request is specific rather than a bare "send evidence".
 
     Saving creates a draft. Nothing reaches the vendor until the drafts are included in a follow-up questionnaire sent through the portal.
 
@@ -541,6 +541,18 @@ With it off, you set the score by hand and record the reason in the note field. 
 <Tip>
   If the switch is missing, the vendor has no services to roll up from. Add a service first.
 </Tip>
+
+---
+
+## Run assessments from MCP or the API
+
+You can create, follow, correct and close out assessments from an MCP client, and most of it with an API key. An MCP client reads with `query_assessments(kind=...)` (`search`, `detail`, `summary`, `evals`, `run_status`, `follow_up_sections`). It writes with `mutate(entity="assessment", action=...)` (`start`, `update`, `rerun`, `resume`, `complete`), `mutate(entity="eval", action=...)` and `mutate(entity="follow_up_section", action=...)`.
+
+With an API key, create one with `POST /v1/assessments` and read it with `GET /v1/assessments/{assessment_id}` on the [Assessments API](/api-reference/assessments). Documents go through the [Documents API](/api-reference/documents), and evals, follow-ups and reruns through the [Assessment administration API](/api-reference/assessment-administration).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#assessments-evals-and-follow-ups) lists every field.
+
+Completing an assessment and recording its outcome have no API route, so a person does them in the dashboard or through MCP. An API key cannot close an issue on evals. Accepting an eval rerun's result works only through MCP.
 
 ---
 

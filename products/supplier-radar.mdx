@@ -78,7 +78,7 @@ A signal arriving changes nothing on a vendor. Radar moves residual risk only wh
 
 <CardGroup cols={2}>
   <Card title="Radar API" icon="satellite-dish" href="/api-reference/radar">
-    Create radar events, and list, retrieve, and dismiss radar alerts programmatically. Signals are not addressable through the API yet.
+    Create and edit radar events, triage alerts and signals, track incidents in cases, and manage sources and detectors.
   </Card>
 
   <Card title="Reassessments API" icon="rotate" href="/api-reference/reassessments">
@@ -90,13 +90,31 @@ A signal arriving changes nothing on a vendor. Radar moves residual risk only wh
   </Card>
 
   <Card title="MCP Server" icon="robot" href="/mcp/overview">
-    Query radar alerts conversationally. "Any new radar alerts on tier-1 vendors in the past 24 hours?" or "Show me every vendor affected by the Northwind outage."
+    Work the Radar queue from an AI assistant. "Any new radar alerts on tier-1 vendors in the past 24 hours?" or "Open a case for the Northwind outage and add every affected vendor."
   </Card>
 
   <Card title="Export API" icon="arrow-up-from-bracket" href="/export-api-concepts">
     Pull radar events and findings into your SIEM, incident response platform, or executive dashboards.
   </Card>
 </CardGroup>
+
+## Work Radar from MCP or the API
+
+You can do the Radar work in the dashboard, from an MCP client, or with an API key. An MCP client reads with `query_radar(kind=...)` and writes with `mutate(entity=..., action=...)`. The API routes sit under `/v1/radar`. Each call checks the same permission as the dashboard.
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| Add, edit or pull a source | `mutate(entity="radar_source", action="create")`, `action="update"`, `action="pull"` | `POST /v1/radar/sources`, `PATCH /v1/radar/sources/{source_id}`, `POST /v1/radar/sources/{source_id}/pull` |
+| Archive a source | `mutate(entity="radar_source", action="archive")` | Not available with an API key |
+| Create, edit or back-test a detector | `mutate(entity="radar_detector", action="create")`, `action="update"`, `action="test"` | `POST /v1/radar/detectors`, `PATCH /v1/radar/detectors/{detector_id}`, `POST /v1/radar/detectors/{detector_id}/tests` |
+| Read and dismiss alerts | `query_radar(kind="detector_alerts")`, `mutate(entity="radar_alert", action="dismiss")` | `GET /v1/radar/alerts`, `POST /v1/radar/alerts/{alert_id}/dismiss` |
+| Set a signal's status | `mutate(entity="radar_signal", action="set_status")` | `PATCH /v1/radar/signals/{signal_id}` |
+| Dismiss or acknowledge signals | `mutate(entity="radar_signal", action="dismiss")`, `action="acknowledge"` | `POST /v1/radar/signals/dismiss`, `POST /v1/radar/signals/{signal_id}/acknowledge` |
+| Decide a signal's risk impact | `mutate(entity="radar_signal", action="decide_risk_impact")` | `POST /v1/radar/signals/risk-impact-decision` |
+| Open, update or close a case | `mutate(entity="case", action="create")`, `action="update"` | `POST /v1/radar/cases`, `PATCH /v1/radar/cases/{case_id}` |
+| Add vendors to a case and update their threads | `mutate(entity="case_thread", action="create")`, `action="bulk_create"`, `action="update"` | `POST /v1/radar/cases/{case_id}/threads`, `POST /v1/radar/cases/{case_id}/threads/bulk`, `PATCH /v1/radar/cases/{case_id}/threads/{thread_id}` |
+
+An API key cannot archive a source, a detector, a case or a case thread. For every call, see [Work Radar from MCP or the API](/user-guides/radar-signals#work-radar-from-mcp-or-the-api) and the [Radar API](/api-reference/radar).
 
 ## Common workflows
 
@@ -115,7 +133,7 @@ A signal arriving changes nothing on a vendor. Radar moves residual risk only wh
 </AccordionGroup>
 
 <Note>
-  Detectors, sources, and default reviewers are configured in the dashboard under **Configuration → Radar**. Browse the built-in [source library](/products/source-library) and [detector library](/products/detector-library) to see what ships out of the box.
+  You configure detectors, sources, and default reviewers in the dashboard under **Configuration → Radar**, through MCP, or with the Radar API. Browse the built-in [source library](/products/source-library) and [detector library](/products/detector-library) to see what ships out of the box.
 </Note>
 
 ## Related

@@ -103,6 +103,16 @@ In the review workbench, open an answer and choose **Raise finding on this quest
 
 What happens next to the finding's risk is covered in [The issue acceptance chain](/user-guides/issue-acceptance-chain).
 
+## Set methods and sessions from MCP or the API
+
+You can set an assessment's method, schedule review sessions and configure attestations from an MCP client or with an API key. An MCP client reads with `query_assessments(kind="review_sessions")` and `query_questionnaires(kind="attestation")`. It writes with `mutate(entity="assessment", action="set_method")`, `mutate(entity="review_session", action=...)` (`create`, `update`, `archive`) and `mutate(entity="attestation", action="set_config")`.
+
+The API routes are `PUT /v1/assessments/{assessment_id}/method`, `GET` and `POST /v1/assessments/{assessment_id}/review-sessions`, `PUT /v1/assessments/{assessment_id}/review-sessions/{review_session_id}` and `PUT /v1/questionnaires/{questionnaire_id}/attestation-config`. See [Attestations and review sessions](/api-reference/risk#attestations-and-review-sessions).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#assessments-evals-and-follow-ups) lists every field.
+
+The API has no route to cancel a review session. Do that in the dashboard or through MCP.
+
 ## Troubleshooting
 
 | What you see | Cause | Fix |

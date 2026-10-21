@@ -1,0 +1,474 @@
+---
+title: "Control sets API"
+description: "Create and configure control sets, their sections and controls, including AI guidance, strictness, evidence sources and Zero Touch eligibility."
+icon: "list-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints let you build and tune the control sets your vendors are assessed against. A **control set** (`cbctst_...`) holds **sections** (`cbctsn_...`) and **controls** (`cbctrl_...`). Settings on the set apply to every control in it: AI evaluation guidance, strictness, evidence sources, applicability and Zero Touch eligibility.
+
+Controls are versioned. A material edit to a control creates a new version with a new `id` and the same `perma_id`, so past assessments keep the text they were evaluated on. Control sets and sections are edited in place. Every change to a set or control is recorded in its activity, as the same edit in the dashboard is.
+
+All endpoints are org-scoped to the API key. See [API conventions](/conventions) for shared behavior. None of these honor `Idempotency-Key`.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/control-sets` | `control_set:read:org` |
+| `POST` | `/v1/control-sets` | `control_set:create:org` |
+| `GET` | `/v1/control-sets/{control_set_id}` | `control_set:read:org` |
+| `PATCH` | `/v1/control-sets/{control_set_id}` | `control_set:update:org` |
+| `PATCH` | `/v1/control-sets/bulk` | `control_set:update:org` |
+| `GET` | `/v1/control-sets/{control_set_id}/stats` | `control_set:read:org` |
+| `GET` | `/v1/control-sets/{control_set_id}/sections` | `control_set:read:org` |
+| `POST` | `/v1/control-sets/{control_set_id}/sections` | `control_set:update:org` |
+| `PATCH` | `/v1/control-sections/{control_section_id}` | `control_set:update:org` |
+| `GET` | `/v1/control-sets/{control_set_id}/controls` | `control:read:org` |
+| `POST` | `/v1/control-sets/{control_set_id}/controls` | `control:create:org` |
+| `GET` | `/v1/controls/{control_id}` | `control:read:org` |
+| `PATCH` | `/v1/controls/{control_id}` | `control:update:org` |
+| `PATCH` | `/v1/controls/bulk` | `control:update:org` |
+| `GET` | `/v1/controls/{control_id}/history` | `control:read:org` |
+| `POST` | `/v1/controls/bulk-action` | `control:update:org` |
+| `PATCH` | `/v1/controls/{control_id}/framework-references/{index}` | `control:update:org` |
+| `GET` | `/v1/control-set-library` | `control_set:read:org` |
+| `GET` | `/v1/control-set-library/updates` | `control_set:read:org` |
+| `POST` | `/v1/control-sets/{control_set_id}/apply-library-update` | `control_set:update:org` |
+| `POST` | `/v1/control-sets/{control_set_id}/reassess-affected` | `control_set:update:org` |
+| `POST` | `/v1/control-sets/{control_set_id}/crosswalk` | `control_set:update:org` |
+| `GET` | `/v1/control-sets/{control_set_id}/crosswalk` | `control_set:read:org` |
+
+Archiving or unarchiving a set or section also needs `control_set:archive:org`, and archiving a control needs `control:archive:org`. Archiving and unarchiving stay with signed-in users: in every organization, a request made with an API key that archives or unarchives returns `403 api_key_not_allowed`.
+
+## Control set object
+
+<ResponseField name="id" type="string">Control set ID (`cbctst_...`).</ResponseField>
+<ResponseField name="name" type="string">Name.</ResponseField>
+<ResponseField name="control_set_type" type="string">`policy`, `questionnaire` or `internal`.</ResponseField>
+<ResponseField name="description" type="string | null">Description.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the set is archived.</ResponseField>
+<ResponseField name="is_applied_to_all" type="boolean">Whether the set applies to every vendor.</ResponseField>
+<ResponseField name="applied_to_tag_ids" type="string[]">Tags whose vendors the set applies to.</ResponseField>
+<ResponseField name="inherent_risk_level_ids" type="string[]">Inherent risk levels whose vendors the set applies to.</ResponseField>
+<ResponseField name="is_zero_touch_eligible" type="boolean">Whether Zero Touch assessments can use the set.</ResponseField>
+<ResponseField name="eval_strictness" type="integer">How strictly the AI judges evidence, from `1` (lenient) to `5` (skeptical). New sets use `3`.</ResponseField>
+<ResponseField name="eval_instructions" type="string | null">Guidance the AI applies when it evaluates every control in the set.</ResponseField>
+<ResponseField name="remediation_instructions" type="string | null">Guidance for remediation wording.</ResponseField>
+<ResponseField name="is_web_search_enabled" type="boolean">Whether evaluations search the web.</ResponseField>
+<ResponseField name="web_search_instructions" type="string | null">Guidance for web search.</ResponseField>
+<ResponseField name="evidence_sources" type="object[]">The [evidence sources](#evidence-source-object) the AI draws on.</ResponseField>
+<ResponseField name="restrict_evidence_to_sources" type="boolean">Whether the AI uses only the listed evidence sources.</ResponseField>
+<ResponseField name="document_requirement" type="object[]">Documents vendors provide, each `{ "document_type": "<slug>", "is_required": true }`.</ResponseField>
+<ResponseField name="risk_domain_id" type="string | null">Risk domain the set rolls up to.</ResponseField>
+<ResponseField name="vendor_rating_weight" type="number | null">The set's share of the vendor rating. `null` leaves it out of the weighting.</ResponseField>
+<ResponseField name="scale_id" type="string | null">The scale every live control uses. `null` when the controls use different scales or none.</ResponseField>
+<ResponseField name="watcher_ids" type="string[]">Users who watch the set.</ResponseField>
+<ResponseField name="library_slug" type="string | null">The library template the set was copied from.</ResponseField>
+<ResponseField name="library_revision" type="integer | null">The template revision the copy carries.</ResponseField>
+<ResponseField name="questionnaire_id" type="string | null">The questionnaire derived from the set.</ResponseField>
+<ResponseField name="control_count" type="integer">Number of live controls.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+### Evidence source object
+
+<ResponseField name="source_type" type="string">`document`, `factsheet`, `web_search` or `contracts`.</ResponseField>
+<ResponseField name="document_types" type="string[]">For `document`: the document types to search. Empty means every type.</ResponseField>
+<ResponseField name="instructions" type="string | null">How the AI uses the source.</ResponseField>
+<ResponseField name="is_required" type="boolean">When `true`, the AI cites this source or flags its absence.</ResponseField>
+<ResponseField name="match" type="string">For a required `document` source: `any` (one type is enough) or `all`.</ResponseField>
+<ResponseField name="minimum_credibility" type="string">For `web_search`: the lowest publisher credibility accepted.</ResponseField>
+<ResponseField name="denied_web_evidence_types" type="string[]">For `web_search`: page types to exclude.</ResponseField>
+
+A `contracts` source shares contract terms with every evaluation, so adding one needs `contract:read:org`.
+
+## List control sets
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-sets`
+</ParamField>
+
+### Query parameters
+
+<ParamField query="limit" type="integer" default="50">Page size, from 1 to 200.</ParamField>
+<ParamField query="offset" type="integer" default="0">Number of sets to skip.</ParamField>
+<ParamField query="include_archived" type="boolean" default="false">Include archived sets.</ParamField>
+
+Returns an `items` array of [control set objects](#control-set-object), newest first, with `total`, `limit` and `offset`.
+
+## Create a control set
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets`
+</ParamField>
+
+Returns `201 Created` with the [control set object](#control-set-object). To copy a framework template with its sections and controls, send its slug from [the library](#list-library-templates) as `use_library`.
+
+### Request body
+
+<ParamField body="name" type="string" required>Name.</ParamField>
+<ParamField body="control_set_type" type="string" default="policy">`policy`, `questionnaire` or `internal`. A library copy takes the template's type.</ParamField>
+<ParamField body="description" type="string">Description.</ParamField>
+<ParamField body="is_applied_to_all" type="boolean" default="false">Apply the set to every vendor.</ParamField>
+<ParamField body="applied_to_tag_ids" type="string[]">Tags whose vendors the set applies to.</ParamField>
+<ParamField body="is_zero_touch_eligible" type="boolean">Make the set available to Zero Touch assessments.</ParamField>
+<ParamField body="eval_strictness" type="integer">From `1` (lenient) to `5` (skeptical).</ParamField>
+<ParamField body="eval_instructions" type="string">Set-level AI guidance.</ParamField>
+<ParamField body="remediation_instructions" type="string">Remediation guidance. A library copy ignores it.</ParamField>
+<ParamField body="is_web_search_enabled" type="boolean" default="false">Let evaluations search the web.</ParamField>
+<ParamField body="web_search_instructions" type="string">Web search guidance, at most 2000 characters.</ParamField>
+<ParamField body="evidence_sources" type="object[]">[Evidence sources](#evidence-source-object).</ParamField>
+<ParamField body="restrict_evidence_to_sources" type="boolean" default="true">Use only the listed evidence sources.</ParamField>
+<ParamField body="document_requirement" type="object[]">Required documents. A library copy ignores it.</ParamField>
+<ParamField body="risk_domain_id" type="string">Risk domain. A library copy otherwise takes the template's domain.</ParamField>
+<ParamField body="scale_id" type="string">Scale for every control of the set.</ParamField>
+<ParamField body="watcher_ids" type="string[]">Users who watch the set.</ParamField>
+<ParamField body="use_library" type="string">Library template slug to copy.</ParamField>
+
+### Example request
+
+```bash cURL
+curl -X POST "https://api.coverbase.app/v1/control-sets" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "SOC 2 for critical vendors",
+    "use_library": "soc2",
+    "is_zero_touch_eligible": true,
+    "eval_strictness": 4
+  }'
+```
+
+## Retrieve a control set
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-sets/{control_set_id}`
+</ParamField>
+
+Returns the [control set object](#control-set-object), archived or live, or `404 control_set_not_found`.
+
+## Update a control set
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/control-sets/{control_set_id}`
+</ParamField>
+
+Only the fields you send change. To clear `risk_domain_id` or `vendor_rating_weight`, send `null`. An archived set returns `409 control_set_archived`. Returns the updated [control set object](#control-set-object).
+
+### Request body
+
+Every create field except `control_set_type` and `use_library`, plus:
+
+<ParamField body="inherent_risk_level_ids" type="string[]">Inherent risk levels the set applies to. Replaces the list.</ParamField>
+<ParamField body="vendor_rating_weight" type="number">Share of the vendor rating, greater than 0 and at most 1000.</ParamField>
+<ParamField body="is_archived" type="boolean">Archive the set with its sections and controls. Needs `control_set:archive:org`. An API key gets `403 api_key_not_allowed`.</ParamField>
+
+Lists you send (`applied_to_tag_ids`, `evidence_sources`, `document_requirement`, `watcher_ids`) replace the stored list. A `scale_id` applies to every live control.
+
+## Update many control sets
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/control-sets/bulk`
+</ParamField>
+
+Applies up to 200 updates in one call. If any update fails, none is applied, and the error names the failing item in `detail.id`. Each control set may appear once per call.
+
+<ParamField body="updates" type="object[]" required>From 1 to 200 items. Each item takes `control_set_id` and the fields of [Update a control set](#update-a-control-set), with the same rules.</ParamField>
+
+Returns an `items` array of the updated [control set objects](#control-set-object), in request order.
+
+## Get control set stats
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-sets/{control_set_id}/stats`
+</ParamField>
+
+Returns `vendor_count` (vendors the live set applies to) and `vendor_percentage` (their share of the org's vendors).
+
+## List sections
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-sets/{control_set_id}/sections`
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">Page size, from 1 to 500.</ParamField>
+<ParamField query="offset" type="integer" default="0">Number of sections to skip.</ParamField>
+<ParamField query="include_archived" type="boolean" default="false">Include archived sections.</ParamField>
+
+Returns an `items` array of [section objects](#section-object) in display order, with `total`, `limit` and `offset`.
+
+### Section object
+
+<ResponseField name="id" type="string">Section ID (`cbctsn_...`).</ResponseField>
+<ResponseField name="control_set_id" type="string">Parent control set.</ResponseField>
+<ResponseField name="name" type="string">Name.</ResponseField>
+<ResponseField name="description" type="string | null">Description.</ResponseField>
+<ResponseField name="external_idx" type="string">Section reference, for example `CC6`.</ResponseField>
+<ResponseField name="sort_order" type="string">Fractional order key.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the section is archived.</ResponseField>
+<ResponseField name="websearch_enabled_override" type="boolean | null">Overrides the set's web search setting. `null` inherits it.</ResponseField>
+<ResponseField name="web_search_instructions" type="string | null">Web search guidance.</ResponseField>
+<ResponseField name="risk_domain_id" type="string | null">Risk domain.</ResponseField>
+<ResponseField name="watcher_ids" type="string[]">Users who watch the section.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## Create a section
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets/{control_set_id}/sections`
+</ParamField>
+
+Returns `201 Created` with the [section object](#section-object). An archived set returns `409 control_set_archived`. Every watcher must be a member of your organization, or the request returns `422 invalid_watcher`.
+
+<ParamField body="name" type="string" required>Name.</ParamField>
+<ParamField body="external_idx" type="string" required>Section reference.</ParamField>
+<ParamField body="description" type="string">Description.</ParamField>
+<ParamField body="sort_order" type="string">Fractional order key. Without it, the section goes last.</ParamField>
+<ParamField body="websearch_enabled_override" type="boolean">Override the set's web search setting.</ParamField>
+<ParamField body="web_search_instructions" type="string">Web search guidance, at most 2000 characters.</ParamField>
+<ParamField body="risk_domain_id" type="string">Risk domain.</ParamField>
+<ParamField body="watcher_ids" type="string[]">Users who watch the section.</ParamField>
+
+## Update a section
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/control-sections/{control_section_id}`
+</ParamField>
+
+Takes the create fields and `is_archived`. Only the fields you send change. To clear `risk_domain_id`, send `null`. Archiving a section archives its controls and needs `control_set:archive:org`. An API key that archives or unarchives a section gets `403 api_key_not_allowed`. An archived section accepts only `is_archived: false`. Returns the updated [section object](#section-object).
+
+## Control object
+
+<ResponseField name="id" type="string">Control version ID (`cbctrl_...`).</ResponseField>
+<ResponseField name="perma_id" type="string">ID shared by every version of the control.</ResponseField>
+<ResponseField name="version" type="integer">Version number, starting at 1.</ResponseField>
+<ResponseField name="control_set_id" type="string">Control set.</ResponseField>
+<ResponseField name="control_section_id" type="string | null">Section.</ResponseField>
+<ResponseField name="external_idx" type="string | null">Reference, for example `SOC2-CC6.1`. Unique within the set.</ResponseField>
+<ResponseField name="expectation" type="string">What the vendor must do.</ResponseField>
+<ResponseField name="question" type="string | null">The question vendors answer.</ResponseField>
+<ResponseField name="question_additional_instructions" type="string | null">Extra guidance shown with the question.</ResponseField>
+<ResponseField name="response_type" type="string">How the question is answered, for example `free_text`, `select_one` or `select_multiple`.</ResponseField>
+<ResponseField name="eval_instructions" type="string | null">Guidance the AI follows when it evaluates the control.</ResponseField>
+<ResponseField name="weight" type="integer | null">Scoring weight.</ResponseField>
+<ResponseField name="is_required" type="boolean">Whether an answer is required.</ResponseField>
+<ResponseField name="allow_comments" type="boolean">Whether respondents can add a comment.</ResponseField>
+<ResponseField name="require_comment" type="boolean">Whether a comment is required.</ResponseField>
+<ResponseField name="supporting_document_types" type="string[]">Supporting document type slugs.</ResponseField>
+<ResponseField name="websearch_enabled_override" type="boolean | null">Overrides the set's web search setting.</ResponseField>
+<ResponseField name="web_search_instructions" type="string | null">Web search guidance.</ResponseField>
+<ResponseField name="evidence_sources" type="object[]">[Evidence sources](#evidence-source-object) for this control. Empty means the set's sources apply.</ResponseField>
+<ResponseField name="evidence_requirement" type="string | null">`document_required` or `attestation_only`.</ResponseField>
+<ResponseField name="significant_deficiency_level_id" type="string | null">A risk scale level. When set, a failing control floors the score at this level.</ResponseField>
+<ResponseField name="significant_deficiency_scope" type="string | null">What the floor applies to, for example `risk_domain`.</ResponseField>
+<ResponseField name="scale_id" type="string | null">Scale the control is scored on.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether this version is archived. An earlier version is archived once a newer one exists.</ResponseField>
+<ResponseField name="options" type="object[]">Live answer choices, each with `id`, `perma_id`, `name`, `description`, `value` and `sort_order`.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## List controls
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-sets/{control_set_id}/controls`
+</ParamField>
+
+<ParamField query="limit" type="integer" default="100">Page size, from 1 to 500.</ParamField>
+<ParamField query="offset" type="integer" default="0">Number of controls to skip.</ParamField>
+<ParamField query="include_archived" type="boolean" default="false">Include archived controls.</ParamField>
+
+Returns the latest version of each control as an `items` array of [control objects](#control-object), in set order, with `total`, `limit` and `offset`.
+
+## Create a control
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets/{control_set_id}/controls`
+</ParamField>
+
+Returns `201 Created` with version 1 of the [control object](#control-object). An archived set returns `409 control_set_archived`. To set `evidence_requirement` or the significant-deficiency floor, send a `PATCH` afterwards.
+
+<ParamField body="expectation" type="string" required>What the vendor must do.</ParamField>
+<ParamField body="control_section_id" type="string">A live section of the same set.</ParamField>
+<ParamField body="external_idx" type="string">Reference. A duplicate within the set returns `409 duplicate_external_idx`.</ParamField>
+<ParamField body="question" type="string">The question vendors answer.</ParamField>
+<ParamField body="question_additional_instructions" type="string">Extra guidance shown with the question.</ParamField>
+<ParamField body="response_type" type="string" default="free_text">How the question is answered.</ParamField>
+<ParamField body="options" type="object[]">Answer choices, each `{ "name": "Yes", "description": null, "value": 1, "sort_order": null }`.</ParamField>
+<ParamField body="eval_instructions" type="string">AI evaluation guidance.</ParamField>
+<ParamField body="weight" type="integer" default="1">Scoring weight.</ParamField>
+<ParamField body="is_required" type="boolean" default="true">Whether an answer is required.</ParamField>
+<ParamField body="allow_comments" type="boolean">Let respondents add a comment.</ParamField>
+<ParamField body="require_comment" type="boolean">Require a comment. Turns on `allow_comments`.</ParamField>
+<ParamField body="supporting_document_types" type="string[]">Supporting document type slugs.</ParamField>
+<ParamField body="websearch_enabled_override" type="boolean">Override the set's web search setting.</ParamField>
+<ParamField body="web_search_instructions" type="string">Web search guidance, at most 2000 characters.</ParamField>
+<ParamField body="evidence_sources" type="object[]">[Evidence sources](#evidence-source-object).</ParamField>
+<ParamField body="scale_id" type="string">Scale. Without it, the org's default scale applies.</ParamField>
+
+## Retrieve a control
+
+<ParamField path="method" type="GET">
+  `GET /v1/controls/{control_id}`
+</ParamField>
+
+Returns the [control object](#control-object) for that version, archived or live, or `404 control_not_found`.
+
+## Update a control
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/controls/{control_id}`
+</ParamField>
+
+Takes every create field, all optional, plus the fields below. Only the fields you send change. Returns the resulting [control object](#control-object).
+
+A material change creates a new version, and the response carries its new `id`. These fields are material: `expectation`, `question`, `question_additional_instructions`, `response_type`, `eval_instructions`, `weight`, `is_required`, `control_section_id`, `significant_deficiency_level_id`, `significant_deficiency_scope` and `options`. Other fields change the version in place.
+
+<ParamField body="evidence_requirement" type="string">`document_required` or `attestation_only`. Send `null` to clear it.</ParamField>
+<ParamField body="significant_deficiency_level_id" type="string">A risk scale level. Send `null` to clear the floor.</ParamField>
+<ParamField body="significant_deficiency_scope" type="string">What the floor applies to. Send `null` to clear it.</ParamField>
+<ParamField body="control_section_id" type="string">Move to this section of the same set. Send `unassigned` to remove it from its section.</ParamField>
+<ParamField body="options" type="object[]">Answer choices to add or edit. A new choice has no `id`. To edit an existing choice, send its `id` and `perma_id` with the fields to change, or `"is_archived": true` to remove it.</ParamField>
+<ParamField body="is_archived" type="boolean">Archive or unarchive the control. Needs `control:archive:org`. An API key gets `403 api_key_not_allowed`.</ParamField>
+
+If you edit an earlier version, the request returns `409 control_superseded` with the latest version's ID in the message.
+
+### Example request
+
+```bash cURL
+curl -X PATCH "https://api.coverbase.app/v1/controls/cbctrl_1234" \
+  -H "Authorization: Bearer ak_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "eval_instructions": "Accept a SOC 2 bridge letter dated within 3 months.",
+    "evidence_requirement": null
+  }'
+```
+
+## Update many controls
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/controls/bulk`
+</ParamField>
+
+Applies up to 200 control updates in one call. If any update fails, none is applied, and the error names the failing item in `detail.id`. Each control may appear once per call.
+
+<ParamField body="updates" type="object[]" required>From 1 to 200 items. Each item takes `control_id` and the fields of [Update a control](#update-a-control), with the same rules.</ParamField>
+
+Returns an `items` array in request order. Each item has `previous_id` (the ID you sent) and `control` (the resulting [control object](#control-object)). A material change gives `control` a new `id`.
+
+## Get control history
+
+<ParamField path="method" type="GET">
+  `GET /v1/controls/{control_id}/history`
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">Versions per page, from 1 to 100.</ParamField>
+<ParamField query="offset" type="integer" default="0">Page number, counted in pages of `limit` versions.</ParamField>
+
+Returns an `items` array of [control objects](#control-object), newest version first, starting from the version you name.
+
+## Move, archive or unarchive controls
+
+<ParamField path="method" type="POST">
+  `POST /v1/controls/bulk-action`
+</ParamField>
+
+Moves many controls into one section, or archives or unarchives them. If any control fails, nothing changes. The section must belong to the same control set as every control, or the request returns `422 invalid_bulk_action`. Unarchiving an earlier version of a control returns `409 control_superseded`, because a newer version is live. Each moved control takes a new version. Returns `{ "action": "add_to_section", "control_count": 2 }`.
+
+<ParamField body="action" type="string" required>`add_to_section`, `archive` or `unarchive`. Archiving and unarchiving needs `control:archive:org`, and an API key gets `403 api_key_not_allowed`.</ParamField>
+<ParamField body="control_ids" type="string[]" required>From 1 to 500 control IDs.</ParamField>
+<ParamField body="control_section_id" type="string">Destination section. Required for `add_to_section`.</ParamField>
+
+## Review a framework reference
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/controls/{control_id}/framework-references/{index}`
+</ParamField>
+
+Accepts or rejects a suggested framework reference on a control. Only an accepted reference counts toward framework coverage.
+
+<ParamField body="action" type="string" required>`accept`, `reject` (removes the reference) or `no_clause` (records that the framework has no matching clause).</ParamField>
+
+Returns `framework_references`, the control's references after the change, or `404 framework_reference_not_found`.
+
+## Start a crosswalk
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets/{control_set_id}/crosswalk`
+</ParamField>
+
+Returns `202 Accepted`. Suggests, in the background, a reference in each target framework for every control of the set. A suggestion counts toward coverage only once you [accept it](#review-a-framework-reference).
+
+<ParamField body="target_control_set_ids" type="string[]" required>From 1 to 50 framework control sets to map onto. Each must be a live control set of your organization other than this one, or the request returns `422 invalid_crosswalk_targets` and nothing is queued.</ParamField>
+
+Returns `queued` and `target_control_set_ids`, the distinct targets that were queued. An archived subject set returns `409 control_set_archived`.
+
+## Read a crosswalk
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-sets/{control_set_id}/crosswalk`
+</ParamField>
+
+Returns `frameworks` and `rows`. Each framework has `framework`, `control_set_id`, `accepted_clauses`, `total_clauses` and `suggested`. Each row has `control_id`, `external_idx`, `expectation`, `section` and `refs`. Each reference has `index` (the value a review takes), `framework`, `reference`, `rationale` and `review_state` (`suggested` or `accepted`).
+
+## List library templates
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-set-library`
+</ParamField>
+
+Returns an `items` array of templates you can copy with `use_library`. Each has `slug`, `name`, `num_controls`, `control_set_type`, `audience` (`vendor` or `internal`), `description` and `is_web_search_enabled`.
+
+## List library updates
+
+<ParamField path="method" type="GET">
+  `GET /v1/control-set-library/updates`
+</ParamField>
+
+Returns an `items` array of the org's library copies whose template has a newer revision. Each has `control_set_id`, `control_set_name`, `template_slug`, `template_name`, `from_revision`, `to_revision`, `vendor_count` and `changes`. Each change has `external_idx`, `kind` (`added`, `changed` or `removed`), `expectation`, `previous_expectation` and `is_conflict` (the copy was edited by hand).
+
+## Apply a library update
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets/{control_set_id}/apply-library-update`
+</ParamField>
+
+Brings a library copy to its template's latest revision. Changed controls take a new version. Controls edited by hand stay as they are. Returns `applied` and `conflicts` (lists of `external_idx`) and `to_revision`, or `409 no_library_update`.
+
+## Draft a reassessment of affected vendors
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets/{control_set_id}/reassess-affected`
+</ParamField>
+
+Returns `201 Created` with `reassessment_id` and `vendor_count`. Drafts one [reassessment](/api-reference/reassessments) of the vendors assessed with the set.
+
+<ParamField body="vendor_ids" type="string[]">Vendors to include. Without it, every vendor assessed with the set is included.</ParamField>
+
+## Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 403 | `{"detail": {"code": "api_key_not_allowed", ...}}` | An API key archives or unarchives a set, section or control. |
+| 403 | `{"detail": "Missing required permission."}` | The caller lacks the permission, including `contract:read:org` for a `contracts` evidence source. |
+| 404 | `{"detail": {"code": "control_set_not_found", ...}}` | The set does not exist in the API key's org. |
+| 404 | `{"detail": {"code": "control_section_not_found", ...}}` | The section does not exist. |
+| 404 | `{"detail": {"code": "control_not_found", ...}}` | The control does not exist. |
+| 409 | `{"detail": {"code": "control_set_archived", ...}}` | Editing an archived set, or adding a section or control to one. |
+| 409 | `{"detail": {"code": "duplicate_external_idx", ...}}` | The set already has a control with that `external_idx`. |
+| 409 | `{"detail": {"code": "control_superseded", ...}}` | Editing or unarchiving an earlier version of a control. |
+| 409 | `{"detail": {"code": "no_library_update", ...}}` | The set has no newer template revision. |
+| 422 | `{"detail": {"code": "invalid_control_set", ...}}` | The set was rejected, for example an unknown library slug or risk domain. |
+| 422 | `{"detail": {"code": "invalid_control_section", ...}}` | The section is not a live section of the same set. |
+| 422 | `{"detail": {"code": "invalid_control_option", ...}}` | An answer choice has no name, or an edited choice has no `perma_id`. |
+| 422 | `{"detail": {"code": "invalid_control_update", ...}}` | The control cannot take the change, for example an archived version. |
+| 422 | `{"detail": {"code": "no_assessed_vendors", ...}}` | None of the vendors were assessed with the set. |
+| 422 | `{"detail": {"code": "invalid_watcher", ...}}` | A section watcher is not a member of your organization. |
+| 422 | `{"detail": {"code": "invalid_bulk_action", ...}}` | A bulk move names a missing section or one in another control set. |
+| 422 | `{"detail": {"code": "invalid_crosswalk_targets", ...}}` | A crosswalk target is missing, archived, in another organization, or the set itself. |
+| 422 | `{"detail": {"code": "duplicate_bulk_item", ...}}` | A bulk update names the same ID twice. |
+
+## Related
+
+- [Reassessments API](/api-reference/reassessments): run the drafts that `reassess-affected` creates.
+- [Zero Touch assessments API](/api-reference/zero-touch-assessments): assessments that use Zero Touch eligible sets.

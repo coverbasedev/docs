@@ -268,6 +268,16 @@ When the batch holds scans, the summary strip says how many files need a person 
 
 The batch counts each confirmation. When every proposed contract is confirmed or added, the batch reads **Complete**.
 
+## Assemble contracts from MCP or the API
+
+You can open a batch, review its families and confirm them from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_engagements_contracts(kind="contract_assembly_batches")` and `query_engagements_contracts(kind="contract_family")`. It writes with `mutate(entity="contract_assembly_batch", action=...)` (`create`, `update`, `archive`) and `mutate(entity="contract_assembly_family", action=...)` (`update`, `confirm`, `bulk_confirm`).
+
+The API routes sit under `/v1/contract-assembly-batches`. See [Assemble contracts from documents](/api-reference/contract-administration#assemble-contracts-from-documents).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#contracts-engagements-and-procurement) lists every field.
+
+An API key cannot archive a batch. A signed-in user does that. Nothing becomes a contract until a family is confirmed, through any path.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

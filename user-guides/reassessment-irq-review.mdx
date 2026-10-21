@@ -94,6 +94,14 @@ Click **Skip and start assessment**, give a reason, and confirm. The assessment 
 
 Click **Start reassessment** on the vendor, or create an assessment from **Assessments**, and choose a plan that has the check. If the vendor has been assessed before, the dialog shows **Confirm inherent risk with the relationship owner first**, checked. Leave it checked for the check, or clear it to start right away.
 
+## Work the check from MCP or the API
+
+You can turn the check on and confirm or skip it from an MCP client, and manage plans with an API key. An MCP client reads with `query_assessments(kind="irq_review")` and `query_assessments(kind="plan_detail")`. It writes with `mutate(entity="assessment_plan", action="update")`, `mutate(entity="assessment", action="confirm_irq_review")` and `mutate(entity="assessment", action="skip_irq_review")`.
+
+With an API key, change a plan with `PATCH /v1/assessment-plans/{assessment_plan_id}`. See [Assessment plans](/api-reference/assessment-administration#assessment-plans). The API has no route to confirm or skip the check. Confirming writes the owner's answers onto the vendor, so a person decides it.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#assessments-evals-and-follow-ups) lists every field.
+
 ## When the check does not run
 
 | What you see | Cause | Fix |

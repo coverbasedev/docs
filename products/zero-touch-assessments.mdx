@@ -101,6 +101,27 @@ By default it stays on the run. You can configure it to write onto the vendor's 
 
 Only the axis you choose is written, so a Zero Touch run can never overwrite an inherent score your team set deliberately from an intake questionnaire.
 
+## Run Zero Touch from MCP or the API
+
+You can run Zero Touch from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_assessments(kind=...)` and writes with `mutate(entity=..., action=...)`. The API routes sit under `/v1/zero-touch-assessments`. Each call checks the same permission as the dashboard.
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| Make a control set Zero Touch eligible | `mutate(entity="control_set", action="update")` with `is_zero_touch_eligible: true` | `PATCH /v1/control-sets/{control_set_id}` |
+| Add shipped templates, or point runs at one | `mutate(entity="zero_touch", action="add_templates")`, `action="set_template"` | `POST /v1/zero-touch-assessments/library`, `POST /v1/zero-touch-assessments/template` |
+| Configure scoring | `query_assessments(kind="zero_touch_config")`, `mutate(entity="zero_touch", action="configure")` | `GET` and `PUT /v1/zero-touch-assessments/config` |
+| Launch one run | `mutate(entity="assessment", action="launch_zero_touch")` | `POST /v1/zero-touch-assessments` |
+| Launch runs in bulk | `mutate(entity="assessment", action="launch_zero_touch_bulk")` | `POST /v1/zero-touch-assessments/bulk` |
+| Read and rank results | `query_assessments(kind="zero_touch")`, `kind="zero_touch_leaderboard"` | `GET /v1/zero-touch-assessments/{assessment_id}`, `GET /v1/zero-touch-assessments/leaderboard` |
+| Review a run or a batch | `mutate(entity="zero_touch", action="review")`, `action="bulk_review"` | `POST /v1/zero-touch-assessments/{assessment_id}/review`, `POST /v1/zero-touch-assessments/bulk-review` |
+| Triage controls | `mutate(entity="zero_touch", action="triage")` | `POST /v1/zero-touch-assessments/{assessment_id}/triage` |
+| Correct a run's inputs | `mutate(entity="zero_touch", action="correct")` | `POST /v1/zero-touch-assessments/{assessment_id}/correct` |
+| Rescore a run | `mutate(entity="zero_touch", action="rescore")` | `POST /v1/zero-touch-assessments/{assessment_id}/rescore` |
+| Revise a result | `mutate(entity="zero_touch", action="propose_revision")`, `action="apply_revision"` | `POST /v1/zero-touch-assessments/{assessment_id}/revisions` and `.../apply` |
+| List and restore versions | `query_assessments(kind="zero_touch_versions")`, `mutate(entity="zero_touch", action="restore_version")` | `GET /v1/zero-touch-assessments/{assessment_id}/versions`, `POST .../versions/{version_number}/restore` |
+
+An API key cannot archive a run or record a run's outcome. A signed-in user does those. For every call and its options, see [Run Zero Touch from MCP or the API](/user-guides/zero-touch-assessments#run-zero-touch-from-mcp-or-the-api) and the [Zero Touch Assessments API](/api-reference/zero-touch-assessments).
+
 ## What it is not
 
 It is not assurance. A run has never spoken to the vendor, so it cannot confirm a control is operating. It can only tell you whether public evidence supports it.

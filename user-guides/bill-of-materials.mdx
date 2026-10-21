@@ -140,6 +140,16 @@ A newer upload changes what future CVEs are checked against. It does not withdra
 
 Only files typed **SBOM** are checked. **AI-BOM**, **Hardware BOM** and **SaaS BOM** files are stored and browsable, but they raise no alerts.
 
+## Work bills of materials from MCP or the API
+
+You can read a vendor's bills of materials and choose the applied one from an MCP client or with an API key. An MCP client reads with `query_vendors(kind="bill_of_materials")` and `query_vendors(kind="bill_of_materials_history")`, and changes things with `mutate(entity="bill_of_materials", action="promote")` and `mutate(entity="bill_of_materials", action="archive")`.
+
+With an API key, use `GET /v1/bills-of-materials/{bom_id}`, `GET /v1/bills-of-materials/{bom_id}/components` and `POST /v1/bills-of-materials/{bom_id}/promote`. See [Nth parties and bills of materials](/api-reference/vendor-administration#nth-parties-and-bills-of-materials). Uploading goes through the [Bill of Materials API](/api-reference/bill-of-materials), which takes a signed-in user's session token, not an API key.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#vendors-services-and-documents) lists every field.
+
+An API key cannot archive a bill of materials. A signed-in user does that.
+
 ## Troubleshooting
 
 | What you see | Usually means |

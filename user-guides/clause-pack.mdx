@@ -63,6 +63,16 @@ When the contract handoff completes, clauses that were present or added to the r
 
 From **Contracts**, open **Non-standard Contracts**, or click **See all non-standard contracts** on a pack. The report lists every clause whose latest review found it non-standard, with the **Contract**, **Vendor**, **Clause**, **Severity**, **Status** (**Non-conforming**, **Missing**, **Needs review**, or **Accepted risk** when you filter for it), the **Risk Domains** it is mapped to, and when it was **Reviewed**. Search, filter by severity, status and risk domain, sort, and **Export CSV**.
 
+## Work clause packs from MCP or the API
+
+You can map clauses, build packs and read the report from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_engagements_contracts(kind="clause_domain_rules")`, `query_engagements_contracts(kind="clause_pack")` and `query_engagements_contracts(kind="non_standard_clauses")`. It writes with `mutate(entity="clause_domain_rule", action="save")` and `mutate(entity="clause_pack", action="update")`.
+
+The API routes are `/v1/clause-domain-rules`, `GET /v1/engagement-records/{engagement_id}/clause-pack` with its `generate` and `redline` routes, and `GET /v1/non-standard-clauses` with its `export`. See [Clause packs and clause domain rules](/api-reference/contract-administration#clause-packs-and-clause-domain-rules).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#contracts-engagements-and-procurement) lists every field.
+
+An API key cannot archive a clause domain rule. A signed-in user does that.
+
 ## Troubleshooting
 
 | What you see | Cause | Fix |

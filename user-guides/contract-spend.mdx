@@ -218,6 +218,16 @@ There is no control for changing a contract's category on the page. If a categor
 
 The priced lines are only on this tab. The contracts list and the [dashboards](/user-guides/dashboard-library) report the contract value from the **Terms** card.
 
+## Work spend from MCP or the API
+
+You can read and correct a contract's spend from an MCP client or with an API key, as well as on the Spend tab. An MCP client reads with `query_engagements_contracts(kind="contract_spend")` and `query_engagements_contracts(kind="contract_value")`. It writes with `mutate(entity="contract_spend_line", action="save")`, `mutate(entity="contract_fx_rates", action="set")` and `mutate(entity="contract", action="analyze_components")`.
+
+The API routes are `/v1/contract-records/{contract_id}/spend-lines`, `GET /v1/contract-value`, `GET` and `PUT /v1/contract-fx-rates`, and `POST /v1/contract-records/{contract_id}/component-analysis`. See [Contract components, value and spend](/api-reference/contract-administration#contract-components-value-and-spend).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#contracts-engagements-and-procurement) lists every field.
+
+An API key cannot remove a spend line. A signed-in user does that.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix |

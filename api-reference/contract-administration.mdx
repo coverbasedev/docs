@@ -1,0 +1,392 @@
+---
+title: "Contract administration API"
+description: "Read cost centers and business units, manage purchase orders, read procurements, and run offboarding and continuity plans on engagements."
+icon: "file-contract"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints extend the [contract records](/api-reference/contract-records) and [engagement records](/api-reference/engagement-records) APIs. Every endpoint is scoped to the organization that owns the API key. See [API conventions](/conventions) for shared behavior.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/cost-centers` | `contract:read:org` |
+| `GET` | `/v1/business-units` | `contract:read:org` |
+| `GET` | `/v1/procurements` | `vendor:read:org` |
+| `GET` | `/v1/procurements/{procurement_id}` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/purchase-orders` | `vendor:read:org` |
+| `GET` | `/v1/purchase-orders/{purchase_order_id}` | `vendor:read:org` |
+| `POST` | `/v1/purchase-orders` | `vendor:update:org` |
+| `POST` | `/v1/purchase-orders/{purchase_order_id}/issue` | `vendor:update:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/offboarding` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding` | `vendor:update:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/continuity-plan` | `vendor:read:org` |
+| `PUT` | `/v1/engagement-records/{engagement_id}/continuity-plan` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/continuity-plan/submit` | `vendor:update:org` |
+| `GET` | `/v1/clause-sets` | `contract:read:org` |
+| `GET` | `/v1/clause-sets/{clause_set_id}` | `contract:read:org` |
+| `POST` | `/v1/clause-sets` | `contract:update:org` |
+| `PATCH` | `/v1/clause-sets/{clause_set_id}` | `contract:update:org` |
+| `DELETE` | `/v1/clause-sets/{clause_set_id}` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/clause-sets/{clause_set_id}/reference-clauses` | `contract:update:org` |
+| `PATCH` | `/v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` | `contract:update:org` |
+| `DELETE` | `/v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/clause-sets/{clause_set_id}/reference-clauses/reorder` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/clause-reviews` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}` | `contract:read:org` |
+| `PATCH` | `/v1/clause-matches/{match_id}` | `contract:update:org`; accepting a risk needs a signed-in user |
+| `POST` | `/v1/clause-matches/triage` | `contract:update:org`; accepting a risk needs a signed-in user |
+| `POST` | `/v1/contract-records/{contract_id}/findings-from-clause-matches` | `finding:create:org` |
+| `POST` | `/v1/clause-matches/{match_id}/finding-links` | `finding:update:org` |
+| `POST` | `/v1/clause-match-finding-links/{association_id}/unlink` | `finding:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/follow-up-drafts` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` | `contract:read:org` |
+| `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` | `contract:read:org` |
+| `GET` | `/v1/clause-sets/{clause_set_id}/export` | `contract:export:org` |
+| `POST` | `/v1/clause-sets/import` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/redline` | `contract:export:org` |
+| `POST` | `/v1/clause-set-baseline-extractions` | `contract:update:org` |
+| `GET` | `/v1/clause-set-baseline-extractions/{run_id}` | `contract:read:org` |
+| `GET` | `/v1/findings/{finding_id}/clause-match-links` | `finding:read:org` |
+| `GET` | `/v1/clause-set-library` | `contract:read:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/clause-pack` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/clause-pack/generate` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/clause-pack/items/{item_id}/redline` | `vendor:update:org` |
+| `GET` | `/v1/clause-domain-rules` | `contract:read:org` |
+| `POST` | `/v1/clause-domain-rules` | `contract:update:org` |
+| `PATCH` | `/v1/clause-domain-rules/{rule_id}` | `contract:update:org` |
+| `DELETE` | `/v1/clause-domain-rules/{rule_id}` | `contract:update:org`, signed-in user only |
+| `GET` | `/v1/non-standard-clauses` | `contract:read:org` |
+| `GET` | `/v1/non-standard-clauses/export` | `contract:export:org` |
+| `GET` | `/v1/contract-records/{contract_id}/components` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/resync` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/pin` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/unpin` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/recheck-done` | `contract:update:org` |
+| `GET` | `/v1/contract-value` | `contract:read:org` |
+| `GET` | `/v1/contract-home-summary` | `contract:read:org` |
+| `GET` | `/v1/contract-savings-report` | `contract:read:org` |
+| `GET` | `/v1/contract-attention-queues` | `contract:read:org` |
+| `GET` | `/v1/contract-records/{contract_id}/detail-context` | `contract:read:org` |
+| `GET` | `/v1/contract-fx-rates` | `contract:read:org` |
+| `PUT` | `/v1/contract-fx-rates` | `contract:update:org` |
+| `GET` | `/v1/component-policies` | `contract:read:org` |
+| `POST` | `/v1/component-policies` | `contract:create:org` |
+| `PATCH` | `/v1/component-policies/{policy_id}` | `contract:update:org`; archiving needs a signed-in user |
+| `GET` | `/v1/contract-records/{contract_id}/spend-lines` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/spend-lines` | `contract:update:org` |
+| `PATCH` | `/v1/contract-records/{contract_id}/spend-lines/{line_id}` | `contract:update:org` |
+| `DELETE` | `/v1/contract-records/{contract_id}/spend-lines/{line_id}` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/contract-records/{contract_id}/component-analysis` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/document-intake` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/document-intake/confirm` | `contract:update:org` |
+| `PUT` | `/v1/contract-records/{contract_id}/documents/{document_id}/components` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
+
+| `GET` | `/v1/contract-assembly-batches` | `contract:read:org` |
+| `POST` | `/v1/contract-assembly-batches` | `contract:create:org` |
+| `GET` | `/v1/contract-assembly-batches/{batch_id}` | `contract:read:org` |
+| `GET` | `/v1/contract-assembly-batches/{batch_id}/status` | `contract:read:org` |
+| `GET` | `/v1/contract-assembly-batches/{batch_id}/files/{file_id}/download` | `contract:read:org` |
+| `POST` | `/v1/contract-assembly-manifest-check` | `contract:create:org` |
+| `PUT` | `/v1/contract-assembly-batches/{batch_id}/manifest` | `contract:create:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/analyse` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/ocr` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/archive` | `contract:archive:org`, signed-in user only |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/confirm` | `contract:create:org`; `contract:update:org` to attach |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/bulk-confirm` | `contract:create:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/reject` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/bulk-reject` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/split` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/merge` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/reassign` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/document-role` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/mark-incorporated` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/resolve-decision` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/family` | `contract:read:org` |
+List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
+
+## List cost centers
+
+`GET /v1/cost-centers` returns the cost center codes your contracts can carry.
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Include archived codes.
+</ParamField>
+<ParamField query="limit" type="integer" default="200">
+  Page size, 1 to 2000.
+</ParamField>
+<ParamField query="offset" type="integer" default="0">
+  Rows to skip.
+</ParamField>
+
+Each item has `id`, `code`, `description` and `is_archived`.
+
+## List business units
+
+`GET /v1/business-units` returns your business units in the order your organization set. It takes the same parameters as the cost center list. Each item has `id`, `code`, `name`, `parent_id` and `is_archived`.
+
+## List procurements
+
+`GET /v1/procurements` returns procurement requests, newest first.
+
+<ParamField query="vendor_id" type="string">
+  Only procurements for this vendor.
+</ParamField>
+<ParamField query="status_id" type="string">
+  Only procurements in this workflow status.
+</ParamField>
+<ParamField query="search" type="string">
+  Text to match in the title.
+</ParamField>
+<ParamField query="include_archived" type="boolean" default="false">
+  Include archived procurements.
+</ParamField>
+<ParamField query="limit" type="integer" default="50">
+  Page size, 1 to 500.
+</ParamField>
+
+Each item has `id`, `title`, `description`, `vendor_id`, `status_id`, `status`, `priority`, `assignee_id`, `assignee_group_id`, `assessment_ids`, `contract_ids`, `intake_session_ids`, `is_archived`, `created_at` and `updated_at`.
+
+## Get a procurement
+
+`GET /v1/procurements/{procurement_id}` returns one procurement in the same shape. An unknown ID returns `404` with code `procurement_not_found`.
+
+## List a vendor's purchase orders
+
+`GET /v1/vendors/{vendor_id}/purchase-orders` returns the vendor's purchase orders, newest first. `total` counts all of the vendor's purchase orders.
+
+<ParamField query="limit" type="integer" default="25">
+  Page size, 1 to 200.
+</ParamField>
+
+## Get a purchase order
+
+`GET /v1/purchase-orders/{purchase_order_id}` returns one purchase order with its three-way match. Each entry in `lines` compares the PO amount with the first receipt line and the first invoice line that carry the same line number. A line is `matched` when all three amounts agree within one cent, `open` while a receipt or invoice amount is missing, and `exception` otherwise. `match_status` is `exception` when any line is, `matched` when every line is, and `open` otherwise. An unknown ID returns `404` with code `purchase_order_not_found`.
+
+## Create a purchase order
+
+`POST /v1/purchase-orders` creates a draft purchase order and returns `201`.
+
+<ParamField body="vendor_id" type="string" required>
+  The vendor ID.
+</ParamField>
+<ParamField body="po_number" type="string">
+  The PO number. It must be unique in your organization.
+</ParamField>
+<ParamField body="assessment_id" type="string">
+  The assessment the purchase order follows from.
+</ParamField>
+<ParamField body="total_amount" type="string">
+  The total as a decimal string, for example `"1200.00"`.
+</ParamField>
+<ParamField body="currency" type="string" default="USD">
+  ISO currency code.
+</ParamField>
+<ParamField body="line_items" type="object[]">
+  Each line has `description`, `quantity`, `unit_price` and `amount`.
+</ParamField>
+<ParamField body="external_system" type="string">
+  The system of record that also holds the purchase order.
+</ParamField>
+
+Errors: `400` with code `vendor_not_found`, `409` with code `po_number_taken`, and `422` with code `assessment_not_for_vendor` when `assessment_id` is not an assessment of that vendor.
+
+## Issue a purchase order
+
+`POST /v1/purchase-orders/{purchase_order_id}/issue` moves a draft to issued.
+
+<ParamField body="po_number_format" type="string">
+  The format for a generated PO number, for example `PO-{YEAR}-{SEQ}`.
+</ParamField>
+
+Coverbase refuses the call with `409` while the vendor fails a blocking prequalification rule.
+
+## Read and file offboarding
+
+The engagement lifecycle endpoints return `404` with code `not_enabled` when your organization does not have the engagement lifecycle, and `404` with code `engagement_not_found` for an unknown engagement.
+
+`GET /v1/engagement-records/{engagement_id}/offboarding` returns `request`, the latest offboarding request, or `null`. The request has `id`, `status`, `reason_category`, `justification`, `requested_date`, `required_approval_roles`, the approval times, and the start, completion and cancel times.
+
+To file an offboarding request, send `POST /v1/engagement-records/{engagement_id}/offboarding`. Coverbase notifies the approvers and returns `201` with the new state.
+
+<ParamField body="reason_category" type="string" required>
+  One of `consolidation`, `contract_end`, `no_longer_needed`, `performance`, `risk`, `cost` or `other`.
+</ParamField>
+<ParamField body="justification" type="string" required>
+  Why the engagement ends, up to 4000 characters.
+</ParamField>
+<ParamField body="requested_date" type="integer">
+  When offboarding should happen, in Unix seconds.
+</ParamField>
+
+A request the lifecycle refuses, for example a second open request, returns the refusal's `code` and `message`.
+
+## Continuity plan
+
+`GET /v1/engagement-records/{engagement_id}/continuity-plan` returns the plan. Before anyone saves one, every field except `engagement_id` is empty.
+
+To create or edit the plan, send `PUT /v1/engagement-records/{engagement_id}/continuity-plan`. Fields you leave out stay as they are. An explicit `null` for `rto_hours` clears it.
+
+<ParamField body="owner_user_id" type="string">
+  The plan owner. The user must belong to your organization, or the call returns `400` with code `user_not_in_org`.
+</ParamField>
+<ParamField body="backup_suppliers" type="object[]">
+  Up to 20 entries, each with `name`, `vendor_id` and `notes`.
+</ParamField>
+<ParamField body="exit_strategy" type="string">
+  How you would exit the vendor, up to 10000 characters.
+</ParamField>
+<ParamField body="rto_hours" type="integer">
+  Recovery time objective in hours, 0 to 8760.
+</ParamField>
+<ParamField body="resiliency_notes" type="string">
+  Free-form notes, up to 10000 characters.
+</ParamField>
+<ParamField body="transition_steps" type="string[]">
+  Up to 50 ordered steps.
+</ParamField>
+
+To submit the plan for review, send `POST /v1/engagement-records/{engagement_id}/continuity-plan/submit`.
+
+## Clause sets
+
+A clause set is the playbook a contract clause review compares against. Each reference clause carries up to five risk-tier variants.
+
+`GET /v1/clause-sets` lists your clause sets with their current reference clauses. It takes `include_archived`, `limit` (1 to 200, default 50) and `offset`. `GET /v1/clause-sets/{clause_set_id}` returns one set. An unknown ID returns `404` with code `clause_set_not_found`.
+
+To create a set, send `POST /v1/clause-sets` with `name`, and optionally `description`, `is_active` and `library_template_id` to copy a shipped template. To change a set, send `PATCH /v1/clause-sets/{clause_set_id}` with any of `name`, `description`, `is_active` and `public_id_prefix` (up to 16 characters). An explicit `null` clears `description` or `public_id_prefix`. A change to an archived set returns `409` with code `clause_set_archived`.
+
+To add a reference clause, send `POST /v1/clause-sets/{clause_set_id}/reference-clauses`.
+
+<ParamField body="public_id" type="string" required>
+  The clause's ID in the playbook, for example `DPA-01`.
+</ParamField>
+<ParamField body="name" type="string" required>
+  The clause name.
+</ParamField>
+<ParamField body="category" type="string" required>
+  The clause category.
+</ParamField>
+<ParamField body="severity" type="string" required>
+  `low`, `medium`, `high` or `critical`.
+</ParamField>
+<ParamField body="variants" type="object[]">
+  Each variant has `risk_tier` (1 to 5), `label`, `text` and `is_archived`. Active variants need distinct tiers, or the call returns `422` with code `duplicate_risk_tier`.
+</ParamField>
+
+`PATCH /v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` saves a new version of the clause and returns it with its new `id`. Variants you send replace the current ones.
+
+To reorder, send `POST /v1/clause-sets/{clause_set_id}/reference-clauses/reorder` with `reference_clause_ids` listing every current clause once. Any other list returns `422` with code `invalid_order`.
+
+API keys cannot archive. `DELETE` on a clause set or a reference clause with an API key returns `403` with code `api_key_not_allowed`.
+
+## Clause reviews
+
+A clause review compares a contract's documents with clause sets and records a match for each reference clause.
+
+To start one, send `POST /v1/contract-records/{contract_id}/clause-reviews` with `clause_set_ids` and, optionally, `document_ids`. Coverbase returns `202` and runs the review in the background. Poll `GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}` until `status` is `completed` or `failed`. Pass `latest` as `run_id` for the most recent run. If the contract already has an active run over the same clause sets, you get that run. An active run over different clause sets returns `409` with code `active_run_exists`. An unknown or inactive clause set returns `404` with code `clause_set_not_found` or `422` with code `clause_set_not_usable`.
+
+Each match has `status`, `triage_decision`, `triage_notes`, `confidence`, `extracted_text`, `reasoning`, `source_document_id` and `page_num`.
+
+To record a reviewer's verdict, send `PATCH /v1/clause-matches/{match_id}` with either `status` (`conforming`, `needs_review`, `non_conforming`, `missing`, `not_applicable` or `accepted_risk`, plus `accepted_risk_expires_at`) or `triage_decision` (`no_action`, `accepted_risk` or `false_positive`, plus `triage_notes`). Accepting a risk is a sign-off, so an API key gets `403` with code `api_key_not_allowed`.
+
+To set one triage decision on up to 500 matches, send `POST /v1/clause-matches/triage` with `match_ids`, `decision` and optional `notes`. Each match is decided on its own: the response lists `succeeded_match_ids` and `failures`, each with a `match_id` and a `message`.
+
+## Findings from clause matches
+
+To raise one finding from up to 200 of a contract's clause matches, send `POST /v1/contract-records/{contract_id}/findings-from-clause-matches` with `clause_match_ids` and `title`, and optionally `body`, `assigned_to_id`, `due_date`, the severity, urgency and risk level IDs, and `finding_status_id`. Coverbase returns `201` with `finding_id` and sets each match's triage to `action_created`.
+
+To link a match to an existing finding, send `POST /v1/clause-matches/{match_id}/finding-links` with `finding_id`. To remove a link, send `POST /v1/clause-match-finding-links/{association_id}/unlink` with `next_triage`: `leave`, `clear`, `no_action`, `accepted_risk` or `false_positive`. Setting `accepted_risk` with an API key returns `403` with code `api_key_not_allowed`.
+
+## Follow-up drafts
+
+To have Coverbase AI draft a follow-up from clause matches, send `POST /v1/contract-records/{contract_id}/follow-up-drafts` with `clause_match_ids` (1 to 200), `audience` (`vendor` or `procurement`) and `force`. Coverbase returns `202` and writes the draft in the background. Poll `GET /v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` until `status` is `completed` or `failed`, then read `draft_text`. Coverbase sends nothing to anyone. A match from another contract returns `422` with code `foreign_clause_match`.
+
+## Review rounds
+
+When the vendor returns a marked-up document, you start a new round that reads it against what the finished run asked for. To start one, send `POST /v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds`. Omit `clause_set_ids` or `document_ids` to keep the previous round's. The previous run must be `complete`, or the call returns `422` with code `round_not_ready`. Coverbase returns `202` with the new run, which you poll like any clause review.
+
+`GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` returns `total`, `queued` (clauses a person still has to look at), `asks_sent`, `asks_answered`, `asks_outstanding`, the counts by carry state in `buckets`, and `pending_dispositions`: vendor answers Coverbase would not settle on its own.
+
+To record those answers, send `POST /v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` with up to 200 `decisions`, each with `ask_id`, `status` (`accepted`, `rejected`, `countered` or `withdrawn`) and `response_text`. An ask from another round returns `422` with code `foreign_ask`. The response is the updated round summary.
+
+## Export a clause set
+
+`GET /v1/clause-sets/{clause_set_id}/export` returns `download_url`, `file_name` and `expires_in_seconds` (900). The URL downloads the set as an Excel workbook that the clause set importer can read back. It holds current, non-archived clauses only. Fetch it before it expires; the response is not cached.
+
+## Build a clause set from documents
+
+To have Coverbase AI build a clause set from baseline contracts or a playbook, send `POST /v1/clause-set-baseline-extractions` with `org_document_ids` (1 to 10 distinct organization documents), and optionally `clause_set_name`, `clause_set_description`, `public_id_prefix` (up to 16 characters) and `import_mode` (`auto`, `playbook` or `baseline`). Coverbase creates an inactive clause set, returns `202` with the run, and extracts in the background. Poll `GET /v1/clause-set-baseline-extractions/{run_id}` until `status` is `complete` or `failed`. `created_reference_clause_ids` lists the clauses added so far. An unknown document returns `404` with code `document_not_found`.
+
+## Clause matches linked to a finding
+
+`GET /v1/findings/{finding_id}/clause-match-links` returns `items`, one per Clause Review run, newest first. Each run lists its `matches` with `clause_match_id`, `link_id`, `reference_clause_name`, `reference_clause_public_id` and `status`. Pass `link_id` to `POST /v1/clause-match-finding-links/{association_id}/unlink` to remove a link. An unknown finding returns `404` with code `finding_not_found`.
+
+## Import clause sets
+
+To create reference clauses from a Clause Set Upload Template workbook, send `POST /v1/clause-sets/import` with `file_base64` (the .xlsx or .csv file, base64-encoded, up to 10 MB), `filename` and `dry_run`. The export above produces this format. Rows are grouped into clause sets by their `Clause Set` column, and Coverbase creates any set that does not exist yet. Send `dry_run: true` first: the response has a `summary` of rows to create, update and skip, the `problems` for each skipped row, and the `clause_set_ids` it touched. Coverbase keeps nothing on a dry run or when no row would import. A file that cannot be read returns `422` with code `workbook_rejected`, and invalid base64 returns `422` with code `invalid_base64`.
+
+## Download the redlined contract
+
+`GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}/redline` returns `download_url`, `file_name` and `expires_in_seconds` (900). The file is the contract's source Word document with each clause that asks for a change applied as a tracked change and comment, ready to send to the vendor. A review with no Word source or no clause that asks for a change returns `422` with code `nothing_to_redline`.
+
+## Clause set library
+
+`GET /v1/clause-set-library` returns `items`: the clause set templates Coverbase ships, each with `id`, `slug`, `name`, `description`, `clause_count`, `tier_count`, `tier_labels`, `category`, `categories`, `industries` and `vendor_types`. To start a set from one, pass its `id` as `library_template_id` to `POST /v1/clause-sets`.
+
+## Clause packs and clause domain rules
+
+These endpoints need the engagement lifecycle. Without it they return `404` with code `not_enabled`.
+
+A clause domain rule requires a reference clause when a risk domain reaches a level, or has an open issue, on an engagement. `GET /v1/clause-domain-rules` lists them; filter with `clause_set_id` or `reference_clause_perma_id`. To create one, send `POST /v1/clause-domain-rules` with `clause_set_id`, `reference_clause_perma_id`, `risk_domain_id`, and optionally `min_risk_level_id`, `require_on_open_issue` and an obligation: `obligation_text`, `obligation_route` (`evidence_request`, `scorecard` or `on_event`) and `obligation_interval_months` (1 to 36; not for `on_event`). A second rule for the same clause and domain returns `409` with code `clause_domain_rule_exists`. `PATCH /v1/clause-domain-rules/{rule_id}` replaces the threshold and obligation. An API key cannot archive a rule.
+
+`GET /v1/engagement-records/{engagement_id}/clause-pack` returns the clauses the engagement's contract must carry, with `items`, `contract_count`, `reviewed_contract_count`, `rule_count` and `generated_at`. To rebuild it from the current domain results, open issues and rules, send `POST .../clause-pack/generate`. To mark a clause as added to the redline sent to the vendor, send `POST .../clause-pack/items/{item_id}/redline` with `marked`.
+
+## Non-standard clauses report
+
+`GET /v1/non-standard-clauses` lists every clause on a contract's latest clause review that departs from the standard. Filter with `search`, `vendor_ids`, `severities`, `statuses` and `risk_domain_ids`; sort with `sort` (`severity`, `contract`, `vendor` or `reviewed_at`) and `descending`. `GET /v1/non-standard-clauses/export` takes the same filters and returns a short-lived `download_url` for the report as CSV.
+
+## Contract components, value and spend
+
+These endpoints need Contracts v3. Without it they return `404` with code `not_enabled`.
+
+A contract carries component slots: MSA, DPA, SLA, order form and the others. `GET /v1/contract-records/{contract_id}/components` returns each slot's `component_type`, the `current_component_id` that answers it, `gap_state`, `pinned`, `resolution_reason` and `required_by_policy_id`. To recompute every slot from the live components, send `POST .../components/resync`. To hold a decision against re-analysis, send `POST .../components/{component_type}/pin` with `current_component_id` and `resolution_reason`; `unpin` releases it, and `recheck-done` answers a re-check request.
+
+A component policy says which components a matching contract must carry. `GET /v1/component-policies` lists them. To create one, send `POST /v1/component-policies` with `name`, `required_component_types`, and optionally `description`, `severity` and `predicate` (`contract_types`, `vendor_tiers`, `processes_customer_data`, `is_ai_subprocessor`, `min_annual_value`, `regulatory_flags`). An empty predicate matches every contract. `PATCH /v1/component-policies/{policy_id}` changes any field; an API key cannot set `is_archived`.
+
+`GET /v1/contract-fx-rates` returns the pinned rate table: `base_currency`, `as_of` and `rates` (`currency`, `rate_to_base`). To replace it, send `PUT /v1/contract-fx-rates` with the whole table. `GET /v1/contract-value` returns what the portfolio, or one vendor with `vendor_id`, is committed to in the base currency, with currencies that have no rate listed in `unconverted`.
+
+`GET /v1/contract-home-summary` returns the contracts home figures: `in_approval_count`, `approved_recently_count` over `approved_window_days`, `direct_savings`, `indirect_savings` and `cost_avoidance` over `savings_window_days`, `annual_spend`, and `vendors_over_budget_count` for `budget_year`. Each money figure has the same shape as `/v1/contract-value`, and `is_complete` is false when a currency has no pinned rate. `GET /v1/contract-savings-report` lists the contracts behind the savings figures, grouped by `group_by` (`vendor`, `business_unit` or `quarter`), with totals per group and each contract's `savings_note`.
+
+`GET /v1/contract-attention-queues` returns the attention cards in a fixed order: `notice_due_soon`, `renewal_undecided`, `renewal_term_missing`, `reviews_needed`, `clauses_open`, `change_of_control` and `value_conflict`. Each has a `count`, a `detail` line, a `severity`, and a `filter` rule group that lists its contracts in the contract filter syntax.
+
+`GET /v1/contract-records/{contract_id}/detail-context` returns what the contract page shows above the facts: `conflicts` where a recorded value disagrees with its document, `derivations` saying how each lifecycle date was worked out, `vendor_context` (other contracts, spend by currency, inherent risk and assessment dates), `plain_terms`, `overlapping_spend` in the same spend category, and the year-over-year `spend_series`. `has_banner` is true when a conflict blocks.
+
+`GET /v1/contract-records/{contract_id}/spend-lines` returns the live pricing lines, the `superseded` lines a later amendment re-priced, `annual_total`, `one_time_total`, `currency` and `mixed_currencies`. To add a line, send `POST` with `description`, `amount`, `currency` (ISO 4217), `frequency` (`one_time`, `monthly`, `quarterly`, `annual` or `usage`), and optionally `effective_date`, `document_id`, `page_number` and `line_key`. `PATCH .../spend-lines/{line_id}` corrects a line; `DELETE` archives it so re-extraction cannot bring it back, and an API key cannot do that. An unknown currency returns `422` with code `invalid_currency`.
+
+
+## Assemble contracts from documents
+
+These endpoints need Contracts v3. Without it they return `404` with code `not_enabled`.
+
+An assembly batch groups vendor documents into proposed contract families. Nothing becomes a contract until a family is confirmed. To open a batch, send `POST /v1/contract-assembly-batches` with `name`, `document_ids` (vendor documents already uploaded), and optionally `vendor_id` and `idempotency_key`. Coverbase queues the analysis; poll `GET /v1/contract-assembly-batches/{batch_id}/status` until `state` is no longer `analysing`. `GET /v1/contract-assembly-batches/{batch_id}` returns the proposed `families`, each with `confidence`, `blocking_decisions`, `vendor_match` and `predecessor`, plus `unmatched` files and the `reconciliation`. `GET .../files/{file_id}/download` returns a link to one file that expires in 15 minutes.
+
+A manifest CSV names the agreement or vendor for each file. `POST /v1/contract-assembly-manifest-check` with `csv` says what it holds and stores nothing; `PUT .../manifest` attaches it, and every later analysis follows it. A manifest that cannot be used returns `422` with code `manifest_rejected`. `POST .../analyse` queues the batch to be grouped again, and `POST .../ocr` queues OCR for its scanned files; both return `202`. `ocr` returns `409` with code `nothing_to_ocr` when no file is waiting.
+
+Before confirming, you can change the proposal: `reject` drops a family (`family_key`), `bulk-reject` drops several (`family_keys`), `split` moves `document_ids` into a new family, `merge` folds `family_key` into `target_family_key`, `reassign` moves a `document_id` to `target_family_key`, `document-role` sets a document's `document_role`, `relation` and `related_document_id`, `mark-incorporated` folds amendments into `into_document_id`, and `resolve-decision` answers one blocking decision with `kind` and `answer`. A change the batch cannot make returns `400` with code `invalid_family_change`.
+
+To create a contract, send `POST .../confirm` with `family_key`, and one of `vendor_id`, `new_vendor_name` (creates that vendor), `attach_to_contract_id` (adds the documents to an existing contract) or `no_vendor`. Confirming a family twice returns the same contract with `already_confirmed: true`. `POST .../bulk-confirm` takes either `family_keys` or `minimum_confidence`, never both, with optional `owner_id`, `vendor_id`, `new_vendor_name`, `create_proposed_vendors`, `no_vendor` and `attach_proposed`. A family with an open blocking decision is listed in `skipped` with its `reason`. Coverbase reads each new contract's components in the background. An API key cannot archive a batch.
+
+`GET /v1/contract-records/{contract_id}/family` lists the documents on a contract, with each one's role, relation, `is_root` and a `contributes` line.
+
+## Analyze and classify contract documents
+
+To have Coverbase AI read a contract's documents for components and priced lines, send `POST /v1/contract-records/{contract_id}/component-analysis`. Coverbase returns `202` with `document_count` and runs the read in the background; poll the components and spend lines endpoints for the results. A contract with no documents returns `422` with code `no_documents`.
+
+`GET /v1/contract-records/{contract_id}/document-intake` proposes what each document is (`role`: `root`, `amendment`, `restatement`, `sow`, `order_form`, `exhibit`, `evidence` or `redline_draft`) and how it relates to another document, with `confidence`, `rationale` and `needs_confirmation`. Pass `document_ids` to read only those against the rest. It writes nothing. To record the answer, send `POST .../document-intake/confirm` with `decisions`, each with `document_id`, `role`, `relation` and `related_document_id`. Coverbase stores each decision at full confidence and rebuilds the component slots. A document that is not on the contract, or one that relates to itself, returns `422` with code `invalid_decision`.
+
+To correct which components a document carries, send `PUT /v1/contract-records/{contract_id}/documents/{document_id}/components` with the whole set in `carries` (`component_type`, `effective_date`). The response lists what was `added`, `removed` and `redated`, and `reextraction_queued` says whether Coverbase queued the document to be read again.

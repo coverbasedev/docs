@@ -286,6 +286,60 @@ Open any control to edit its expectation, weight, and guidance. Guidance is wher
   Not every framework covers every topic. NIST CSF, for example, does not explicitly cover penetration testing. When your program cares about something a framework does not name, add a control for it and point the guidance at the specific evidence.
 </Note>
 
+### Manage control sets from MCP or the API
+
+You can create and tune control sets, sections and controls from an MCP client or with an API key, as well as on the **Controls** page. An MCP client reads with `query_controls(kind=...)` and changes things with `mutate(entity=..., action=..., data={...})`. The API routes are on the [Control sets API](/api-reference/control-sets) page. Each call checks the same permission as the dashboard: `control_set:create:org` or `control_set:update:org` for sets and sections, and `control:create:org` or `control:update:org` for controls.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. An API key cannot archive or unarchive a set, a section or a control. A signed-in user does that.
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| List your control sets | `query_controls(kind="control_sets")` | [`GET /v1/control-sets`](/api-reference/control-sets#list-control-sets) |
+| Read every setting of one set | `query_controls(kind="control_set_detail")` | [`GET /v1/control-sets/{control_set_id}`](/api-reference/control-sets#retrieve-a-control-set) |
+| See how many vendors a set applies to | `query_controls(kind="stats")` | [`GET /v1/control-sets/{control_set_id}/stats`](/api-reference/control-sets#get-control-set-stats) |
+| List the library templates | `query_controls(kind="library")` | [`GET /v1/control-set-library`](/api-reference/control-sets#list-library-templates) |
+| Create a set, from scratch or from a template | `mutate(entity="control_set", action="create")` | [`POST /v1/control-sets`](/api-reference/control-sets#create-a-control-set) |
+| Change a set's guidance, strictness, evidence sources or applicability | `mutate(entity="control_set", action="update")` | [`PATCH /v1/control-sets/{control_set_id}`](/api-reference/control-sets#update-a-control-set) |
+| Update many sets at once | `mutate(entity="control_set", action="bulk_update")` | [`PATCH /v1/control-sets/bulk`](/api-reference/control-sets#update-many-control-sets) |
+| List a set's sections | `query_controls(kind="sections")` | [`GET /v1/control-sets/{control_set_id}/sections`](/api-reference/control-sets#list-sections) |
+| Add a section | `mutate(entity="control_section", action="create")` | [`POST /v1/control-sets/{control_set_id}/sections`](/api-reference/control-sets#create-a-section) |
+| Rename, reorder or reconfigure a section | `mutate(entity="control_section", action="update")` | [`PATCH /v1/control-sections/{control_section_id}`](/api-reference/control-sets#update-a-section) |
+| List a set's controls | `query_controls(kind="search")` | [`GET /v1/control-sets/{control_set_id}/controls`](/api-reference/control-sets#list-controls) |
+| Read one control with its guidance | `query_controls(kind="detail")` | [`GET /v1/controls/{control_id}`](/api-reference/control-sets#retrieve-a-control) |
+| Add a control | `mutate(entity="control", action="create")` | [`POST /v1/control-sets/{control_set_id}/controls`](/api-reference/control-sets#create-a-control) |
+| Edit a control's guidance, answer choices or scale | `mutate(entity="control", action="update")` | [`PATCH /v1/controls/{control_id}`](/api-reference/control-sets#update-a-control) |
+| Update many controls at once | `mutate(entity="control", action="bulk_update")` | [`PATCH /v1/controls/bulk`](/api-reference/control-sets#update-many-controls) |
+| Move, archive or unarchive many controls | `mutate(entity="control", action="bulk_action")` | [`POST /v1/controls/bulk-action`](/api-reference/control-sets#move-archive-or-unarchive-controls) |
+| Read a control's versions | `query_controls(kind="history")` | [`GET /v1/controls/{control_id}/history`](/api-reference/control-sets#get-control-history) |
+| See which library copies have a newer template | `query_controls(kind="library_updates")` | [`GET /v1/control-set-library/updates`](/api-reference/control-sets#list-library-updates) |
+| Bring a library copy to the latest template | `mutate(entity="control_set", action="apply_library_update")` | [`POST /v1/control-sets/{control_set_id}/apply-library-update`](/api-reference/control-sets#apply-a-library-update) |
+| Draft a reassessment of the vendors assessed with a set | `mutate(entity="control_set", action="reassess_affected")` | [`POST /v1/control-sets/{control_set_id}/reassess-affected`](/api-reference/control-sets#draft-a-reassessment-of-affected-vendors) |
+| Suggest framework references for every control | `mutate(entity="control_set", action="start_crosswalk")` | [`POST /v1/control-sets/{control_set_id}/crosswalk`](/api-reference/control-sets#start-a-crosswalk) |
+| Read framework coverage and references | `query_controls(kind="crosswalk")` | [`GET /v1/control-sets/{control_set_id}/crosswalk`](/api-reference/control-sets#read-a-crosswalk) |
+| Accept or reject a suggested framework reference | `mutate(entity="control", action="set_framework_reference")` | [`PATCH /v1/controls/{control_id}/framework-references/{index}`](/api-reference/control-sets#review-a-framework-reference) |
+
+#### Control guidance fields
+
+The fields below are the same in an MCP `data` object and in an API request body. A set-level field applies to every control in the set. A control-level field applies to that control only.
+
+| Setting | Field | Where it lives |
+| --- | --- | --- |
+| AI evaluation guidance | `eval_instructions` | Set and control |
+| What the vendor must do | `expectation` | Control |
+| Whether the control needs a document or accepts an attestation | `evidence_requirement` (`document_required` or `attestation_only`) | Control |
+| Strictness, from `1` (lenient) to `5` (skeptical) | `eval_strictness` | Set |
+| Evidence sources the AI may read | `evidence_sources` | Set and control |
+| Keep the analysis inside the listed sources | `restrict_evidence_to_sources` | Set |
+| Required documents | `document_requirement` | Set |
+| Zero Touch eligibility | `is_zero_touch_eligible` | Set |
+| Answer choices | `options`, with `response_type` | Control |
+| Scale the control is scored on | `scale_id` | Set and control |
+| Significant deficiency floor | `significant_deficiency_level_id` and `significant_deficiency_scope` | Control |
+
+To clear `evidence_requirement` or either significant-deficiency field, send `null` in an update. To edit an existing answer choice, send its `id` and `perma_id` with the fields you want to change. Read both from `query_controls(kind="detail")` or `GET /v1/controls/{control_id}`. A new control takes neither `evidence_requirement` nor a significant-deficiency floor, so set them with an update after you create it.
+
+A material edit to a control creates a new version, so past assessments keep the text they were evaluated on. `eval_instructions`, `expectation`, `options` and the significant-deficiency fields are material. A `scale_id` on a set applies to every live control in it. An evidence source of type `contracts` needs a role that can read contracts.
+
 ---
 
 ## Step 7: Assessment plans and reassessment cadence

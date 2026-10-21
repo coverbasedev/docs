@@ -307,6 +307,16 @@ Below that, **Commitment Settings** has its own **Save changes**:
 
 Admins and Members create and edit findings and commitments. Siloed Members can only touch findings on vendors they own, watch or analyze. Recording a justification and expiry when you accept risk needs an Admin or Member role, or a custom role with the finding approve permission. Archiving, exporting and creating are separate permissions in a custom role, and portal actions (sending a reminder, re-requesting, pushing back a completion) need the portal update permission. A grayed-out action shows a "no permission" tooltip. Details: [Permissions and roles](/user-guides/permissions-and-roles).
 
+## Work findings from MCP or the API
+
+You can raise, update and export findings and manage commitments from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_findings(kind=...)` (`search`, `list_detailed`, `detail`, `commitments`, `stats`, `related`). It writes with `mutate(entity="finding", action=...)` (`create`, `update`, `export`) and `mutate(entity="commitment", action=...)` (`create`, `update`, `bulk_update`, `extend_due_date`, `regenerate_review`).
+
+The API routes are `/v1/findings` on the [Findings API](/api-reference/findings), plus `GET /v1/findings-stats`, `POST /v1/findings/exports` and the commitment routes on the [Risk API](/api-reference/risk#findings-commitments-obligations-and-assessments).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#findings-commitments-and-obligations) lists every field.
+
+Archiving a finding needs `finding:archive:org`, which service accounts do not hold. Accepting a finding's risk is a decision for a person. See [The issue acceptance chain](/user-guides/issue-acceptance-chain).
+
 ## Troubleshooting
 
 | What you see | What is happening |

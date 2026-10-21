@@ -110,6 +110,16 @@ The same card appears on the Front Door review of an intake request. Issuing a p
 
 Under **Configuration → External Integrations**, the **Bitsight**, **SecurityScorecard**, **RapidRatings** and **Moody's** panels each take credentials. Saving them the first time adds a Radar source for the provider and a rating drop detector on it. Each pull matches the provider's portfolio to your vendors, records the rating, and raises a Radar signal only when a stored rating moved. The first pull is a baseline. A rating the provider reports as zero is recorded as zero. On the detector, **Rating fell by at least**, **New rating below** and **Grade worsened** are requirements in the provider's own units. A rating change alerts only when it clears every requirement that is switched on, and at least one must be on. **Rating fell by at least** and **New rating below** take zero or more. See each provider's guide for the fields and the default drop that alerts.
 
+## Work the vault from MCP or the API
+
+You can read the vault, add and request certificates, sync networks and manage rule sets from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_vendors(kind="certificates")`, `query_vendors(kind="certificate_summary")`, `query_vendors(kind="certificate_networks")`, `query_vendors(kind="prequalification")` and `query_vendors(kind="prequalification_rule_sets")`. It writes with `mutate(entity="certificate", action=...)`, `mutate(entity="certificate_renewal_job", action="create")`, `mutate(entity="certificate_network", action="sync")`, `mutate(entity="prequalification", action=...)` and `mutate(entity="prequalification_rule_set", action=...)`.
+
+The API routes are `/v1/vendor-certificates`, `/v1/vendor-certificate-requests`, `/v1/certificate-renewal-jobs`, `/v1/certificate-networks`, `/v1/prequalification-rule-sets` and `/v1/vendors/{vendor_id}/prequalification`. See [Manage certificates and prequalification](/api-reference/monitoring-and-insights#manage-certificates-and-prequalification).
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#vendors-services-and-documents) lists every field.
+
+An API key cannot mark a certificate verified, archive a certificate or archive a rule set. A signed-in user does those. The API has no route to override a prequalification result.
+
 ## Troubleshooting
 
 | What you see | Cause | Fix |

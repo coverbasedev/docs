@@ -254,6 +254,14 @@ Contract reminders are configured per organization and can be turned off for a s
   <img src="/images/user-guides/email/contract-reminder.png" alt="Contract renewal reminder email" />
 </Frame>
 
+## Manage email from MCP or the API
+
+You can change your own notification settings, the layouts and the templates from an MCP client. An MCP client reads with `query_platform(kind="notification_settings")`, `query_platform(kind="email_layouts")` and `query_platform(kind="email_templates")`. It writes with `mutate(entity="notification_setting", action="set")`, `mutate(entity="notification_preference", action="update")`, `mutate(entity="email_layout", action="save")` and `mutate(entity="email_template", action=...)` (`create`, `update`).
+
+With an API key, the template routes are `/v1/email-templates`. See [Email templates](/api-reference/platform-configuration#email-templates). They need `email_template` permission, which API keys do not hold, so use a key created by a person whose role holds it. The API has no layout or notification setting routes, and a key cannot archive a template.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#platform-settings) lists every field.
+
 ## Common questions
 
 **An email went out looking wrong. What do I check first?**

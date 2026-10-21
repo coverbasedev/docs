@@ -1,0 +1,412 @@
+---
+title: "Questionnaires API"
+description: "Build questionnaire templates, add show rules, read submissions, and send questionnaire requests to vendors."
+icon: "clipboard-list"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints let your systems build and maintain **questionnaires** (`cbqst_...`), read the **submissions** vendors send back, and open a **request** (`cbsbpt_...`) that asks a vendor to answer one or more questionnaires.
+
+All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token](/api-reference/oauth). See [API conventions](/conventions) for shared behavior. Errors return `{"detail": {"code": "...", "message": "..."}}`.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/questionnaires` | Read questionnaires |
+| `POST` | `/v1/questionnaires` | Create questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}` | Read questionnaires |
+| `PATCH` | `/v1/questionnaires/{questionnaire_id}` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/clone` | Create questionnaires |
+| `PATCH` | `/v1/questionnaires/{questionnaire_id}/content` | Update questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses` | Read questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}` | Read questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/status` | Read questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary/generate` | Update questionnaires |
+| `PUT` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary` | Update questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/answer-review` | Read questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/questions/{question_id}/versions` | Read questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill-suggestions` | Read questionnaires |
+| `GET` | `/v1/questions/{question_id}/autofill-mappings` | Read questionnaires |
+| `POST` | `/v1/questions/{question_id}/autofill-mappings` | Update questionnaires |
+| `DELETE` | `/v1/questions/{question_id}/autofill-mappings/{mapping_id}` | Update questionnaires (not API keys) |
+| `POST` | `/v1/autofill-suggestions/{suggestion_id}/decision` | Update vendors (not API keys) |
+| `POST` | `/v1/emails/drafts` | Update the record the email is about |
+| `PATCH` | `/v1/emails/drafts/{email_id}` | Update the record the email is about |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/conditions` | Update questionnaires |
+| `PATCH` | `/v1/questionnaire-conditions/{condition_id}` | Update questionnaires |
+| `POST` | `/v1/questionnaire-conditions/{condition_id}/archive` | Update questionnaires (not API keys) |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/question-imports` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/condition-imports` | Update questionnaires |
+| `GET` | `/v1/spreadsheet-import-jobs/{job_id}` | Read questionnaires |
+| `POST` | `/v1/emails/preview` | Read portals |
+| `POST` | `/v1/emails/suggestions` | Read portals |
+| `POST` | `/v1/portals/{portal_id}/submissions/{submission_id}/request-revision` | Update portals |
+| `POST` | `/v1/portals/{portal_id}/submissions/{submission_id}/accept` | Update portals (not API keys) |
+| `GET` | `/v1/irq-library` | Read questionnaires |
+| `POST` | `/v1/portals` | Create portals |
+| `PATCH` | `/v1/portals/{portal_id}` | Update portals |
+| `POST` | `/v1/portals/{portal_id}/pause` | Update portals |
+| `POST` | `/v1/portals/{portal_id}/resume` | Update portals |
+| `POST` | `/v1/portals/{portal_id}/invitations` | Update portals |
+| `GET` | `/v1/portals/{portal_id}/submissions` | Read portals |
+| `POST` | `/v1/vendor-outreach-requests/{request_id}/decision` | Update portals (not API keys) |
+| `POST` | `/v1/vendors/{vendor_id}/contact-grants/revoke` | Update vendors (not API keys) |
+| `GET` | `/v1/portal-templates` | Read portals |
+| `GET` | `/v1/portal-templates/{portal_template_id}` | Read portals |
+| `POST` | `/v1/portal-templates/{portal_template_id}/portals` | Create portals |
+
+To list requests and read one request, use the [Portals API](/api-reference/portals). The request object these endpoints return is the same one.
+
+## Archiving is a human decision
+
+API keys cannot archive a questionnaire, a question, an option, a section, or a show rule. When an API key sends `is_archived` or calls an archive endpoint, the call returns `403` with code `api_key_not_allowed`. To archive, use an OAuth token for a person who holds the archive permission.
+
+## Versions
+
+A questionnaire version that people already answered is locked. A content change or a show rule on a locked version returns `409` with code `version_locked`. To change it, draft a new version in Coverbase, then edit the draft.
+
+## List questionnaires
+
+<ParamField path="method" type="GET">
+  `GET /v1/questionnaires`
+</ParamField>
+
+Returns the org's questionnaires, newest first, without their questions.
+
+<ParamField query="type" type="string">
+  Only questionnaires of this type: `irq`, `vendor_onboarding`, `assessment`, `informational`, `follow_up`, `rfp_prequalification`, `rfp_response`, `performance`, or `kys`.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Page size, 1-200.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Rows to skip.
+</ParamField>
+
+The response has `items`, `total`, `limit`, and `offset`. Each item has:
+
+<ResponseField name="id" type="string">Questionnaire ID (`cbqst_...`).</ResponseField>
+<ResponseField name="name" type="string">Name.</ResponseField>
+<ResponseField name="description" type="string | null">Description.</ResponseField>
+<ResponseField name="type" type="string">Questionnaire type.</ResponseField>
+<ResponseField name="version_number" type="integer">Version number.</ResponseField>
+<ResponseField name="version_status" type="string">`draft`, `published`, or `retired`.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether it is archived.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+
+## Create a questionnaire
+
+<ParamField path="method" type="POST">
+  `POST /v1/questionnaires`
+</ParamField>
+
+Creates a blank questionnaire, or forks one from the IRQ library. Returns `201` with the full questionnaire. To add questions, send [`PATCH /v1/questionnaires/{questionnaire_id}/content`](#edit-questions-and-sections).
+
+<ParamField body="name" type="string">
+  Name. Required unless you send `irq_library_slug`.
+</ParamField>
+
+<ParamField body="type" type="string" default="informational">
+  Questionnaire type.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Description.
+</ParamField>
+
+<ParamField body="irq_library_slug" type="string">
+  Fork this inherent risk questionnaire from [`GET /v1/irq-library`](#list-the-irq-library). An invalid slug returns `422` with code `invalid_library_template`.
+</ParamField>
+
+## Get a questionnaire
+
+<ParamField path="method" type="GET">
+  `GET /v1/questionnaires/{questionnaire_id}`
+</ParamField>
+
+Returns the questionnaire with its live `sections`, `questions`, and `conditions`. Each question has `id`, `text`, `response_type`, `section_id`, `external_idx`, `sort_order`, `is_required`, `is_internal_only`, and `options` (each with `id`, `name`, and `value`, its score). An unknown ID returns `404` with code `questionnaire_not_found`.
+
+## Update a questionnaire
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/questionnaires/{questionnaire_id}`
+</ParamField>
+
+Changes the questionnaire's settings. Fields you leave out stay as they are.
+
+<ParamField body="name" type="string">New name.</ParamField>
+<ParamField body="description" type="string">New description.</ParamField>
+<ParamField body="reviewer_ids" type="string[]">The users who review submissions. Replaces the list.</ParamField>
+<ParamField body="is_applied_to_all" type="boolean">Whether the questionnaire applies to every vendor automatically.</ParamField>
+<ParamField body="applied_to_tag_ids" type="string[]">Vendor tags the questionnaire applies to. Replaces the list.</ParamField>
+<ParamField body="inherent_risk_level_ids" type="string[]">Inherent risk levels the questionnaire applies to. Replaces the list.</ParamField>
+<ParamField body="is_archived" type="boolean">Archive or restore. Refused to API keys.</ParamField>
+
+## Clone a questionnaire
+
+<ParamField path="method" type="POST">
+  `POST /v1/questionnaires/{questionnaire_id}/clone`
+</ParamField>
+
+Copies the sections, questions, options, show rules, and reviewers into a new questionnaire of the same type. Automation settings are not copied. Returns `201`. A questionnaire type that cannot be cloned returns `422` with code `clone_not_supported`.
+
+<ParamField body="name" type="string" required>
+  Name of the copy.
+</ParamField>
+
+## Edit questions and sections
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/questionnaires/{questionnaire_id}/content`
+</ParamField>
+
+Adds or changes sections, questions, and options in one save. An item without `id` is added. An item with `id` changes only the fields you send. Items you leave out are not touched. The response is the full questionnaire.
+
+<ParamField body="sections" type="object[]">
+  Each with `id`, `name`, `description`, `external_idx`, `sort_order`, and `is_archived`.
+</ParamField>
+
+<ParamField body="questions" type="object[]">
+  Each with `id`, `text`, `response_type` (for example `free_text`, `select_one`, `select_multiple`, `date`, or `document_upload`), `section_id`, `additional_instructions`, `guidance`, `sort_order`, `external_idx`, `is_required`, `is_internal_only`, `allow_documents`, `require_documents`, `allow_comments`, `is_archived`, and `options`. A new question needs `text` and `response_type`. Each option has `id`, `name`, `description`, `value`, `sort_order`, and `is_archived`.
+</ParamField>
+
+A change the editor would refuse returns `422` or `400` with code `content_refused`, and an invalid body returns `422` with code `invalid_content`.
+
+## List submissions
+
+<ParamField path="method" type="GET">
+  `GET /v1/questionnaires/{questionnaire_id}/responses`
+</ParamField>
+
+Lists the submissions to a questionnaire, newest first, without answers. Takes `limit` (1-200, default 50) and `offset`. Each item has `id`, `questionnaire_id`, `status`, `vendor_id`, `portal_id`, `assignee_id` (the reviewer), `respondent_email_address`, and `created_at`.
+
+## Get a submission
+
+<ParamField path="method" type="GET">
+  `GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}`
+</ParamField>
+
+Returns one submission with `answers`. Each answer has `question_id`, `question_text`, `text`, `option_id`, `selected_option_ids`, `response_data`, and `comment`. Answers to internal-only questions are left out. An unknown ID returns `404` with code `response_not_found`.
+
+## Draft answers with AI
+
+<ParamField path="method" type="POST">
+  `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill`
+</ParamField>
+
+Starts a background run in which Coverbase drafts the submission's answers from the files uploaded to its request. Returns `202` with the submission's `status` and `autofill` progress. To follow the run, poll `GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/status` until `autofill.phase` is `done`, then read the answers with [Get a submission](#get-a-submission).
+
+<ParamField body="use_assessment_documents" type="boolean" default="false">Also draft from the linked assessment's documents.</ParamField>
+<ParamField body="use_web_search" type="boolean" default="true">Set to false to draft from the documents alone.</ParamField>
+<ParamField body="document_ids" type="string[]">Draft from these uploaded files only.</ParamField>
+
+A request with no files returns `400` with code `autofill_no_documents`. A run already in progress returns `409` with code `autofill_in_progress`. A submitted response returns `400` with code `already_submitted`.
+
+## Analysis summary
+
+To regenerate a submission's AI analysis summary, send `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary/generate`. It returns `202`, and the new summary replaces the old one when the run finishes.
+
+To replace the summary yourself, send `PUT /v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary` with `summary`, an object in the assessment summary shape. An invalid summary returns `422` with code `invalid_summary`.
+
+## Answer review and versions
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/answer-review` returns `enabled`, `carried_forward` (each answer copied from an earlier submission, with `carry_forward_state` and `carried_forward_from_id`), and `edit_reviews` (each reviewer change with `original_answer_text`, `edited_answer_text`, and the vendor's `status`). When your org does not use answer review, `enabled` is false and the lists are empty.
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/questions/{question_id}/versions` returns every version of one answer, including replaced ones (`is_archived` is true). A question with no answer returns `404` with code `answer_not_found`.
+
+## What a question writes to the record
+
+An autofill mapping says what a question's answer writes to the vendor, service, engagement, or assessment record when the submission is approved.
+
+`GET /v1/questions/{question_id}/autofill-mappings` lists a question's mappings. Each has `id`, `mode`, `target_object`, `target_property`, `custom_field_config_id`, `record_field_name`, `instruction`, `requires_review`, `prefills_answer`, and `option_rules`.
+
+To add a mapping, or replace the one named by `id`, send `POST /v1/questions/{question_id}/autofill-mappings`. It returns `201` with the mapping.
+
+<ParamField body="target_property" type="string" required>`custom_field`, `record_field`, `tag`, `contact`, or `location`.</ParamField>
+<ParamField body="target_object" type="string" default="vendor">`vendor`, `service`, `engagement`, or `assessment`.</ParamField>
+<ParamField body="mode" type="string" default="fixed">`fixed` writes by option rule or copies the answer. `ai` asks the model, and needs `instruction`.</ParamField>
+<ParamField body="custom_field_config_id" type="string">The custom field, for a `custom_field` target.</ParamField>
+<ParamField body="record_field_name" type="string">The record column, for a `record_field` target.</ParamField>
+<ParamField body="instruction" type="string">What the model should write, for `ai` mode.</ParamField>
+<ParamField body="requires_review" type="boolean" default="true">Whether a reviewer confirms the change before approval writes it.</ParamField>
+<ParamField body="prefills_answer" type="boolean" default="false">Also answer the question from the record.</ParamField>
+<ParamField body="option_rules" type="object[]">For `fixed` mode on a select question: each with `option_perma_id` and either `tag_id` or `literal_value`.</ParamField>
+
+A mapping that would save and then write nothing returns `400` with code `mapping_refused` and the reason in `message`.
+
+To remove a mapping, send `DELETE /v1/questions/{question_id}/autofill-mappings/{mapping_id}`. It returns `204`. API keys get `403` with code `api_key_not_allowed`.
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill-suggestions` lists the changes a submission proposes, each with `id`, `target_object`, `target_property`, `values`, `rejected_values`, and `decision`.
+
+## Decide a proposed record change
+
+<ParamField path="method" type="POST">
+  `POST /v1/autofill-suggestions/{suggestion_id}/decision`
+</ParamField>
+
+A submission can propose changes to the vendor record, such as a tag or a contact, that approval writes. This endpoint accepts or rejects one of them before approval. API keys get `403` with code `api_key_not_allowed`; use a person's OAuth token.
+
+<ParamField body="decision" type="string">`accepted`, `rejected`, or null to clear the verdict.</ParamField>
+<ParamField body="value" type="string">For a contact suggestion, the one address the verdict is on.</ParamField>
+
+## Preview and draft email text
+
+To see an email as the recipient will read it, send `POST /v1/emails/preview` with `subject`, `body`, and the records whose values fill its variables (`vendor_id`, `assessment_id`, `portal_id`, `case_thread_id`, `service_ids`). Variables written as `{{namespace::path}}` are filled; any that nothing can fill stay visible. Send `as_sent: true` to also get `html`, the message as the send path builds it inside your org's email layout. A portal that does not exist returns `404` with code `portal_not_found`.
+
+To have Coverbase's AI draft an email subject or body, send `POST /v1/emails/suggestions` with `field_name` (`subject` or `body`), `instruction`, and optionally the email so far (`subject`, `body`, `attachments`) and the `assessment_id`, `eval_ids`, or `vendor_id` it is about. It returns `field_name` and `text`. Nothing is saved or sent.
+
+## Email drafts
+
+To save an unsent email about a record, send `POST /v1/emails/drafts` with `object_id`, `object_type` (`vendor`, `vendor_document`, `portal`, `contract`, `task`, `questionnaire_review`, `case`, or `case_thread`), `from_address`, and optionally `to_addresses`, `cc_emails`, `bcc_emails`, `subject`, `text_body`, and `html_body`. Each address is an object with `email` and an optional `name`. It returns `201` with `id`, `status` (`draft`), `subject`, `object_id`, and `object_type`. A person reviews and sends the draft from the record's email tab. The call needs permission to update the record. An unknown type returns `422` with code `invalid_object_type`, and a record that does not exist returns `404` with code `object_not_found`.
+
+To change a draft, send `PATCH /v1/emails/drafts/{email_id}` with the fields to change. An email that was already sent returns `409` with code `not_a_draft`.
+
+## Import questions and show rules from a workbook
+
+To create or update a questionnaire's questions from an `.xlsx` workbook, send it as a multipart upload (`file`, and `dry_run`) to `POST /v1/questionnaires/{questionnaire_id}/question-imports`. The import runs in the background: the call returns `202` with the job's `id` and `status`. To follow it, poll `GET /v1/spreadsheet-import-jobs/{job_id}` until `status` is `completed`, `rejected` (the workbook as a whole could not be imported), or `failed`. The finished job's `result` has a `summary` (rows to create, update, and skip) and `problems` (each skipped row and why). `dry_run` defaults to true, so send `false` to write.
+
+To add show rules from a workbook, send the same multipart upload to `POST /v1/questionnaires/{questionnaire_id}/condition-imports`. It runs while you wait and returns the same `summary` and `problems`. Nothing is kept from a preview, or from a workbook whose every row failed. A file that is not a workbook returns `422`.
+
+## Add a show rule
+
+<ParamField path="method" type="POST">
+  `POST /v1/questionnaires/{questionnaire_id}/conditions`
+</ParamField>
+
+A show rule shows its targets only when an earlier answer matches. Send either the trigger fields or `clauses`. Returns `201` with the rule.
+
+<ParamField body="question_id" type="string">The trigger question.</ParamField>
+<ParamField body="predicate" type="string">`one_of`, `not_one_of`, `date_after`, `date_on_or_after`, `date_before`, or `date_on_or_before`.</ParamField>
+<ParamField body="reference_values" type="string[]">Option IDs, or one Unix timestamp at UTC midnight (as a string) for a date predicate.</ParamField>
+<ParamField body="clauses" type="object[]">Instead of the three fields above, up to 10 clauses (`question_id`, `predicate`, `reference_values`) that must all hold.</ParamField>
+<ParamField body="target_question_ids" type="string[]">Questions to show.</ParamField>
+<ParamField body="target_section_ids" type="string[]">Sections to show.</ParamField>
+<ParamField body="target_option_ids" type="string[]">Options to show.</ParamField>
+
+A rule needs at least one target. An invalid rule returns `422` with code `invalid_condition`. A rule the editor refuses, for example an internal-only trigger that controls a question the vendor sees, returns `422` with code `condition_refused`.
+
+## Update a show rule
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/questionnaire-conditions/{condition_id}`
+</ParamField>
+
+Takes the same fields as [Add a show rule](#add-a-show-rule). Fields you leave out keep their value. The updated rule has a new `id`, because submissions already answered keep the old rule. An unknown ID returns `404` with code `condition_not_found`.
+
+## Archive a show rule
+
+<ParamField path="method" type="POST">
+  `POST /v1/questionnaire-conditions/{condition_id}/archive`
+</ParamField>
+
+Removes the rule, so its targets always show. Returns `204`. API keys get `403` with code `api_key_not_allowed`.
+
+## List the IRQ library
+
+<ParamField path="method" type="GET">
+  `GET /v1/irq-library`
+</ParamField>
+
+Returns the curated inherent risk questionnaires. Each has `slug`, `name`, `description`, `num_questions`, and `risk_category`.
+
+## Open a request to a vendor
+
+<ParamField path="method" type="POST">
+  `POST /v1/portals`
+</ParamField>
+
+Opens a request that asks one vendor to answer questionnaires, and returns `201` with the [request](/api-reference/portals). Coverbase adds the informational questionnaires that apply to the vendor automatically, and routes each submission to the questionnaire's reviewer or else to the credential's user. Opening a request emails nobody.
+
+<ParamField body="vendor_id" type="string" required>Vendor (`cbvndr_...`).</ParamField>
+<ParamField body="questionnaire_ids" type="string[]" required>Questionnaires to ask for, in order.</ParamField>
+<ParamField body="type" type="string" default="informational">`irq`, `informational`, or `vendor_onboarding`. Any other type returns `422` with code `invalid_type`.</ParamField>
+<ParamField body="due_at" type="integer">Unix timestamp the vendor should answer by.</ParamField>
+<ParamField body="displayed_message" type="string">Message the vendor sees on the request.</ParamField>
+<ParamField body="service_ids" type="string[]">Scope IRQ and informational answers to these services of the vendor.</ParamField>
+<ParamField body="engagement_id" type="string">Scope an IRQ to this engagement. Do not send it with `service_ids`.</ParamField>
+
+A vendor with engagements needs `engagement_id` or `service_ids` for an IRQ, or the call returns `400` with code `request_refused`.
+
+## Update a request
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/portals/{portal_id}`
+</ParamField>
+
+Changes the request's due date or the message the vendor sees on it, and returns the request. Fields you leave out stay as they are.
+
+<ParamField body="due_at" type="integer">Unix timestamp the vendor should answer by.</ParamField>
+<ParamField body="displayed_message" type="string">Message the vendor sees on the request.</ParamField>
+
+## Pause and resume a request
+
+<ParamField path="method" type="POST">
+  `POST /v1/portals/{portal_id}/pause`
+</ParamField>
+
+Puts an open request on hold. Reminders stop, and the vendor sees the request on hold. A request that is not open returns `409` with code `portal_not_open`.
+
+<ParamField path="method" type="POST">
+  `POST /v1/portals/{portal_id}/resume`
+</ParamField>
+
+Takes the request off hold. Send `due_at` to set a new due date. Without it, the due date moves on by the time the request was held. Both return the request.
+
+## Send the invitation
+
+<ParamField path="method" type="POST">
+  `POST /v1/portals/{portal_id}/invitations`
+</ParamField>
+
+Emails the invitation to the vendor and grants each recipient access to the request. This contacts the vendor. Returns `201` with `email_id` and `portal_id`.
+
+<ParamField body="subject" type="string" required>Subject. Template variables resolve.</ParamField>
+<ParamField body="text" type="string" required>Body. Template variables resolve.</ParamField>
+<ParamField body="to_addresses" type="string[]" required>Recipients.</ParamField>
+<ParamField body="cc_emails" type="string[]">Copy recipients.</ParamField>
+<ParamField body="bcc_emails" type="string[]">Blind copy recipients.</ParamField>
+
+A recipient whose address bounced or unsubscribed returns `422` with code `recipient_suppressed`.
+
+## Send an automatic collection's request
+
+When an assessment collects documents automatically but cannot send its request to the vendor unasked, a person decides who receives it. Send `POST /v1/vendor-outreach-requests/{request_id}/decision` with `revision` (the revision you read in Coverbase), `recipients` (each with `email`, `role` as `to`, `cc`, or `bcc`, and `source`), an optional `message` (`subject`, `text`, `due_at`), and optional `recipient_consent` (each with `email` and `intent`, to save or allow an address as a vendor contact). This contacts the vendor. It returns `request_id`, `outcome`, and `skip_reason`. A request that changed since you read it returns `outcome` `skipped` with the reason. An unknown ID returns `404` with code `outreach_request_not_found`. API keys get `403` with code `api_key_not_allowed`.
+
+To stop automatic document requests going to a vendor contact someone allowed, send `POST /v1/vendors/{vendor_id}/contact-grants/revoke` with `email`. The contact stays saved. It returns `email`, `revoked` (false when the grant was not live), and `vendor_contact`. Only the vendor's owner or an admin may revoke a grant, so API keys get `403` with code `api_key_not_allowed`.
+
+## List submissions on a request
+
+<ParamField path="method" type="GET">
+  `GET /v1/portals/{portal_id}/submissions`
+</ParamField>
+
+Lists the rounds the vendor submitted, newest first. Each has `id`, `status`, `submitted_at`, and `submitted_by_email_address`.
+
+## Review a submitted round
+
+To send a submitted round back to the vendor, send `POST /v1/portals/{portal_id}/submissions/{submission_id}/request-revision` with `revision_message`. To accept it, send `POST /v1/portals/{portal_id}/submissions/{submission_id}/accept`. API keys cannot accept a round and get `403` with code `api_key_not_allowed`. Both return the submission. A round that is not `submitted` returns `409` with code `not_submitted`. A round that carries a findings commitment returns `409` with code `commitment_round`, because you decide it on the commitment.
+
+## Portal templates
+
+<ParamField path="method" type="GET">
+  `GET /v1/portal-templates`
+</ParamField>
+
+Lists the org's portal templates. Filter with `portal_type`. Each has `id`, `name`, `description`, `portal_type`, `lifecycle` (`ephemeral` or `persistent`), `due_days`, `is_archived`, and `ask_specs`.
+
+<ParamField path="method" type="GET">
+  `GET /v1/portal-templates/{portal_template_id}`
+</ParamField>
+
+Returns one template, or `404` with code `portal_template_not_found`.
+
+<ParamField path="method" type="POST">
+  `POST /v1/portal-templates/{portal_template_id}/portals`
+</ParamField>
+
+Opens a request from an ephemeral template and returns `201` with the request. It emails nobody. The body takes `vendor_id`, `due_at`, `service_ids`, and `engagement_id`. A persistent template, or an IRQ that needs a scope, returns `422` with code `instantiate_refused`.

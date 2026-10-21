@@ -381,6 +381,151 @@ Coverbase reads the documents and returns the passage the answer rests on. Full 
     The assistant lists reassessments via `query_radar(kind="reassessments")` to check for an existing one, then proposes a new reassessment (radar event, vendors, optional plan) and calls `mutate(entity="reassessment", action="create", data={..., "confirm": true})`. This never opens a case.
   </Accordion>
 </AccordionGroup>
+
+## Zero Touch Assessments
+
+These prompts launch, rank, review and revise [Zero Touch](/user-guides/zero-touch-assessments) runs. Every write asks you first.
+
+<AccordionGroup>
+  <Accordion title="Triage a list of vendors" defaultOpen icon="bolt">
+    > Run a Zero Touch assessment on Acme, Globex and Initech, and refresh their vendor intelligence first.
+
+    The assistant resolves each name to a vendor, proposes the batch, and after you confirm calls `mutate(entity="assessment", action="launch_zero_touch_bulk", data={..., "refresh_vendor_intelligence": true, "confirm": true})`. It reports the runs that started and any vendor that failed to launch.
+  </Accordion>
+
+  <Accordion title="Rank the portfolio" icon="ranking-star">
+    > Which vendors have the worst Zero Touch scores? Show me the bottom 25.
+
+    The assistant calls `query_assessments(kind="zero_touch_leaderboard", limit=25)` and lists each vendor with its score and the components behind it.
+  </Accordion>
+
+  <Accordion title="Make a control set Zero Touch eligible" icon="toggle-on">
+    > Use our Vendor Baseline control set in Zero Touch runs.
+
+    The assistant finds the set with `query_controls(kind="control_sets")`, proposes the change, and calls `mutate(entity="control_set", action="update", data={..., "is_zero_touch_eligible": true, "confirm": true})`. To see what runs evaluate afterwards, it reads `query_assessments(kind="zero_touch_config")`.
+  </Accordion>
+
+  <Accordion title="Change how runs score" icon="sliders">
+    > Turn off the people component in Zero Touch scoring and weight security twice as heavily as financial health.
+
+    The assistant reads the current configuration with `query_assessments(kind="zero_touch_config")`, proposes the new weights, and calls `mutate(entity="zero_touch", action="configure", data={..., "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Review a batch of runs" icon="list-check">
+    > Approve every Zero Touch run from last week that scored above 80, and escalate the rest.
+
+    The assistant lists the runs, shows you which go in each group, and records one decision per group with `mutate(entity="zero_touch", action="bulk_review", data={..., "confirm": true})`. It reports any run it skipped, for example a run that is still working.
+  </Accordion>
+
+  <Accordion title="Fix a run that researched the wrong company" icon="pen">
+    > The Zero Touch run for Appital looked at appital.com. The right website is appital.io.
+
+    The assistant calls `mutate(entity="zero_touch", action="correct", data={..., "confirm": true})` with your words. The run is re-scored, and your instruction lands in its review trail. To replace the profile too, it follows with `mutate(entity="zero_touch", action="reprofile", ...)`.
+  </Accordion>
+
+  <Accordion title="Revise a result from your notes" icon="file-pen">
+    > Here are my notes from the call with Acme. Update the Zero Touch result to match.
+
+    The assistant starts a proposal with `mutate(entity="zero_touch", action="propose_revision", ...)`, polls `query_assessments(kind="zero_touch_revision")` until it is ready, and shows you each proposed change with the score before and after. It applies the changes you accept with `mutate(entity="zero_touch", action="apply_revision", ...)`, which saves a new version. To undo it later, ask it to restore the earlier version.
+  </Accordion>
+</AccordionGroup>
+
+## Radar triage and cases
+
+These prompts work the [Radar signal queue](/user-guides/radar-signals) and track incidents in cases.
+
+<AccordionGroup>
+  <Accordion title="Work the In alert queue" defaultOpen icon="satellite-dish">
+    > Walk me through the signals in alert from the last 7 days, most severe first.
+
+    The assistant calls `query_radar(kind="signals", ...)` and, for each signal you open, `query_radar(kind="signal_detail")` for its alerts and reasoning. For each one it offers to acknowledge, dismiss, move to another status, or open a case.
+  </Accordion>
+
+  <Accordion title="Dismiss noise and teach the detector" icon="bell-slash">
+    > These three signals are routine patch notes. Dismiss them with the reason "routine release, no security impact".
+
+    The assistant proposes the dismissal and calls `mutate(entity="radar_signal", action="dismiss", data={..., "confirm": true})`. Each dismissed alert becomes a negative example on the detector that raised it.
+  </Accordion>
+
+  <Accordion title="Acknowledge a real signal and decide its risk impact" icon="circle-check">
+    > The Northwind breach is real. Acknowledge it and apply the proposed residual risk changes.
+
+    The assistant calls `mutate(entity="radar_signal", action="acknowledge", ...)`, shows you the proposed change for each affected vendor, and records your decision with `mutate(entity="radar_signal", action="decide_risk_impact", ...)`.
+  </Accordion>
+
+  <Accordion title="Open a case for an incident" icon="folder-open">
+    > Open a case for the Northwind breach, add every affected vendor, and assign it to me.
+
+    The assistant calls `mutate(entity="case", action="create", ...)` linked to the signal, then `mutate(entity="case_thread", action="bulk_create", ...)` for the vendors. Each vendor's owners and analysts get an in-app notice. Nothing reaches the vendors, so you send the emails from the case page.
+  </Accordion>
+
+  <Accordion title="Update vendor threads as replies come in" icon="reply">
+    > Acme confirmed they were not affected. Close their thread.
+
+    The assistant reads the case with `query_radar(kind="case_detail")`, finds Acme's thread, and calls `mutate(entity="case_thread", action="update", data={..., "status": "closed", "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Close a case" icon="flag-checkered">
+    > Close the Northwind case as resolved.
+
+    The assistant warns you that closing as resolved raises the residual risk of the case's vendors, then calls `mutate(entity="case", action="update", data={..., "confirm": true})` with the resolution.
+  </Accordion>
+
+  <Accordion title="Find out why an event never alerted" icon="magnifying-glass">
+    > Why didn't we get a signal for the Contoso outage?
+
+    The assistant calls `query_radar(kind="event_diagnostics", ...)`, which traces the event from ingestion through source and detector and names the step that stopped it, with the action that fixes it.
+  </Accordion>
+
+  <Accordion title="Add a source and back-test a detector" icon="vial">
+    > Add the Contoso status page RSS feed as a source, then test our outage detector against the last 30 days.
+
+    The assistant calls `mutate(entity="radar_source", action="create", ...)`, then `mutate(entity="radar_detector", action="test", ...)`, and reads the candidates with `query_radar(kind="detector_test_run")`. You choose which candidates become real alerts.
+  </Accordion>
+</AccordionGroup>
+
+## Control guidance
+
+These prompts build and tune [control sets](/user-guides/admin-setup#manage-control-sets-from-mcp-or-the-api), their sections and their controls.
+
+<AccordionGroup>
+  <Accordion title="Create a control set from the library" defaultOpen icon="book">
+    > Create a control set from the SOC 2 library template and apply it to vendors tagged SaaS.
+
+    The assistant reads the templates with `query_controls(kind="library")`, proposes the set, and calls `mutate(entity="control_set", action="create", data={..., "use_library": "...", "applied_to_tag_ids": [...], "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Tighten a set's strictness and evidence sources" icon="sliders">
+    > Make our Data Protection set stricter, and limit it to the SOC 2 report and the privacy policy.
+
+    The assistant reads the set with `query_controls(kind="control_set_detail")`, proposes `eval_strictness` and `evidence_sources`, and calls `mutate(entity="control_set", action="update", data={..., "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Add a section and a control" icon="plus">
+    > Add a section called Business continuity to the Vendor Baseline set, with a control asking whether the vendor tests its DR plan every year.
+
+    The assistant calls `mutate(entity="control_section", action="create", ...)`, then `mutate(entity="control", action="create", data={..., "control_section_id": "...", "expectation": "...", "eval_instructions": "...", "confirm": true})`.
+  </Accordion>
+
+  <Accordion title="Require a document for a control" icon="file-circle-check">
+    > The encryption at rest control should need a document, not an attestation.
+
+    The assistant calls `mutate(entity="control", action="update", data={..., "evidence_requirement": "document_required", "confirm": true})`. The response carries the control's new version ID.
+  </Accordion>
+
+  <Accordion title="Change a control's answer choices" icon="list-ol">
+    > Add a "Partially" option between Yes and No on the MFA control.
+
+    The assistant reads the existing choices and their `perma_id` with `query_controls(kind="detail")`, then sends the new choice in `options` with `mutate(entity="control", action="update", ...)`.
+  </Accordion>
+
+  <Accordion title="Set a significant deficiency floor" icon="arrow-down-to-line">
+    > If a vendor fails the incident response control, floor its InfoSec score at High.
+
+    The assistant finds the level on your risk scale with `query_platform(kind="scales")`, then calls `mutate(entity="control", action="update", data={..., "significant_deficiency_level_id": "...", "significant_deficiency_scope": "risk_domain", "confirm": true})`.
+  </Accordion>
+</AccordionGroup>
+
 ## Tuning the AI
 
 <AccordionGroup>

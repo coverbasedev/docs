@@ -545,6 +545,81 @@ If your organization runs a control set of its own rather than one of these, no 
   </Step>
 </Steps>
 
+## Run Zero Touch from MCP or the API
+
+You can do every task in this guide from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_assessments(kind=...)` and changes things with `mutate(entity=..., action=..., data={...})`. The API routes sit under `/v1/zero-touch-assessments` and take an `ak_` API key. Each call checks the same permission as the matching dashboard action.
+
+Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The write itself carries `confirm: true` inside `data`. See [Roles and permissions](/mcp/permissions#write-protection).
+
+An API key cannot archive a run or record a run's outcome. A review with `action` set to `archived`, or with an `approval_option_id`, returns `403` with code `api_key_not_allowed`. A signed-in user makes those decisions.
+
+Adding shipped templates and choosing a template need `control_set:create:org`. API keys hold it, so a key can do both.
+
+### Set up what runs evaluate
+
+A run evaluates every control set marked Zero Touch eligible. To make one of your own control sets eligible, set `is_zero_touch_eligible` to `true` on it. To use a shipped template instead, add it from the template list.
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| Make a control set Zero Touch eligible | `mutate(entity="control_set", action="update")` with `is_zero_touch_eligible: true` | [`PATCH /v1/control-sets/{control_set_id}`](/api-reference/control-sets#update-a-control-set) with `is_zero_touch_eligible` |
+| List the shipped templates and the ones you added | `query_assessments(kind="zero_touch_templates")` | [`GET /v1/zero-touch-assessments/templates`](/api-reference/zero-touch-assessments#list-and-choose-templates) |
+| Add shipped templates as eligible control sets | `mutate(entity="zero_touch", action="add_templates")` | [`POST /v1/zero-touch-assessments/library`](/api-reference/zero-touch-assessments#add-templates-from-the-library) |
+| Point future runs at one shipped template | `mutate(entity="zero_touch", action="set_template")` | [`POST /v1/zero-touch-assessments/template`](/api-reference/zero-touch-assessments#list-and-choose-templates) |
+| Read the eligible control sets and the scoring configuration | `query_assessments(kind="zero_touch_config")` | [`GET /v1/zero-touch-assessments/config`](/api-reference/zero-touch-assessments#read-and-set-the-scoring-configuration) |
+| Change components, weights, the score target or the automated review | `mutate(entity="zero_touch", action="configure")` | [`PUT /v1/zero-touch-assessments/config`](/api-reference/zero-touch-assessments#read-and-set-the-scoring-configuration) |
+
+`set_template` refuses when your organization runs an eligible control set of its own. In that case, change eligibility on your control sets instead.
+
+### Launch runs
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| List the documents a run can use for each vendor | `query_assessments(kind="zero_touch_documents")` | [`GET /v1/zero-touch-assessments/documents`](/api-reference/zero-touch-assessments#list-documents-a-run-can-use) |
+| Launch one run | `mutate(entity="assessment", action="launch_zero_touch")` | [`POST /v1/zero-touch-assessments`](/api-reference/zero-touch-assessments#launch-a-run) |
+| Launch runs for many vendors and prospects | `mutate(entity="assessment", action="launch_zero_touch_bulk")` | [`POST /v1/zero-touch-assessments/bulk`](/api-reference/zero-touch-assessments#launch-in-bulk) |
+| Move a prospect into the portfolio at the Onboarding status | `mutate(entity="vendor", action="promote_prospect")` | [`POST /v1/vendors/{vendor_id}/promote-prospect`](/api-reference/zero-touch-assessments#promote-a-prospect) |
+
+A bulk launch returns the runs that started and, separately, the vendors that failed. Read both lists, because a partial success still returns `201`.
+
+### Read and rank results
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| Read one run | `query_assessments(kind="zero_touch")` | [`GET /v1/zero-touch-assessments/{assessment_id}`](/api-reference/zero-touch-assessments#read-a-run) |
+| Rank vendors by their latest score | `query_assessments(kind="zero_touch_leaderboard")` | [`GET /v1/zero-touch-assessments/leaderboard`](/api-reference/zero-touch-assessments#rank-a-portfolio) |
+| Read the module counters | `query_assessments(kind="zero_touch_pulse")` | [`GET /v1/zero-touch-assessments/pulse`](/api-reference/zero-touch-assessments#read-the-module-counters) |
+| Read the review trail | `query_assessments(kind="zero_touch_audit")` | [`GET /v1/zero-touch-assessments/{assessment_id}/audit`](/api-reference/zero-touch-assessments#read-the-audit-trail) |
+
+### Review, triage and correct
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| Approve, escalate, archive or leave a note on a run | `mutate(entity="zero_touch", action="review")` | [`POST /v1/zero-touch-assessments/{assessment_id}/review`](/api-reference/zero-touch-assessments#review-a-run) |
+| Record one decision on a batch of runs | `mutate(entity="zero_touch", action="bulk_review")` | [`POST /v1/zero-touch-assessments/bulk-review`](/api-reference/zero-touch-assessments#review-runs-in-bulk) |
+| Confirm or dismiss what a run concluded about controls | `mutate(entity="zero_touch", action="triage")` | [`POST /v1/zero-touch-assessments/{assessment_id}/triage`](/api-reference/zero-touch-assessments#triage-controls) |
+| Correct what a run was built on, in plain language | `mutate(entity="zero_touch", action="correct")` | [`POST /v1/zero-touch-assessments/{assessment_id}/correct`](/api-reference/zero-touch-assessments#correct-a-runs-inputs) |
+| Re-research the company behind a run | `mutate(entity="zero_touch", action="reprofile")` | [`POST /v1/zero-touch-assessments/{assessment_id}/reprofile`](/api-reference/zero-touch-assessments#re-source-a-runs-vendor-profile) |
+| Recompute the score against today's inputs | `mutate(entity="zero_touch", action="rescore")` | [`POST /v1/zero-touch-assessments/{assessment_id}/rescore`](/api-reference/zero-touch-assessments#re-score-a-run) |
+| Run the automated review again | `mutate(entity="zero_touch", action="auto_review")` | [`POST /v1/zero-touch-assessments/{assessment_id}/auto-review`](/api-reference/zero-touch-assessments#run-the-automated-review-again) |
+| Edit, dismiss, reopen or delete lines of what to ask the vendor for | `mutate(entity="zero_touch", action="set_vendor_requests")` | [`PATCH /v1/zero-touch-assessments/{assessment_id}/vendor-requests`](/api-reference/zero-touch-assessments#edit-what-to-ask-the-vendor-for) |
+
+To triage controls, you need their eval IDs. Read them with `query_assessments(kind="evals", assessment_id=...)`. To edit what to ask the vendor for, you need each line's key, which `query_assessments(kind="zero_touch")` lists.
+
+### Revise a result and manage versions
+
+| Task | MCP call | API route |
+| --- | --- | --- |
+| Start reading analyst text against a result | `mutate(entity="zero_touch", action="propose_revision")` | [`POST /v1/zero-touch-assessments/{assessment_id}/revisions`](/api-reference/zero-touch-assessments#revise-a-result-from-analyst-text) |
+| Check a proposal's progress and read its changes | `query_assessments(kind="zero_touch_revision")` | [`GET /v1/zero-touch-assessments/{assessment_id}/revisions/{proposal_id}`](/api-reference/zero-touch-assessments#revise-a-result-from-analyst-text) |
+| Score a subset of the changes without saving them | `query_assessments(kind="zero_touch_revision_preview")` | [`POST /v1/zero-touch-assessments/{assessment_id}/revisions/{proposal_id}/preview`](/api-reference/zero-touch-assessments#revise-a-result-from-analyst-text) |
+| Apply the accepted changes as a new version | `mutate(entity="zero_touch", action="apply_revision")` | [`POST /v1/zero-touch-assessments/{assessment_id}/revisions/{proposal_id}/apply`](/api-reference/zero-touch-assessments#revise-a-result-from-analyst-text) |
+| List every version of a revised result | `query_assessments(kind="zero_touch_versions")` | [`GET /v1/zero-touch-assessments/{assessment_id}/versions`](/api-reference/zero-touch-assessments#list-and-restore-versions) |
+| Read an earlier version | `query_assessments(kind="zero_touch", params={"version": 2})` | [`GET /v1/zero-touch-assessments/{assessment_id}?version=2`](/api-reference/zero-touch-assessments#read-a-run) |
+| Make an earlier version current again | `mutate(entity="zero_touch", action="restore_version")` | [`POST /v1/zero-touch-assessments/{assessment_id}/versions/{version_number}/restore`](/api-reference/zero-touch-assessments#list-and-restore-versions) |
+| Rerun the pipeline stages the current revision flagged | `mutate(entity="zero_touch", action="rerun_revision")` | [`POST /v1/zero-touch-assessments/{assessment_id}/rerun`](/api-reference/zero-touch-assessments#rerun-flagged-stages) |
+
+A rerun updates the vendor's shared research but not the run's score. To replay the revision over the new research, rescore the run afterwards.
+
 ## Things worth knowing
 
 <AccordionGroup>
