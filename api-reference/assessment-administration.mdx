@@ -20,12 +20,16 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `PATCH` | `/v1/assessment-plans/{assessment_plan_id}` | `assessment:update:org` |
 | `PUT` | `/v1/assessment-plans/{assessment_plan_id}/default` | `assessment:update:org` |
 | `GET` | `/v1/approval-options` | `assessment:read:org` |
+| `POST` | `/v1/approval-options` | `assessment:update:org` |
+| `PATCH` | `/v1/approval-options/{approval_option_id}` | `assessment:update:org` |
 | `GET` | `/v1/reassessment-triggers` | `assessment:read:org` |
 | `POST` | `/v1/reassessment-triggers` | `assessment:update:org` |
 | `GET` | `/v1/reassessment-triggers/{trigger_id}` | `assessment:read:org` |
 | `PATCH` | `/v1/reassessment-triggers/{trigger_id}` | `assessment:update:org` |
 | `POST` | `/v1/assessments/{assessment_id}/clone` | `assessment:create:org` |
+| `POST` | `/v1/assessments/{assessment_id}/resume` | `assessment:run:org` |
 | `POST` | `/v1/assessments/{assessment_id}/rerun-failed-evals` | `assessment:run:org` |
+| `POST` | `/v1/assessments/{assessment_id}/rerun-summary` | `assessment:update:org` |
 | `GET` | `/v1/assessments/{assessment_id}/sla` | `assessment:read:org` |
 | `PATCH` | `/v1/assessments/{assessment_id}/sla` | `assessment:update:org` |
 | `PUT` | `/v1/assessments/{assessment_id}/missing-documents/{document_type}` | `assessment:update:org` |
@@ -34,6 +38,7 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/assessments/{assessment_id}/significant-deficiencies` | `assessment:read:org` |
 | `GET` | `/v1/assessments/{assessment_id}/risk-domain-scores` | `assessment:read:org` |
 | `GET` | `/v1/assessments/{assessment_id}/vendor-rating` | `assessment:read:org` |
+| `POST` | `/v1/evals/bulk-update` | `assessment:update:org` |
 | `POST` | `/v1/evals/bulk-score` | `assessment:update:org` |
 | `POST` | `/v1/evals/bulk-category` | `assessment:update:org` |
 | `POST` | `/v1/evals/bulk-review-note` | `assessment:update:org` |
@@ -41,12 +46,17 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/reviews/{review_id}` | `assessment:read:org` |
 | `GET` | `/v1/follow-ups` | `follow_up:read:org` |
 | `POST` | `/v1/follow-ups` | `follow_up:create:org` |
+| `POST` | `/v1/follow-ups/bulk` | `follow_up:update:org` |
 | `GET` | `/v1/follow-ups/{follow_up_id}` | `follow_up:read:org` |
 | `PATCH` | `/v1/follow-ups/{follow_up_id}` | `follow_up:update:org` |
 | `GET` | `/v1/follow-up-rounds` | `follow_up:read:org` |
+| `POST` | `/v1/follow-up-rounds/current` | `follow_up:create:org` |
 | `GET` | `/v1/follow-up-rounds/{round_id}` | `follow_up:read:org` |
+| `PATCH` | `/v1/follow-up-rounds/{round_id}` | `follow_up:update:org` |
 | `GET` | `/v1/slas` | `vendor:read:org` |
+| `POST` | `/v1/slas` | `vendor:update:org` |
 | `GET` | `/v1/slas/{sla_id}` | `vendor:read:org` |
+| `PATCH` | `/v1/slas/{sla_id}` | `vendor:update:org` |
 | `GET` | `/v1/slas/{sla_id}/measurements` | `vendor:read:org` |
 | `GET` | `/v1/scales` | `assessment:read:org` |
 | `GET` | `/v1/scales/{scale_id}` | `assessment:read:org` |
@@ -60,10 +70,10 @@ Every error body has a `detail` object with a `code` and a `message`.
 
 | Status | Code | When |
 | ------ | ---- | ---- |
-| `403` | `api_key_not_allowed` | An API key tried an action that stays a human decision: setting summary instructions, archiving a follow-up, or waiving a monitoring entry. |
+| `403` | `api_key_not_allowed` | An API key tried an action that stays a human decision: setting summary instructions, archiving a follow-up or an SLA, closing an issue on evals, or waiving a monitoring entry. |
 | `404` | `assessment_not_found`, `assessment_plan_not_found`, `reassessment_trigger_not_found`, `review_not_found`, `follow_up_not_found`, `follow_up_round_not_found`, `sla_not_found`, `scale_not_found`, `eval_not_found`, `scale_level_not_found`, `monitoring_record_not_found`, `monitoring_entry_not_found` | The ID does not exist in your organization. |
 | `404` | `not_enabled` | Monitoring records are not enabled for your organization. |
-| `409` | `prompt_busy`, `monitoring_record_closed` | The summary prompt is being edited, or the monitoring record is closed. |
+| `409` | `prompt_busy`, `monitoring_record_closed`, `assessment_run_active`, `summary_conflict`, `eval_not_an_issue` | The summary prompt is being edited, the monitoring record is closed, an AI run is already active, the summary changed since you read it, or a closing outcome was sent for an eval that is not an issue. |
 | `422` | `invalid_assessment_plan`, `invalid_reassessment_trigger`, `invalid_monitoring_entry` | The request refers to something that does not exist or breaks a rule. The message says which. |
 
 ## Assessment plans
@@ -120,6 +130,8 @@ To make a plan the org default, send `PUT /v1/assessment-plans/{assessment_plan_
 
 `GET /v1/approval-options` lists the outcomes a reviewer picks from when completing an assessment. Set `include_archived=true` to include archived options.
 
+To add an option, send `POST /v1/approval-options` with `label`, `color` and `icon`. `PATCH /v1/approval-options/{approval_option_id}` changes any of the three. Archiving an option is not available to API keys.
+
 ## Reassessment triggers
 
 A **reassessment trigger** opens a draft [reassessment](/api-reference/reassessments) when a radar event matches its rules and vendor scope.
@@ -153,6 +165,14 @@ The body also accepts `description`, `assignee_id`, `applies_to_all_vendors`, `s
 ### Clone an assessment
 
 `POST /v1/assessments/{assessment_id}/clone` copies an assessment with its scope and documents and starts the copy's AI run. Returns `201 Created` with the new `id`, `name`, `vendor_id` and `run_started`.
+
+### Resume an assessment
+
+`POST /v1/assessments/{assessment_id}/resume` restarts the assessment's AI run from its latest step and closes an open vendor portal first. Returns `202 Accepted`. It returns `409` with `assessment_run_active` while a run is already going, and `400` with `assessment_no_control_source` when the assessment has nothing to evaluate.
+
+### Regenerate the summary
+
+`POST /v1/assessments/{assessment_id}/rerun-summary` regenerates the AI summary from the current evals. Add `risk_domain_id` as a query parameter to regenerate only that risk domain's summary. Send `{"expected_summary_revision": <n>}` with the revision you last read: when the summary changed before or during generation, the call returns `409` with `summary_conflict` and nothing is saved. The response has the assessment `id` and its current `summary_revision`.
 
 ### Rerun failed evals
 
@@ -195,6 +215,7 @@ Each endpoint takes `ids`, a non-empty list of eval IDs, and returns the IDs it 
 
 | Path | Body | Effect |
 | ---- | ---- | ------ |
+| `/v1/evals/bulk-update` | `ids`, `outcome`, `review_notes`, `manual_review_locked` | Sets one verdict, reviewer notes or the preserved flag on up to 500 evals and recomputes the assessment scores. An API key can send `issue` or `not_an_issue`, but not `mitigated` or `risk_accepted`. Returns the IDs it updated. |
 | `/v1/evals/bulk-score` | `ids`, `scale_level_id`, `review_note`, `include_reviewed` | Sets the same control rating and recomputes the assessment scores. Evals on another scale are skipped. Returns `409` when your organization requires approval for rating changes. |
 | `/v1/evals/bulk-category` | `ids`, `issue_category`, `include_reviewed` | Sets the issue category. |
 | `/v1/evals/bulk-review-note` | `ids`, `review_note` | Appends the note to each eval. |
@@ -233,9 +254,17 @@ The body also accepts `additional_instructions` and `use_control_question`.
 
 `GET /v1/follow-ups` lists follow-ups (filter with `assessment_id` or `eval_id`). `GET /v1/follow-ups/{follow_up_id}` returns one with the vendor's response. `PATCH` changes `question`, `additional_instructions`, `required_document_types` or `use_control_question`. An API key cannot change `is_archived`.
 
+To create and edit many follow-ups in one all-or-nothing save, send `POST /v1/follow-ups/bulk` with `items` (1 to 500). An item with an `id` updates that follow-up, and an item without one creates a follow-up. The response lists the saved follow-ups.
+
 `GET /v1/follow-up-rounds` lists rounds (filter with `assessment_id`), and `GET /v1/follow-up-rounds/{round_id}` returns one round with its follow-ups.
 
+To get the assessment's current unsent round, creating it when there is none, send `POST /v1/follow-up-rounds/current` with `assessment_id`. `PATCH /v1/follow-up-rounds/{round_id}` sets `follow_up_ids` (replacing the set), `instructions` or `status`. A sent round cannot go back to unsent or be emptied; the call returns `422` with `invalid_follow_up_round`.
+
 ## Vendor SLAs
+
+To track an SLA on a vendor, send `POST /v1/slas` with `vendor_id` and `name`. The body also accepts `status`, `service_id`, `risk_domain_id`, `description`, `metric`, `target`, `unit`, `frequency`, `current_value`, `last_measured_at`, `due_date`, `assignee_id`, `measurement_source`, `radar_origin_id` and `component_key`. A status-page SLA takes its first measurement right away. Returns `201 Created`.
+
+`PATCH /v1/slas/{sla_id}` changes the same fields. An omitted field keeps its value, and an explicit `null` clears a clearable field. An API key cannot set `is_archived`.
 
 `GET /v1/slas` lists service level agreements tracked on vendors. Filter with `vendor_id`, `service_id` or `status` (`on_track`, `at_risk`, `breached`, `met`), and set `include_archived=true` to include archived ones. `GET /v1/slas/{sla_id}` returns one SLA, and `GET /v1/slas/{sla_id}/measurements` returns the measurement periods of a status-page SLA, newest first.
 
