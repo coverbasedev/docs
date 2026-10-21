@@ -143,6 +143,12 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `POST` | `/v1/documents/{document_id}/alerts/{alert_type}/dismiss` | `vendor:update:org` |
 | `POST` | `/v1/documents/bulk-action` | `vendor:update:org` |
 | `GET` | `/v1/contract-documents/unlinked` | `vendor:read:org` |
+| `POST` | `/v1/screening/ad-hoc` | `screening_match:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/screening/rescreen` | `screening_match:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/screening/people` | `screening_match:update:org` |
+| `POST` | `/v1/documents/{document_id}/unlock` | `vendor:update:org` |
+| `POST` | `/v1/documents/{document_id}/extract-insights` | `vendor:update:org` |
+| `POST` | `/v1/documents/bulk-upload` | `vendor:update:org` |
 
 List endpoints that take `limit` and `offset` return `items`, `total`, `limit` and `offset`. `limit` defaults to `50` and accepts `1` to `200`.
 
@@ -415,6 +421,8 @@ These endpoints need sanctions screening, or they return `404 not_found`. They a
 
 `PATCH /v1/screening-subjects/{subject_id}` edits a subject, for example whether it is monitored.
 
+To screen one name once, send `POST /v1/screening/ad-hoc` with `name` and `kind` (`entity` or `person`), and optionally `vendor_id`, `country` and `feeds`. Feeds your organization switched off are refused with `400`. To screen every live subject of a vendor now, send `POST /v1/vendors/{vendor_id}/screening/rescreen`; the response lists `dispatched_subject_ids`. To enroll a person you know belongs to the vendor, send `POST /v1/vendors/{vendor_id}/screening/people` with `name`, and optionally `country`, `role` and `screen_now`. It returns `201` with the new subject.
+
 ## Vendor SSO
 
 `GET /v1/vendor-sso/summary` counts the vendors your identity provider shows in use and how many enforce SSO. `GET /v1/vendors/{vendor_id}/sso` lists the applications linked to one vendor. `GET /v1/vendor-sso/applications` lists applications; pass `unlinked=true` or `suggested=true` to narrow it.
@@ -454,3 +462,9 @@ These endpoints extend the [Documents API](/api-reference/documents).
 To record a company named in a document as one of the vendor's subprocessors, send `POST /v1/documents/{document_id}/mark-subprocessor` with `company_name`. This also clears the document's company-name mismatch alerts. `POST /v1/documents/{document_id}/autofill` writes the vendor custom fields the document's extracted details fill, and returns `400` when there are none. `POST /v1/documents/{document_id}/alerts/{alert_type}/dismiss` archives the document's active alerts of one type.
 
 `POST /v1/documents/bulk-action` takes `action: "archive"` with `ids`, `action: "update_services"` with `ids` and `service_ids`, or `action: "update_services_granular"` with `items` of `id` and `service_ids`. It returns `updated_count`. Archiving refuses API keys.
+
+To unlock a password-protected document, send `POST /v1/documents/{document_id}/unlock` with `password`. The unlock runs in the background and the request returns `202`; a document that is not locked returns `400`.
+
+To extract document insights, send `POST /v1/documents/{document_id}/extract-insights`, optionally with `insight_config_ids`. It returns `202` with the queued `insight_extraction` state. Poll `GET /v1/documents/{document_id}` until the state is no longer `running`.
+
+To add many documents at once, upload a ZIP with one folder per vendor and send its `org_document_id` to `POST /v1/documents/bulk-upload`. Each folder name must match exactly one vendor and the ZIP may hold no loose files. The response says whether validation passed and lists the matched vendors or the errors; on success the documents are added in the background.
