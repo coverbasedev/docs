@@ -75,6 +75,60 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `PUT` | `/v1/finding-acceptance-rules/order` | `org_settings:update:org` |
 | `PUT` | `/v1/finding-acceptance-rules/{rule_id}` | `org_settings:update:org` |
 | `GET` | `/v1/findings/{finding_id}/decision-path` | `finding:read:org` |
+| `GET` | `/v1/risks/{risk_id}/signal-suggestions` | `risk:read:org` |
+| `GET` | `/v1/risk-chain/nodes/{node_id}` | `risk:read:org` |
+| `POST` | `/v1/risk-chain/rebuild` | `risk:run:org` |
+| `POST` | `/v1/risk-chain/lineage` | `risk:read:org` |
+| `POST` | `/v1/risk-geography/query` | `risk:read:org` and `vendor:read:org` |
+| `GET` | `/v1/risk-scenarios/subjects` | `risk:read:org` |
+| `POST` | `/v1/risk-scenarios/{scenario_id}/attach` | `risk:update:org` |
+| `POST` | `/v1/risk-scenarios/create-risks` | `risk:create:org` |
+| `POST` | `/v1/risk-ask` | `risk:run:org` |
+| `POST` | `/v1/risk-agent/run` | `risk:run:org` |
+| `GET` | `/v1/risk-narrative` | `risk:read:org` |
+| `PUT` | `/v1/risk-narrative` | `risk:update:org` |
+| `PUT` | `/v1/risk-narrative/instructions` | `risk:update:org` |
+| `GET` | `/v1/vendor-tier-rule` | `org_settings:read:org` |
+| `POST` | `/v1/vendor-tier-rule/preview` | `org_settings:update:org` |
+| `PUT` | `/v1/vendor-tier-rule` | `org_settings:update:org` |
+| `GET` | `/v1/risk-methodology/scale-normalization` | `org_settings:read:org` |
+| `POST` | `/v1/reviewer-matrix-rules/reassign` | `org_settings:update:org` |
+| `GET` | `/v1/work-queue-escalation-log` | `org_settings:read:org` |
+| `GET` | `/v1/work-queue-items/{work_queue_item_id}/routing-events` | `org_settings:read:org` |
+| `GET` | `/v1/agent-actions/{action_id}` | `org_settings:read:org` |
+| `GET` | `/v1/agent-decision-rates` | `org_settings:read:org` |
+| `PATCH` | `/v1/ai-settings/learned-examples/{example_id}` | `org_settings:update:org` |
+| `POST` | `/v1/ai-settings/learned-examples/harvest` | `org_settings:update:org` |
+| `GET` | `/v1/risk-domain-control-links` | `risk:read:org` |
+| `PUT` | `/v1/risk-domains/{risk_domain_id}/control-links` | `control_set:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/residual-risk-floor` | `vendor:read:org` |
+| `GET` | `/v1/services/{service_id}/residual-risk-floor` | `service:read:org` |
+| `POST` | `/v1/questionnaire-responses/{response_id}/irq-what-if` | `questionnaire:read:org` |
+| `POST` | `/v1/assessments/{assessment_id}/residual-what-if` | `assessment:read:org` |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/change-log` | `questionnaire:read:org` |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/version-diff` | `questionnaire:read:org` |
+| `PUT` | `/v1/questionnaires/{questionnaire_id}/content-review` | `questionnaire:update:org` |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/content-review` | `questionnaire:update:org` |
+| `PUT` | `/v1/questionnaires/{questionnaire_id}/attestation-config` | `questionnaire:update:org` |
+| `PATCH` | `/v1/responsibility-topics/{topic_id}` | `org_settings:update:org` |
+| `PUT` | `/v1/responsibility-topics/order` | `org_settings:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/responsibility-matrix/versions/{version_id}` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/responsibility-matrix/generate` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/responsibility-matrix/versions/{version_id}/publish` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/responsibility-matrix/versions/{version_id}/discard` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/responsibility-matrix/revert` | `vendor:update:org` |
+| `PUT` | `/v1/vendors/{vendor_id}/engagements/{engagement_id}/service-model` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/engagements/{engagement_id}/responsibility-acknowledgements` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/engagements/{engagement_id}/unlinked-cuecs` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/engagements/{engagement_id}/rights` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/engagements/{engagement_id}/rights/scope-to-contracts` | `assessment:run:org` |
+| `PUT` | `/v1/assessments/{assessment_id}/method` | `assessment:update:org` |
+| `POST` | `/v1/work-queue-items/complete` | `assessment:update:org` |
+| `GET` | `/v1/findings/{finding_id}/related-findings` | `finding:read:org` |
+| `GET` | `/v1/findings/{finding_id}/jira` | `finding:read:org` |
+| `POST` | `/v1/commitments/{commitment_id}/regenerate-review` | `portal:update:org` and `commitment:update:org` |
+| `POST` | `/v1/obligations/bulk-action` | `obligation:update:org`, and `obligation:archive:org` for `delete` |
+| `POST` | `/v1/obligations/extract-from-documents` | `obligation:create:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -476,3 +530,83 @@ Acceptance rules decide who recommends, who decides and who approves when a find
 `GET /v1/findings/{finding_id}/decision-path` returns where a finding stands: `phase`, the routing rule in `route`, the `decisions` so far, and `can_recommend`, `can_decide` and `can_approve` for the key's user. Without the TPRM lifecycle it returns `enabled: false`.
 
 Recording a decision and accepting a risk stay with a signed-in user in the app, and archiving a rule does too. The API does not offer them.
+
+## More Risk module reads and actions
+
+These need the Risk module, like the other `/v1/risk*` endpoints.
+
+`GET /v1/risks/{risk_id}/signal-suggestions` lists findings, contract gaps, alerts and other records that look related to a risk and are not attached yet. Nothing is attached.
+
+`GET /v1/risk-chain/nodes/{node_id}` returns one chain node: what it depends on, what it serves, contract terms, and the open findings, obligations and risks on it. Pass `snapshot_id` when you have it. An unknown node returns `404` with the code `not_found`. `POST /v1/risk-chain/rebuild` rebuilds the chain from current records and returns it.
+
+`POST /v1/risk-chain/lineage` returns one row per business unit, service and vendor path, with its fourth party hops. Send optional `data_class_ids` and `department_ids`. It also needs TPRM expansion.
+
+`POST /v1/risk-geography/query` groups supplier locations by country or region. Send `group_by`, an optional `focus_country`, and an optional vendor `filter` in the shape the Vendors page uses.
+
+`GET /v1/risk-scenarios/subjects` lists the chain nodes a scenario can run against. Filter with `search`. `POST /v1/risk-scenarios/{scenario_id}/attach` links a saved scenario to `risk_id`. `POST /v1/risk-scenarios/create-risks` returns `201 Created` with the `risk_ids` it added from a scenario's `drafts`.
+
+`POST /v1/risk-ask` answers a `question` about the register from your records, with citations. Send earlier turns in `history`. Nothing is saved.
+
+`POST /v1/risk-agent/run` runs the risk agent now. It refreshes signals, attaches new ones and proposes risks. A person decides each proposal in the app.
+
+`GET /v1/risk-narrative` returns the saved narrative for a `report_type` and optional `scope_key` or `subject_id`, or `null` when none is saved. `PUT /v1/risk-narrative` saves an edited `content` and marks it as edited by a person. `PUT /v1/risk-narrative/instructions` saves `custom_instructions` for the next generation.
+
+## More methodology and AI governance
+
+These need the TPRM lifecycle. The `org_settings` endpoints need a user key, as described above.
+
+`GET /v1/vendor-tier-rule` returns the vendor tier rule, whether chain inputs are available, and the user group that approves a tier move. `POST /v1/vendor-tier-rule/preview` returns every vendor a `rule` would move, and changes nothing. `PUT /v1/vendor-tier-rule` saves the `rule` and then moves each vendor it changes; a null `rule` turns tiering off. The tier rule endpoints also need TPRM expansion.
+
+`GET /v1/risk-methodology/scale-normalization` shows how each risk domain's control scale maps onto your risk levels, and the residual risk formula.
+
+`POST /v1/reviewer-matrix-rules/reassign` gives every rule in `rule_ids` the same `reviewer_user_id` or `reviewer_department_id`, and returns `updated_count`.
+
+`GET /v1/work-queue-escalation-log` lists every escalation the rules made, newest first. Filter with `escalation_rule_id` and page with `limit` and `offset`. `GET /v1/work-queue-items/{work_queue_item_id}/routing-events` shows how one item was routed, reassigned and escalated.
+
+`GET /v1/agent-actions/{action_id}` returns one Agent Ledger entry. `GET /v1/agent-decision-rates` returns how often people accepted, edited or rejected what Coverbase AI proposed, per playbook, over the last `days` (1 to 365).
+
+`PATCH /v1/ai-settings/learned-examples/{example_id}` turns one learned example on or off with `is_enabled`. `POST /v1/ai-settings/learned-examples/harvest` picks up reviewer overrides now instead of at the nightly harvest, and returns the examples.
+
+## Control links, risk floors and what-if scores
+
+`GET /v1/risk-domain-control-links` lists each risk domain's linked control sets and sections. Pass `include_archived=true` to include archived domains. `PUT /v1/risk-domains/{risk_domain_id}/control-links` replaces a domain's links with `control_set_ids` and `control_section_ids`. A set or section that does not exist returns `400` with the code `invalid_control_links`.
+
+`GET /v1/vendors/{vendor_id}/residual-risk-floor` and `GET /v1/services/{service_id}/residual-risk-floor` return the significant deficiency that holds residual risk at a minimum, or `floor: null`.
+
+`POST /v1/questionnaire-responses/{response_id}/irq-what-if` returns where an inherent risk questionnaire's score would land with some answers changed. Send `changes`, one `question_id` with its `option_ids` per answer. `POST /v1/assessments/{assessment_id}/residual-what-if` returns where an assessment's residual risk would land with the issues in `remediate_eval_ids` remediated. Both need the TPRM lifecycle and save nothing.
+
+## Questionnaire versions and attestation settings
+
+`GET /v1/questionnaires/{questionnaire_id}/change-log` lists who drafted, published, reviewed or retired each version of a template, newest first. `GET /v1/questionnaires/{questionnaire_id}/version-diff` compares a version with `base_questionnaire_id`. Without a base it compares with the published version, or with the version before when this one is published.
+
+`PUT /v1/questionnaires/{questionnaire_id}/content-review` sets `interval_months` and `owner_user_id` for content reviews; a null `interval_months` removes the cadence. `POST` to the same path records that the content was reviewed today. These need the TPRM lifecycle.
+
+`PUT /v1/questionnaires/{questionnaire_id}/attestation-config` sets what a questionnaire asks a respondent to attest to. Records already signed keep the statement they were signed against. An invalid config returns `400` with the code `invalid_attestation_config`.
+
+Retiring a version stays with a signed-in user in the app.
+
+## More responsibilities
+
+These need Responsibilities enabled.
+
+`PATCH /v1/responsibility-topics/{topic_id}` edits a topic. Fields you omit keep their value, and an explicit null clears `guidance` or `owner_department_id`. `PUT /v1/responsibility-topics/order` takes `topic_ids`, every live topic in the new order.
+
+`POST /v1/vendors/{vendor_id}/responsibility-matrix/generate` starts AI Autofill and returns `202 Accepted` with a version in the `generating` state. To get the result, poll `GET /v1/vendors/{vendor_id}/responsibility-matrix/versions/{version_id}` until its `status` is `draft` or `failed`, then publish the draft with `POST .../versions/{version_id}/publish`. When the job cannot start, the version is marked failed and the call returns `503` with the code `generation_not_started`.
+
+`POST .../versions/{version_id}/discard` deletes a draft that is not current. A service account key receives `403` with the code `api_key_not_allowed`. `POST /v1/vendors/{vendor_id}/responsibility-matrix/revert` copies `target_version_id` into a new published version. Each of these takes the same `engagement_id` query parameter as the matrix.
+
+`PUT /v1/vendors/{vendor_id}/engagements/{engagement_id}/service-model` sets the engagement's `service_model` and fills every topic no document has settled with that model's default. `GET .../responsibility-acknowledgements` shows where each requested topic stands with its owner group. `GET .../unlinked-cuecs` lists the vendor's complementary user entity controls that no topic cites. `GET .../rights` returns the results of a linked assessment, such as a contractual rights review; pass `assessment_id` to pick one. `POST .../rights/scope-to-contracts` points the `assessment_id` at the engagement's contract documents only.
+
+## Findings, commitments, obligations and assessments
+
+`GET /v1/findings/{finding_id}/related-findings` lists the same third party's other open findings, newest first, and needs the TPRM lifecycle. `GET /v1/findings/{finding_id}/jira` returns whether Jira is connected and the ticket linked to the finding. It needs TPRM expansion.
+
+`POST /v1/commitments/{commitment_id}/regenerate-review` runs the AI review of the vendor's latest round again, with your current review instructions, and returns `202 Accepted`. When the latest round is not awaiting review it returns `400` with the code `review_not_pending`.
+
+`POST /v1/obligations/bulk-action` applies one `action` to every ID in `obligation_ids` and returns `204 No Content`. The actions are `change_assignee` (with `assignee_id`, a user or user group), `change_status` (with `status`), `set_due_date` (with `due_date`, or null to clear it), `set_controls` (with `control_ids`) and `delete`, which archives. A service account key cannot use `delete`. Unknown IDs are skipped.
+
+`POST /v1/obligations/extract-from-documents` queues a job that reads `vendor_document_ids` of `vendor_id` and adds the obligations it finds. It returns `202 Accepted` with `document_count`. Optionally send `obligation_type`, `service_ids`, `assignee_id` and `due_date` for every obligation it adds. The key's user is emailed when the job finishes.
+
+`PUT /v1/assessments/{assessment_id}/method` sets `assessment_method`, such as remote or onsite. It needs the TPRM lifecycle.
+
+`POST /v1/work-queue-items/complete` completes every pending item in `work_queue_item_ids`, or every item `filter` and `search` match. Items the key cannot reach and items a record owns stay pending. It returns `completed_count`.

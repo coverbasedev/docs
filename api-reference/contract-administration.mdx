@@ -50,6 +50,16 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/clause-set-baseline-extractions` | `contract:update:org` |
 | `GET` | `/v1/clause-set-baseline-extractions/{run_id}` | `contract:read:org` |
 | `GET` | `/v1/findings/{finding_id}/clause-match-links` | `finding:read:org` |
+| `GET` | `/v1/clause-set-library` | `contract:read:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/clause-pack` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/clause-pack/generate` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/clause-pack/items/{item_id}/redline` | `vendor:update:org` |
+| `GET` | `/v1/clause-domain-rules` | `contract:read:org` |
+| `POST` | `/v1/clause-domain-rules` | `contract:update:org` |
+| `PATCH` | `/v1/clause-domain-rules/{rule_id}` | `contract:update:org` |
+| `DELETE` | `/v1/clause-domain-rules/{rule_id}` | `contract:update:org`, signed-in user only |
+| `GET` | `/v1/non-standard-clauses` | `contract:read:org` |
+| `GET` | `/v1/non-standard-clauses/export` | `contract:export:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
 
@@ -279,3 +289,19 @@ To create reference clauses from a Clause Set Upload Template workbook, send `PO
 ## Download the redlined contract
 
 `GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}/redline` returns `download_url`, `file_name` and `expires_in_seconds` (900). The file is the contract's source Word document with each clause that asks for a change applied as a tracked change and comment, ready to send to the vendor. A review with no Word source or no clause that asks for a change returns `422` with code `nothing_to_redline`.
+
+## Clause set library
+
+`GET /v1/clause-set-library` returns `items`: the clause set templates Coverbase ships, each with `id`, `slug`, `name`, `description`, `clause_count`, `tier_count`, `tier_labels`, `category`, `categories`, `industries` and `vendor_types`. To start a set from one, pass its `id` as `library_template_id` to `POST /v1/clause-sets`.
+
+## Clause packs and clause domain rules
+
+These endpoints need the engagement lifecycle. Without it they return `404` with code `not_enabled`.
+
+A clause domain rule requires a reference clause when a risk domain reaches a level, or has an open issue, on an engagement. `GET /v1/clause-domain-rules` lists them; filter with `clause_set_id` or `reference_clause_perma_id`. To create one, send `POST /v1/clause-domain-rules` with `clause_set_id`, `reference_clause_perma_id`, `risk_domain_id`, and optionally `min_risk_level_id`, `require_on_open_issue` and an obligation: `obligation_text`, `obligation_route` (`evidence_request`, `scorecard` or `on_event`) and `obligation_interval_months` (1 to 36; not for `on_event`). A second rule for the same clause and domain returns `409` with code `clause_domain_rule_exists`. `PATCH /v1/clause-domain-rules/{rule_id}` replaces the threshold and obligation. An API key cannot archive a rule.
+
+`GET /v1/engagement-records/{engagement_id}/clause-pack` returns the clauses the engagement's contract must carry, with `items`, `contract_count`, `reviewed_contract_count`, `rule_count` and `generated_at`. To rebuild it from the current domain results, open issues and rules, send `POST .../clause-pack/generate`. To mark a clause as added to the redline sent to the vendor, send `POST .../clause-pack/items/{item_id}/redline` with `marked`.
+
+## Non-standard clauses report
+
+`GET /v1/non-standard-clauses` lists every clause on a contract's latest clause review that departs from the standard. Filter with `search`, `vendor_ids`, `severities`, `statuses` and `risk_domain_ids`; sort with `sort` (`severity`, `contract`, `vendor` or `reviewed_at`) and `descending`. `GET /v1/non-standard-clauses/export` takes the same filters and returns a short-lived `download_url` for the report as CSV.
