@@ -53,7 +53,7 @@ Coverbase organization roles map to MCP access as follows.
 A few specifics:
 
 - **Read access** (search vendors, pull assessment detail, list findings, run portfolio reports, and so on) is available to every role that can connect.
-- **Write access** (creating or updating vendors, assessments, findings, obligations, notes, tags, and other records) is reserved for **Members** and **Admins**.
+- **Write access** (creating or updating vendors, assessments, Zero Touch runs, control sets and controls, Radar sources, detectors, signals and cases, findings, obligations, notes, tags, and other records) is reserved for **Members** and **Admins**. The [tool reference](/mcp/tool-reference#writes) lists every write entity and action.
 - **Auxiliary Members** cannot use the MCP server at all, and receive a `403` if a token for one is ever presented.
 - **Custom roles** cannot connect. The write guard cannot express a custom role's permissions, so rather than silently forcing a possibly write-capable user to read-only, the server refuses the connection. Give the user one of the default roles above.
 - **Service Accounts** are non-interactive by design, so they cannot sign in through OAuth or a dashboard session; those paths still return `403`. They *can* hold an API key, which is what makes a programmatic read-only connection possible without a human seat. A service account can never write through MCP.
@@ -105,6 +105,8 @@ Read-only versus read/write is not a single switch: a write tool only executes w
     Every write tool requires an explicit `confirm=true` argument. Without it, the tool returns a precondition error rather than executing, so the assistant is forced to surface the proposed change to you and wait for your approval before anything is written.
   </Step>
 </Steps>
+
+Zero Touch, Radar and control set writes also check the Coverbase permission that the matching dashboard action checks. For example, dismissing a Radar signal needs `radar_alert:archive:org`, and adding a control section needs `control_set:update:org`. A user without that permission gets an error, and nothing changes.
 
 <Warning>
   These checks are applied **server-side**, inside the write guard, before any database write. They do not rely on the client or the model behaving correctly. A misbehaving or compromised client cannot bypass the role check, the scope check, or the confirmation requirement.
