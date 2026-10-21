@@ -54,6 +54,9 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/follow-up-rounds/current` | `follow_up:create:org` |
 | `GET` | `/v1/follow-up-rounds/{round_id}` | `follow_up:read:org` |
 | `PATCH` | `/v1/follow-up-rounds/{round_id}` | `follow_up:update:org` |
+| `POST` | `/v1/follow-up-rounds/{round_id}/send` | `follow_up:update:org` |
+| `POST` | `/v1/evals/{eval_id}/rerun` | `assessment:update:org` |
+| `GET` | `/v1/evals/{eval_id}/rerun/{job_id}` | `assessment:read:org` |
 | `GET` | `/v1/slas` | `vendor:read:org` |
 | `POST` | `/v1/slas` | `vendor:update:org` |
 | `GET` | `/v1/slas/{sla_id}` | `vendor:read:org` |
@@ -243,6 +246,14 @@ To fix the vendor answer an eval scored, send `POST /v1/evals/{eval_id}/correct-
 
 The call returns `404` with `eval_not_found` for an unknown eval, and `409` with `eval_correction_rejected` when the eval cannot take the correction, for example because it is archived.
 
+### Rerun an eval
+
+To preview a fresh AI evaluation of one eval, send `POST /v1/evals/{eval_id}/rerun`. You can pass `guidance`, `expectation` or `question` to try instead of the control's. The call returns `202` with a `job_id` and `job_status` set to `pending`, or `404` with `eval_not_found` when the eval cannot be rerun.
+
+Poll `GET /v1/evals/{eval_id}/rerun/{job_id}` until `job_status` is `completed` or `failed`. A completed job has the proposed `title`, `analysis`, `issue_category`, `is_issue`, `score` and `response`. Citations to records you cannot read are left out. A failed job has `job_error`. An unknown job returns `404` with `eval_rerun_job_not_found`.
+
+The rerun changes nothing on the eval. Applying its result rewrites the verdict, so a person does that in Coverbase.
+
 ## Reviews
 
 `GET /v1/reviews` lists reviews (sign-offs). Filter with `assessment_id`, `risk_domain_id`, `assignee_id` or `contract_id`, and set `include_archived=true` to include archived reviews. `GET /v1/reviews/{review_id}` returns one review.
@@ -282,6 +293,52 @@ To create and edit many follow-ups in one all-or-nothing save, send `POST /v1/fo
 `GET /v1/follow-up-rounds` lists rounds (filter with `assessment_id`), and `GET /v1/follow-up-rounds/{round_id}` returns one round with its follow-ups.
 
 To get the assessment's current unsent round, creating it when there is none, send `POST /v1/follow-up-rounds/current` with `assessment_id`. `PATCH /v1/follow-up-rounds/{round_id}` sets `follow_up_ids` (replacing the set), `instructions` or `status`. A sent round cannot go back to unsent or be emptied; the call returns `422` with `invalid_follow_up_round`.
+
+### Send a round
+
+To send a round to the vendor, send `POST /v1/follow-up-rounds/{round_id}/send`. Coverbase puts the round's follow-ups in a questionnaire on the assessment's vendor portal and marks the round sent. The response has the `questionnaire_id`, `assessment_id` and `portal_id`.
+
+<ParamField body="follow_up_ids" type="string[]">
+  The follow-ups to send. Leave it out to send the round's follow-ups.
+</ParamField>
+
+<ParamField body="instructions" type="string">
+  Instructions shown to the vendor.
+</ParamField>
+
+<ParamField body="due_date" type="integer">
+  Unix timestamp the vendor should answer by.
+</ParamField>
+
+<ParamField body="recipient_email" type="string">
+  The vendor contact who answers the round.
+</ParamField>
+
+<ParamField body="send_email_notification" type="boolean">
+  Email the recipient an invitation. Needs `recipient_email` and either `email_subject` or `email_template_id`.
+</ParamField>
+
+<ParamField body="email_subject" type="string">
+  Subject of the invitation email.
+</ParamField>
+
+<ParamField body="email_template_id" type="string">
+  An email template to use instead of a subject.
+</ParamField>
+
+<ParamField body="cc_emails" type="string[]">
+  Addresses copied on the invitation.
+</ParamField>
+
+<ParamField body="vendor_autofill_enabled" type="boolean">
+  Let the vendor prefill answers with AI.
+</ParamField>
+
+<ParamField body="show_question_control_identifiers" type="boolean">
+  Show control identifiers next to the questions.
+</ParamField>
+
+If the round was sent but the invitation could not be queued, the call still succeeds and `error_message` says so. The call returns `404` with `follow_up_round_not_found` for an unknown round, and `422` with `follow_up_round_not_sendable` when the round cannot be sent, for example because it has no follow-ups or its responses are already in.
 
 ## Vendor SLAs
 

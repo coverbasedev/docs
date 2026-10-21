@@ -153,6 +153,22 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `POST` | `/v1/documents/infer-control-set` | `vendor:update:org` |
 | `POST` | `/v1/documents/{document_id}/infer` | `vendor:update:org` |
 | `POST` | `/v1/documents/{document_id}/recreate-assessment-report` | `vendor:update:org` |
+| `GET` | `/v1/supplier_countries` | `supplier_profile:read:org` |
+| `GET` | `/v1/supplier_countries/{country_code}` | `supplier_profile:read:org` |
+| `GET` | `/v1/supplier_countries/{country_code}/banks` | `supplier_profile:read:org` |
+| `POST` | `/v1/supplier_validation/bank_account` | `supplier_profile:read:org` |
+| `POST` | `/v1/supplier_validation/tax_id` | `supplier_profile:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/supplier_profile` | `vendor:read:org` |
+| `PATCH` | `/v1/vendors/{vendor_id}/supplier_profile` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/diversity_records` | `supplier_profile:update:org` |
+| `POST` | `/v1/update_requests/{request_id}/close` | `supplier_profile:update:org` |
+| `POST` | `/v1/update_requests/{request_id}/apply_contacts` | `supplier_profile:approve:org` |
+| `GET` | `/v1/supplier_settings` | `org_settings:read:org` |
+| `PATCH` | `/v1/supplier_settings` | `org_settings:update:org` |
+| `POST` | `/v1/legal_entities` | `org_settings:update:org` |
+| `PATCH` | `/v1/legal_entities/{legal_entity_id}` | `org_settings:update:org` |
+| `POST` | `/v1/legal_entities/{legal_entity_id}/archive` | `org_settings:update:org` |
+| `GET` | `/v1/supplier_reviews` | `supplier_banking:approve:org` |
 
 List endpoints that take `limit` and `offset` return `items`, `total`, `limit` and `offset`. `limit` defaults to `50` and accepts `1` to `200`.
 
@@ -478,3 +494,23 @@ To rerun inference of one field on a processed document, send `POST /v1/document
 `POST /v1/documents/{document_id}/recreate-assessment-report` rebuilds a Word assessment report document from its template with the placeholder values you send in `vendor_data`, `services_data`, `assessment_data`, `reviews_data`, `agent_data` and `intelligence_data`. It replaces the stored file and returns the document.
 
 To add many documents at once, upload a ZIP with one folder per vendor and send its `org_document_id` to `POST /v1/documents/bulk-upload`. Each folder name must match exactly one vendor and the ZIP may hold no loose files. The response says whether validation passed and lists the matched vendors or the errors; on success the documents are added in the background.
+
+## Know Your Supplier
+
+These endpoints need Know Your Supplier turned on for your organization; otherwise they return `404 not_enabled`. Bank account numbers are always masked here.
+
+`GET /v1/supplier_countries` lists the countries whose bank and tax details can be validated. `GET /v1/supplier_countries/{country_code}` returns that country's bank, tax ID and address rules with your overrides applied, and `GET /v1/supplier_countries/{country_code}/banks` lists its known banks, which is empty for most countries. A country without rules returns `404 country_not_configured`.
+
+To check details before saving them, send `POST /v1/supplier_validation/bank_account` with `bank_country`, `currency` and `values`, or `POST /v1/supplier_validation/tax_id` with `country_code`, `tax_id_type` and `value`. Both return `200` with per-field results, even when the details fail.
+
+`GET /v1/vendors/{vendor_id}/supplier_profile` returns the vendor's bank accounts, sites, tax registrations, diversity records, legal entity assignments and pending bank changes in one response. `PATCH` the same path with `legal_name_local` to set the vendor's legal name in its local script; an empty value clears it.
+
+To record a diversity classification or certification, send `POST /v1/vendors/{vendor_id}/diversity_records` with `category` and its details. A record that fails validation returns `422` with per-field results.
+
+`POST /v1/update_requests/{request_id}/close` withdraws an open update request or marks a returned one reviewed, and returns `409 update_request_closed` when it is already closed. `POST /v1/update_requests/{request_id}/apply_contacts` writes the contact changes the supplier proposed onto the vendor; API keys are refused, so a signed-in user applies them.
+
+`GET /v1/supplier_settings` returns your Know Your Supplier settings. `PATCH /v1/supplier_settings` replaces them with the whole object you send. API keys are refused on the `PATCH`, because these settings decide whether a bank change waits for a person's review.
+
+To add a legal entity that suppliers can be assigned to, send `POST /v1/legal_entities` with `name` and `entity_code`; a code already in use returns `409 duplicate_entity_code`. `PATCH /v1/legal_entities/{legal_entity_id}` changes its name, code, country, description or `active` flag. `POST /v1/legal_entities/{legal_entity_id}/archive` archives it and keeps the assignments suppliers already hold; API keys are refused.
+
+`GET /v1/supplier_reviews` lists the bank changes waiting for a reviewer, optionally for one `vendor_id` or with `include_decided=true`. Approving or rejecting a change, and revealing a full account number, happen only in the dashboard.

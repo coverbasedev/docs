@@ -66,6 +66,10 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/unpin` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/components/{component_type}/recheck-done` | `contract:update:org` |
 | `GET` | `/v1/contract-value` | `contract:read:org` |
+| `GET` | `/v1/contract-home-summary` | `contract:read:org` |
+| `GET` | `/v1/contract-savings-report` | `contract:read:org` |
+| `GET` | `/v1/contract-attention-queues` | `contract:read:org` |
+| `GET` | `/v1/contract-records/{contract_id}/detail-context` | `contract:read:org` |
 | `GET` | `/v1/contract-fx-rates` | `contract:read:org` |
 | `PUT` | `/v1/contract-fx-rates` | `contract:update:org` |
 | `GET` | `/v1/component-policies` | `contract:read:org` |
@@ -82,6 +86,27 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
 
+| `GET` | `/v1/contract-assembly-batches` | `contract:read:org` |
+| `POST` | `/v1/contract-assembly-batches` | `contract:create:org` |
+| `GET` | `/v1/contract-assembly-batches/{batch_id}` | `contract:read:org` |
+| `GET` | `/v1/contract-assembly-batches/{batch_id}/status` | `contract:read:org` |
+| `GET` | `/v1/contract-assembly-batches/{batch_id}/files/{file_id}/download` | `contract:read:org` |
+| `POST` | `/v1/contract-assembly-manifest-check` | `contract:create:org` |
+| `PUT` | `/v1/contract-assembly-batches/{batch_id}/manifest` | `contract:create:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/analyse` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/ocr` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/archive` | `contract:archive:org`, signed-in user only |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/confirm` | `contract:create:org`; `contract:update:org` to attach |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/bulk-confirm` | `contract:create:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/reject` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/bulk-reject` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/split` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/merge` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/reassign` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/document-role` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/mark-incorporated` | `contract:update:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/resolve-decision` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/family` | `contract:read:org` |
 List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
 
 ## List cost centers
@@ -335,7 +360,28 @@ A component policy says which components a matching contract must carry. `GET /v
 
 `GET /v1/contract-fx-rates` returns the pinned rate table: `base_currency`, `as_of` and `rates` (`currency`, `rate_to_base`). To replace it, send `PUT /v1/contract-fx-rates` with the whole table. `GET /v1/contract-value` returns what the portfolio, or one vendor with `vendor_id`, is committed to in the base currency, with currencies that have no rate listed in `unconverted`.
 
+`GET /v1/contract-home-summary` returns the contracts home figures: `in_approval_count`, `approved_recently_count` over `approved_window_days`, `direct_savings`, `indirect_savings` and `cost_avoidance` over `savings_window_days`, `annual_spend`, and `vendors_over_budget_count` for `budget_year`. Each money figure has the same shape as `/v1/contract-value`, and `is_complete` is false when a currency has no pinned rate. `GET /v1/contract-savings-report` lists the contracts behind the savings figures, grouped by `group_by` (`vendor`, `business_unit` or `quarter`), with totals per group and each contract's `savings_note`.
+
+`GET /v1/contract-attention-queues` returns the attention cards in a fixed order: `notice_due_soon`, `renewal_undecided`, `renewal_term_missing`, `reviews_needed`, `clauses_open`, `change_of_control` and `value_conflict`. Each has a `count`, a `detail` line, a `severity`, and a `filter` rule group that lists its contracts in the contract filter syntax.
+
+`GET /v1/contract-records/{contract_id}/detail-context` returns what the contract page shows above the facts: `conflicts` where a recorded value disagrees with its document, `derivations` saying how each lifecycle date was worked out, `vendor_context` (other contracts, spend by currency, inherent risk and assessment dates), `plain_terms`, `overlapping_spend` in the same spend category, and the year-over-year `spend_series`. `has_banner` is true when a conflict blocks.
+
 `GET /v1/contract-records/{contract_id}/spend-lines` returns the live pricing lines, the `superseded` lines a later amendment re-priced, `annual_total`, `one_time_total`, `currency` and `mixed_currencies`. To add a line, send `POST` with `description`, `amount`, `currency` (ISO 4217), `frequency` (`one_time`, `monthly`, `quarterly`, `annual` or `usage`), and optionally `effective_date`, `document_id`, `page_number` and `line_key`. `PATCH .../spend-lines/{line_id}` corrects a line; `DELETE` archives it so re-extraction cannot bring it back, and an API key cannot do that. An unknown currency returns `422` with code `invalid_currency`.
+
+
+## Assemble contracts from documents
+
+These endpoints need Contracts v3. Without it they return `404` with code `not_enabled`.
+
+An assembly batch groups vendor documents into proposed contract families. Nothing becomes a contract until a family is confirmed. To open a batch, send `POST /v1/contract-assembly-batches` with `name`, `document_ids` (vendor documents already uploaded), and optionally `vendor_id` and `idempotency_key`. Coverbase queues the analysis; poll `GET /v1/contract-assembly-batches/{batch_id}/status` until `state` is no longer `analysing`. `GET /v1/contract-assembly-batches/{batch_id}` returns the proposed `families`, each with `confidence`, `blocking_decisions`, `vendor_match` and `predecessor`, plus `unmatched` files and the `reconciliation`. `GET .../files/{file_id}/download` returns a link to one file that expires in 15 minutes.
+
+A manifest CSV names the agreement or vendor for each file. `POST /v1/contract-assembly-manifest-check` with `csv` says what it holds and stores nothing; `PUT .../manifest` attaches it, and every later analysis follows it. A manifest that cannot be used returns `422` with code `manifest_rejected`. `POST .../analyse` queues the batch to be grouped again, and `POST .../ocr` queues OCR for its scanned files; both return `202`. `ocr` returns `409` with code `nothing_to_ocr` when no file is waiting.
+
+Before confirming, you can change the proposal: `reject` drops a family (`family_key`), `bulk-reject` drops several (`family_keys`), `split` moves `document_ids` into a new family, `merge` folds `family_key` into `target_family_key`, `reassign` moves a `document_id` to `target_family_key`, `document-role` sets a document's `document_role`, `relation` and `related_document_id`, `mark-incorporated` folds amendments into `into_document_id`, and `resolve-decision` answers one blocking decision with `kind` and `answer`. A change the batch cannot make returns `400` with code `invalid_family_change`.
+
+To create a contract, send `POST .../confirm` with `family_key`, and one of `vendor_id`, `new_vendor_name` (creates that vendor), `attach_to_contract_id` (adds the documents to an existing contract) or `no_vendor`. Confirming a family twice returns the same contract with `already_confirmed: true`. `POST .../bulk-confirm` takes either `family_keys` or `minimum_confidence`, never both, with optional `owner_id`, `vendor_id`, `new_vendor_name`, `create_proposed_vendors`, `no_vendor` and `attach_proposed`. A family with an open blocking decision is listed in `skipped` with its `reason`. Coverbase reads each new contract's components in the background. An API key cannot archive a batch.
+
+`GET /v1/contract-records/{contract_id}/family` lists the documents on a contract, with each one's role, relation, `is_root` and a `contributes` line.
 
 ## Analyze and classify contract documents
 

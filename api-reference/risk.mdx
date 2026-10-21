@@ -129,6 +129,20 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `POST` | `/v1/commitments/{commitment_id}/regenerate-review` | `portal:update:org` and `commitment:update:org` |
 | `POST` | `/v1/obligations/bulk-action` | `obligation:update:org`, and `obligation:archive:org` for `delete` |
 | `POST` | `/v1/obligations/extract-from-documents` | `obligation:create:org` |
+| `POST` | `/v1/assessments/{assessment_id}/review-sessions` | `assessment:update:org` |
+| `PUT` | `/v1/assessments/{assessment_id}/review-sessions/{review_session_id}` | `assessment:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/engagements/{engagement_id}/responsibility-acknowledgements` | `vendor:update:org` and `portal:update:org` |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation/documents/{org_document_id}` | `questionnaire:read:org` |
+| `POST` | `/v1/documents/{document_id}/finding-extraction` | `finding:create:org` |
+| `GET` | `/v1/documents/{document_id}/finding-extraction` | `finding:read:org` |
+| `POST` | `/v1/documents/{document_id}/finding-extraction/accept` | `finding:create:org` |
+| `POST` | `/v1/findings/exports` | `finding:export:org` |
+| `GET` | `/v1/findings/exports/{export_id}` | `finding:export:org` |
+| `POST` | `/v1/risk-chain/lineage/exports` | `risk:export:org` |
+| `GET` | `/v1/risk-chain/lineage/exports/{export_id}` | `risk:export:org` |
+| `POST` | `/v1/agent-actions/exports` | `org_settings:read:org` |
+| `GET` | `/v1/agent-actions/exports/{export_id}` | `org_settings:read:org` |
+| `POST` | `/v1/responsibility-topics/import` | `org_settings:update:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -610,3 +624,39 @@ These need Responsibilities enabled.
 `PUT /v1/assessments/{assessment_id}/method` sets `assessment_method`, such as remote or onsite. It needs the TPRM lifecycle.
 
 `POST /v1/work-queue-items/complete` completes every pending item in `work_queue_item_ids`, or every item `filter` and `search` match. Items the key cannot reach and items a record owns stay pending. It returns `completed_count`.
+
+## Review sessions
+
+`POST /v1/assessments/{assessment_id}/review-sessions` returns `201 Created` with a new remote or onsite session. Send `title`, `mode` (`remote` or `onsite`), `scheduled_at`, and optionally `duration_minutes`, `location`, `notes`, `participant_user_ids` and `participant_emails`. Participant users are notified in the app, and the vendor's attendees in `participant_emails` are emailed. A time more than a day in the past returns `400` with the code `invalid_review_session`. These need the TPRM lifecycle.
+
+`PUT /v1/assessments/{assessment_id}/review-sessions/{review_session_id}` replaces a session with the same body. When the time or place moves, every participant is told again. Otherwise only the people you added are told. Cancelling a session stays with a signed-in user in the app.
+
+## Ask for responsibility acknowledgements
+
+`POST /v1/vendors/{vendor_id}/engagements/{engagement_id}/responsibility-acknowledgements` asks each owner group to acknowledge its topics. Send the matrix `row_ids`, a `due_at`, and an optional `description`. Each group gets one Obligations Portal and one email that lists only its topics. The response gives each topic's status, `emails_sent`, `groups_without_members` (groups with nobody to email) and `groups_not_emailed` (groups whose email failed; their requests are saved). A selection that cannot be requested returns `422` with the code `invalid_acknowledgement_request`. It needs Responsibilities.
+
+## Attestation documents
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation/documents/{org_document_id}` returns a `url` that downloads a document the questionnaire asks respondents to read, and its `filename`. The URL expires after five minutes, and the response is never cached. A document the questionnaire does not name returns `404`.
+
+## Extract findings from a document
+
+To read findings out of an org or vendor document, start a run and poll it.
+
+`POST /v1/documents/{document_id}/finding-extraction` returns `202 Accepted` with `status: pending`. Send optional `extra_instructions`, added after your organization's saved extraction instructions, and for a vendor document an optional `assessment_id` it must be linked to. A document that does not exist returns `404` with the code `document_not_found`. A system-generated assessment report, or a vendor document not linked to `assessment_id`, returns `422` with the code `extraction_not_allowed`.
+
+`GET /v1/documents/{document_id}/finding-extraction` returns the run's `status` (`pending`, `running`, `completed` or `failed`), the `candidates` it found with their quotes and locations, and the `accepted_candidates`.
+
+`POST /v1/documents/{document_id}/finding-extraction/accept` records `candidates` you accept. Send each one's `candidate_id` and `title`, and optionally an edited `description`, `finding_severity_level_id`, `finding_urgency_level_id`, `finding_risk_level_id` and `due_date`.
+
+## Exports and imports
+
+Exports run in the background. Each start call returns `202 Accepted` with the export's `id` and `status: queued`. Poll the matching `GET .../exports/{export_id}` until `status` is `complete`; the response then carries a `download_url` that expires after `expires_in` seconds. An ID from a different kind of export returns `404` with the code `export_not_found`.
+
+`POST /v1/findings/exports?file_name=...` writes an Excel workbook of the findings the optional `filter`, `search` and `sort` in the body match.
+
+`POST /v1/risk-chain/lineage/exports` writes the data lineage to a file. Send `export_filename`, `format` (`xlsx` or `csv`), and optional `data_class_ids` and `department_ids`. It needs the Risk module and TPRM expansion.
+
+`POST /v1/agent-actions/exports` writes a CSV of the Agent Ledger actions an optional `filter` matches. It needs the TPRM lifecycle and a user key.
+
+`POST /v1/responsibility-topics/import` creates or updates topics from an uploaded workbook, sent as multipart form data with `file` and an optional `dry_run`. Rows match existing topics by name. With `dry_run=true` nothing is saved, and the response shows what would change. A workbook that cannot be read returns `422`. It needs Responsibilities and a user key.

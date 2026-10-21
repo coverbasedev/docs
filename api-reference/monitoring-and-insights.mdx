@@ -28,6 +28,17 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `POST` | `/v1/document-insights` | `org_settings:update:org` |
 | `POST` | `/v1/document-insights/{config_id}/archive` | `org_settings:update:org` |
 | `POST` | `/v1/document-insights/{config_id}/restore` | `org_settings:update:org` |
+| `PATCH` | `/v1/document-insights/{config_id}` | `org_settings:update:org` |
+| `POST` | `/v1/document-insights/bulk-update` | `org_settings:update:org` |
+| `POST` | `/v1/document-insights/bulk-archive` | `org_settings:update:org` |
+| `GET` | `/v1/document-insight-models` | `vendor:read:org` |
+| `GET` | `/v1/document-insight-definitions` | `vendor:read:org` |
+| `POST` | `/v1/document-insight-definitions` | `org_settings:update:org` |
+| `POST` | `/v1/document-insight-definitions/test` | `org_settings:update:org` |
+| `POST` | `/v1/document-insight-models` and its `dataset`, `evaluate`, `training`, `training/sync`, `activate`, and `retire` actions | `org_settings:update:org` |
+| `GET` | `/v1/document-insights/{config_id}/promotion-options` | `custom_field:read:org` |
+| `POST` | `/v1/document-insights/{config_id}/promote` | `custom_field:update:org` |
+| `DELETE` | `/v1/document-insights/{config_id}/custom-fields/{custom_field_id}` | `custom_field:update:org` |
 | `GET` | `/v1/document-insights/{config_id}/targets` | `vendor:read:org` |
 | `POST` | `/v1/document-insights/{config_id}/targets` | `org_settings:update:org` |
 | `PATCH` | `/v1/document-insight-targets/{target_id}` | `org_settings:update:org` |
@@ -96,6 +107,58 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `GET` | `/v1/inspections` | `integration:read:org` |
 | `GET` | `/v1/document-insights` | `vendor:read:org` |
 | `GET` | `/v1/document-insight-values` | `vendor:read:org` |
+| `POST` | `/v1/inspect-applications` | `integration:update:org` |
+| `POST` | `/v1/inspect-applications/bulk` | `integration:update:org` |
+| `GET` | `/v1/inspect-applications/{application_id}` | `integration:read:org` |
+| `PATCH` | `/v1/inspect-applications/{application_id}` | `integration:update:org` |
+| `PUT` | `/v1/inspect-applications/{application_id}/vendor` | `integration:update:org` |
+| `PUT` | `/v1/inspect-applications/{application_id}/platform` | `integration:update:org` |
+| `POST` | `/v1/inspect-applications/link-suggested-vendors` | `integration:update:org` |
+| `POST` | `/v1/inspect-applications/{application_id}/archive` | `integration:update:org` |
+| `POST` | `/v1/inspect-applications/{application_id}/unarchive` | `integration:update:org` |
+| `POST` | `/v1/inspect-applications/bulk-archive` | `integration:update:org` |
+| `DELETE` | `/v1/inspect-applications/{application_id}` | `integration:update:org` |
+| `GET` | `/v1/inspect-setup-options` | `integration:read:org` |
+| `GET` | `/v1/inspect-platforms` | `integration:read:org` |
+| `GET` | `/v1/inspect-applications/{application_id}/config` | `integration:read:org` |
+| `PATCH` | `/v1/inspect-applications/{application_id}/config` | `integration:update:org` |
+| `GET` | `/v1/inspect-plans/readiness` | `integration:read:org` |
+| `POST` | `/v1/inspect-plans/ensure` | `integration:run:org` |
+| `GET` | `/v1/inspect-plans/{plan_id}` | `integration:read:org` |
+| `GET` | `/v1/inspect-plans/{plan_id}/versions` | `integration:read:org` |
+| `POST` | `/v1/inspect-plans/{plan_id}/revisions/validate` | `integration:update:org` |
+| `POST` | `/v1/inspect-plans/{plan_id}/revisions` | `integration:update:org` |
+| `POST` | `/v1/inspect-plans/{plan_id}/regenerate` | `integration:update:org` |
+| `POST` | `/v1/inspect-plans/{plan_id}/requirements/{requirement_key}/regenerate` | `integration:update:org` |
+| `POST` | `/v1/inspections` | `integration:run:org` |
+| `POST` | `/v1/inspections/query` | `integration:read:org` |
+| `GET` | `/v1/inspections/{inspection_id}` | `integration:read:org` |
+| `POST` | `/v1/inspections/bulk-archive` | `integration:update:org`, `integration:archive:org` |
+| `POST` | `/v1/inspections/bulk-cancel` | `integration:run:org` |
+| `POST` | `/v1/inspections/{inspection_id}/runs/bulk-cancel` | `integration:run:org` |
+| `POST` | `/v1/inspections/{inspection_id}/runs/bulk-retry` | `integration:run:org` |
+| `GET` | `/v1/inspect-posture` | `integration:read:org` |
+| `GET` | `/v1/inspect-summary` | `integration:read:org` |
+| `GET` | `/v1/inspect-identities/summary` | `integration:read:org` |
+| `POST` | `/v1/inspect-identities/query` | `integration:read:org` |
+| `PUT` | `/v1/inspect-accounts/owner` | `integration:update:org` |
+| `POST` | `/v1/inspect-identities/merge` | `integration:update:org` |
+| `PUT` | `/v1/inspect-idp-applications/{application_id}/platform` | `integration:update:org` |
+| `GET` | `/v1/inspect-auth-contexts` | `integration:read:org` |
+| `POST` | `/v1/inspect-auth-contexts` | `integration:update:org` |
+| `POST` | `/v1/inspect-auth-contexts/{auth_context_id}/stale` | `integration:update:org` |
+| `POST` | `/v1/inspect-documentation-discovery-runs` | `integration:run:org` |
+| `GET` | `/v1/inspect-documentation-discovery-runs/{run_id}` | `integration:read:org` |
+| `GET` | `/v1/inspect-applications/{application_id}/documentation` | `integration:read:org` |
+| `GET` | `/v1/okta-integration/applications` | `integration:read:org` |
+| `GET` | `/v1/entra-integration/applications` | `integration:read:org` |
+| `GET` | `/v1/okta-integration/schedule` | `integration:read:org` |
+| `PUT` | `/v1/okta-integration/schedule` | `integration:update:org`, organization admin |
+| `GET` | `/v1/okta-integration/sync` | `integration:read:org` |
+| `DELETE` | `/v1/okta-integration` | `integration:update:org`, organization admin |
+| `GET` | `/v1/inspections/{inspection_id}/runs/{run_id}/replay` | `integration:read:org` |
+| `GET` | `/v1/inspections/{inspection_id}/runs/{run_id}/replay/pages/{page_id}` | `integration:read:org` |
+| `GET` | `/v1/inspections/{inspection_id}/runs/{run_id}/live-view` | `integration:read:org` |
 
 Routes that need `dark_web_exposure:read:org`, `dark_web_exposure:update:org`, or `org_settings:update:org` work with a user API key only. Service account keys do not hold those permissions.
 
@@ -109,7 +172,7 @@ Each feature has its own gate. When your organization does not have the feature,
 
 When your organization enforces roles and the key lacks the permission, the endpoint returns `403`.
 
-Some actions stay with a signed-in person. When an API key calls one of them, the endpoint returns `403` with the code `api_key_not_allowed`. These actions are: archiving or restoring a document insight, deleting an insight group or target, stopping an Inspect schedule, removing a watchlist identifier, marking a certificate `verified`, archiving a certificate, archiving a rule set, deleting an insight example or value, and archiving or restoring an org document.
+Some actions stay with a signed-in person. When an API key calls one of them, the endpoint returns `403` with the code `api_key_not_allowed`. These actions are: archiving or restoring a document insight (one at a time or in bulk), unlinking a custom field from an insight, resetting a dark web playbook, retiring a decision model, deleting an insight group or target, stopping an Inspect schedule, removing a watchlist identifier, marking a certificate `verified`, archiving a certificate, archiving a rule set, deleting an insight example or value, and archiving or restoring an org document.
 
 ## List Inspect schedules
 
@@ -503,6 +566,10 @@ To create an insight, send `POST /v1/document-insights`. It returns `201` with t
   The reviewer for `review_required` changes.
 </ParamField>
 
+To change an insight, send `PATCH /v1/document-insights/{config_id}` with the fields to change. Send `reviewer_user_id: null` to clear the reviewer. `apply_mode` decides what the new definition reaches: `forward_only` (the default) re-runs nothing, `selected` re-runs the documents in `document_ids`, and `all_historical` re-runs every in-scope document an older revision filled. A re-run starts in the background and its id comes back as `backfill_id`; poll `GET /v1/document-insight-backfills/{backfill_id}`. When a running backfill or a daily ceiling blocks the re-run, nothing is saved and the response is `409`, `422`, or `429` with `backfill_refused`. Making a synthesis insight anything but text returns `422` with `synthesis_needs_text`.
+
+To edit many insights at once, send `POST /v1/document-insights/bulk-update` with `config_ids` (up to 200) and any of `enabled`, `group_id`, `clear_group`, `add_document_types`, and `remove_document_types`. Document types are added and removed, never replaced. To archive many at once, send `POST /v1/document-insights/bulk-archive` with `config_ids`; API keys cannot do this. Both return `updated_count` and the changed insights in `items`.
+
 To retire an insight and keep its values, send `POST /v1/document-insights/{config_id}/archive`. To bring it back, send `POST /v1/document-insights/{config_id}/restore`.
 
 ### Targets
@@ -704,3 +771,489 @@ Org documents are files your organization owns, such as policies, questionnaire 
 - To replace an extracted value with the right one, send `POST /v1/document-insight-values/{data_id}/correct` with one of `value_string`, `value_number`, `value_date`, or `value_boolean`. The correction becomes a manual value that no re-extraction overwrites, and Coverbase writes it to linked fields. A value that does not fit the insight's type returns `422` with `invalid_value`.
 - To delete a value, send `DELETE /v1/document-insight-values/{data_id}`.
 - To judge many values at once, send `POST /v1/document-insight-values/bulk-verdict` with `ids` and `verdict` (`correct`, `incorrect`, or null). The response gives `updated_count` and `found_count`; a value that already holds the verdict is skipped.
+
+## Fill a custom field from a document insight
+
+Promoting an insight links it to a custom field on vendors, services, assessments, or contracts, so each extracted value also fills that field.
+
+- To see which custom fields an insight could fill, send `GET /v1/document-insights/{config_id}/promotion-options`. `compatible_field_type` names the custom field type the insight can fill, or is null when its type cannot fill one yet. Each item gives `custom_field_id`, `field_name`, `field_type`, `applied_to`, and `is_linked`.
+- To link it, send `POST /v1/document-insights/{config_id}/promote` with either `custom_field_id` (an existing field) or `new_field_name` and `applied_to` (`vendor`, `service`, `assessment`, or `contract`) to create one. Optional fields are `require_grounded` (default `true`), `min_confidence` (`high`, `medium`, or `low`; default `medium`), `conflict_policy` (`never_overwrite`, `fill_if_empty`, or `latest_document_wins`; default `fill_if_empty`), and `backfill` (default `true`, which fills the field from existing documents in the background). The response gives `custom_field_id`, `created_custom_field`, and `backfill_queued`. An archived insight returns `409` with `document_insight_archived`, a field that already has another autofill source returns `409` with `custom_field_has_autofill_source`, and a type or target mismatch returns `422` with `promotion_invalid`.
+- To stop filling a field, send `DELETE /v1/document-insights/{config_id}/custom-fields/{custom_field_id}`. It returns `204`. Values already written stay. A field the insight does not fill returns `409` with `custom_field_not_linked`.
+
+## Train a decision model
+
+A decision model is the model document insight extraction uses for your organization. You can start one from a base model, train it on your verified values, and switch extraction to it once it scores at least as well as the standard model. Responses never include storage locations or job identifiers.
+
+- To list models, send `GET /v1/document-insight-models`. The response also gives `base_model_ids` you can start from, `active_model_id`, and `training_configured`.
+- To start one, send `POST /v1/document-insight-models` with `name` and `base_model_id`. An unlisted base model returns `422` with `base_model_not_allowed`.
+- To collect verified values into its training set, send `POST /v1/document-insight-models/{model_id}/dataset`. `dataset_stats` gives the counts.
+- To compare it with the standard model, send `POST /v1/document-insight-models/{model_id}/evaluate` with an optional `max_documents` (1 to 100, default 25). It returns `202` and costs model calls. Poll the list until `eval_result.status` is no longer `running`.
+- To start fine-tuning, send `POST /v1/document-insight-models/{model_id}/training`. Training runs for hours. To record its progress, send `POST /v1/document-insight-models/{model_id}/training/sync`.
+- To switch extraction to it, send `POST /v1/document-insight-models/{model_id}/activate`. A trained model is held back until its accuracy check passes; `activation_blocked_reason` says why.
+- To retire it, send `POST /v1/document-insight-models/{model_id}/retire`. Retiring the active model returns extraction to the standard model. API keys cannot retire.
+
+A step the model's state refuses, such as evaluating a retired model or training without a dataset, returns `409` with `decision_model_conflict`.
+
+## Add an Inspect application
+
+<ParamField path="method" type="POST">
+  `POST /v1/inspect-applications`
+</ParamField>
+
+Adds an application for Inspect to sign in to and check, and returns it with `201`. When the application's login domain matches exactly one of your vendors, Coverbase links that vendor.
+
+<ParamField body="display_name" type="string" required>
+  The name you see for the application.
+</ParamField>
+
+<ParamField body="auth_method" type="string" required>
+  How Inspect signs in: `password_url`, `okta_app`, `entra_app`, or `oauth_google`.
+</ParamField>
+
+<ParamField body="login_url" type="string">
+  The sign-in page, as an absolute `http` or `https` URL. Required for `password_url` and `oauth_google`. For `okta_app` and `entra_app`, Coverbase uses the URL the identity provider reports when you leave it out.
+</ParamField>
+
+<ParamField body="okta_application_id" type="string">
+  The Okta application ID. Required for `okta_app`, and Okta must be connected.
+</ParamField>
+
+<ParamField body="entra_application_id" type="string">
+  The Entra application ID. Required for `entra_app`, and Entra must be connected.
+</ParamField>
+
+<ParamField body="platform_key" type="string">
+  The SaaS platform the application runs on, from `GET /v1/inspect-platforms`.
+</ParamField>
+
+<ParamField body="api_authority" type="string">
+  The HTTPS origin of the application's API, for example `https://api.example.com`.
+</ParamField>
+
+To add up to 200 applications in one request, send `POST /v1/inspect-applications/bulk` with `applications`, a list of the same objects. Coverbase validates every entry before it creates any, so one invalid entry refuses the whole batch. The response has `items` in request order.
+
+### Response
+
+<ResponseField name="id" type="string">Application ID.</ResponseField>
+<ResponseField name="display_name" type="string">The application's name.</ResponseField>
+<ResponseField name="auth_method" type="string">How Inspect signs in.</ResponseField>
+<ResponseField name="login_url" type="string | null">The sign-in page.</ResponseField>
+<ResponseField name="api_authority" type="string | null">The API origin.</ResponseField>
+<ResponseField name="okta_application_id" type="string | null">The linked Okta application.</ResponseField>
+<ResponseField name="entra_application_id" type="string | null">The linked Entra application.</ResponseField>
+<ResponseField name="platform_key" type="string | null">The SaaS platform.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the application is archived.</ResponseField>
+<ResponseField name="has_verification_factor" type="boolean">Whether a one-time code or passkey factor is enrolled.</ResponseField>
+<ResponseField name="vendor_match_status" type="string">`linked`, `suggested`, `ambiguous`, or `unresolved`.</ResponseField>
+<ResponseField name="vendor_id" type="string | null">The linked vendor.</ResponseField>
+<ResponseField name="suggested_vendor_id" type="string | null">The one vendor that matches the login domain, when the application has no vendor yet.</ResponseField>
+<ResponseField name="candidate_vendor_ids" type="string[]">Vendors that match when the match is ambiguous.</ResponseField>
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `okta_application_not_found` | No synced Okta application with this ID. |
+| `404` | `entra_application_not_found` | No synced Entra application with this ID. |
+| `409` | `okta_not_connected` | Okta is not connected for your organization. |
+| `409` | `entra_not_connected` | Entra is not connected for your organization. |
+| `422` | `login_url_required` | The sign-in method needs `login_url`. |
+| `422` | `login_url_invalid` | `login_url` is not an absolute `http` or `https` URL with a hostname. |
+| `422` | `login_url_unresolved` | The identity provider reports no login URL. Send `login_url` or sync the provider again. |
+| `422` | `okta_application_required` | `okta_app` needs `okta_application_id`. |
+| `422` | `entra_application_required` | `entra_app` needs `entra_application_id`. |
+| `422` | `platform_invalid` | The platform key is unknown, or the API origin is not one the platform declares. |
+
+## Get or change an Inspect application
+
+To read one application, send `GET /v1/inspect-applications/{application_id}`. It returns the same shape as the create response. An unknown ID returns `404` with `application_not_found`.
+
+To rename an application or change its login URL, send `PATCH /v1/inspect-applications/{application_id}` with `display_name`, `login_url`, or both. Omitted fields keep their value. To make an Okta or Entra application use the URL its identity provider reports, send `login_url: null`. A `password_url` or `oauth_google` application keeps its URL and returns `422` with `login_url_required`. A blank name returns `422` with `display_name_blank`.
+
+To link an application to one of your vendors, send `PUT /v1/inspect-applications/{application_id}/vendor` with `vendor_id`. An unknown or archived vendor returns `404` with `vendor_not_found`.
+
+To set the platform, send `PUT /v1/inspect-applications/{application_id}/platform` with `platform_key` (or null to clear it) and an optional `api_authority`. When you leave out `api_authority`, the current one stays.
+
+To link several applications to their suggested vendors, send `POST /v1/inspect-applications/link-suggested-vendors` with up to 200 `application_ids`. An application that already has a vendor, or whose match is ambiguous, stays as it is. When an ID is unknown, nothing changes and the endpoint returns `404` with `application_not_found`.
+
+All of these need the `integration:update:org` permission, except the read, which needs `integration:read:org`.
+
+## Archive or delete an Inspect application
+
+To stop Inspect checking an application and keep its history, send `POST /v1/inspect-applications/{application_id}/archive`. To restore it, send `POST /v1/inspect-applications/{application_id}/unarchive`. To archive or restore up to 200 at once, send `POST /v1/inspect-applications/bulk-archive` with `application_ids` and `is_archived`.
+
+To delete an application for good, send `DELETE /v1/inspect-applications/{application_id}`. Coverbase removes its saved sign-in sessions and stored credentials, then returns `204`. You cannot undo a delete.
+
+API keys cannot archive, restore, or delete applications. A signed-in user must do it.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `403` | `api_key_not_allowed` | An API key called the endpoint. |
+| `404` | `application_not_found` | No application with this ID in your organization. |
+| `409` | `identity_reconciliation_busy` | Coverbase is reconciling identities for your organization. Try again shortly. |
+| `500` | `sessions_not_revoked` | A saved sign-in session could not be removed, so nothing was deleted. |
+| `500` | `credentials_not_deleted` | A stored credential could not be removed, so nothing was deleted. |
+
+## Read setup options and platforms
+
+To list what you can pick when you start an inspection, send `GET /v1/inspect-setup-options`. The response has `applications` (each with `id` and `display_name`) and `control_sets` (each with `id`, `name`, and `control_count`). Only internal control sets with at least one active control appear.
+
+To list the platform keys you can assign to an application, send `GET /v1/inspect-platforms`. The response has `platform_keys`.
+
+Both need the `integration:read:org` permission.
+
+## Read and change an application's config
+
+<ParamField path="method" type="GET">
+  `GET /v1/inspect-applications/{application_id}/config`
+</ParamField>
+
+Returns how Inspect signs in to an application and calls its API. Each credential field says whether a value is stored. The API never returns a stored credential or where it is kept.
+
+### Response
+
+<ResponseField name="application_id" type="string">Application ID.</ResponseField>
+<ResponseField name="display_name" type="string">The application's name.</ResponseField>
+<ResponseField name="auth_method" type="string | null">How Inspect signs in.</ResponseField>
+<ResponseField name="credentials_configured" type="boolean">Whether every required credential is stored, or a ready single sign-on session covers it.</ResponseField>
+<ResponseField name="credential_fields" type="object[]">
+  Each with `key`, `label`, `input_kind`, `usage` (`sign_in`, `sso_identity`, or `api`), `required`, and `configured`.
+</ResponseField>
+<ResponseField name="api_authentication_parameters" type="object[]">
+  Each with `key`, `label`, `description`, and the stored `value`.
+</ResponseField>
+<ResponseField name="request_parameters" type="object[]">
+  API request parameters the application's plans need. Each with `key`, `name`, `location` (`path` or `query`), `value_type`, `description`, `allowed_values`, and the stored `value`.
+</ResponseField>
+<ResponseField name="api_authority" type="string | null">The API origin.</ResponseField>
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/inspect-applications/{application_id}/config`
+</ParamField>
+
+To set an application's API settings, send any of `api_authentication_parameters` and `request_parameters` (objects keyed by the `key` the read returns) and `api_authority`. Coverbase validates every value before it saves any, and returns the updated config. You set sign-in and API credentials in Coverbase, not through the API, so a `credentials` field returns `422`.
+
+The read needs `integration:read:org` and the update needs `integration:update:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `application_not_found` | No application with this ID in your organization. |
+| `422` | `request_parameter_unknown` | A request parameter key the application's plans do not use. |
+| `422` | `request_parameter_invalid` | A request parameter value that does not fit its type or allowed values. |
+| `422` | `authentication_parameter_unknown` | An API authentication parameter key the application does not use. |
+| `422` | `authentication_parameter_invalid` | An API authentication parameter value that is not valid. |
+| `422` | `api_authority_undeclared` | An API origin the application's platform does not declare. |
+
+## Prepare Inspect plans
+
+A plan says which evidence Inspect collects for one control on one platform, and how. Inspect can start an inspection only when every control in the chosen set has a ready plan.
+
+<ParamField path="method" type="GET">
+  `GET /v1/inspect-plans/readiness`
+</ParamField>
+
+Reports whether a control set is ready for an application. Needs `integration:read:org`.
+
+<ParamField query="control_set_id" type="string" required>
+  The internal control set.
+</ParamField>
+
+<ParamField query="application_id" type="string" required>
+  The Inspect application. It must have a platform.
+</ParamField>
+
+<ParamField query="browser_evidence_allowed" type="boolean" default="true">
+  Set to `false` to count only API evidence.
+</ParamField>
+
+The response gives the set's readiness and each control's plan or preparation.
+
+<ParamField path="method" type="POST">
+  `POST /v1/inspect-plans/ensure`
+</ParamField>
+
+To prepare the missing plans, send `control_set_id`, `application_id`, and an optional `browser_evidence_allowed`. Preparation runs in the background, and the response is the readiness after Coverbase queued it. Poll `GET /v1/inspect-plans/readiness` until the set is ready. Needs `integration:run:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `target_not_found` | No application with this ID in your organization. |
+| `422` | `target_not_found` | The application is archived. |
+| `422` | `target_platform_missing` | The application has no platform. Set one with `PUT /v1/inspect-applications/{application_id}/platform`. |
+| `422` | `plan_selection_invalid` | The control set is not an internal set in your organization, or has no active controls. |
+| `409` | `plan_version_conflict` | Another request changed the plans at the same time. Try again. |
+
+## Read and edit an Inspect plan
+
+To read a plan, send `GET /v1/inspect-plans/{plan_id}`. The response has `id`, `source_control_id`, `platform_key`, `version`, `scope` (`public` or `organization`), `is_latest_version`, `superseded_reason`, `outdated`, `plan_content_hash`, the full `plan`, and `created_at`. `outdated` is `true` when newer documentation or a newer planner would build a different plan.
+
+To list a plan's published versions without their bodies, send `GET /v1/inspect-plans/{plan_id}/versions`. Each item has `id`, `version`, `plan_content_hash`, `is_latest_version`, `superseded_reason`, `published_by_user_id`, `derived_from_plan_id`, and `created_at`.
+
+To edit a plan, send the whole edited `plan` with the `plan_content_hash` you read:
+
+- To check an edit without saving it, send `POST /v1/inspect-plans/{plan_id}/revisions/validate`. The response gives the `plan_content_hash` that publishing would store.
+- To publish it as the next version, send `POST /v1/inspect-plans/{plan_id}/revisions`. It returns `201` with the new version.
+
+To customize a public plan, also send `control_id`, one of your own controls the plan covers. You can change wording and route hints. You cannot change what evidence the plan collects.
+
+Reads need `integration:read:org`. Edits need `integration:update:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `plan_not_found` | No plan with this ID that your organization can see. |
+| `409` | `plan_version_conflict` | Someone published a version since you read `plan_content_hash`. Read the plan again. |
+| `409` | `plan_already_customized` | Your organization already customized this public plan. Edit your version instead. |
+| `422` | `plan_contract_changed` | The edit changes the evidence the plan collects. |
+| `422` | `plan_field_not_editable` | The edit changes a field you cannot edit. |
+| `422` | `plan_route_hint_invalid` | A route hint is not valid for the platform. |
+| `422` | `plan_text_required` | A text field is empty. |
+| `422` | `plan_text_too_long` | A text field is too long. |
+| `422` | `plan_text_unsupported` | A text field holds characters Inspect does not accept. |
+| `422` | `plan_selection_invalid` | `control_id` does not match the plan. |
+| `503` | `plan_storage_unavailable` | Plan sources cannot be loaded right now, so the edit cannot be checked. |
+
+## Regenerate an Inspect plan
+
+When a plan is `outdated`, you choose when to replace it. To retire your organization's plan and prepare a fresh one, send `POST /v1/inspect-plans/{plan_id}/regenerate`. The retired version stays readable, and inspections that used it keep it. The response has `superseded_plan_id` and the `preparation`, which is null when a current public plan already covers the control.
+
+To redesign how Inspect checks one requirement after a run failed it, send `POST /v1/inspect-plans/{plan_id}/requirements/{requirement_key}/regenerate` with the `run_id`. The plan stays live until the new version publishes. The response has the `preparation`.
+
+Both need `integration:update:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `plan_not_found` | No plan with this ID in your organization. |
+| `409` | `plan_version_conflict` | The plan changed at the same time. Try again. |
+| `422` | `plan_regeneration_refused` | The control is archived, or its platform has no documentation, so nothing would replace the plan. |
+| `422` | `requirement_regeneration_refused` | The run did not fail this requirement, or the requirement cannot be redesigned. |
+| `503` | `plan_preparation_unavailable` | Plan preparation cannot run right now. Nothing changed. |
+
+## Start an inspection
+
+<ParamField path="method" type="POST">
+  `POST /v1/inspections`
+</ParamField>
+
+Starts an inspection of one application against one or more control sets, and returns it with `201`. The inspection runs in the background. To follow it, poll `GET /v1/inspections/{inspection_id}`. Every control needs a ready plan first, so check `GET /v1/inspect-plans/readiness` and prepare missing plans with `POST /v1/inspect-plans/ensure`.
+
+<ParamField body="application_id" type="string" required>
+  The Inspect application.
+</ParamField>
+
+<ParamField body="control_set_ids" type="string[]" required>
+  The internal control sets to check.
+</ParamField>
+
+<ParamField body="purpose" type="string" default="evaluative">
+  `evaluative` scores each control, `exploratory` collects evidence without a score, and `drift` compares against an earlier inspection.
+</ParamField>
+
+<ParamField body="reference_inspection_id" type="string">
+  For `drift` only: a finished inspection of the same application that ran every control set you send.
+</ParamField>
+
+<ParamField body="vendor_id" type="string">
+  The vendor to attribute results to. It defaults to the application's vendor and must match it when the application has one.
+</ParamField>
+
+<ParamField body="schedule_id" type="string">
+  Links the inspection to a schedule. The schedule must be active and match the application, vendor, control sets, purpose, and `browser_evidence_allowed`.
+</ParamField>
+
+<ParamField body="browser_evidence_allowed" type="boolean" default="true">
+  Set to `false` to collect only API evidence.
+</ParamField>
+
+Needs `integration:run:org`.
+
+### Response
+
+<ResponseField name="id" type="string">Inspection ID.</ResponseField>
+<ResponseField name="application_id" type="string | null">The application.</ResponseField>
+<ResponseField name="app_name" type="string">The application's name when the inspection started.</ResponseField>
+<ResponseField name="vendor_id" type="string | null">The vendor.</ResponseField>
+<ResponseField name="control_set_ids" type="string[]">The control sets checked.</ResponseField>
+<ResponseField name="purpose" type="string">`evaluative`, `exploratory`, or `drift`.</ResponseField>
+<ResponseField name="status" type="string">The inspection's status.</ResponseField>
+<ResponseField name="browser_evidence_allowed" type="boolean">Whether browser evidence is collected.</ResponseField>
+<ResponseField name="reference_inspection_id" type="string | null">The inspection a drift run compares against.</ResponseField>
+<ResponseField name="schedule_id" type="string | null">The linked schedule.</ResponseField>
+<ResponseField name="is_archived" type="boolean">Whether the inspection is archived.</ResponseField>
+<ResponseField name="created_at" type="integer">Unix timestamp.</ResponseField>
+<ResponseField name="started_at" type="integer | null">Unix timestamp.</ResponseField>
+<ResponseField name="finished_at" type="integer | null">Unix timestamp.</ResponseField>
+<ResponseField name="runs" type="object[]">
+  One per control: `id`, `status`, `control_id`, `control_set_id`, `retry_of_run_id`, `started_at`, and `finished_at`.
+</ResponseField>
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `reference_inspection_required` | A `drift` inspection needs `reference_inspection_id`. |
+| `400` | `reference_inspection_not_allowed` | Only a `drift` inspection names a reference. |
+| `400` | `reference_inspection_incompatible` | The reference inspection checked another application. |
+| `400` | `reference_inspection_unusable` | The reference inspection has not finished, observed no evidence, or is a probe sample. |
+| `400` | `reference_inspection_controls_missing` | The reference inspection did not run every control set you send. |
+| `400` | `schedule_incompatible` | The schedule is stopped or does not match the request. |
+| `404` | `target_not_found` | No application with this ID in your organization. |
+| `409` | `target_archived` | The application is archived. |
+| `409` | `plans_not_ready` | A control has no ready plan. `readiness` in the error says which. |
+| `409` | `controls_not_scoreable` | A control set has no control that can be scored. |
+| `409` | `authentication_in_progress` | Inspect is refreshing the application's sign-in. Try again shortly. |
+| `422` | `vendor_mismatch` | `vendor_id` does not match the application's vendor. |
+| `422` | `vendor_unavailable` | The vendor is archived or not found. |
+| `422` | `plan_selection_invalid` | A control set is not an internal set in your organization. |
+
+## Find inspections
+
+To read one inspection, send `GET /v1/inspections/{inspection_id}`. It returns the same shape as the create response. An unknown ID returns `404` with `inspection_not_found`.
+
+To filter inspections, send `POST /v1/inspections/query` with an optional `filter` in the [unified filter language](/conventions), `sort`, `exclude_probes`, `limit` (1 to 500, default 50), and `offset`. The response has `items` in the shape above, `total`, `limit`, and `offset`.
+
+Both need `integration:read:org`.
+
+## Archive, cancel, or retry inspections
+
+- To archive or restore up to 500 inspections, send `POST /v1/inspections/bulk-archive` with `inspection_ids` and `is_archived` (default `true`). API keys cannot archive or restore inspections, and the call needs `integration:update:org` and `integration:archive:org`.
+- To cancel every unfinished control of up to 500 inspections, send `POST /v1/inspections/bulk-cancel` with `inspection_ids`. `affected_ids` lists the inspections that had a control to cancel.
+- To cancel some controls of one inspection, send `POST /v1/inspections/{inspection_id}/runs/bulk-cancel` with `run_ids`.
+- To run finished controls again, send `POST /v1/inspections/{inspection_id}/runs/bulk-retry` with `run_ids`. Set `use_current_control` to `true` to run each control's current version. When that version has no ready plan, nothing restarts, Coverbase starts preparing the plan, and the call returns `409` with `plans_not_ready`.
+
+Cancel and retry need `integration:run:org`. Each returns `affected_ids`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `403` | `api_key_not_allowed` | An API key tried to archive or restore inspections. |
+| `404` | `inspection_not_found` | An inspection or control run is not in your organization. |
+| `409` | `run_not_retryable` | A control run has not finished, so it cannot run again. |
+| `409` | `inspection_has_no_application` | The inspection's application was deleted, so it cannot run against the current control. |
+| `409` | `plans_not_ready` | The current control has no ready plan yet. Retry after it is ready. |
+
+## Read the Inspect overview
+
+To read your posture score across each application's latest scored inspection, send `GET /v1/inspect-posture`. The response has `percent`, which is null until an application has a scored inspection, and `app_count`.
+
+To read the overview, send `GET /v1/inspect-summary` with an optional `days` (1 to 365, default 30). The response counts issues (`issues_open`, `issues_resolved`, `issues_dismissed`, `issues_total`, and `issues_by_severity`), findings (`findings_new`, `findings_overdue`, `findings_total`), applications (`applications_connected`, `applications_inspected`, `applications_never_inspected`, `applications_with_connection_issues`), and runs (`runs_completed`, `runs_partial`, `runs_failed`, `runs_total`). `top_vendors` and `top_applications` rank by issue count, each with `id`, `name`, and `issue_count`.
+
+Both need `integration:read:org`.
+
+## Work with the identity directory
+
+The identity directory lists the people and services Inspect found in Okta, Entra, and inspected applications, with the accounts each holds.
+
+- To count identities by the views the dashboard offers, send `GET /v1/inspect-identities/summary`. The response has `identities`, `with_accounts`, `guests`, `admin_observed`, `observed`, `needs_attribution`, `observations_total`, and `observations_attributed`.
+- To filter identities, send `POST /v1/inspect-identities/query` with an optional `filter`, `sort`, `search`, `limit` (1 to 500, default 50), and `offset`. Each item has `id`, `display_name`, `primary_email`, `association`, `account_count`, `admin_account_count`, `needs_review_count`, and `latest_observed_at`.
+- To assign accounts Inspect observed to an identity, send `PUT /v1/inspect-accounts/owner` with `account_ids` and `identity_id`. To hand the accounts back to automatic matching, send `identity_id: null`. Only accounts known from inspections can be assigned.
+- To move every observed account of some identities to another identity, send `POST /v1/inspect-identities/merge` with `identity_ids` and `into_identity_id`. You cannot merge away an identity from Okta or Entra.
+- To set which SaaS platform an Okta or Entra application is, send `PUT /v1/inspect-idp-applications/{application_id}/platform` with `platform_key`, or null to clear it.
+
+An owner change or merge returns `request_id` and `queued`. Coverbase then rebuilds the identity inventory in the background, so counts follow the decision within a few minutes. Reads need `integration:read:org` and changes need `integration:update:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `400` | `sort_invalid` | A sort field the directory cannot sort by. |
+| `404` | `identity_not_found` | No identity with this ID in your organization. |
+| `404` | `idp_application_not_found` | No Okta or Entra application with this ID. |
+| `409` | `accounts_gone` | An account was removed while you decided. Read the directory again. |
+| `422` | `accounts_not_observed` | An account comes from Okta or Entra, which decides its owner. |
+| `422` | `unknown_owner_not_assignable` | Clear the owner instead of assigning Unknown owner. |
+| `422` | `merge_source_required` | Name at least one identity other than `into_identity_id`. |
+| `422` | `directory_identity_not_mergeable` | An identity from Okta or Entra cannot be merged away. |
+| `422` | `unknown_owner_not_mergeable` | Assign Unknown owner's accounts one at a time. |
+| `422` | `platform_invalid` | The platform key is unknown. |
+
+## Manage saved sign-in sessions
+
+Inspect saves a sign-in session (an auth context) per single sign-on provider or application, and reuses it across runs. The API returns each session's `id`, `label`, `principal_login`, `status`, `allowed_domains`, `last_validated_at`, `last_stale_at`, `last_stale_reason`, and `last_error`. It never returns browser identifiers.
+
+- To list them, send `GET /v1/inspect-auth-contexts`.
+- To create the session for a provider, send `POST /v1/inspect-auth-contexts` with optional `label`, `provider_config`, and `allowed_domains`. Leave out `provider_config` for Okta. When a session for the provider exists, Coverbase returns it. The session starts empty, and Inspect signs in on the next run.
+- To make Inspect sign in again, for example after a password change, send `POST /v1/inspect-auth-contexts/{auth_context_id}/stale` with an optional `reason`.
+
+Listing needs `integration:read:org`. The other two need `integration:update:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `auth_context_not_found` | No session with this ID in your organization. |
+| `409` | `auth_context_provider_unavailable` | The provider is not connected or has no inspection identity. |
+| `422` | `auth_context_config_invalid` | `provider_config` is not valid for the provider. |
+| `502` | `browser_profile_unavailable` | Coverbase could not create the browser profile. Try again. |
+
+## Find documentation for a control
+
+Inspect builds plans from vendor documentation for each platform.
+
+- To list the documents for an application's platform, send `GET /v1/inspect-applications/{application_id}/documentation`. The response has `platform_key`, `bundle_id`, `activated_at`, and `documents`, each with `key`, `title`, `usage`, and `canonical_url`. An application without a platform has no documents.
+- To search for the documentation a control needs, send `POST /v1/inspect-documentation-discovery-runs` with `control_id` and `application_id`. It returns `202` with the run. A run already queued for the same pair is returned instead of a new one.
+- To follow a run, send `GET /v1/inspect-documentation-discovery-runs/{run_id}`. The run has `id`, `control_id`, `application_id`, `platform_key`, `status`, `phase`, `outcome`, `failure_code`, `resource_bundle_id`, `created_at`, `started_at`, and `finished_at`.
+
+Reads need `integration:read:org`. Starting a run needs `integration:run:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `application_not_found` | No application with this ID in your organization. |
+| `404` | `control_not_found` | No control with this ID in your organization. |
+| `404` | `target_not_found` | No application with this ID in your organization. |
+| `404` | `discovery_run_not_found` | No discovery run with this ID. |
+| `422` | `target_archived` | The application is archived. |
+| `422` | `target_platform_missing` | The application has no platform. |
+
+## Read Okta and Entra connections
+
+- To list the applications synced from Okta, send `GET /v1/okta-integration/applications`. For Microsoft Entra, send `GET /v1/entra-integration/applications`. Both take `limit` (1 to 500, default 100) and `offset`. Each item has `id`, `provider_app_id`, `display_name`, `status`, `sign_on_mode`, `login_url`, `platform_key`, `vendor_id`, and `last_synced_at`.
+- To read how often Coverbase syncs Okta, send `GET /v1/okta-integration/schedule`. The response has `connected`, `sync_interval_hours`, `last_synced_at`, and `next_sync_at`.
+- To change it, send `PUT /v1/okta-integration/schedule` with `sync_interval_hours` set to `6`, `12`, `24`, or `168`, or null to sync only when someone asks.
+- To read the latest sync, send `GET /v1/okta-integration/sync`. The response has `job`, which is null when Okta never synced. A job has `id`, `kind`, `status`, `stage`, `incremental`, `inventory_ready`, `applications_ready`, `applications_total`, `access_synced_count`, `groups_synced_count`, `can_resume`, record counts, `last_error`, `started_at`, and `completed_at`. A sync that stopped reporting progress reads as `failed`.
+- To disconnect Okta, send `DELETE /v1/okta-integration`. Inspect stops syncing it and keeps the synced history. It returns `204`.
+
+Changing the schedule and disconnecting stay with an organization admin, so API keys cannot do them. You connect Okta and Entra, and store their credentials, in Coverbase.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `403` | `admin_required` | The caller is not an organization admin, or is an API key. |
+| `403` | `api_key_not_allowed` | An API key tried to disconnect Okta. |
+| `404` | `okta_not_connected` | Okta is not connected for your organization. |
+
+## Watch or download a control run's browser
+
+When Inspect checks a control in a browser, it records each browser tab.
+
+- To list a run's recorded tabs, send `GET /v1/inspections/{inspection_id}/runs/{run_id}/replay`. The response has `status` (`ready`, `preparing`, or `unavailable`) and `pages`, each with `page_id`. A recording reads as `preparing` for about a minute after the run finishes.
+- To download one tab, send `GET /v1/inspections/{inspection_id}/runs/{run_id}/replay/pages/{page_id}`. The response is an HLS playlist (`application/vnd.apple.mpegurl`) whose segment links are short-lived, so play or save it right away.
+- To watch a running control, send `GET /v1/inspections/{inspection_id}/runs/{run_id}/live-view`. The response has `live_view_url` and `pages`, each with `page_id`, `title`, and `live_view_url`. The fields are null when the control is not running. Anyone with a live view link can watch until it expires, so do not store or share it.
+
+These responses are never cached. All three need `integration:read:org`.
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `replay_not_found` | The run is not in this inspection, never opened a browser, or the tab has no recording. |
+| `404` | `run_not_found` | The run is not in this inspection. |
+| `502` | `replay_provider_unavailable` | The recording provider is unavailable. Try again shortly. |
+
+## Export, import, and test insight definitions
+
+- To export your insight library, send `GET /v1/document-insight-definitions` with an optional `include_archived`. Each item is a portable definition keyed by `field_key`, with no ids and no extracted values.
+- To import definitions, send `POST /v1/document-insight-definitions` with `definitions` (up to 500) and an optional `overwrite_existing` (default `false`). An insight whose `field_key` already exists is skipped unless you overwrite. The response lists `created_field_keys`, `updated_field_keys`, and `skipped_field_keys`.
+- To try a definition before saving it, send `POST /v1/document-insight-definitions/test` with `field_name` and any of `field_description`, `field_type`, `field_mode`, `document_types`, `sample_size` (1 to 5), `config_id`, and `document_ids`. It runs one model call per document and saves nothing. Each item gives the answer, its quote, and, with `config_id`, whether it matches the value the insight holds now. A scope with no readable documents returns `422` with `no_documents_to_test`.
