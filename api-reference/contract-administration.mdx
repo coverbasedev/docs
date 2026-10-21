@@ -44,6 +44,7 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/contract-records/{contract_id}/follow-up-drafts` | `contract:update:org` |
 | `GET` | `/v1/contract-records/{contract_id}/follow-up-drafts/{draft_id}` | `contract:read:org` |
 | `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` | `contract:read:org` |
+| `GET` | `/v1/clause-sets/{clause_set_id}/export` | `contract:export:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
 
@@ -253,3 +254,7 @@ When the vendor returns a marked-up document, you start a new round that reads i
 `GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}/round-summary` returns `total`, `queued` (clauses a person still has to look at), `asks_sent`, `asks_answered`, `asks_outstanding`, the counts by carry state in `buckets`, and `pending_dispositions`: vendor answers Coverbase would not settle on its own.
 
 To record those answers, send `POST /v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` with up to 200 `decisions`, each with `ask_id`, `status` (`accepted`, `rejected`, `countered` or `withdrawn`) and `response_text`. An ask from another round returns `422` with code `foreign_ask`. The response is the updated round summary.
+
+## Export a clause set
+
+`GET /v1/clause-sets/{clause_set_id}/export` returns `download_url`, `file_name` and `expires_in_seconds` (900). The URL downloads the set as an Excel workbook that the clause set importer can read back. It holds current, non-archived clauses only. Fetch it before it expires; the response is not cached.

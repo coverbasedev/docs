@@ -22,6 +22,15 @@ All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token
 | `PATCH` | `/v1/questionnaires/{questionnaire_id}/content` | Update questionnaires |
 | `GET` | `/v1/questionnaires/{questionnaire_id}/responses` | Read questionnaires |
 | `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}` | Read questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/status` | Read questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary/generate` | Update questionnaires |
+| `PUT` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary` | Update questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/answer-review` | Read questionnaires |
+| `GET` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/questions/{question_id}/versions` | Read questionnaires |
+| `POST` | `/v1/autofill-suggestions/{suggestion_id}/decision` | Update vendors (not API keys) |
+| `POST` | `/v1/emails/drafts` | Update the record the email is about |
+| `PATCH` | `/v1/emails/drafts/{email_id}` | Update the record the email is about |
 | `POST` | `/v1/questionnaires/{questionnaire_id}/conditions` | Update questionnaires |
 | `PATCH` | `/v1/questionnaire-conditions/{condition_id}` | Update questionnaires |
 | `POST` | `/v1/questionnaire-conditions/{condition_id}/archive` | Update questionnaires (not API keys) |
@@ -170,6 +179,49 @@ Lists the submissions to a questionnaire, newest first, without answers. Takes `
 </ParamField>
 
 Returns one submission with `answers`. Each answer has `question_id`, `question_text`, `text`, `option_id`, `selected_option_ids`, `response_data`, and `comment`. Answers to internal-only questions are left out. An unknown ID returns `404` with code `response_not_found`.
+
+## Draft answers with AI
+
+<ParamField path="method" type="POST">
+  `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/autofill`
+</ParamField>
+
+Starts a background run in which Coverbase drafts the submission's answers from the files uploaded to its request. Returns `202` with the submission's `status` and `autofill` progress. To follow the run, poll `GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/status` until `autofill.phase` is `done`, then read the answers with [Get a submission](#get-a-submission).
+
+<ParamField body="use_assessment_documents" type="boolean" default="false">Also draft from the linked assessment's documents.</ParamField>
+<ParamField body="use_web_search" type="boolean" default="true">Set to false to draft from the documents alone.</ParamField>
+<ParamField body="document_ids" type="string[]">Draft from these uploaded files only.</ParamField>
+
+A request with no files returns `400` with code `autofill_no_documents`. A run already in progress returns `409` with code `autofill_in_progress`. A submitted response returns `400` with code `already_submitted`.
+
+## Analysis summary
+
+To regenerate a submission's AI analysis summary, send `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary/generate`. It returns `202`, and the new summary replaces the old one when the run finishes.
+
+To replace the summary yourself, send `PUT /v1/questionnaires/{questionnaire_id}/responses/{response_id}/summary` with `summary`, an object in the assessment summary shape. An invalid summary returns `422` with code `invalid_summary`.
+
+## Answer review and versions
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/answer-review` returns `enabled`, `carried_forward` (each answer copied from an earlier submission, with `carry_forward_state` and `carried_forward_from_id`), and `edit_reviews` (each reviewer change with `original_answer_text`, `edited_answer_text`, and the vendor's `status`). When your org does not use answer review, `enabled` is false and the lists are empty.
+
+`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}/questions/{question_id}/versions` returns every version of one answer, including replaced ones (`is_archived` is true). A question with no answer returns `404` with code `answer_not_found`.
+
+## Decide a proposed record change
+
+<ParamField path="method" type="POST">
+  `POST /v1/autofill-suggestions/{suggestion_id}/decision`
+</ParamField>
+
+A submission can propose changes to the vendor record, such as a tag or a contact, that approval writes. This endpoint accepts or rejects one of them before approval. API keys get `403` with code `api_key_not_allowed`; use a person's OAuth token.
+
+<ParamField body="decision" type="string">`accepted`, `rejected`, or null to clear the verdict.</ParamField>
+<ParamField body="value" type="string">For a contact suggestion, the one address the verdict is on.</ParamField>
+
+## Email drafts
+
+To save an unsent email about a record, send `POST /v1/emails/drafts` with `object_id`, `object_type` (`vendor`, `vendor_document`, `portal`, `contract`, `task`, `questionnaire_review`, `case`, or `case_thread`), `from_address`, and optionally `to_addresses`, `cc_emails`, `bcc_emails`, `subject`, `text_body`, and `html_body`. Each address is an object with `email` and an optional `name`. It returns `201` with `id`, `status` (`draft`), `subject`, `object_id`, and `object_type`. A person reviews and sends the draft from the record's email tab. The call needs permission to update the record. An unknown type returns `422` with code `invalid_object_type`, and a record that does not exist returns `404` with code `object_not_found`.
+
+To change a draft, send `PATCH /v1/emails/drafts/{email_id}` with the fields to change. An email that was already sent returns `409` with code `not_a_draft`.
 
 ## Add a show rule
 
