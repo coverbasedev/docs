@@ -44,6 +44,7 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 - `POST /v1/vendor-discoveries/approve` and `POST /v1/vendor-discoveries/dismiss`
 - `POST /v1/screening-matches/{match_id}/disposition`
 - `POST /v1/bills-of-materials/{bom_id}/archive`
+- `POST /v1/documents/bulk-action` with `action: "archive"`
 
 ## Endpoints
 
@@ -132,6 +133,16 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `GET` | `/v1/bills-of-materials/{bom_id}/components` | `vendor:read:org` |
 | `POST` | `/v1/bills-of-materials/{bom_id}/archive` | `vendor:update:org` |
 | `POST` | `/v1/bills-of-materials/{bom_id}/promote` | `vendor:update:org` |
+| `POST` | `/v1/vendors/{vendor_id}/documents/query` | `vendor:read:org` |
+| `POST` | `/v1/documents/query` | `vendor:read:org` |
+| `POST` | `/v1/documents/expirations/query` | `vendor:read:org` |
+| `POST` | `/v1/documents/groups` | `vendor:read:org` |
+| `GET` | `/v1/document-types` | `vendor:read:org` |
+| `POST` | `/v1/documents/{document_id}/mark-subprocessor` | `vendor:update:org` |
+| `POST` | `/v1/documents/{document_id}/autofill` | `vendor:update:org` |
+| `POST` | `/v1/documents/{document_id}/alerts/{alert_type}/dismiss` | `vendor:update:org` |
+| `POST` | `/v1/documents/bulk-action` | `vendor:update:org` |
+| `GET` | `/v1/contract-documents/unlinked` | `vendor:read:org` |
 
 List endpoints that take `limit` and `offset` return `items`, `total`, `limit` and `offset`. `limit` defaults to `50` and accepts `1` to `200`.
 
@@ -429,3 +440,17 @@ These endpoints need the engagement record feature, or they return `404 not_enab
 `POST /v1/nth-parties/query` filters, sorts and pages the companies your vendors depend on, with the same unified filter body the dashboard uses (`filter`, `sort`, `search`, `limit`, `offset`).
 
 `GET /v1/bills-of-materials/{bom_id}` returns one software or AI bill of materials, and `GET .../components` pages its components with `search` and `component_type`. `POST .../promote` makes it the current bill for its vendor or service. `POST .../archive` archives it and refuses API keys.
+
+## Vendor documents
+
+These endpoints extend the [Documents API](/api-reference/documents).
+
+`POST /v1/vendors/{vendor_id}/documents/query` filters, sorts and pages one vendor's documents with the unified filter body (`filter`, `sort`, `search`, `limit`, `offset`, and an optional `group`). `POST /v1/documents/query` does the same across every vendor. `POST /v1/documents/groups` returns document counts by type or status.
+
+`POST /v1/documents/expirations/query` lists every expiry and renewal date across your documents, soonest first, with one row per date. Filter with `search`, `anchor_keys`, `document_type_slugs`, `anchor_date_start` and `anchor_date_end`.
+
+`GET /v1/document-types` lists the document types you can assign, including your custom types. `GET /v1/contract-documents/unlinked` lists contract documents not yet linked to a contract record.
+
+To record a company named in a document as one of the vendor's subprocessors, send `POST /v1/documents/{document_id}/mark-subprocessor` with `company_name`. This also clears the document's company-name mismatch alerts. `POST /v1/documents/{document_id}/autofill` writes the vendor custom fields the document's extracted details fill, and returns `400` when there are none. `POST /v1/documents/{document_id}/alerts/{alert_type}/dismiss` archives the document's active alerts of one type.
+
+`POST /v1/documents/bulk-action` takes `action: "archive"` with `ids`, `action: "update_services"` with `ids` and `service_ids`, or `action: "update_services_granular"` with `items` of `id` and `service_ids`. It returns `updated_count`. Archiving refuses API keys.
