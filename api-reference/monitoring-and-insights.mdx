@@ -1,0 +1,261 @@
+---
+title: "Monitoring and insights API"
+description: "Read Inspect schedules, document insight review items, dark web exposures, and vendor certificates, and pause or resume Inspect schedules."
+icon: "radar"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+These endpoints give you API access to four monitoring features: Inspect schedules (internal controls monitoring), the document insight review queue, dark web monitoring, and the Certificate Vault.
+
+All endpoints are scoped to the API key's organization. See [API conventions](/conventions) for shared behavior. List endpoints take `limit` and `offset` and return `items`, `total`, `limit`, and `offset`.
+
+| Method | Path | Permission |
+| ------ | ---- | ---------- |
+| `GET` | `/v1/inspect-schedules` | `integration:read:org` |
+| `POST` | `/v1/inspect-schedules/{schedule_id}/pause` | `integration:run:org` |
+| `POST` | `/v1/inspect-schedules/{schedule_id}/resume` | `integration:run:org` |
+| `GET` | `/v1/document-insight-pending-changes` | `vendor:read:org` |
+| `GET` | `/v1/dark-web/summary` | `dark_web_exposure:read:org` |
+| `GET` | `/v1/dark-web/exposures` | `dark_web_exposure:read:org` |
+| `GET` | `/v1/vendor-certificates` | `vendor:read:org` |
+
+Each feature has its own gate. When your organization does not have the feature, its endpoints return `404` with one of these codes:
+
+| Code | Feature |
+| ---- | ------- |
+| `inspect_not_enabled` | Inspect |
+| `dark_web_not_enabled` | Dark web monitoring |
+| `certificates_not_enabled` | Certificate Vault |
+
+When your organization enforces roles and the key lacks the permission, the endpoint returns `403`.
+
+## List Inspect schedules
+
+<ParamField path="method" type="GET">
+  `GET /v1/inspect-schedules`
+</ParamField>
+
+Returns your recurring Inspect schedules, newest first. A schedule inspects one application against its control sets on a day of the month or at a fixed interval.
+
+<ParamField query="include_archived" type="boolean" default="false">
+  Set to `true` to include stopped schedules.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Page size, from 1 to 100.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of schedules to skip.
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="object[]">
+  <Expandable title="schedule">
+    <ResponseField name="id" type="string">Schedule ID.</ResponseField>
+    <ResponseField name="target_id" type="string | null">The application the schedule inspects.</ResponseField>
+    <ResponseField name="app_name" type="string | null">The application's display name.</ResponseField>
+    <ResponseField name="control_set_ids" type="string[]">Control sets each inspection checks.</ResponseField>
+    <ResponseField name="purpose" type="string">`evaluative`, `exploratory`, or `drift`.</ResponseField>
+    <ResponseField name="day_of_month" type="integer | null">Day of the month a monthly schedule runs.</ResponseField>
+    <ResponseField name="interval_seconds" type="integer | null">Seconds between runs for an interval schedule.</ResponseField>
+    <ResponseField name="is_paused" type="boolean">Whether the schedule is paused.</ResponseField>
+    <ResponseField name="is_archived" type="boolean">Whether the schedule is stopped.</ResponseField>
+    <ResponseField name="created_at" type="integer">Unix timestamp.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Pause or resume an Inspect schedule
+
+<ParamField path="method" type="POST">
+  `POST /v1/inspect-schedules/{schedule_id}/pause`
+</ParamField>
+
+<ParamField path="method" type="POST">
+  `POST /v1/inspect-schedules/{schedule_id}/resume`
+</ParamField>
+
+To stop a schedule from starting inspections for a while, pause it. To start it again, resume it. Both return the updated schedule in the same shape as the list items. Pausing a paused schedule changes nothing.
+
+<ParamField path="schedule_id" type="string" required>
+  The schedule ID.
+</ParamField>
+
+### Errors
+
+| Status | Code | Meaning |
+| ------ | ---- | ------- |
+| `404` | `schedule_not_found` | No schedule with this ID in your organization. |
+| `409` | `schedule_archived` | The schedule was stopped. Create a new one in Coverbase instead. |
+
+## List document insight pending changes
+
+<ParamField path="method" type="GET">
+  `GET /v1/document-insight-pending-changes`
+</ParamField>
+
+Returns the field changes that document insights propose, newest first. An insight with a review-required update policy holds each change here until a person approves or rejects it in Coverbase. API keys cannot approve or reject changes.
+
+<ParamField query="config_id" type="string">
+  Only changes from this document insight.
+</ParamField>
+
+<ParamField query="document_id" type="string">
+  Only changes from this document.
+</ParamField>
+
+<ParamField query="status" type="string[]">
+  Any of `pending`, `approved`, `rejected`, `superseded`. Repeat the parameter for more than one.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Page size, from 1 to 200.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of changes to skip.
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="object[]">
+  <Expandable title="pending change">
+    <ResponseField name="id" type="string">Pending change ID.</ResponseField>
+    <ResponseField name="config_id" type="string">The document insight that proposed the change.</ResponseField>
+    <ResponseField name="document_id" type="string">The document the value came from.</ResponseField>
+    <ResponseField name="target_object_type" type="string">The kind of record the change writes to, for example `vendor`.</ResponseField>
+    <ResponseField name="target_object_id" type="string">The record the change writes to.</ResponseField>
+    <ResponseField name="field_name" type="string | null">The built-in field the change writes.</ResponseField>
+    <ResponseField name="custom_field_config_id" type="string | null">The custom field the change writes.</ResponseField>
+    <ResponseField name="current_value" type="any">What the field holds now.</ResponseField>
+    <ResponseField name="proposed_value" type="any">What the field would become.</ResponseField>
+    <ResponseField name="status" type="string">`pending`, `approved`, `rejected`, or `superseded`.</ResponseField>
+    <ResponseField name="resolved_at" type="integer | null">Unix timestamp of the decision.</ResponseField>
+    <ResponseField name="created_at" type="integer">Unix timestamp.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Get the dark web summary
+
+<ParamField path="method" type="GET">
+  `GET /v1/dark-web/summary`
+</ParamField>
+
+Returns the dark web monitoring rollup: open exposures by severity and category, recent activity, and how many identifiers and vendors you monitor. Vendor exposures follow the key's vendor read scope.
+
+### Response
+
+<ResponseField name="is_enabled" type="boolean">Whether monitoring is switched on.</ResponseField>
+<ResponseField name="open_total" type="integer">Open exposures.</ResponseField>
+<ResponseField name="open_by_severity" type="object">Open exposures per severity.</ResponseField>
+<ResponseField name="open_by_category" type="object">Open exposures per category.</ResponseField>
+<ResponseField name="new_last_7_days" type="integer">Exposures first seen in the last 7 days.</ResponseField>
+<ResponseField name="closed_total" type="integer">Closed exposures.</ResponseField>
+<ResponseField name="needs_review" type="integer">Exposures waiting for review.</ResponseField>
+<ResponseField name="with_legal" type="integer">Exposures sent to Legal.</ResponseField>
+<ResponseField name="monitored_assets" type="integer">Identifiers on the watchlist.</ResponseField>
+<ResponseField name="monitored_vendors" type="integer">Vendors in monitoring scope.</ResponseField>
+<ResponseField name="last_sweep_at" type="integer | null">Unix timestamp of the last sweep.</ResponseField>
+
+## List dark web exposures
+
+<ParamField path="method" type="GET">
+  `GET /v1/dark-web/exposures`
+</ParamField>
+
+Returns dark web exposures, worst severity first. Each item masks the identifier it matched. To see the full identifier and evidence, open the exposure in Coverbase.
+
+<ParamField query="review_status" type="string[]">
+  Review statuses to include, for example `new` or `confirmed`.
+</ParamField>
+
+<ParamField query="severity" type="string[]">
+  Severities to include, for example `critical` or `high`.
+</ParamField>
+
+<ParamField query="vendor_id" type="string[]">
+  Only exposures for these vendors.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Text match on the title and source.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Page size, from 1 to 200.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of exposures to skip.
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="object[]">
+  <Expandable title="exposure">
+    <ResponseField name="id" type="string">Exposure ID.</ResponseField>
+    <ResponseField name="subject_kind" type="string">`organization` or `vendor`.</ResponseField>
+    <ResponseField name="vendor_id" type="string | null">The vendor the exposure concerns.</ResponseField>
+    <ResponseField name="asset_id" type="string">The watchlist identifier that matched.</ResponseField>
+    <ResponseField name="masked_identifier" type="string">The matched identifier, masked.</ResponseField>
+    <ResponseField name="source_name" type="string">Where the exposure was found.</ResponseField>
+    <ResponseField name="category" type="string">For example `credential_leak` or `ransomware_victim`.</ResponseField>
+    <ResponseField name="severity" type="string">Severity.</ResponseField>
+    <ResponseField name="title" type="string">Short description.</ResponseField>
+    <ResponseField name="review_status" type="string">Where the exposure is in review.</ResponseField>
+    <ResponseField name="first_seen_at" type="integer">Unix timestamp.</ResponseField>
+    <ResponseField name="last_seen_at" type="integer">Unix timestamp.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+## List vendor certificates
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendor-certificates`
+</ParamField>
+
+Returns the vendor certificates in the Certificate Vault, soonest-expiring first.
+
+<ParamField query="vendor_id" type="string">
+  Only this vendor's certificates.
+</ParamField>
+
+<ParamField query="certificate_type" type="string[]">
+  Certificate types to include.
+</ParamField>
+
+<ParamField query="validity" type="string[]">
+  Any of `valid`, `expiring`, `expired`.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Text match on the certificate or vendor name.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Page size, from 1 to 500.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of certificates to skip.
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="object[]">
+  <Expandable title="certificate">
+    <ResponseField name="id" type="string">Certificate ID.</ResponseField>
+    <ResponseField name="vendor_id" type="string">The vendor that holds the certificate.</ResponseField>
+    <ResponseField name="certificate_type" type="string">Certificate type.</ResponseField>
+    <ResponseField name="name" type="string">Certificate name.</ResponseField>
+    <ResponseField name="issuer" type="string | null">Who issued it.</ResponseField>
+    <ResponseField name="valid_from" type="integer | null">Unix timestamp.</ResponseField>
+    <ResponseField name="valid_to" type="integer | null">Unix timestamp.</ResponseField>
+    <ResponseField name="source" type="string">Where Coverbase got the certificate.</ResponseField>
+    <ResponseField name="verification_status" type="string">Whether a person verified it.</ResponseField>
+  </Expandable>
+</ResponseField>
