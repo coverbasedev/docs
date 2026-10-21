@@ -14,14 +14,16 @@ A supplier whose bank account is held in Mexico sees the fields below. The count
 
 | Field | Requirement | Format | Notes |
 | --- | --- | --- | --- |
-| Bank name | Optional | up to 60 characters |  |
+| Beneficiary name | Required | up to 64 characters | The full name the account is held in, exactly as the bank has it. |
+| Bank name | Required | up to 60 characters |  |
 | Bank code | Read from the CLABE | not entered separately |  |
 | Branch code | Read from the CLABE | not entered separately |  |
 | Account number | Read from the CLABE | not entered separately |  |
 | Check digit | Read from the CLABE | not entered separately |  |
 | CLABE | Required | 18 characters, digits only, CLABE check digit | 18 digits: 3-digit bank code, 3-digit branch, 11-digit account, check digit. |
+| Payment system | Required | no length limit, one of: SPEI (Mexican pesos), SPID (US dollars) | SPEI for a peso account, SPID for a US dollar account in Mexico. |
 | SWIFT/BIC | Optional | 8 to 11 characters, letters and digits | 8 or 11 characters, for example, BOFAUS3N. Needed for a payment by wire. |
-| Account type | Optional | no length limit, one of: checking, savings | Checking unless the bank issued the account as a savings account. |
+| Account type | Required | no length limit, one of: checking, savings | Checking unless the bank issued the account as a savings account. |
 | Intermediary bank country code | Optional | 2 characters, letters only | Two-letter country code, for example, US. |
 | Intermediary bank city | Optional | up to 60 characters |  |
 | Account number at the intermediary bank | Optional | up to 34 characters |  |
@@ -33,6 +35,10 @@ A supplier whose bank account is held in Mexico sees the fields below. The count
 ### IBAN
 
 Mexico does not use IBANs. Accounts are identified by the fields above.
+
+### Currency
+
+Every account also records its currency. The form opens on MXN, the currency of Mexico, and the supplier changes it for an account held in another currency.
 
 ## Tax and company registrations
 
@@ -46,7 +52,7 @@ Oracle Fusion Cash Management 26c MX validations; Banxico CLABE spec. The CLABE 
 
 The rules on this page are confirmed against a primary source, so they are enforced strictly.
 
-Configuration version `2026.10.2`. Your organization can override any of these rules for its own suppliers.
+Configuration version `2026.10.3`. Your organization can override any of these rules for its own suppliers.
 
 ## Related
 
