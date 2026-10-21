@@ -94,9 +94,14 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/workflow-definitions/{workflow_definition_id}/graph-issues` | `workflow:read:org` |
 | `GET` | `/v1/workflow-definitions/{workflow_definition_id}/versions/diff` | `workflow:read:org` |
 | `PATCH` | `/v1/custom-document-types/{custom_document_type_id}` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types/draft` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types/{custom_document_type_id}/examples` | `org_settings:update:org` |
+| `POST` | `/v1/custom-document-types/{custom_document_type_id}/lookalikes/{vendor_document_id}/decision` | `org_settings:update:org` |
 | `GET` | `/v1/prompts/{prompt_name}/versions` | `org_settings:read:org` |
 | `PUT` | `/v1/prompts/{prompt_name}` | `org_settings:update:org` |
 | `POST` | `/v1/prompts/{prompt_name}/select` | `org_settings:update:org` |
+| `PATCH` | `/v1/prompts/{prompt_name}/versions/{version_num}` | `org_settings:update:org`; archiving needs a user key |
 
 <Note>
 An organization API key does not hold the `org_settings`, `email_template`, `report` or `role` permissions. In an organization that enforces roles, call the routes that need them with a key created by a person whose role holds the permission.
@@ -569,7 +574,31 @@ To download configured data exports as JSON, CSV or XLSX, use the existing `GET 
 
 `PATCH /v1/custom-document-types/{custom_document_type_id}` renames, regroups or redescribes one of your document types with `name`, `description` and `classification`. A new description runs the detection check again. A name another type already uses returns `409 document_type_name_taken`.
 
+### Create a custom document type from example files
+
+The draft, create and add-examples endpoints take `multipart/form-data`. Send each example file as its own `files` field, from 1 to 10 per request. Each file follows the same type and size limits as a vendor document upload, and a file outside them returns `400` or `413` before anything is stored.
+
+1. `POST /v1/custom-document-types/draft` with `name` and `files` returns a suggested `description`, `classification` and `confusable_document_types`, plus `existing_document_type` when your examples already match a built-in type and `unreadable_examples` for files with no readable text. Nothing is saved.
+2. `POST /v1/custom-document-types` with `name`, `description`, `classification`, up to 3 `confusable_document_types` fields and `files` creates the type, returns `201` and starts its detection check. A name another type already uses returns `409 document_type_name_taken`.
+3. `POST /v1/custom-document-types/{custom_document_type_id}/examples` with `files` adds examples and runs the check again. A type holds at most 10 examples; more returns `422 too_many_examples`.
+
+```bash
+curl -X POST "$BASE_URL/v1/custom-document-types" \
+  -H "Authorization: Bearer $API_KEY" \
+  -F "name=Modern Slavery Statement" \
+  -F "description=Annual statement under the UK Modern Slavery Act." \
+  -F "classification=esg" \
+  -F "files=@statement-2024.pdf" \
+  -F "files=@statement-2025.pdf"
+```
+
+The detection check can pull in vendor documents that look like your new type. Settle each one with `POST /v1/custom-document-types/{custom_document_type_id}/lookalikes/{vendor_document_id}/decision` and a `decision` of `keep`, which leaves the document's type, or `relabel`, which moves it to your type. A document the check did not pull in returns `404 lookalike_not_found`.
+
+### AI prompts
+
 `GET /v1/prompts/{prompt_name}/versions` lists your saved versions of one AI prompt, for example `finding_creation`, with `is_selected` on the version in use. `PUT /v1/prompts/{prompt_name}` saves a new version with `prompt_text` and an optional `prompt_key` and uses it. `POST /v1/prompts/{prompt_name}/select` uses an earlier `version_num`. The organization's assessment summary returns `409 use_summary_instructions`; manage it with the summary instructions endpoints.
+
+`PATCH /v1/prompts/{prompt_name}/versions/{version_num}` renames a version with `name`, or archives it or brings it back with `is_archived`. When you archive the version in use, Coverbase uses `new_selected_version_num`, or your newest unarchived version when you leave it out. Archiving and unarchiving need a user key: an API key gets `403 api_key_not_allowed`. An unknown version returns `404 prompt_version_not_found`.
 
 ## Errors
 
