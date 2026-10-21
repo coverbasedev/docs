@@ -45,6 +45,8 @@ All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token
 | `POST` | `/v1/portals/{portal_id}/resume` | Update portals |
 | `POST` | `/v1/portals/{portal_id}/invitations` | Update portals |
 | `GET` | `/v1/portals/{portal_id}/submissions` | Read portals |
+| `POST` | `/v1/vendor-outreach-requests/{request_id}/decision` | Update portals (not API keys) |
+| `POST` | `/v1/vendors/{vendor_id}/contact-grants/revoke` | Update vendors (not API keys) |
 | `GET` | `/v1/portal-templates` | Read portals |
 | `GET` | `/v1/portal-templates/{portal_template_id}` | Read portals |
 | `POST` | `/v1/portal-templates/{portal_template_id}/portals` | Create portals |
@@ -351,6 +353,12 @@ Emails the invitation to the vendor and grants each recipient access to the requ
 <ParamField body="bcc_emails" type="string[]">Blind copy recipients.</ParamField>
 
 A recipient whose address bounced or unsubscribed returns `422` with code `recipient_suppressed`.
+
+## Send an automatic collection's request
+
+When an assessment collects documents automatically but cannot send its request to the vendor unasked, a person decides who receives it. Send `POST /v1/vendor-outreach-requests/{request_id}/decision` with `revision` (the revision you read in Coverbase), `recipients` (each with `email`, `role` as `to`, `cc`, or `bcc`, and `source`), an optional `message` (`subject`, `text`, `due_at`), and optional `recipient_consent` (each with `email` and `intent`, to save or allow an address as a vendor contact). This contacts the vendor. It returns `request_id`, `outcome`, and `skip_reason`. A request that changed since you read it returns `outcome` `skipped` with the reason. An unknown ID returns `404` with code `outreach_request_not_found`. API keys get `403` with code `api_key_not_allowed`.
+
+To stop automatic document requests going to a vendor contact someone allowed, send `POST /v1/vendors/{vendor_id}/contact-grants/revoke` with `email`. The contact stays saved. It returns `email`, `revoked` (false when the grant was not live), and `vendor_contact`. Only the vendor's owner or an admin may revoke a grant, so API keys get `403` with code `api_key_not_allowed`.
 
 ## List submissions on a request
 
