@@ -43,6 +43,7 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `POST` | `/v1/document-insights/{config_id}/targets` | `org_settings:update:org` |
 | `PATCH` | `/v1/document-insight-targets/{target_id}` | `org_settings:update:org` |
 | `DELETE` | `/v1/document-insight-targets/{target_id}` | `org_settings:update:org` |
+| `GET` | `/v1/document-insight-stats` | `vendor:read:org` |
 | `GET` | `/v1/document-insight-groups` | `vendor:read:org` |
 | `POST` | `/v1/document-insight-groups` | `org_settings:update:org` |
 | `PATCH` | `/v1/document-insight-groups/{group_id}` | `org_settings:update:org` |
@@ -581,6 +582,10 @@ To change a target, send `PATCH /v1/document-insight-targets/{target_id}`. To st
 ### Groups
 
 To list groups, send `GET /v1/document-insight-groups`. To create one, send `POST /v1/document-insight-groups` with `name` and optionally `description`, `document_types`, `sort_order`, and `enabled`. To change one, send `PATCH /v1/document-insight-groups/{group_id}`; changing `document_types` rescopes every insight that inherits from the group. To delete one, send `DELETE /v1/document-insight-groups/{group_id}`. Its insights stay, outside any group.
+
+### Coverage
+
+`GET /v1/document-insight-stats` returns one row per insight with how many eligible documents it applies to, how many hold a value, and its fill rate. Pass `config_id` one or more times to read only those insights.
 
 ## Manage dark web monitoring
 
