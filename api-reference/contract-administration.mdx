@@ -34,6 +34,9 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `PATCH` | `/v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` | `contract:update:org` |
 | `DELETE` | `/v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}` | `contract:update:org`, signed-in user only |
 | `POST` | `/v1/clause-sets/{clause_set_id}/reference-clauses/reorder` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/clause-reviews` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}` | `contract:read:org` |
+| `PATCH` | `/v1/clause-matches/{match_id}` | `contract:update:org`; accepting a risk needs a signed-in user |
 
 List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
 
@@ -211,3 +214,13 @@ To add a reference clause, send `POST /v1/clause-sets/{clause_set_id}/reference-
 To reorder, send `POST /v1/clause-sets/{clause_set_id}/reference-clauses/reorder` with `reference_clause_ids` listing every current clause once. Any other list returns `422` with code `invalid_order`.
 
 API keys cannot archive. `DELETE` on a clause set or a reference clause with an API key returns `403` with code `api_key_not_allowed`.
+
+## Clause reviews
+
+A clause review compares a contract's documents with clause sets and records a match for each reference clause.
+
+To start one, send `POST /v1/contract-records/{contract_id}/clause-reviews` with `clause_set_ids` and, optionally, `document_ids`. Coverbase returns `202` and runs the review in the background. Poll `GET /v1/contract-records/{contract_id}/clause-reviews/{run_id}` until `status` is `completed` or `failed`. Pass `latest` as `run_id` for the most recent run. If the contract already has an active run over the same clause sets, you get that run. An active run over different clause sets returns `409` with code `active_run_exists`. An unknown or inactive clause set returns `404` with code `clause_set_not_found` or `422` with code `clause_set_not_usable`.
+
+Each match has `status`, `triage_decision`, `triage_notes`, `confidence`, `extracted_text`, `reasoning`, `source_document_id` and `page_num`.
+
+To record a reviewer's verdict, send `PATCH /v1/clause-matches/{match_id}` with either `status` (`conforming`, `needs_review`, `non_conforming`, `missing`, `not_applicable` or `accepted_risk`, plus `accepted_risk_expires_at`) or `triage_decision` (`no_action`, `accepted_risk` or `false_positive`, plus `triage_notes`). Accepting a risk is a sign-off, so an API key gets `403` with code `api_key_not_allowed`.

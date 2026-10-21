@@ -40,6 +40,20 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `GET` | `/v1/ai-settings` | `org_settings:read:org` |
 | `GET` | `/v1/agent-actions` | `org_settings:read:org` |
 | `GET` | `/v1/vendors/{vendor_id}/access-removal-requests` | `integration:read:org` |
+| `GET` | `/v1/access-removal-requests/{request_id}` | `integration:read:org` |
+| `PATCH` | `/v1/risk-config` | `org_settings:update:org` |
+| `POST` | `/v1/risks/{risk_id}/commitment-requests` | `risk:update:org` |
+| `POST` | `/v1/risk-chain/query` | `risk:read:org` |
+| `PUT` | `/v1/risk-methodology` | `org_settings:update:org` |
+| `POST` | `/v1/reviewer-matrix-rules` | `org_settings:update:org` |
+| `PUT` | `/v1/reviewer-matrix-rules/{rule_id}` | `org_settings:update:org` |
+| `POST` | `/v1/work-queue-escalation-rules` | `org_settings:update:org` |
+| `PUT` | `/v1/work-queue-escalation-rules/{rule_id}` | `org_settings:update:org` |
+| `PATCH` | `/v1/ai-settings` | `org_settings:update:org` |
+| `GET` | `/v1/ai-settings/learned-examples` | `org_settings:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/due-diligence-status` | `vendor:read:org` |
+| `GET` | `/v1/findings-stats` | `finding:read:org` |
+| `POST` | `/v1/commitments/{commitment_id}/extend-due-date` | `portal:update:org` and `commitment:update:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -343,3 +357,51 @@ Lists the Agent Ledger, newest first. Filter with `awaiting_decision`, `target_t
 </ParamField>
 
 Lists the identity-provider access removals a workflow proposed for a vendor, with each assignment it would remove. This read needs Inspect and returns `404` when Inspect is not enabled. Approving or rejecting a request stays with a signed-in user.
+
+## Change configuration and methodology
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/risk-config`
+</ParamField>
+
+Changes the Risk module configuration and returns it. Only the fields you send change. An invalid level scale returns `422` with the code `invalid_risk_config`.
+
+<ParamField path="method" type="PUT">
+  `PUT /v1/risk-methodology`
+</ParamField>
+
+Sets `irq_aggregation_method` and returns it.
+
+<ParamField path="method" type="POST">
+  `POST /v1/reviewer-matrix-rules`
+</ParamField>
+
+Returns `201 Created` with the new rule. Send `requester_department_id`, `risk_level_id`, `risk_domain_id` and `business_unit_id` (a null criterion matches anything) and one of `reviewer_user_id` or `reviewer_department_id`. `PUT /v1/reviewer-matrix-rules/{rule_id}` replaces a rule with the same body.
+
+<ParamField path="method" type="POST">
+  `POST /v1/work-queue-escalation-rules`
+</ParamField>
+
+Returns `201 Created` with the new rule. Send `name`, `overdue_days` (0 to 365), `target_type`, `item_types` (empty covers every type), `target_user_id` or `target_department_id`, and `reassign`. `PUT /v1/work-queue-escalation-rules/{rule_id}` replaces a rule with the same body.
+
+<ParamField path="method" type="PATCH">
+  `PATCH /v1/ai-settings`
+</ParamField>
+
+Changes `pii_redaction_enabled`, `learning_enabled`, `evaluation_guidance` (null clears it) or `policies`, and returns the settings. A policy that always needs a person, or that no agent enforces yet, returns `400` with the code `policy_not_allowed`.
+
+`GET /v1/ai-settings/learned-examples` lists the examples the org's reviewers taught control evaluation, newest first.
+
+## Other reads and actions
+
+`POST /v1/risks/{risk_id}/commitment-requests` asks a risk's owner to commit to treating it. Send an optional `due_at` and `message`. It returns `201 Created` with the `finding_id` and `commitment_id` it created.
+
+`POST /v1/risk-chain/query` returns the dependency chain. Send the same filters the Risk page uses, such as `follow`, `depth`, `critical_only` and `focus_node_id`.
+
+`GET /v1/access-removal-requests/{request_id}` returns one access removal request.
+
+`GET /v1/vendors/{vendor_id}/due-diligence-status` returns `is_current`, the latest completed assessment and the next assessment date. It needs the TPRM lifecycle.
+
+`GET /v1/findings-stats` returns the Findings page's insight numbers over every finding.
+
+`POST /v1/commitments/{commitment_id}/extend-due-date` moves a mitigation-underway commitment's `due_at` later and stores an optional internal `note`. The vendor's acceptance stands. A commitment that is not mitigation-underway, or a date that is not later, returns `400` with the code `extension_not_allowed`.

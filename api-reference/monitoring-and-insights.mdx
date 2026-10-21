@@ -22,6 +22,45 @@ All endpoints are scoped to the API key's organization. See [API conventions](/c
 | `GET` | `/v1/dark-web/exposures` | `dark_web_exposure:read:org` |
 | `GET` | `/v1/vendor-certificates` | `vendor:read:org` |
 | `GET` | `/v1/inspect-applications` | `integration:read:org` |
+| `POST` | `/v1/inspect-schedules` | `integration:run:org` |
+| `PATCH` | `/v1/inspect-schedules/{schedule_id}` | `integration:run:org` |
+| `DELETE` | `/v1/inspect-schedules/{schedule_id}` | `integration:run:org` |
+| `POST` | `/v1/document-insights` | `org_settings:update:org` |
+| `POST` | `/v1/document-insights/{config_id}/archive` | `org_settings:update:org` |
+| `POST` | `/v1/document-insights/{config_id}/restore` | `org_settings:update:org` |
+| `GET` | `/v1/document-insights/{config_id}/targets` | `vendor:read:org` |
+| `POST` | `/v1/document-insights/{config_id}/targets` | `org_settings:update:org` |
+| `PATCH` | `/v1/document-insight-targets/{target_id}` | `org_settings:update:org` |
+| `DELETE` | `/v1/document-insight-targets/{target_id}` | `org_settings:update:org` |
+| `GET` | `/v1/document-insight-groups` | `vendor:read:org` |
+| `POST` | `/v1/document-insight-groups` | `org_settings:update:org` |
+| `PATCH` | `/v1/document-insight-groups/{group_id}` | `org_settings:update:org` |
+| `DELETE` | `/v1/document-insight-groups/{group_id}` | `org_settings:update:org` |
+| `GET` | `/v1/dark-web/config` | `dark_web_exposure:read:org` |
+| `PATCH` | `/v1/dark-web/config` | `dark_web_exposure:update:org` |
+| `PATCH` | `/v1/dark-web/exposures/{exposure_id}/review` | `dark_web_exposure:update:org` |
+| `GET` | `/v1/dark-web/watchlist` | `dark_web_exposure:read:org` |
+| `POST` | `/v1/dark-web/watchlist` | `dark_web_exposure:update:org` |
+| `PATCH` | `/v1/dark-web/watchlist/{asset_id}` | `dark_web_exposure:update:org` |
+| `DELETE` | `/v1/dark-web/watchlist/{asset_id}` | `dark_web_exposure:update:org` |
+| `GET` | `/v1/dark-web/playbooks` | `dark_web_exposure:read:org` |
+| `PUT` | `/v1/dark-web/playbooks/{key}` | `dark_web_exposure:update:org` |
+| `DELETE` | `/v1/dark-web/playbooks/{key}` | `dark_web_exposure:update:org` |
+| `POST` | `/v1/vendor-certificates` | `vendor:update:org` |
+| `PATCH` | `/v1/vendor-certificates/{certificate_id}/verification` | `vendor:update:org` |
+| `DELETE` | `/v1/vendor-certificates/{certificate_id}` | `vendor:update:org` |
+| `POST` | `/v1/vendor-certificate-requests` | `vendor:update:org`, `portal:create:org` |
+| `GET` | `/v1/certificate-renewal-jobs` | `vendor:read:org` |
+| `POST` | `/v1/certificate-renewal-jobs` | `vendor:update:org`, `portal:create:org` |
+| `GET` | `/v1/certificate-renewal-jobs/{job_id}` | `vendor:read:org` |
+| `POST` | `/v1/certificate-networks/{network}/sync` | `integration:run:org` |
+| `GET` | `/v1/prequalification-rule-sets` | `vendor:read:org` |
+| `POST` | `/v1/prequalification-rule-sets` | `vendor:update:org` |
+| `PUT` | `/v1/prequalification-rule-sets/{rule_set_id}` | `vendor:update:org` |
+| `DELETE` | `/v1/prequalification-rule-sets/{rule_set_id}` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/prequalification` | `vendor:read:org` |
+| `POST` | `/v1/vendors/{vendor_id}/prequalification/refresh` | `vendor:update:org` |
+| `GET` | `/v1/vendors/{vendor_id}/security-benchmark` | `vendor:read:org` |
 | `GET` | `/v1/inspections` | `integration:read:org` |
 | `GET` | `/v1/document-insights` | `vendor:read:org` |
 | `GET` | `/v1/document-insight-values` | `vendor:read:org` |
@@ -35,6 +74,8 @@ Each feature has its own gate. When your organization does not have the feature,
 | `certificates_not_enabled` | Certificate Vault |
 
 When your organization enforces roles and the key lacks the permission, the endpoint returns `403`.
+
+Some actions stay with a signed-in person. When an API key calls one of them, the endpoint returns `403` with the code `api_key_not_allowed`. These actions are: archiving or restoring a document insight, deleting an insight group or target, stopping an Inspect schedule, removing a watchlist identifier, marking a certificate `verified`, archiving a certificate, and archiving a rule set.
 
 ## List Inspect schedules
 
@@ -351,3 +392,157 @@ Returns the insight values Coverbase extracted from one document. The response h
 </ParamField>
 
 Each item has `id`, `config_id`, `field_name`, `value`, `source_quote`, `source_page_number`, `confidence`, `source_type`, and `answer_accepted_at`.
+
+## Create an Inspect schedule
+
+<ParamField path="method" type="POST">
+  `POST /v1/inspect-schedules`
+</ParamField>
+
+Returns `201` with the new schedule. A drift schedule repeats every `interval_seconds`; every other purpose runs monthly on `day_of_month`.
+
+<ParamField body="target_id" type="string" required>
+  The Inspect application to inspect.
+</ParamField>
+
+<ParamField body="control_set_ids" type="string[]" required>
+  Control sets each inspection checks, in order.
+</ParamField>
+
+<ParamField body="day_of_month" type="integer">
+  Day of the month to run, for evaluative and exploratory schedules.
+</ParamField>
+
+<ParamField body="interval_seconds" type="integer">
+  Seconds between runs, for drift schedules.
+</ParamField>
+
+<ParamField body="purpose" type="string" default="evaluative">
+  `evaluative`, `exploratory`, or `drift`.
+</ParamField>
+
+<ParamField body="browser_evidence_allowed" type="boolean" default="true">
+  Whether inspections may collect browser evidence.
+</ParamField>
+
+An unknown application returns `422` with `target_not_found`, an archived one `target_archived`, and an invalid cadence or control set `schedule_invalid`.
+
+To change a schedule's cadence or control sets, send `PATCH /v1/inspect-schedules/{schedule_id}` with any of `day_of_month`, `interval_seconds`, and `control_set_ids`. To stop it for good, send `DELETE /v1/inspect-schedules/{schedule_id}`.
+
+## Create and manage document insights
+
+To create an insight, send `POST /v1/document-insights`. It returns `201` with the insight.
+
+<ParamField body="field_name" type="string" required>
+  The insight's name, for example "Governing law".
+</ParamField>
+
+<ParamField body="field_key" type="string">
+  A stable key. Defaults to `field_name`. A key already in use returns `409` with `field_key_exists`.
+</ParamField>
+
+<ParamField body="field_description" type="string">
+  What to extract and how.
+</ParamField>
+
+<ParamField body="field_type" type="string" default="string">
+  `string`, `number`, `date`, or `boolean`.
+</ParamField>
+
+<ParamField body="field_mode" type="string" default="extraction">
+  `extraction` quotes the document; `synthesis` writes text from it.
+</ParamField>
+
+<ParamField body="document_types" type="string[]">
+  Document types the insight reads. Empty means all.
+</ParamField>
+
+<ParamField body="group_id" type="string">
+  The insight group to file it under.
+</ParamField>
+
+<ParamField body="update_policy" type="string" default="auto_fill">
+  `auto_fill`, or `review_required` to hold each change for a reviewer.
+</ParamField>
+
+<ParamField body="reviewer_user_id" type="string">
+  The reviewer for `review_required` changes.
+</ParamField>
+
+To retire an insight and keep its values, send `POST /v1/document-insights/{config_id}/archive`. To bring it back, send `POST /v1/document-insights/{config_id}/restore`.
+
+### Targets
+
+A target links an insight to a built-in contract or document field it fills. To list them, send `GET /v1/document-insights/{config_id}/targets`. To add one, send `POST /v1/document-insights/{config_id}/targets` with `object_type` (`contract` or `vendor_document`), `field_name`, and optionally `conflict_policy` (`fill_if_empty`, `latest_document_wins`, `never_overwrite`), `min_confidence` (`low`, `medium`, `high`), `require_grounded`, and `enabled`. A pairing no parser covers returns `422` with `target_not_supported`; a field the insight already fills returns `409` with `target_exists`.
+
+To change a target, send `PATCH /v1/document-insight-targets/{target_id}`. To stop filling the field, send `DELETE /v1/document-insight-targets/{target_id}`. Values already written stay.
+
+### Groups
+
+To list groups, send `GET /v1/document-insight-groups`. To create one, send `POST /v1/document-insight-groups` with `name` and optionally `description`, `document_types`, `sort_order`, and `enabled`. To change one, send `PATCH /v1/document-insight-groups/{group_id}`; changing `document_types` rescopes every insight that inherits from the group. To delete one, send `DELETE /v1/document-insight-groups/{group_id}`. Its insights stay, outside any group.
+
+## Manage dark web monitoring
+
+To read the policy, send `GET /v1/dark-web/config`. To change it, send `PATCH /v1/dark-web/config` with any of `is_enabled`, `monitor_organization`, `vendor_scope` (`radar_monitored` or `all`), `enabled_sources`, `lookalikes_for_vendors`, `confidence_threshold` (0 to 1), and `business_hours`. Coverbase re-derives the watchlist right away, and switching monitoring on creates the dark web roles.
+
+### Review an exposure
+
+To record a triage decision, send `PATCH /v1/dark-web/exposures/{exposure_id}/review`. Only the fields you send change.
+
+<ParamField body="review_status" type="string">
+  The new review status. Coverbase records every step in between.
+</ParamField>
+
+<ParamField body="review_note" type="string">
+  A note on the decision. Send `null` to clear it.
+</ParamField>
+
+<ParamField body="false_positive_reason" type="string">
+  Required with `false_positive`.
+</ParamField>
+
+<ParamField body="assigned_user_id" type="string">
+  Assign the exposure to this member. They are notified.
+</ParamField>
+
+<ParamField body="clear_assignee" type="boolean" default="false">
+  Remove the current assignee.
+</ParamField>
+
+Moving to `new`, `confirmed`, or `with_legal` runs your alert rules. Errors: `404` `exposure_not_found`, `422` `assignee_not_member`, `422` `review_not_allowed`.
+
+### Watchlist
+
+To list watched identifiers, send `GET /v1/dark-web/watchlist`. Values are masked. To add one, send `POST /v1/dark-web/watchlist` with `subject_kind` (`organization` or `vendor`), `asset_type`, `value`, and `vendor_id` for a vendor identifier. Optional fields: `label`, `role` (domains), `program_vendor_id`, `card_kind`, `card_network` (BINs), and `linked_asset_id` (mailboxes). Adding an identifier already there re-enables it.
+
+To turn one on or off or change its details, send `PATCH /v1/dark-web/watchlist/{asset_id}`. To stop watching it, send `DELETE /v1/dark-web/watchlist/{asset_id}`; a derived identifier is switched off instead of removed.
+
+### Playbooks
+
+To list every response checklist, send `GET /v1/dark-web/playbooks`. To replace one with your own steps, send `PUT /v1/dark-web/playbooks/{key}` with `steps`, a list of `{ "id": optional, "label": required }`. To go back to Coverbase's default, send `DELETE /v1/dark-web/playbooks/{key}`.
+
+## Manage certificates and prequalification
+
+To record a certificate by hand, send `POST /v1/vendor-certificates` with `vendor_id`, `certificate_type`, `name`, and optionally `issuer`, `scope`, `result`, `coverages`, `valid_from`, `valid_to`, and `vendor_document_id`. Coverbase re-checks the vendor's prequalification.
+
+To record a person's check, send `PATCH /v1/vendor-certificates/{certificate_id}/verification` with `verification_status` (`unverified`, `verified`, `discrepancy`) and `verification_note`. To archive a certificate, send `DELETE /v1/vendor-certificates/{certificate_id}`.
+
+To ask a vendor for a certificate, send `POST /v1/vendor-certificate-requests` with `vendor_id`, `certificate_type`, `message`, and `due_at`. The response gives the unsent supplier portal's `portal_id`.
+
+To ask for renewals in bulk, send `POST /v1/certificate-renewal-jobs` with `certificate_ids`, `message`, and `due_at`. It returns `202` with the job. To follow it, poll `GET /v1/certificate-renewal-jobs/{job_id}` until `status` is final; the counts show how many requests were sent, skipped, or failed.
+
+To pull certificates from a connected network now, send `POST /v1/certificate-networks/{network}/sync` with `isnetworld`, `avetta`, or `ecovadis`. It returns `202`.
+
+### Rule sets
+
+A rule set lists the certificates vendors must hold. To list them, send `GET /v1/prequalification-rule-sets`. To create or replace one, send `POST /v1/prequalification-rule-sets` or `PUT /v1/prequalification-rule-sets/{rule_set_id}` with `name`, `description`, `applies_to`, `rules`, `expiry_reminder_days`, and `blocks_on_failure`. Coverbase re-checks every governed vendor in the background. To archive one, send `DELETE /v1/prequalification-rule-sets/{rule_set_id}`.
+
+To see where a vendor stands, send `GET /v1/vendors/{vendor_id}/prequalification`. To re-check it now, send `POST /v1/vendors/{vendor_id}/prequalification/refresh`.
+
+## Get a vendor's security benchmark
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/security-benchmark`
+</ParamField>
+
+Returns where the vendor's outside-in security score sits among your other rated vendors: `score`, `rated_vendors`, `percentile` (null until enough vendors are rated), and `grade_counts`.
