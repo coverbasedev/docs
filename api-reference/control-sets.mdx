@@ -39,6 +39,10 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `POST` | `/v1/control-sets/{control_set_id}/reassess-affected` | `control_set:update:org` |
 | `POST` | `/v1/control-sets/{control_set_id}/crosswalk` | `control_set:update:org` |
 | `GET` | `/v1/control-sets/{control_set_id}/crosswalk` | `control_set:read:org` |
+| `POST` | `/v1/control-sets/{control_set_id}/exports` | `control_set:export:org` |
+| `GET` | `/v1/control-set-exports/{export_id}` | `control_set:export:org` |
+| `GET` | `/v1/vendors/{vendor_id}/control-set-matches` | `control_set:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/control-set-matches` | `control_set:read:org` |
 
 Archiving or unarchiving a set or section also needs `control_set:archive:org`, and archiving a control needs `control:archive:org`. Archiving and unarchiving stay with signed-in users: in every organization, a request made with an API key that archives or unarchives returns `403 api_key_not_allowed`.
 
@@ -445,6 +449,24 @@ Returns `201 Created` with `reassessment_id` and `vendor_count`. Drafts one [rea
 
 <ParamField body="vendor_ids" type="string[]">Vendors to include. Without it, every vendor assessed with the set is included.</ParamField>
 
+## Export a control set
+
+<ParamField path="method" type="POST">
+  `POST /v1/control-sets/{control_set_id}/exports`
+</ParamField>
+
+Returns `202 Accepted` with the export's `id` and `status`. Coverbase builds an Excel workbook of the set, named `export_filename`, in the background. Poll `GET /v1/control-set-exports/{export_id}`: once `status` is `complete`, the response carries a `download_url` that expires after `expires_in` seconds. The poll response is never cached.
+
+## Find matching control sets
+
+<ParamField path="method" type="GET">
+  `GET /v1/vendors/{vendor_id}/control-set-matches`
+</ParamField>
+
+Lists the control sets that apply to a vendor, one row per set, with the `reason`: applied to every vendor, the vendor's inherent risk, or one of its tags. The route also checks that you can read the vendor.
+
+`GET /v1/assessments/{assessment_id}/control-set-matches` lists the control sets the assessment's custom questionnaires match that are not on the assessment yet. Each row has the `questionnaire_name`, a `score`, and how many questions overlap. The route also checks that you can read the assessment.
+
 ## Error responses
 
 | Status | Body | When |
@@ -454,6 +476,9 @@ Returns `201 Created` with `reassessment_id` and `vendor_count`. Drafts one [rea
 | 404 | `{"detail": {"code": "control_set_not_found", ...}}` | The set does not exist in the API key's org. |
 | 404 | `{"detail": {"code": "control_section_not_found", ...}}` | The section does not exist. |
 | 404 | `{"detail": {"code": "control_not_found", ...}}` | The control does not exist. |
+| 404 | `{"detail": {"code": "export_not_found", ...}}` | The export does not exist. |
+| 404 | `{"detail": {"code": "vendor_not_found", ...}}` | The vendor does not exist. |
+| 404 | `{"detail": {"code": "assessment_not_found", ...}}` | The assessment does not exist. |
 | 409 | `{"detail": {"code": "control_set_archived", ...}}` | Editing an archived set, or adding a section or control to one. |
 | 409 | `{"detail": {"code": "duplicate_external_idx", ...}}` | The set already has a control with that `external_idx`. |
 | 409 | `{"detail": {"code": "control_superseded", ...}}` | Editing or unarchiving an earlier version of a control. |

@@ -309,13 +309,13 @@ Admins and Members create and edit findings and commitments. Siloed Members can 
 
 ## Work findings from MCP or the API
 
-You can raise, update and export findings and manage commitments from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_findings(kind=...)` (`search`, `list_detailed`, `detail`, `commitments`, `stats`, `related`). It writes with `mutate(entity="finding", action=...)` (`create`, `update`, `export`) and `mutate(entity="commitment", action=...)` (`create`, `update`, `bulk_update`, `extend_due_date`, `regenerate_review`).
+You can raise, update and export findings and manage commitments from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_findings(kind=...)` (`search`, `list_detailed`, `detail`, `commitments`, `stats`, `related`, `finding_documents`, `commitment_documents`, `document_link`). It writes with `mutate(entity="finding", action=...)` (`create`, `bulk_create`, `update`, `export`), `mutate(entity="commitment", action=...)` (`create`, `update`, `bulk_update`, `extend_due_date`, `regenerate_review`, `prepare_vendor_portal`, `send_to_vendor`, `send_obligations_to_vendor`, `resolve_round`), and `mutate(entity="finding_document", action=...)` and `mutate(entity="commitment_document", action=...)` (`attach`, `update_note`, `archive`). It sends a file as base64, up to 10 MB.
 
-The API routes are `/v1/findings` on the [Findings API](/api-reference/findings), plus `GET /v1/findings-stats`, `POST /v1/findings/exports` and the commitment routes on the [Risk API](/api-reference/risk#findings-commitments-obligations-and-assessments).
+The API routes are `/v1/findings` on the [Findings API](/api-reference/findings), plus `GET /v1/findings-stats`, `POST /v1/findings/exports`, `POST /v1/findings/bulk`, the document routes and the commitment routes on the [Risk API](/api-reference/risk#edit-a-commitment-and-answer-the-vendors-round). Sending commitments puts them on the vendor's portal without emailing the vendor.
 
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#findings-commitments-and-obligations) lists every field.
 
-Archiving a finding needs `finding:archive:org`, which service accounts do not hold. Accepting a finding's risk is a decision for a person. See [The issue acceptance chain](/user-guides/issue-acceptance-chain).
+Archiving a finding needs `finding:archive:org`, which service accounts do not hold. An API key cannot archive a commitment or a document, or accept or reject a vendor's commitment round. From an MCP client you can, after you confirm. Accepting a finding's risk is a decision for a person. See [The issue acceptance chain](/user-guides/issue-acceptance-chain).
 
 ## Troubleshooting
 

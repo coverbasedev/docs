@@ -8,7 +8,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 <AgentDirective />
 
-The server exposes **12 tools**. Nine of them are read dispatchers, one per domain, each covering many operations through a `kind` parameter. One returns reports, one performs every write, and one describes the rest. Together they route 393 read kinds, 32 reports, and 626 write actions.
+The server exposes **12 tools**. Nine of them are read dispatchers, one per domain, each covering many operations through a `kind` parameter. One returns reports, one performs every write, and one describes the rest. Together they route 560 read kinds, 33 reports, and 790 write actions.
 
 The server keeps the tool count small because an assistant choosing among hundreds of narrowly named tools spends its context on the choice and still picks wrong. A dozen tools with explicit routes leave more room for your data.
 
@@ -52,6 +52,7 @@ Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_ter
 | `sla_detail` | Every field of one SLA, with its latest measurement periods when a status page measures it. |
 | `passive_assessment` | Every passive assessment value recorded for a vendor, with its confidence, reasoning and sources. |
 | `passive_assessment_fields` | The vendor facts Coverbase researches without an assessment (passive assessment fields), grouped as on the vendor page. |
+| `trust_center_access_request` | An access request to a vendor's trust center and its decision. |
 | `certificates` | Vendor certificates in the Certificate Vault, soonest-expiring first. |
 | `certificate_summary` | Certificate Vault totals: certificates, vendors, expiring and expired counts. |
 | `certificate_networks` | Each certificate network, whether it is connected, and its last sync. |
@@ -100,6 +101,35 @@ Accepted parameters: `kind`, `vendor_id`, `document_id`, `query`, `llm_query_ter
 | `supplier_update_requests` | The requests sent to a vendor to review and update their supplier details, with each one's status. |
 | `document_type_inference` | Classify a file by its name and text before any document exists. |
 | `document_control_set_match` | Finds the questionnaire control set a filled questionnaire answers, from its name and text. |
+| `kyc` | The vendor's know-your-customer record: TIN (masked to its last four), business name and address, each with its source. |
+| `kyc_fields` | Every recorded value of the vendor's KYC fields (tin, business_name, business_address) with its source. |
+| `kyc_verifications` | The vendor's TIN, OFAC, PEP, watchlist and bank account verifications. |
+| `kyc_verification` | One KYC verification with its input (TIN masked) and result. |
+| `portal_bank_accounts` | Bank accounts a vendor submitted through a portal, as metadata only: name, payment method, currencies and each number's last four. |
+| `discovery_aliases` | Your overrides that map a discovered vendor name to a domain and product patterns. |
+| `intel_revision` | Your organization's current reading of the vendor's security or financial intelligence: the version, revised and stored scores, and where each revised value came from. |
+| `intel_revision_versions` | Every version of your reading of the surface, newest first. |
+| `intel_refresh_status` | When each Vendor Intelligence surface was last built, and what started the last build. |
+| `data_flows` | The vendor's daily data flows from your DLP and CASB platforms over 90 days, the data its engagement declares, and open data-flow findings. |
+| `service_risk_attributes` | A service's data classes, access level, criticality, regulatory scopes and AI flag; or, with vendor_id, those combined across all of the vendor's services. |
+| `nth_party_filter` | The companies your vendors depend on, with structured filters, sort and paging, each with its catalog risk level, tags and dependent vendors. |
+| `bom_components` | Searches components across all of a vendor's bills of materials. |
+| `ai_inventory` | Every AI model, provider or dataset on your vendors' applied AI bills of materials, plus fourth parties recorded as AI model providers. |
+| `status_counts` | How many live vendors are in each vendor status. |
+| `directory_search` | Searches Coverbase's company directory, or look companies up by id. |
+| `directory_company` | One directory company's profile: name, website, description, headquarters and its parent or owner. |
+| `portfolio_risk_over_time` | How each vendor's risk moved over a window (the last twelve months by default), and the events that moved several vendors at once. |
+| `sso_settings` | Your vendor SSO settings: whether gaps open findings, which vendor statuses count as approved, ignored label prefixes and internal domains. |
+| `export_status` | A vendor or service export's status, and once complete a download link valid for 15 minutes. |
+| `web_research` | Researches a company on the web before you add it: its website, description, headquarters and trust center. |
+| `do_not_use` | Whether the vendor is on the Do Not Use list, and why. |
+| `record_drift` | Vendors whose outside records changed (registry, subprocessors and the like) and wait for review, with each change. |
+| `screening_runs` | Every screen, including those that found nothing, newest first. |
+| `screening_evidence` | A CSV with one row per screened vendor: first and last screen and the last outcome, for an auditor. |
+| `status_page_components` | The status page sources you monitor and their components, the ones on the vendor's own domain first, for choosing what an SLA measures. |
+| `financial_statements` | The vendor documents your financial statement analysis reads, and the analysis. |
+| `financial_statements_export` | A five-minute download link for the credit analytics workbook (.xlsx) built from the vendor's analyzed financial statements, the same workbook the dashboard exports. |
+| `fourth_party_coverage` | How complete and fresh the vendor's fourth-party (subprocessor) list is, and where it came from. |
 
 ### `query_assessments`
 
@@ -141,8 +171,17 @@ Accepted parameters: `kind`, `assessment_id`, `eval_id`, `vendor_id`, `status`, 
 | `properties_fields` | The vendor and service fields shown in an assessment's properties panel, in display order. |
 | `doc_evals` | Answers the AI extracted from vendor documents (document evals). |
 | `doc_eval_detail` | One document eval: the answer, its analysis and review state. |
+| `ai_job` | The state of an AI job you started and, once it completed, its result. |
+| `export` | An assessment export's status and, once done, a download link. |
+| `trust_center_runs` | An assessment's trust center runs, newest first, with what each collected. |
+| `trust_center_run_events` | What the trust center agent did on one run, oldest first. |
+| `trust_center_status` | Where collecting an assessment's documents from the vendor's trust center stands, and who an access request would come from. |
+| `collection_stage_stats` | How long each document collection stage typically takes in your organization. |
+| `interrogate_sessions` | The Coverbase AI conversations about one subject. |
+| `interrogate_session` | One Coverbase AI conversation with every message. |
 | `residual_what_if` | Where an assessment's residual risk would land with some open issues remediated. |
 | `review_sessions` | The remote or onsite review sessions scheduled on an assessment. |
+| `vendor_outreach_handoff` | Why the assessment's document collection was handed to a person because vendor outreach is off, and which setting turned it off. |
 | `zero_touch_config` | What a Zero Touch run covers for this organization and how it scores: the eligible control sets a launch evaluates, and the scoring configuration (components on or off, weights, score target, risk tier push, automated review, financial stability policy, risk tier map). |
 | `zero_touch_templates` | The shipped Zero Touch templates (control count, domains), which ones your organization has added, and the one template current runs evaluate. |
 | `zero_touch_pulse` | The Zero Touch module's headline counters: runs in total and in the last 30 days, vendors covered, and issues surfaced. |
@@ -187,6 +226,10 @@ Accepted parameters: `kind`, `finding_id`, `vendor_id`, `assessment_id`, `commit
 | `related` | The same third party's other open findings, newest first. |
 | `stats` | The Findings page's insight numbers across every finding you can see. |
 | `jira` | Whether Jira is connected, and the ticket linked to a finding, if any. |
+| `jira_draft` | A Jira ticket drafted from a finding for you to edit. |
+| `commitment_documents` | The documents attached to a commitment. |
+| `finding_documents` | The finding's documents: its own, then each of its commitments' (those carry a commitment_id). |
+| `document_link` | A short-lived link to download one of a finding's documents, including those on its commitments. |
 
 ### `query_engagements_contracts`
 
@@ -240,6 +283,8 @@ Accepted parameters: `kind`, `vendor_id`, `engagement_id`, `contract_id`, `vendo
 | `unlinked_cuecs` | The vendor's complementary user entity controls that no topic on this engagement cites as its source. |
 | `engagement_rights` | Results of an assessment linked to the engagement, such as a contractual rights review, in control order. |
 | `service_risk_domain_scores` | The service's inherent and residual risk score and level per risk domain. |
+| `service_risk_profile` | A service's data classes, access level, criticality, regulatory scopes and AI flag; or, with vendor_id, those combined across all of the vendor's services. |
+| `service_bills_of_materials` | The bill of materials applied to a service and its upload history, newest first. |
 
 ### `query_controls`
 
@@ -258,6 +303,8 @@ Accepted parameters: `kind`, `control_set_id`, `control_id`, `limit`, and `param
 | `library_updates` | Your organization's library copies whose template has a newer revision, with the control changes and the vendors affected. |
 | `crosswalk` | Coverage of each mapped framework and every control's framework references, with the reference index that `mutate(entity="control", action="set_framework_reference")` takes. |
 | `history` | Every version of a control, newest first, with what each version said. |
+| `control_set_vendor_matches` | The control sets that apply to a vendor through its tags, its inherent risk, or being applied to every vendor. |
+| `control_set_assessment_matches` | Control sets the assessment's custom questionnaires match that are not on the assessment yet, with how much of each they overlap. |
 
 ### `query_questionnaires`
 
@@ -273,6 +320,7 @@ Accepted parameters: `kind`, `questionnaire_id`, `questionnaire_type`, `vendor_i
 | `intake_prequalification` | The per-criterion screening verdict and its reasoning. |
 | `intake_vendor_matches` | Ranked existing vendors and web alternatives for an intake. |
 | `intake_steps` | Which steps your organization's intake portal turns on **and off**. Authoritative. |
+| `claim_checks` | Each answer on a submission tested against the vendor's evidence: the verdict, its confidence and citations, and the latest run. |
 | `questionnaire_detail` | One questionnaire template: version, sections, every question with its response type, flags and options (ids and scores), and its show rules. |
 | `irq_library` | The curated inherent risk questionnaire templates you can fork, with their slugs for `mutate(entity="questionnaire", action="create_from_library")` and their question counts. |
 | `vendor_matches` | Informational questionnaires that apply to a vendor automatically (by applied-to-all, inherent risk or tag), which a request to the vendor adds. |
@@ -295,6 +343,20 @@ Accepted parameters: `kind`, `questionnaire_id`, `questionnaire_type`, `vendor_i
 | `import_job` | The status and, once done, the result of a background spreadsheet import. |
 | `intake_triage_config` | Your organization's Front Door settings: reuse window, sign-off groups and IRQ scoping rules. |
 | `vendor_outreach_request` | The assessment's pending ask to the vendor (documents Coverbase wants to request), else the one decided or closed last. |
+| `intake_export` | A short-lived download link for an Excel workbook of the intake requests that match, with the dashboard export's columns. |
+| `intake_budget_lines` | The synced budget lines an intake request's spend can map to. |
+| `portal_review_set` | The questionnaire submissions one portal's review covers, in the order Approve all decides them, and whether it is reviewed as one set. |
+| `portal_reminder_template` | The reminder email template assigned to a portal. |
+| `portal_invitation_template` | The email a portal's invitation sends, and where that choice comes from: the portal template, your organization default or the built-in text. |
+| `portal_invitation_recipients` | Who a questionnaire invitation from this portal would address, with the email template's default CC and BCC applied. |
+| `portal_directory_exposure` | Whether a portal config would let people outside your organization read your organization's own people, before it is saved. |
+| `portal_template_defaults` | Your organization's default portal template for each portal type. |
+| `portal_template_invitation` | The invitation email a portal built from this template would send. |
+| `portal_templates_sending_invitation` | The portal templates whose invitations send this email template, by choice or as your organization default. |
+| `custom_field_autofill_questions` | The questions whose answers fill one custom field. |
+| `custom_field_autofill_sources` | For every custom field a questionnaire fills, the questions that fill it. |
+| `autofill_record_fields` | The vendor, service and engagement columns an autofill mapping may name. |
+| `response_documents` | Every document attached to a submission's current answers. |
 | `irq_what_if` | Where an inherent risk questionnaire's score would land with some answers changed, computed by the real scoring code. |
 | `attestation` | What a questionnaire asks a respondent to attest to, and every attestation recorded on one response. |
 | `attestation_document_url` | A five-minute download link for a document the questionnaire asks respondents to read before attesting. |
@@ -317,6 +379,8 @@ Accepted parameters: `kind`, `rfp_id`, `submission_id`, `query`, `limit`, and `p
 | `submission_answers` | One submission's answers, each labelled with where it came from. |
 | `comparison` | The stored cross-vendor comparison, with its timestamp. |
 | `activity` | The RFP's event history, including which AI steps ran. |
+| `categories` | The categories your RFPs already use, so a new RFP can reuse one. |
+| `submission` | One response to an RFP: who sent it, when, its score and rank. |
 
 <Card title="How to run an RFP" icon="clipboard-list" href="/user-guides/running-an-rfp">
   The full lifecycle, and what a researched response is and is not.
@@ -351,6 +415,29 @@ Accepted parameters: `kind`, `vendor_id`, `query`, `llm_query_terms`, `include_c
 | `dismissal_examples` | The learning examples detectors use: events they should and should not alert on. |
 | `suggest_detector_instructions` | Suggests a rewrite of a detector's instructions from its labelled example events. |
 | `suggest_detector_risk_domains` | Suggests which of your organization's risk domains a detector configuration maps to. |
+| `radar_data` | The raw items Radar pulled (articles, advisories, API records), each under a source your organization reads. |
+| `radar_data_categories` | The impact categories Radar sorts data and events into. |
+| `radar_data_detail` | One raw Radar item: its source, categories, summary and metadata. |
+| `radar_data_content` | The stored text of one raw Radar item. |
+| `radar_data_event` | The newest unarchived Radar event a raw Radar item is linked to. |
+| `runs` | Radar pull runs, newest first. |
+| `run_detail` | One Radar run with its log entries. |
+| `source_snapshot` | What Radar last captured at a snapshot source and what changed since the capture before it: a line diff for a page, an entry delta for a list. |
+| `source_extractor_run` | The latest extractor generation for a source that reads a web page: its status, why it stopped, and the extractor it proposed. |
+| `detector_replays` | Coverbase staff only. |
+| `detector_replay` | Coverbase staff only. |
+| `events` | Radar events: things that happened that Radar grouped from its sources, newest change first. |
+| `event_detail` | One Radar event: what happened, when, and its impact categories. |
+| `event_data_items` | The raw items (articles, advisories, records) behind a Radar event, with how each was linked to it. |
+| `event_time_to_signal` | How long a Radar event took to reach your organization: when it happened, when it was first published, and when your organization was alerted. |
+| `event_exposure_vendors` | Your organization's vendors a Radar event exposes, directly or through their suppliers, including vendors that did not alert, with any internal incidents and how relevant each is. |
+| `signal_alerts` | A signal's active alerts: the set acknowledging or dismissing the signal acts on. |
+| `vendor_stories` | The Radar stories that reached a vendor in the last year, most recent first: one per event unless Radar Ops filed events together. |
+| `vendor_story` | The vendor's story that holds one event: its events, milestones, the suppliers it came through, and the sources behind it. |
+| `alert_purge_preview` | Coverbase staff only. |
+| `alert_purges` | Coverbase staff only. |
+| `alert_purge` | Coverbase staff only. |
+| `case_contact_search` | How the case's latest public contact search is going, by thread. |
 | `detector_alerts` | Your organization's Radar alerts: one row per detector result, as the dashboard's alert list shows them, newest first. |
 | `detector_alert_detail` | One Radar alert in full: why the detector raised it, its references and suggested follow-up, its dismissal state, and the events it belongs to. |
 | `cases` | Your organization's Radar cases, newest first. |
@@ -380,6 +467,8 @@ Accepted parameters: `kind`, `object_type`, `object_id`, `target_type`, `target_
 | `scale_detail` | One scale with its levels, values and colors. |
 | `reassessment_rules` | How often each risk level is reassessed, per assessment plan, and your organization's reminder, collection and review runway. |
 | `monitoring_policy` | Your organization's monitoring policy: which sources count, the coverage the verdict needs, and what each verdict does to the next assessment. |
+| `summary_instructions_default` | Coverbase's built-in assessment summary instructions, the starting point for an organization's own. |
+| `branding` | The organization's white-label branding: logo, icon, brand color and vendor portal title. |
 | `change_requests` | Rating override change requests, or one request by ID. |
 | `governance_configuration` | Whether rating overrides need approval, which group approves each target, and the allowed override reason codes. |
 | `tprm_lifecycle_settings` | The user groups the engagement lifecycle routes to, and Risk Summary open tracking. |
@@ -420,6 +509,34 @@ Accepted parameters: `kind`, `object_type`, `object_id`, `target_type`, `target_
 | `darkweb_retention` | How many years each class of dark web data is kept before it is purged. |
 | `document_insight_definitions` | The insight library as portable JSON definitions keyed by field_key. |
 | `document_insight_promotion_options` | Custom fields a document insight could fill, and the ones it already fills. |
+| `document_insight_delete_preview` | What deleting an insight would destroy: its values and the custom fields it fills. |
+| `document_insight_config_events` | Every value change for one insight across all documents, newest first. |
+| `document_insight_value_events` | One extracted value's timeline, newest first. |
+| `document_insight_coverage` | How much of each document type each insight has filled. |
+| `document_insight_value_query` | Every extracted value in the organization, filtered and paged. |
+| `document_insight_pivot` | Documents of the given types as rows and their insights as columns. |
+| `document_insight_snippets` | Each verified citation on a value, with a short-lived link to its page image. |
+| `document_insight_export_columns` | Every column an insight export can hold, grouped, in display order. |
+| `document_insight_model_scorecard` | Per-insight accuracy for each model in a check, with reviews applied. |
+| `document_insight_model_examples` | A check's answer for each checked value, unreviewed first. |
+| `document_insight_model_dataset_preview` | One insight's checked values as the training set would use them, with the cited text. |
+| `document_insight_preview` | A background preview's status and, once done, its answer. |
+| `document_insight_target_fields` | The built-in contract and document fields an insight can fill, and the insight types each accepts. |
+| `document_insight_inbox` | How much in document insights waits for a person, split by why. |
+| `document_type_decision_model` | Where the shared document type model and this organization's fork stand. |
+| `darkweb_exposure_playbook` | The exposure's playbook steps and which are done. |
+| `darkweb_access` | The roles that open dark web monitoring and what each can do. |
+| `darkweb_retention_preview` | What the next purge removes. |
+| `darkweb_setup` | What is left to set up, each step read from the organization's records. |
+| `darkweb_baseline_preview` | A baseline file's columns and a suggested mapping. |
+| `darkweb_baseline` | The imported baseline and how each item matched. |
+| `darkweb_program_report` | The program report for [from_ts, to_ts), aggregates only. |
+| `darkweb_exposure_evidence` | Each redacted capture's metadata and a short-lived download link. |
+| `darkweb_exposure_detail` | One exposure with its playbook, baseline match and open follow-up. |
+| `darkweb_vendor` | One vendor's open and closed exposures and its watched identifiers. |
+| `darkweb_ai_fraud_terms` | The Coverbase-managed AI fraud term pack the crawler matches. |
+| `darkweb_sources` | Each source's reach, cadence, health and key status, and coverage gaps. |
+| `darkweb_alert_rule_preview` | How many exposures first seen in the last 30 days a rule's filters match, read as if it were the only rule. |
 | `inspect_target_detail` | One Inspect application with its sign-in settings and vendor link. |
 | `inspect_setup_options` | The applications and internal control sets you can pick for an inspection. |
 | `inspect_target_config` | How Inspect signs in to an application and calls its API, without secrets. |
@@ -433,6 +550,41 @@ Accepted parameters: `kind`, `object_type`, `object_id`, `target_type`, `target_
 | `inspect_identities` | Filter the identity directory (people and services Inspect knows of). |
 | `inspect_documentation` | The documents Inspect plans from for an application's platform. |
 | `inspect_documentation_discovery_run` | A documentation discovery run's status and outcome. |
+| `inspect_documentation_text` | Refuses: document text lives in the planning bucket; names the public route. |
+| `inspect_probes` | Probes (recurring custom checks) with their automation and recent samples. |
+| `inspect_probe_detail` | One probe with its procedure, readiness, automation and latest sample. |
+| `inspect_probe_definitions` | Reusable probe definitions. |
+| `inspect_probe_definition` | The probe a definition belongs to. |
+| `inspect_probe_runs` | A probe's samples, newest first. |
+| `inspect_probe_run` | One probe sample with each checkpoint's result. |
+| `inspect_probe_package` | Refuses: the sample zip needs the evidence bucket; names the public route. |
+| `inspect_probe_deliveries` | Each scheduled launch of a probe and whether a sample started. |
+| `okta_scope_check` | The Okta scopes Inspect needs against those the Okta app granted. |
+| `okta_application_detail` | One synced Okta application: sign-on mode, assignments and vendor link. |
+| `okta_application_users` | Everyone Okta assigns to one application, directly or through a group. |
+| `okta_identities` | People in the Okta directory with their account and finding counts. |
+| `okta_identity_summary` | How many people the Okta directory holds and how many have a finding. |
+| `okta_inspection_identity` | The Okta user Inspect signs in as, its applications and recent changes. |
+| `okta_inspect_run` | An Okta inspect run with each application's result. |
+| `entra_inspection_identity` | The Entra user Inspect signs in as and the applications it holds. |
+| `inspect_identity_detail` | One identity with a page of its application accounts and its detections. |
+| `inspect_identity_events` | Identity provider events an identity performed, newest first. |
+| `inspect_account_evidence` | The observations that tie one application account to its identity. |
+| `inspect_account_applications` | Applications that hold accounts, from Inspect and identity providers. |
+| `inspect_credentials` | Application credentials as metadata (type, owner, expiry); never a secret. |
+| `inspect_identity_reconcile_status` | Whether an identity inventory rebuild is queued, running, done or failed. |
+| `finding_recommended_remediation` | A Finding's recommended remediation and whether a draft is under way. |
+| `integrations` | Every integration hub provider offered to the organization, with its connection's status, last sync and open steward items. |
+| `integration_sync_runs` | A connection's sync runs, newest first. |
+| `integration_sync_records` | What syncs did with each provider record. |
+| `integration_conflicts` | The steward queue: provider suppliers a sync could not match to one vendor, with their candidate vendors. |
+| `integration_conflict_bulk_job` | A bulk resolve or dismiss job's progress. |
+| `integration_mismatches` | Linked supplier fields whose provider value differs from Coverbase's. |
+| `monitoring_cadence` | The cadence matrix: for each risk tier and activity, how many months apart it recurs and who owns it, and the plan settings. |
+| `monitoring_plans` | Live monitoring plans with their next due activity, soonest first. |
+| `monitoring_plan` | One plan with its activities, by its ID or by the engagement or service it monitors. |
+| `monitoring_plan_events` | A plan's history, newest first: generation, edits, completions, signal moves and attestations. |
+| `monitoring_activities` | Scheduled activities across every live plan, soonest first. |
 | `saved_views` | The saved views you can see on one list page: your own and those shared with your organization. |
 | `agents` | Every live Coverbase AI agent in your organization, oldest first, with whether it is enabled or paused. |
 | `agent_preferences` | What Coverbase AI remembers for your organization, oldest first. |
@@ -474,6 +626,10 @@ Accepted parameters: `kind`, `object_type`, `object_id`, `target_type`, `target_
 | `workflow_version_diff` | What changed between two versions of a workflow, step by step. |
 | `prompt_versions` | The organization's saved versions of one AI prompt, and which version is in use. |
 | `report_export` | The status of a report export, and a download link once it is done. |
+| `agent_playbooks` | The jobs Coverbase AI knows how to do, each with its steps and an instruction that starts it. |
+| `agent_setup` | How far the organization has got with its Coverbase AI setup: each step and whether it is done, never which records did it. |
+| `agent_run_export` | A short-lived link to one of your runs' whole log as a CSV file: every event with who did it and what happened. |
+| `billing_overview` | Your organization's billing contracts and usage against each limit. |
 | `emails` | The emails sent about a record, optionally narrowed by a search. |
 | `email_detail` | One email: sender, recipients, subject and text body. |
 | `email_layouts` | Your organization's email layouts (the frame around every outgoing email). |
@@ -504,6 +660,17 @@ Accepted parameters: `kind`, `object_type`, `object_id`, `target_type`, `target_
 | `legal_entities` | The organization's legal entities that suppliers can be assigned to. |
 | `supplier_settings` | The organization's Know Your Supplier settings. |
 | `bank_change_reviews` | Bank account changes waiting for a reviewer, with masked values. |
+| `data_label_mapping` | Which data class each platform label means, and the labels no mapping names yet. |
+| `data_flow_unmatched_apps` | Apps in your data flows no vendor claims, flagged when the platform calls them AI (the Shadow AI candidates). |
+| `data_classes` | Your organization's data class list, which service risk profiles pick from. |
+| `service_tag_mapping_preview` | What mapping tags onto service risk attributes would change. |
+| `document_type_groups` | The document type groups and whether each is on for your organization. |
+| `screening_config` | Your screening policy: whether it is on, its provider and whether the provider can still be switched, whether the provider's credential is stored (never the credential), and the monitoring and assignment settings. |
+| `custom_field_usage` | How many records hold a value for each custom field. |
+| `home_dashboard` | The dashboard you land on at home: your user group's, then the organization's default, then the oldest. |
+| `role_audit_log` | Who changed a role's name, description or permissions, and when. |
+| `notification_types` | Every notification type you can turn on or off, by category, with its event type for notification settings. |
+| `email_layout_preview` | The HTML an email layout renders around sample content. |
 
 ## Reports
 
@@ -545,6 +712,7 @@ Accepted parameters: `report_name`, `vendor_id`, `assessment_id`, `top_n`, `days
 | `agent_ledger` | Every action a Coverbase agent took on your organization's data, newest first. | See `mcp_capabilities()` |
 | `agent_ledger_entry` | One agent action with its inputs, citations and decision. | See `mcp_capabilities()` |
 | `agent_decision_rates` | How often people accepted, edited or rejected what Coverbase AI proposed, per playbook, over the last days. | See `mcp_capabilities()` |
+| `text_job` | A narrative or suggestion job you started, with its result once it completes. | See `mcp_capabilities()` |
 
 <Tip>
   `control_flag_rates` accepts `format='csv'` for a spreadsheet-ready export.
@@ -571,6 +739,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `vendor` | `merge` | Merges the source vendor into the target vendor: every record moves to the target, fields merge (the non-empty value wins), and the source is archived. |
 | `vendor` | `bulk_merge` | Runs several vendor merges in order. |
 | `vendor` | `bulk_action` | Applies one change to up to 100 vendors at once. |
+| `vendor` | `import` | Creates or updates vendors, services and locations from the dashboard's vendor import workbook, in the background. |
 | `vendor` | `promote_prospect` | Adds a prospect (a company launched on before it was a vendor) to the portfolio: it moves to the Onboarding status. |
 | `service` | `create` | Creates a new service (use case) linked to a vendor. |
 | `service` | `update` | Updates an existing service's editable fields and associations. |
@@ -578,6 +747,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `service` | `merge` | Merges the source service into the target service and archives the source. |
 | `service` | `relink` | Moves a service to a different vendor. |
 | `service` | `promote` | Turns a service into a standalone vendor and archives the service. |
+| `service` | `bulk_action` | Applies one change to up to 100 services: assign-relationship-owner, assign-watcher (user_id), update-status (status_id), set-next-assessment-date (a Unix timestamp or null), tag (up to 15 tag_ids, operation add or remove) or archive. |
 | `document` | `create` | Uploads a vendor document from a URL and attaches it to a vendor. |
 | `document` | `update` | Updates a vendor document's name, type, and service and assessment links. |
 | `document` | `archive` | Archives a vendor document. |
@@ -593,6 +763,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `tag` | `update` | Updates a tag's label or color, or archives it. |
 | `tag_group` | `update` | Sets how a tag group rolls up from services to vendors, its risk order and its category. |
 | `note` | `add` | Adds a note to any platform object. |
+| `note` | `edit` | Replaces the text of a note you wrote. |
 | `vendor_risk_profile` | `update` | Edits the vendor's risk profile. |
 | `vendor_business_unit_dependency` | `update` | Sets how critical a vendor is to one business unit, and what the unit uses it for. |
 | `subprocessor` | `add` | Links a subprocessor to a vendor, by an existing catalog id or by name (an unknown name creates the catalog entry). |
@@ -616,6 +787,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `department` | `remove_member` | Removes a user from a department. |
 | `document_insight_pending_change` | `approve` | Approves a proposed field change, writing it to the target record. |
 | `document_insight_pending_change` | `reject` | Rejects a proposed field change. |
+| `document_insight_pending_change` | `bulk_resolve` | Approves or rejects many proposed field changes. |
 | `darkweb` | `sweep` | Starts a dark web sweep now. |
 | `org_document` | `update` | Renames, retype or archives one of the organization's own documents. |
 | `org_document` | `upload` | Store one of the organization's own documents, fetched from a URL. |
@@ -658,15 +830,48 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `diversity_record` | `create` | Records a supplier diversity classification or certification. |
 | `supplier_update_request` | `close` | Withdraws an open supplier update request, or marks a returned one reviewed. |
 | `supplier_update_request` | `apply_contacts` | Approves the contact changes a supplier proposed on an update request and write them onto the vendor. |
+| `supplier_update_request` | `create` | Asks a supplier to review and updates named sections of their details. |
 | `legal_entity` | `create` | Adds one of the organization's legal entities that suppliers can be assigned to. |
 | `legal_entity` | `update` | Changes a legal entity's name, code, country, description or active flag. |
 | `legal_entity` | `archive` | Archives a legal entity. |
+| `legal_entity` | `import` | Creates or updates your organization's legal entities from a CSV, upserting on entity_code. |
 | `legal_entity_assignment` | `approve` | Approves a requested assignment of a supplier to a legal entity. |
 | `legal_entity_assignment` | `reject` | Rejects a requested assignment of a supplier to a legal entity. |
 | `bank_account` | `retire` | Retire a vendor's bank account so it is no longer paid into. |
 | `supplier_settings` | `update` | Changes Know Your Supplier settings. |
 | `vendor_outreach_request` | `decide` | Sends an automatic document collection's request to the vendor that it could not send on its own. |
 | `vendor_contact_grant` | `revoke` | Stops automatic document requests going to a vendor contact someone allowed; the contact stays saved. |
+| `supplier_contact` | `set_external_id` | Key the vendor contact with this email to your finance system's id for it. |
+| `vendor_kyc` | `create` | Creates the vendor's KYC record from existing KYC field values. |
+| `vendor_kyc` | `update` | Points a KYC record at different field values. |
+| `vendor_kyc` | `delete` | Deletes a vendor's KYC record. |
+| `vendor_kyc` | `rerun_checks` | Reruns the vendor's TIN, OFAC, PEP and watchlist checks from its current KYC values. |
+| `vendor_kyc_field` | `create` | Records a business name or business address for the vendor's KYC. |
+| `vendor_kyc_field` | `update` | Changes a business name or address KYC value, or archives it. |
+| `discovery_alias` | `save` | Creates an alias override (source and vendor_entity required), or changes one by alias_id. |
+| `discovery_alias` | `delete` | Deletes an alias override. |
+| `vendor_intel_revision` | `propose` | Read pasted text (for example a SOC 2 excerpt or a filing) against the vendor's security or financial intelligence and propose a change set. |
+| `vendor_intel_revision` | `apply` | Accepts chosen changes of a proposal as a new version of your reading. |
+| `vendor_intel_revision` | `restore` | Makes an earlier version of your reading current again, as a new version. |
+| `vendor_intel` | `review` | Queues the automated check of the vendor's Security and Financial pages against its own site. |
+| `vendor_intel` | `feedback` | Tells Coverbase a Vendor Intelligence tab describes the wrong thing, and rebuild what that invalidates. |
+| `vendor_intel` | `refresh` | Rebuilds named Vendor Intelligence surfaces from paid sources. |
+| `data_label_mapping` | `set` | Replaces the whole label-to-data-class mapping; every data flow is checked again under it. |
+| `engagement_data_scope` | `set` | Declare the data classes an engagement may send its vendor; its data flows are checked again against the new scope. |
+| `data_flow_app` | `link` | Tie an unmatched app to a vendor; its past and future flows follow. |
+| `service_risk_profile` | `update` | Sets the service risk attributes you pass and keep the rest. |
+| `data_class` | `save` | Adds data classes or renames listed ones by code (entries of `{"code", "name", "chain_scope"}`), or changes one by data_class_id. |
+| `service_tag_mapping` | `apply` | Backfill service risk attributes from tags. |
+| `nth_party` | `set_tags` | Replaces the tags on an nth party (a company your vendors depend on). |
+| `vendor_sso_settings` | `update` | Replaces your vendor SSO settings. |
+| `vendor_export` | `start` | Starts an export and poll query_vendors(kind="export_status") for its download link. kind is `pdf` or `xlsx` for one record (pass target_id; a PDF needs report_tier), `list` for the workbook of every vendor or service (filters narrow the vendor list), or `portfolio` for the portfolio PDF report. |
+| `vendor_do_not_use` | `set` | Puts the vendor on, or take it off, the Do Not Use list, with a reason. |
+| `bank_change` | `reject` | Rejects a supplier's queued bank change; their current details stay. |
+| `document_type_groups` | `enable` | Turns on optional document type groups. |
+| `record_drift` | `decide` | Accepts, records a hand update for, or dismisses each outside change on a vendor. |
+| `screening_config` | `update` | Turns screening on or off, switch its provider, or changes the settings you pass; the rest keep their values. |
+| `screening_subject` | `update` | Turns screening of one subject (a vendor or a person) on or off. |
+| `financial_statements` | `manage` | Changes what the vendor's financial statement analysis reads. operation `set` (document_ids, re-typed as financial statements; runs the analysis unless analyze is false), `analyze` (run it again), `remove_document` (document_id; the file stays on the vendor) or `withdraw` (drop the submission and restores the published score). |
 
 ### Assessments, evals and follow-ups
 
@@ -694,6 +899,13 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `assessment` | `skip_irq_review` | Starts the reassessment on the vendor's current inherent risk without waiting for the relationship owner's answers. |
 | `assessment` | `set_risk_domain_score` | Sets the reviewer or summary of one risk domain on an assessment. |
 | `assessment` | `override_vendor_rating` | Sets or clears an analyst's risk level for one control set of the vendor rating. |
+| `assessment` | `run_template_filler` | Runs the report template agent on one prompt against an assessment. |
+| `assessment` | `export` | Builds an assessment's PDF report, or fill a Word report template, in the background. |
+| `assessment` | `export_many` | Exports many assessments in the background. |
+| `assessment` | `link_library_documents` | Copies documents from Coverbase's library for the vendor onto the vendor and attaches them to the assessment. |
+| `assessment` | `start_trust_center_run` | Sends Coverbase's agent to the vendor's trust center to collect the assessment's documents. |
+| `assessment` | `bulk_create` | Starts one assessment per vendor, each named from your organization's format. |
+| `assessment` | `provision_portal` | Opens a vendor portal for an assessment with the questionnaires named. |
 | `assessment` | `set_method` | Chooses how an assessment gathers evidence: questionnaire, remote review or onsite. |
 | `eval` | `update` | Triages a single control evaluation (eval) result. |
 | `eval` | `rerun` | Reruns the AI evaluation of one eval with evidence, optionally with edited guidance, expectation or question, as a preview. |
@@ -704,6 +916,8 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `eval` | `bulk_review_note` | Appends the same review note to many evals. |
 | `eval` | `correct_response` | Corrects the vendor answer an eval scored, by choosing the right option, and re-evaluate it and the evals that depend on it. |
 | `eval` | `reevaluate` | Re-runs the AI evaluation of one eval and of the evals that depend on its answer. |
+| `eval` | `regenerate_analysis_summary` | Regenerates the short summary of an eval's analysis in the background. |
+| `eval` | `bulk_correct_response` | Keep each eval's current answer and evaluate it again in the background. |
 | `doc_eval` | `update` | Corrects a document eval's answer or marks it reviewed. |
 | `assessment_plan` | `create` | Creates an assessment plan: the template new assessments start from. |
 | `assessment_plan` | `update` | Updates an assessment plan. |
@@ -719,9 +933,11 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `follow_up` | `update` | Edits a follow-up's question, instructions or requested documents, or archives it. |
 | `follow_up` | `bulk_archive` | Archives many follow-ups at once and updates the vendor portal's document requests to match. |
 | `follow_up` | `bulk_upsert` | Creates and edits many follow-ups in one all-or-nothing save. |
+| `follow_up` | `suggest` | Asks the model for a follow-up question, or the documents to request, for each eval. |
 | `follow_up_section` | `open_current` | Returns the assessment's current unsent follow-up round, creating it when there is none. |
 | `follow_up_section` | `update` | Chooses which follow-ups a round carries, sets its instructions, or moves its status. |
 | `follow_up_section` | `send` | Sends a follow-up round to the vendor through a portal questionnaire and, when asked, email the vendor contact the invitation. |
+| `follow_up_section` | `import_xlsx` | Imports a filled-in follow-up workbook as if the vendor had answered in the portal. |
 | `sla` | `create` | Tracks a service level agreement on a vendor. |
 | `sla` | `update` | Edits an SLA. |
 | `sla` | `archive` | Archives an SLA. |
@@ -781,6 +997,13 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `review_session` | `archive` | Cancels a scheduled review session. |
 | `attestation` | `clear` | Supersede an attestation so the respondent is asked again. |
 | `attestation` | `set_config` | Sets what a questionnaire asks a respondent to attest to. |
+| `claim_check` | `run` | Checks a submission's answers, or the ones named, against the vendor's evidence in the background. |
+| `claim_check` | `cancel` | Stops a claim check run that has not started. |
+| `claim_check` | `raise_issues` | Raise one issue per answer named. |
+| `claim_check` | `ask_vendor` | Asks the vendor to clarify each answer named. |
+| `interrogate_session` | `create` | Opens a Coverbase AI conversation about an assessment, a vendor, a Radar event or the whole organization. |
+| `vendor_outreach_handoff` | `send_once` | Prepare asking the vendor for this collection's documents once, without turning outreach on. |
+| `assessment_scores` | `compute` | Recomputes and save an assessment's scores by control section, control set and overall, with its residual scores. |
 
 ### Zero Touch
 
@@ -812,6 +1035,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `control_set` | `apply_library_update` | Brings a library copy to its template's latest revision. |
 | `control_set` | `reassess_affected` | Drafts one reassessment of the vendors assessed with a control set, for an analyst to review and send. |
 | `control_set` | `start_crosswalk` | Suggests, in the background, a reference in each target framework for every control of the set. |
+| `control_set` | `export` | Builds an Excel workbook of a control set in the background. |
 | `control_section` | `create` | Adds a section to a control set. |
 | `control_section` | `update` | Renames, reorders, archives or reconfigures a control section. |
 | `control` | `create` | Creates a new control within a control set. |
@@ -826,14 +1050,23 @@ Each write checks the same permission as the matching dashboard action. A write 
 | -------- | -------- | ------------ |
 | `finding` | `create` | Creates a finding (an exception or gap). |
 | `finding` | `update` | Updates an existing finding. |
+| `finding` | `draft_recommended_remediation` | Drafts the recommended remediation for a Finding raised by Inspect. |
 | `finding` | `record_decision` | Records one step of a finding's acceptance chain (recommend, decide or approve). |
 | `finding` | `bulk_record_decision` | Records the same acceptance chain step on many findings. |
 | `finding` | `export` | Starts an Excel export of the findings a filter matches. |
+| `finding` | `suggest` | Suggests a finding's title, description or levels from an assessment, in the background. |
+| `finding` | `suggest_for_vendor` | Suggests a vendor finding's title, description or levels from one Radar alert, in the background. |
+| `finding` | `bulk_create` | Creates up to 50 findings on one source (an assessment, a vendor or an organization document). |
 | `commitment` | `create` | Creates a commitment: what a vendor is asked to do about a finding or an obligation. |
 | `commitment` | `update` | Updates a commitment's description, due date, status or assignee, or archives it. |
 | `commitment` | `bulk_update` | Updates many commitments in one batch; if any item fails, nothing changes. |
+| `commitment` | `suggest_description` | Suggests a commitment description from a finding, or from obligations, in the background. |
 | `commitment` | `extend_due_date` | Moves a mitigation-underway commitment's due date later without renegotiating it. |
 | `commitment` | `regenerate_review` | Re-runs the AI review of the vendor's latest round on a commitment, with your organization's current review instructions. |
+| `commitment` | `prepare_vendor_portal` | Opens the vendor's persistent findings portal, where commitments are sent, without putting anything on it. |
+| `commitment` | `send_to_vendor` | Creates or updates a commitment per finding and put them all on the vendor's findings portal, all or nothing. |
+| `commitment` | `send_obligations_to_vendor` | Puts a commitment per obligation on the vendor's findings portal, reusing an obligation's open commitment. |
+| `commitment` | `resolve_round` | Answers the vendor's latest round on a commitment with one of the two actions its detail lists under round_actions. accept closes it; accept_risk accepts a decline; adopt_terms takes the vendor's date; request_more_work rejects a completion; re_request and hold_terms send it back. |
 | `obligation` | `create` | Creates a new obligation (compliance requirement). |
 | `obligation` | `update` | Updates an existing obligation and its associations. |
 | `obligation` | `bulk_action` | Applies one change to many obligations: a new assignee, status, due date or satisfying controls, or archiving them. |
@@ -844,6 +1077,12 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `finding_acceptance_rule` | `archive` | Archives an acceptance rule. |
 | `document_finding_extraction` | `start` | Starts reading an organization or vendor document for findings. |
 | `document_finding_extraction` | `accept` | Accepts extracted finding candidates, optionally with edits. |
+| `commitment_document` | `attach` | Attaches a document to a finding's commitment. |
+| `commitment_document` | `update_note` | Replaces the note on a commitment's document. |
+| `commitment_document` | `archive` | Takes a document off a commitment. |
+| `finding_document` | `attach` | Attaches a document to the finding itself. |
+| `finding_document` | `update_note` | Replaces the note on a document attached to the finding itself. |
+| `finding_document` | `archive` | Takes a document off the finding itself. |
 
 ### Radar
 
@@ -853,21 +1092,26 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `radar_source` | `update` | Renames a Radar source or re-points its RSS feed. |
 | `radar_source` | `archive` | Archives or restores a Radar source. |
 | `radar_source` | `pull` | Makes a Radar source's origin due on the next scheduler tick. |
+| `radar_source` | `accept_extractor` | Adopt the extractor the latest generation run proposed for a source. |
 | `black_kite` | `configure` | Creates or reconfigures your organization's Black Kite portfolio monitor. |
+| `black_kite` | `set_vendor_domains` | Replaces the Black Kite domains a person maintains for one vendor. |
 | `radar_detector` | `create` | Creates a Radar detector that watches vendor news and risks. |
 | `radar_detector` | `update` | Updates an existing Radar detector. |
 | `radar_detector` | `test` | Back-tests a detector over a window of past Radar events. |
 | `radar_detector` | `create_alerts_from_test` | Promotes chosen back-test candidates into real alerts and notifies the detector's default reviewers. |
 | `radar_detector` | `teach` | Labels back-test candidates so the detector learns from them. |
+| `radar_detector` | `replay` | Coverbase staff only. |
 | `radar_dismissal_example` | `create` | Teaches a detector with an example event it should (positive) or should not (negative) alert on. |
 | `radar_dismissal_example` | `update` | Edits the explanation on a detector example. |
 | `radar_dismissal_example` | `delete` | Removes an example from a detector's learning context. |
 | `radar_event` | `create` | Creates a Radar event by hand, for example for an incident Radar did not pick up. |
 | `radar_event` | `update` | Renames or re-summarizes a Radar event for your organization, or links more vendors to it. |
+| `radar_event` | `run_detector` | Back-tests one of your organization's enabled detectors against one Radar event. |
 | `radar_alert` | `dismiss` | Dismisses one or more Radar alerts (detector results). |
 | `radar_alert` | `undismiss` | Restores a dismissed Radar alert to the active list, undoing what its dismissal taught the detector. |
 | `radar_alert` | `update` | Edits a Radar alert's summary, reasoning, confidence, or whether it alerts, or archives or restores it. |
 | `radar_alert` | `set_dismiss_reason` | Edits or clears the dismissal reason on an already-dismissed Radar alert. |
+| `radar_alert` | `create` | Records a detector's verdict on one Radar data item for one vendor by hand, signed the way the detector signs its own so a later run does not duplicate it. |
 | `radar_signal` | `set_status` | Moves a Radar signal to one of your organization's Radar statuses. |
 | `radar_signal` | `dismiss` | Dismisses one or more Radar signals and every active alert on them. |
 | `radar_signal` | `undismiss` | Restores the dismissed alerts on one or more Radar signals. |
@@ -883,6 +1127,10 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `case_thread` | `bulk_create` | Adds several vendors to a Radar case, one thread each. |
 | `case_thread` | `update` | Edits a vendor thread on a Radar case: its status, owner, due date, or the portal, assessment or finding it is tied to. |
 | `case_thread` | `pause_follow_ups` | Stops the automatic policy-outreach follow-up emails on a case thread. |
+| `case_thread` | `source_contacts` | Fill every case thread that has no contacts: from the vendor's other case threads, its vendor record or a public security email, then a background web search at the vendor's own domain for the rest. |
+| `case_thread` | `send_email` | Email the vendor on a case thread and mark the thread emailed. |
+| `radar_alert_purge` | `start` | Coverbase staff only. |
+| `radar_alert_purge` | `cancel` | Coverbase staff only. |
 
 ### Questionnaires, portals and intake
 
@@ -895,6 +1143,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `questionnaire` | `edit_content` | Adds, changes, reorders or archives sections, questions and options, as the template editor's save does. |
 | `questionnaire` | `import_questions` | Creates or updates a questionnaire's questions from a workbook (base64, .xlsx), in the background. |
 | `questionnaire` | `import_conditions` | Adds single-trigger show rules to a questionnaire from a workbook (base64, .xlsx). |
+| `questionnaire` | `create_default_kyv` | Creates the default know-your-vendor questionnaire for your organization. |
 | `questionnaire_condition` | `create` | Adds a show rule: show the target questions, sections or options only when an earlier answer matches. |
 | `questionnaire_condition` | `update` | Changes a show rule. |
 | `questionnaire_condition` | `archive` | Removes a show rule; the questions it hid always show. |
@@ -904,12 +1153,18 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `questionnaire_response` | `autofill` | Have Coverbase's AI draft the answers to a submission from its portal's documents, in the background. |
 | `questionnaire_response` | `generate_summary` | Regenerates the AI analysis summary of a submission in the background; it replaces the current summary. |
 | `questionnaire_response` | `update_summary` | Replaces a submission's analysis summary by hand. |
+| `questionnaire_response` | `create` | Starts a response to a questionnaire for a vendor, for your organization's own team to answer with action="answer". |
+| `questionnaire_response` | `set_archived` | Archives a questionnaire response, or restores it with archived=False. |
+| `questionnaire_response` | `answer` | Creates or replaces one answer on a response, as a member of your organization's own team. |
 | `portal` | `create_request` | Opens a questionnaire request (portal) for a vendor and returns its link. |
 | `portal` | `pause` | Puts an open request on hold: no reminders, and the vendor sees it on hold. |
 | `portal` | `resume` | Takes a request off hold. |
 | `portal` | `update` | Changes a request's due date (unix timestamp) or the message the vendor sees on it. |
 | `portal` | `create_persistent` | Creates a standing portal with one stable link (intake or findings commitment), asking for the given questionnaires. |
 | `portal` | `update_persistent` | Changes a standing portal (the intake form or a findings commitment portal): its name, AI guidance, opens or closed status, or the questionnaires it asks for (replaces the list). |
+| `portal` | `create_submission` | Starts a draft submission on an open persistent portal. |
+| `portal` | `apply_template` | Rebuilds one assessment portal from a different assessment portal template, or from your organization default when no template is given. |
+| `portal` | `approve_review_set` | Approves every submission of a portal reviewed as one set, in one transaction: profiles first, the inherent risk questionnaire last. |
 | `portal_template` | `create` | Creates a portal template. |
 | `portal_template` | `update` | Changes a portal template; omitted fields stay. |
 | `portal_template` | `archive` | Archives a portal template; a persistent template's link stops working. |
@@ -918,6 +1173,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `portal_template` | `instantiate` | Opens a new request from an ephemeral template and returns its link. |
 | `portal_template` | `set_default` | Sets or clears the default template for a portal type. |
 | `email_layout` | `save` | Saves the frame for outgoing emails of one layout type (external or internal), replacing the current one. |
+| `email_layout` | `dry_run` | Email a saved layout's preview to you, and nobody else. |
 | `intake_session` | `create` | Opens a new vendor intake request, the first step of intake over MCP. |
 | `intake_session` | `start_from_message` | Hands the human's own words to Coverbase's intake agent, which opens the intake once it knows enough and otherwise says what it still needs. |
 | `intake_session` | `prequalify` | Runs the intake portal's pre-qualification checks on the vendor. |
@@ -931,6 +1187,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `intake_session` | `reject` | Rejects a pending vendor intake request. |
 | `intake_session` | `request_follow_up` | Requests more information from the intake requester. |
 | `intake_session` | `archive` | Archives an intake session. |
+| `intake_session` | `generate_follow_ups` | Generates the follow-up questions an intake's questionnaires need and store them on the intake, as the web intake's second step does. |
 | `zero_form_intake` | `update_settings` | Turns each zero-form intake channel on or off. |
 | `portal_submission` | `accept` | Accepts a round the vendor submitted on a portal. |
 | `portal_submission` | `request_revision` | Sends a submitted round back to the vendor with what to change. |
@@ -939,6 +1196,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `question_autofill_mapping` | `archive` | Stops a question's answer writing to one target. |
 | `email` | `create_draft` | Saves an unsent email draft about a record (vendor, portal, contract, task, case and the rest). |
 | `email` | `update_draft` | Changes an unsent draft; omitted fields stay. |
+| `email` | `send` | Email a vendor or anyone else about a record. |
 | `email_template` | `create` | Creates an email template people can send from Coverbase. |
 | `email_template` | `update` | Edits or archives an email template. |
 | `intake_triage` | `set_identifiers` | Sets the D-U-N-S, LEI and tax ID the duplicate check matches on. |
@@ -950,12 +1208,15 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `intake_triage` | `set_procurement_origin` | Records the procurement requisition this intake came from. |
 | `intake_triage` | `decide_budget_exception` | Approves or decline the budget exception the requester asked for. |
 | `intake_triage` | `refresh_irq_for_change` | Opens the engagement's IRQ refresh for the material change the requester reported; its Transaction Owner answers it on the monitoring plan. |
+| `intake_triage` | `answer_question` | Answers one of the Front Door reviewer's questions, as the intake's requester. |
 | `intake_triage_config` | `update` | Replaces your organization's Front Door settings (reuse_window_months, tprm_office_group_id, supply_chain_group_id, irq_required_by_default, irq_rules). |
 | `questionnaire_version` | `create_draft` | Starts a new draft version of a template from the given version. |
 | `questionnaire_version` | `publish` | Publishes a draft version so new sends use it. |
 | `questionnaire_version` | `set_review_cadence` | Sets how often a template's content is reviewed and who reviews it. |
 | `questionnaire_version` | `record_review` | Records that a template's content was reviewed today. |
 | `questionnaire_version` | `retire` | Retire versions from new sends: a draft is discarded, a published version stops being sendable. |
+| `question` | `bind_option_source` | Takes a select question's options from a custom field from now on. |
+| `question` | `unbind_option_source` | Stops a question following its custom field. |
 
 ### Contracts, engagements and procurement
 
@@ -1037,6 +1298,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `responsibility_matrix` | `generate` | Starts AI Autofill on the matrix. |
 | `responsibility_matrix` | `set_service_model` | Sets an engagement's cloud service model and fill every topic no document has settled with that model's default. |
 | `responsibility_matrix` | `scope_rights` | Points a linked assessment's evidence at the engagement's contract documents only. |
+| `responsibility_matrix` | `request_acknowledgement` | Asks each owner group to acknowledge the topics it owns on this engagement: one Obligations Portal per group. |
 
 ### RFPs
 
@@ -1052,6 +1314,15 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `rfp` | `simulate_submissions` | Researches how each invited vendor would answer, without contacting them. |
 | `rfp` | `compare` | Compares every submission on an RFP against the rubric and each other. |
 | `rfp` | `award` | Awards an RFP to one or more vendors. |
+| `rfp` | `update` | Changes an RFP's name, description, category, timeline or settings. |
+| `rfp` | `set_status` | Moves an RFP to any lifecycle status by hand. |
+| `rfp` | `pause` | Puts an RFP back to draft. |
+| `rfp` | `cancel` | Cancels an RFP. |
+| `rfp` | `archive` | Archives an RFP, taking it out of the list. |
+| `rfp` | `rank_submissions` | Ranks an RFP's submissions by hand, best first. |
+| `rfp` | `lock_rubric` | Freezes the RFP's scoring rubric as a new numbered version. |
+| `rfp` | `update_invitation` | Moves a vendor's invitation along, for example to `declined` or `disqualified`. |
+| `rfp` | `create_submission` | Records a vendor's response to an RFP against its invitation, and marks the invitation submitted. |
 
 ### Risk register and risk settings
 
@@ -1074,6 +1345,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `risk_config` | `update` | Changes the Risk module configuration. |
 | `risk_narrative` | `save` | Replaces a report's narrative with your text and marks it edited by a person, so a later page load keeps it. |
 | `risk_narrative` | `set_instructions` | Saves the custom AI instructions a report's narrative is generated with, without regenerating it. |
+| `risk_narrative` | `start_job` | Writes a report's AI narrative in the background and save it as the report's narrative. |
 | `risk_methodology` | `update` | Changes how inherent risk questionnaire answers aggregate into a score. |
 | `vendor_tier_rule` | `update` | Saves the vendor tier rule, or turns it off with null. |
 | `reviewer_matrix_rule` | `create` | Adds a reviewer matrix rule. |
@@ -1100,6 +1372,8 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `agent_run` | `stop` | Stops one of your runs. |
 | `agent_run` | `archive` | Moves one of your finished runs out of the list. |
 | `agent_run` | `set_mode` | Switches a live run between `guided` (the browser follows it) and `background` (you are notified instead). |
+| `agent_run` | `unarchive` | Brings one of your archived runs back into the list. |
+| `agent_run` | `delete` | Deletes one of your archived runs and everything it logged. |
 | `agent` | `create` | Creates a standing Coverbase AI agent. |
 | `agent` | `update` | Changes an agent. |
 | `agent` | `create_from_template` | Makes an agent from a template. |
@@ -1131,6 +1405,10 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `custom_field` | `create` | Creates a new custom field configuration. |
 | `custom_field` | `update` | Updates a custom field's label, enabled state, or the objects it applies to. |
 | `custom_field` | `set_value` | Creates or updates a custom field value on a supported object. |
+| `custom_field` | `delete` | Deletes a custom field and every value records hold for it. |
+| `custom_field` | `archive` | Retire a custom field, keeping every value it holds. |
+| `custom_field` | `restore` | Brings an archived custom field back onto its records. |
+| `custom_field` | `delete_value` | Clears one record's value for a custom field. |
 | `saved_view` | `create` | Saves a filtered, sorted list view. |
 | `saved_view` | `update` | Changes a saved view's name, filters, sort, sharing or organization default. |
 | `saved_view` | `delete` | Deletes a saved view for everyone who sees it. |
@@ -1161,6 +1439,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `report` | `add_chart_templates` | Adds library charts to a report, laid out below its content. |
 | `report` | `remove_chart` | Takes a chart off a report. |
 | `report` | `export` | Starts a PDF or Excel export of a report. |
+| `report` | `test_scheduled_export` | Sends a dashboard's scheduled export once, to your own address only. |
 | `chart` | `create` | Saves a chart, optionally onto a report. |
 | `chart` | `update` | Changes a chart. |
 | `chart` | `archive` | Archives a chart; it leaves every report it was on. |
@@ -1176,6 +1455,18 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `sso_application` | `confirm_suggested` | Confirms name-only application matches, each to the vendor it was matched to. |
 | `sso_application` | `reset_vendor` | Clears an application's vendor link so matching runs again. |
 | `sso_finding` | `open_missing` | Opens an unassigned finding for each approved vendor without SSO that has none yet. |
+| `branding` | `update` | Changes the brand color or vendor portal title, or removes the logo or icon. |
+| `branding` | `upload_image` | Replaces the logo shown on vendor portals and emails, or the square icon, with an image (PNG, JPG, SVG or WebP, up to 5 MB). |
+| `integration` | `set_status` | Pauses or resumes a connection. |
+| `integration` | `set_mappings` | Replaces which provider fields sync into which Coverbase fields. |
+| `integration` | `sync` | Starts a sync now. |
+| `integration_conflict` | `resolve` | Links a provider supplier to one vendor. |
+| `integration_conflict` | `dismiss` | Takes a conflict off the steward queue without linking a vendor. |
+| `integration_conflict` | `bulk` | Resolve or dismiss up to 500 conflicts in the background. |
+| `integration_mismatch` | `resolve` | Settle one field mismatch: take the provider's value, keep Coverbase's, or dismiss the pair. |
+| `user` | `create` | Adds a member to the organization. |
+| `user` | `set_locale` | Sets the language Coverbase uses for you. |
+| `directory_person` | `create` | Adds a person who can be named on records, such as a business owner, and get their email, but cannot sign in. |
 
 ### Monitoring, insights and Inspect
 
@@ -1183,6 +1474,10 @@ Each write checks the same permission as the matching dashboard action. A write 
 | -------- | -------- | ------------ |
 | `darkweb_exposure` | `review` | Records a triage decision on a dark web exposure, or assigns it. |
 | `darkweb_exposure` | `escalate` | Opens a finding from a dark web exposure. |
+| `darkweb_exposure` | `playbook_step` | Tick or untick one playbook step on one exposure. |
+| `darkweb_exposure` | `bulk_review` | Promotes exposures held in Needs review to New, or dismisses them as false positives. |
+| `darkweb_exposure` | `export` | Every exposure the filters match, as CSV behind a short-lived link. |
+| `darkweb_exposure` | `partner_follow_up` | Opens a finding on the exposure's vendor, or on the partner a program BIN runs for. |
 | `darkweb_watchlist` | `sync` | Re-derive the watchlist from the organization and vendor records now. |
 | `darkweb_watchlist` | `create` | Adds an identifier for dark web monitoring to watch, by hand. |
 | `darkweb_watchlist` | `update` | Turns a watchlist identifier on or off, or changes its details. |
@@ -1195,6 +1490,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `darkweb_alert_rule` | `update` | Replaces a dark web alert rule whole. |
 | `darkweb_alert_rule` | `delete` | Retire a dark web alert rule. |
 | `darkweb_alert_rule` | `reorder` | Sets the order rules are evaluated in. |
+| `darkweb_alert_rule` | `test` | Sends a fictional, signed DarkWebExposure.Created to every webhook subscribed to dark web events. |
 | `document_insight_config` | `create` | Creates a document insight: a field Coverbase extracts from documents. |
 | `document_insight_config` | `promote` | Fill a custom field from a document insight, creating the field if asked. |
 | `document_insight_config` | `update` | Changes a document insight, optionally re-running past documents. |
@@ -1204,6 +1500,9 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `document_insight_config` | `unlink_custom_field` | Stops filling a custom field from a document insight. |
 | `document_insight_config` | `archive` | Retire a document insight. |
 | `document_insight_config` | `restore` | Brings an archived document insight back into the working set. |
+| `document_insight_config` | `test` | Try a definition on up to five real documents and show each answer. |
+| `document_insight_config` | `delete` | Permanently delete an archived insight and every value it extracted. |
+| `document_insight_config` | `export` | One insight's values as a spreadsheet, behind a short-lived download link. |
 | `document_insight_backfill` | `create` | Re-runs insights over existing documents in the background. |
 | `document_insight_backfill` | `cancel` | Stops a backfill dispatching more documents. |
 | `document_insight_model` | `create` | Starts a document insight decision model from a listed base model. |
@@ -1213,6 +1512,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `document_insight_model` | `sync_training` | Read the training job's state and record it on the model. |
 | `document_insight_model` | `activate` | Makes this the model every extraction in the organization uses. |
 | `document_insight_model` | `retire` | Retire the model. |
+| `document_insight_model` | `shadow` | Starts or stops answering live documents with a trained model beside production. |
 | `document_insight_example` | `create` | Adds a worked example that teaches a document insight. |
 | `document_insight_example` | `update` | Edits, enable or disable a worked example. |
 | `document_insight_example` | `delete` | Deletes a worked example. |
@@ -1222,6 +1522,7 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `document_insight_value` | `correct` | Replaces an extracted value with the right one. |
 | `document_insight_value` | `delete` | Deletes an extracted insight value from its document. |
 | `document_insight_value` | `bulk_verdict` | Marks many extracted values correct or incorrect at once, or clears the verdict. |
+| `document_insight_value` | `render_snippet` | Render the page image for one citation, in the background. |
 | `document_insight_group` | `create` | Creates a group that organizes document insights and can share a scope. |
 | `document_insight_group` | `update` | Updates a document insight group. |
 | `document_insight_group` | `delete` | Deletes a document insight group. |
@@ -1241,15 +1542,46 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `inspect_plan` | `ensure` | Starts preparing a plan for each control in a set that has none yet. |
 | `inspect_plan` | `regenerate` | Retire the organization's plan and prepare a fresh one. |
 | `inspect_plan` | `regenerate_requirement` | Redesign how Inspect checks one requirement, from a run that failed it. |
+| `inspect_plan` | `validate_revision` | Refuses: checking a plan reads its planning documents; names the public route. |
+| `inspect_plan` | `publish_revision` | Refuses: publishing a plan reads planning documents; names the public route. |
 | `inspect_inspection` | `bulk_archive` | Archives, or with is_archived=False restore, up to 500 inspections. |
 | `inspect_inspection` | `cancel` | Cancels every unfinished control of up to 500 inspections. |
+| `inspect_inspection` | `create` | Refuses: an inspection needs a browser session; names the public route. |
 | `inspect_run` | `cancel` | Cancels some controls of one inspection while the rest keep running. |
 | `inspect_run` | `retry` | Runs finished controls of one inspection again. |
 | `inspect_account` | `set_owner` | Assigns observed accounts to an identity, or with no identity_id clear it. |
 | `inspect_identity` | `merge` | Moves every observed account of the listed identities to one identity. |
+| `inspect_identity` | `reconcile` | Rebuilds the whole identity inventory in the background. |
 | `inspect_idp_application` | `set_platform` | Sets which SaaS platform an Okta or Entra application is. |
 | `inspect_auth_context` | `mark_stale` | Flag a saved sign-in session so Inspect signs in again on its next run. |
+| `inspect_auth_context` | `create` | Refuses: a sign-in session needs a browser context; names the public route. |
+| `inspect_auth_context` | `bootstrap` | Sign a single sign-on session in again now, in the background. |
 | `inspect_documentation_discovery` | `start` | Searches for the vendor documentation a control needs on an application. |
+| `document_insight_eval_example` | `review` | Settle one miss in an accuracy check. ai_right also corrects the value to the AI's answer. |
+| `document_insight_extraction` | `run` | Runs one saved insight on one document and show the answer. |
+| `document_insight_extraction` | `start_preview` | Try an unsaved insight definition on one document, in the background. |
+| `document_type_decision_model` | `train_fork` | Queues a retrain of this organization's fork of the document type model. |
+| `darkweb_setup` | `confirm` | Records that the person reviewed the alert rules or the business hours. |
+| `darkweb_baseline` | `import` | Replaces the baseline with the file's valid rows and match it against the last year of exposures. |
+| `inspect_probe` | `prepare` | Refuses: drafting a probe reads planning documents; names the public route. |
+| `inspect_probe` | `create` | Refuses: saving a probe reads its planning documents; names the public route. |
+| `inspect_probe` | `revise` | Refuses: a probe revision reads planning documents; names the public route. |
+| `inspect_probe` | `prepare_binding` | Refuses: drafting reads planning documents; names the public route. |
+| `inspect_probe` | `set_automation` | Turns a probe's recurrence on or off, or changes how often it runs. |
+| `inspect_probe` | `preview` | Refuses: a sample needs a browser session; names the public route. |
+| `okta_integration` | `sync` | Refuses: the Okta sync package is not on this server; names the public route. |
+| `okta_integration` | `verify` | Refuses: verifying reads Okta signing keys; names the public route. |
+| `okta_integration` | `provision` | Refuses: Okta provisioning is not on this server; names the public route. |
+| `okta_integration` | `deprovision` | Refuses: Okta deprovisioning is not on this server; names the public route. |
+| `okta_integration` | `inspect_run` | Checks every Okta application Inspect can sign in to, in the background. |
+| `entra_integration` | `verify` | Refuses: verifying reads the Entra client secret; names the public route. |
+| `entra_integration` | `sync` | Refuses: syncing reads the Entra client secret; names the public route. |
+| `entra_integration` | `provision` | Refuses: provisioning stores the Entra user's password; names the public route. |
+| `inspect_evaluation` | `create_finding` | Raise a failed Inspect evaluation as a Finding, or return the one it raised. |
+| `monitoring_cadence` | `update` | Replaces the cadence matrix and plan settings. |
+| `monitoring_plan` | `generate` | Generates a plan now, or re-plan it from the cadence matrix, for an engagement or for a service no live engagement covers. |
+| `monitoring_activity` | `update` | Changes an activity's interval, next due date, owner or whether it runs. |
+| `monitoring_activity` | `complete` | Marks a contract review or evidence request done and schedule its next one. |
 
 A few of these carry behaviour worth knowing:
 

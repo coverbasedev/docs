@@ -336,6 +336,8 @@ You can read the queue, triage exposures and tune the watchlist from an MCP clie
 
 The API routes sit under `/v1/dark-web`. See [Manage dark web monitoring](/api-reference/monitoring-and-insights#manage-dark-web-monitoring).
 
+You can also work an exposure's playbook, move held exposures in bulk, read evidence, export the queue, import a baseline, read the program report and setup checklist, and manage alert rules. An MCP client reads these with `query_platform(kind=...)` (`darkweb_exposure_detail`, `darkweb_exposure_playbook`, `darkweb_exposure_evidence`, `darkweb_program_report`, `darkweb_setup`, `darkweb_baseline`, `darkweb_sources`) and writes with `mutate(entity="darkweb_exposure", action=...)` (`playbook_step`, `bulk_review`, `export`, `partner_follow_up`), `mutate(entity="darkweb_baseline", action="import")` and `mutate(entity="darkweb_setup", action="confirm")`. Evidence comes back as metadata and a short-lived download link. A partner follow-up opens a finding and sends nothing to the partner. See [Work an exposure](/api-reference/monitoring-and-insights#work-an-exposure) and [Run the dark web program](/api-reference/monitoring-and-insights#run-the-dark-web-program).
+
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#monitoring-insights-and-inspect) lists every field.
 
 Every route needs `dark_web_exposure` permission, which API keys do not hold, so use a key created by a person whose role holds it. Even then, a key cannot remove a watchlist identifier or reset a playbook. Recording consent and sending an exposure to Legal with a case never go through MCP or the API. Do those in the dashboard.

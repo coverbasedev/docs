@@ -313,7 +313,11 @@ The API routes sit under `/v1/inspect-applications`, `/v1/inspect-plans`, `/v1/i
 
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#monitoring-insights-and-inspect) lists every field.
 
-An API key cannot archive, restore or delete an application, archive or restore inspections, stop a schedule or disconnect Okta. A signed-in user does those.
+You can also run probes, read the identity directory and its credentials, follow Okta and Entra connections, sign a session in again and raise an evaluation as a Finding. MCP reads them with kinds such as `inspect_probes`, `inspect_identity_detail`, `inspect_credentials`, `okta_inspection_identity` and `entra_inspection_identity`, and writes with `mutate(entity="inspect_probe", action="set_automation")`, `mutate(entity="inspect_auth_context", action="bootstrap")` and `mutate(entity="inspect_evaluation", action="create_finding")`. The API routes sit under `/v1/inspect-probes`, `/v1/inspect-identities`, `/v1/okta-integration` and `/v1/entra-integration`. See [Run probes](/api-reference/monitoring-and-insights#run-probes).
+
+Work that needs a browser session, the planning documents or a stored credential runs through the API, not MCP: drafting, saving and previewing probes, starting inspections, editing plans, and syncing, verifying or provisioning Okta and Entra. MCP says which API route to use.
+
+An API key cannot archive, restore or delete an application, archive or restore inspections, stop a schedule, disconnect Okta, provision or deprovision an Okta or Entra inspection identity, or decide an access removal request. A signed-in user does those. Only an organization admin can sync, verify or provision Okta and Entra, or rebuild the identity inventory.
 
 ## Troubleshooting
 

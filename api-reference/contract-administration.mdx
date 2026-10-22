@@ -1,6 +1,6 @@
 ---
 title: "Contract administration API"
-description: "Read cost centers and business units, manage purchase orders, read procurements, and run offboarding and continuity plans on engagements."
+description: "Manage reference lists, procurements, contract approvals, the Contracts Repository, e-signature, engagement records, obligation documents and data share."
 icon: "file-contract"
 ---
 
@@ -85,7 +85,6 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `PUT` | `/v1/contract-records/{contract_id}/documents/{document_id}/components` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/rounds` | `contract:update:org` |
 | `POST` | `/v1/contract-records/{contract_id}/clause-reviews/{run_id}/ask-dispositions` | `contract:update:org` |
-
 | `GET` | `/v1/contract-assembly-batches` | `contract:read:org` |
 | `POST` | `/v1/contract-assembly-batches` | `contract:create:org` |
 | `GET` | `/v1/contract-assembly-batches/{batch_id}` | `contract:read:org` |
@@ -107,6 +106,183 @@ These endpoints extend the [contract records](/api-reference/contract-records) a
 | `POST` | `/v1/contract-assembly-batches/{batch_id}/mark-incorporated` | `contract:update:org` |
 | `POST` | `/v1/contract-assembly-batches/{batch_id}/resolve-decision` | `contract:update:org` |
 | `GET` | `/v1/contract-records/{contract_id}/family` | `contract:read:org` |
+| `POST` | `/v1/procurements` | `vendor:update:org` |
+| `PATCH` | `/v1/procurements/{procurement_id}` | `vendor:update:org` |
+| `POST` | `/v1/cost-centers/bulk` | `org_settings:update:org`, a key created by a person |
+| `PATCH` | `/v1/cost-centers/{cost_center_id}` | `org_settings:update:org`, a key created by a person; archiving needs a signed-in user |
+| `POST` | `/v1/business-units/bulk` | `org_settings:update:org`, a key created by a person |
+| `POST` | `/v1/business-units/reorder` | `org_settings:update:org`, a key created by a person |
+| `PATCH` | `/v1/business-units/{business_unit_id}` | `org_settings:update:org`, a key created by a person; archiving needs a signed-in user |
+| `GET` | `/v1/contract-approver-roles` | `contract:read:org` |
+| `POST` | `/v1/contract-approver-roles/bulk` | `org_settings:update:org`, a key created by a person |
+| `GET` | `/v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}/versions` | `contract:read:org` |
+| `POST` | `/v1/contract-assembly-batches/{batch_id}/files` | `contract:create:org` |
+| `POST` | `/v1/contract-assembly-archive-plans` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/suggested-renewals` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/documents/{document_id}/split` | `contract:create:org` and `contract:update:org` |
+| `POST` | `/v1/contract-records/separate-agreements` | `contract:create:org` and `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/accounting-packet` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/accounting-packet/send` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/follow-up-rounds` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/follow-up-rounds` | `contract:update:org` |
+| `POST` | `/v1/contract-follow-up-asks/{ask_id}/response` | `contract:update:org` |
+| `POST` | `/v1/contract-tracker-imports` | `contract:update:org` |
+| `POST` | `/v1/contract-bulk-imports` | `contract:create:org` |
+| `GET` | `/v1/contract-import-jobs/{job_id}` | `contract:read:org` |
+| `GET` | `/v1/contract-service-description-comparison` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/renewal-decision` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/release-hold` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/vendor-link` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/vendor-request` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/risk-profile` | `contract:read:org` |
+| `PUT` | `/v1/contract-records/{contract_id}/risk-profile` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/legal-suggestions` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/summary` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/summary` | `contract:read:org` |
+| `POST` | `/v1/contract-records/fill-details` | `contract:update:org` |
+| `POST` | `/v1/contract-records/set-type` | `contract:update:org` |
+| `GET` | `/v1/vendor-contract-summaries` | `contract:read:org` |
+| `POST` | `/v1/contract-exports` | `contract:export:org` |
+| `GET` | `/v1/contract-exports/{export_id}` | `contract:export:org` |
+| `GET` | `/v1/contract-runway` | `contract:read:org` |
+| `GET` | `/v1/contract-alert-settings` | `contract:read:org` |
+| `PUT` | `/v1/contract-alert-settings` | `contract:update:org` |
+| `GET` | `/v1/contract-alert-suppressions` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/alert-suppression` | `contract:read:org` |
+| `DELETE` | `/v1/contract-records/{contract_id}/alert-suppression` | `contract:read:org` |
+| `GET` | `/v1/contract-records/{contract_id}/notification-preview` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/notification-rule-preview` | `contract:read:org` |
+| `POST` | `/v1/contract-reminder-presets` | `org_settings:update:org`, a key created by a person |
+| `GET` | `/v1/contract-records/{contract_id}/approval` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/approval/validate-metadata` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/approval/submit` | `contract:update:org` |
+| `GET` | `/v1/contract-records/{contract_id}/approval-plan` | `contract:read:org` |
+| `PUT` | `/v1/contract-records/{contract_id}/approval-plan` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/approval-steps/{step_id}/reassign` | `contract:update:org`, contract administrator |
+| `POST` | `/v1/contract-records/{contract_id}/approval-steps/{step_id}/resend-link` | `contract:update:org`, contract administrator |
+| `GET` | `/v1/contract-records/{contract_id}/timeline` | `contract:read:org` |
+| `GET` | `/v1/contract-approval-policies` | `org_settings:read:org`, a key created by a person |
+| `POST` | `/v1/contract-approval-policies` | `org_settings:update:org`, a key created by a person |
+| `PUT` | `/v1/contract-approval-policies/{policy_id}` | `org_settings:update:org`, a key created by a person |
+| `DELETE` | `/v1/contract-approval-policies/{policy_id}` | `org_settings:update:org`, signed-in user only |
+| `GET` | `/v1/change-requests` | `change_request:read:org` |
+| `GET` | `/v1/change-requests/{change_request_id}` | `change_request:read:org` |
+| `POST` | `/v1/change-requests` | The target's update permission |
+| `POST` | `/v1/change-requests/{change_request_id}/withdraw` | `change_request:read:org`, the requester |
+| `GET` | `/v1/repository-settings` | `contract:read:org` |
+| `PATCH` | `/v1/repository-settings` | `contract:update:org` |
+| `GET` | `/v1/repository-summary` | `contract:read:org` |
+| `GET` | `/v1/repository-folders` | `contract:read:org` |
+| `POST` | `/v1/repository-folders` | `contract:update:org` |
+| `PATCH` | `/v1/repository-folders/{folder_id}` | `contract:update:org` |
+| `DELETE` | `/v1/repository-folders/{folder_id}` | `contract:update:org`, signed-in user only |
+| `GET` | `/v1/repository-folder-templates` | `contract:read:org` |
+| `POST` | `/v1/repository-folder-templates/{template_key}/apply` | `contract:update:org` |
+| `GET` | `/v1/repository-documents` | `contract:read:org` |
+| `GET` | `/v1/repository-documents/{document_id}` | `contract:read:org` |
+| `PATCH` | `/v1/repository-documents/{document_id}` | `contract:update:org` |
+| `POST` | `/v1/repository-documents/move` | `contract:update:org` |
+| `POST` | `/v1/repository-documents/{document_id}/archive` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/repository-documents/{document_id}/restore` | `contract:update:org`, signed-in user only |
+| `GET` | `/v1/repository-documents/{document_id}/download` | `contract:read:org` |
+| `POST` | `/v1/repository-uploads` | `contract:update:org` |
+| `GET` | `/v1/repository-inbound-emails` | `contract:read:org` |
+| `GET` | `/v1/repository-inbound-emails/{inbound_email_id}` | `contract:read:org` |
+| `POST` | `/v1/repository-inbound-emails/{inbound_email_id}/retry` | `contract:update:org` |
+| `POST` | `/v1/engagement-records` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/archive` | `vendor:update:org`, signed-in user only |
+| `GET` | `/v1/engagement-records/{engagement_id}/lifecycle` | `vendor:read:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/assessment-links` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/assessment-links` | `vendor:update:org` |
+| `DELETE` | `/v1/engagement-records/{engagement_id}/assessment-links/{link_id}` | `vendor:update:org`, signed-in user only |
+| `GET` | `/v1/engagement-records/{engagement_id}/other-engagements` | `vendor:read:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/risk-summary` | `vendor:read:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/risk-domain-scores` | `vendor:read:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/risk-domain-scores/{risk_domain_id}` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/risk-domain-scores` | `vendor:update:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/access-scope` | `vendor:read:org` |
+| `PUT` | `/v1/engagement-records/{engagement_id}/access-scope` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/access-scope/proposal` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/cancel` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/regenerate` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/remind` | `vendor:update:org` |
+| `PATCH` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/items/{item_id}` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/items/{item_id}/evidence` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/items/evidence` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/items/{item_id}/attestation` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/offboarding/{request_id}/items/{item_id}/check-access` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/continuity-plan/reopen` | `vendor:update:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/contract-handoff` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/contract-handoff` | `vendor:update:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/contract-handoff/{handoff_id}/complete` | `vendor:update:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/contract-context` | `vendor:read:org` |
+| `POST` | `/v1/engagement-records/{engagement_id}/risk-summary/pdf-exports` | `vendor:read:org` |
+| `GET` | `/v1/engagement-records/{engagement_id}/risk-summary/pdf-exports/{export_id}` | `vendor:read:org` |
+| `GET` | `/v1/obligations/{obligation_id}/commitment` | `obligation:read:org` |
+| `GET` | `/v1/obligations/{obligation_id}/documents` | `obligation:read:org` |
+| `POST` | `/v1/obligations/{obligation_id}/documents` | `obligation:update:org` |
+| `PATCH` | `/v1/obligations/{obligation_id}/documents/{document_id}` | `obligation:update:org` |
+| `DELETE` | `/v1/obligations/{obligation_id}/documents/{document_id}` | `obligation:update:org`, signed-in user only |
+| `GET` | `/v1/obligations/{obligation_id}/documents/{document_id}/download` | `obligation:read:org` |
+| `GET` | `/v1/signature-envelopes` | `contract:read:org` |
+| `GET` | `/v1/signature-envelopes/{envelope_id}` | `contract:read:org` |
+| `POST` | `/v1/signature-envelopes/{envelope_id}/send` | `contract:update:org` |
+| `POST` | `/v1/signature-envelopes/{envelope_id}/remind` | `contract:update:org` |
+| `POST` | `/v1/signature-envelopes/{envelope_id}/void` | `contract:archive:org`, signed-in user only |
+| `GET` | `/v1/signature-envelopes/{envelope_id}/audit` | `contract:read:org` |
+| `GET` | `/v1/signature-envelopes/{envelope_id}/documents/{kind}` | `contract:export:org` |
+| `GET` | `/v1/signature-templates` | `contract:read:org` |
+| `GET` | `/v1/signature-templates/{template_id}` | `contract:read:org` |
+| `GET` | `/v1/contract-records/{contract_id}/signature` | `contract:read:org` |
+| `POST` | `/v1/contract-records/{contract_id}/send-for-signature` | `contract:update:org` |
+| `POST` | `/v1/signature-envelopes` | `contract:create:org` |
+| `POST` | `/v1/signature-envelopes/query` | `contract:read:org` |
+| `PATCH` | `/v1/signature-envelopes/{envelope_id}` | `contract:update:org` |
+| `PUT` | `/v1/signature-envelopes/{envelope_id}/recipients` | `contract:update:org` |
+| `PUT` | `/v1/signature-envelopes/{envelope_id}/fields` | `contract:update:org` |
+| `POST` | `/v1/signature-envelopes/{envelope_id}/correct` | `contract:update:org`, signed-in user only |
+| `GET` | `/v1/signature-envelopes/{envelope_id}/verify` | `contract:read:org` |
+| `POST` | `/v1/signature-templates` | `contract:create:org` |
+| `PATCH` | `/v1/signature-templates/{template_id}` | `contract:update:org` |
+| `PUT` | `/v1/signature-templates/{template_id}/layout` | `contract:update:org` |
+| `POST` | `/v1/signature-templates/{template_id}/publish` | `contract:update:org`, signed-in user only |
+| `POST` | `/v1/signature-templates/{template_id}/fork` | `contract:create:org` |
+| `POST` | `/v1/signature-templates/{template_id}/archive` | `contract:archive:org`, signed-in user only |
+| `GET` | `/v1/signature-templates/{template_id}/document` | `contract:read:org` |
+| `GET` | `/v1/signature-sources/{source_id}/document` | `contract:read:org` |
+| `GET` | `/v1/signature-contract-documents` | `contract:read:org` |
+| `POST` | `/v1/signature-send-copy` | `contract:update:org` |
+| `GET` | `/v1/signature-config` | `contract:read:org` |
+| `PATCH` | `/v1/signature-config` | `org_settings:update:org`, a key created by a person |
+| `POST` | `/v1/signature-config/email-preview` | `org_settings:update:org`, a key created by a person |
+| `GET` | `/v1/signature-content-blocks` | `contract:read:org` |
+| `GET` | `/v1/signature-content-blocks/library` | `contract:read:org` |
+| `POST` | `/v1/signature-content-blocks/library/{slug}/adopt` | `contract:create:org` |
+| `POST` | `/v1/signature-content-blocks` | `contract:create:org` |
+| `PATCH` | `/v1/signature-content-blocks/{block_id}` | `contract:update:org`, signed-in user only to archive or restore |
+| `GET` | `/v1/signature-authored-documents` | `contract:read:org` |
+| `GET` | `/v1/signature-authored-documents/{document_id}` | `contract:read:org` |
+| `POST` | `/v1/signature-authored-documents` | `contract:create:org` |
+| `PUT` | `/v1/signature-authored-documents/{document_id}` | `contract:update:org` |
+| `GET` | `/v1/signature-bulk-sends/preflight` | `contract:read:org` |
+| `POST` | `/v1/signature-bulk-sends` | `contract:create:org` |
+| `GET` | `/v1/signature-bulk-sends` | `contract:read:org` |
+| `GET` | `/v1/signature-bulk-sends/{batch_id}` | `contract:read:org` |
+| `POST` | `/v1/signature-bulk-sends/{batch_id}/cancel` | `contract:update:org` |
+| `POST` | `/v1/signature-requests` | `contract:update:org` |
+| `PUT` | `/v1/contract-records/{contract_id}/signature-plan` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/signature-envelopes/{envelope_id}/sync` | `contract:update:org` |
+| `POST` | `/v1/contract-records/{contract_id}/signature-envelopes/{envelope_id}/abandon` | `contract:update:org`, signed-in user only |
+| `GET` | `/v1/data-share/tables` | `org_settings:read:org`, a key created by a person |
+| `GET` | `/v1/data-share/setup` | `org_settings:read:org`, a key created by a person |
+| `GET` | `/v1/data-share/destinations` | `org_settings:read:org`, a key created by a person |
+| `POST` | `/v1/data-share/destinations` | `org_settings:update:org`, a key created by a person |
+| `PATCH` | `/v1/data-share/destinations/{destination_id}` | `org_settings:update:org`, a key created by a person |
+| `DELETE` | `/v1/data-share/destinations/{destination_id}` | `org_settings:update:org`, signed-in user only |
+| `GET` | `/v1/data-share/destinations/{destination_id}/runs` | `org_settings:read:org`, a key created by a person |
+| `POST` | `/v1/data-share/destinations/{destination_id}/test` | `org_settings:update:org`, a key created by a person |
+| `POST` | `/v1/data-share/destinations/{destination_id}/sync` | `org_settings:update:org`, a key created by a person |
+| `GET` | `/v1/data-share/distribution` | `org_settings:read:org`, a key created by a person |
 List endpoints take `limit` and `offset` and return `items`, `total`, `limit` and `offset`. Errors return `detail` with a `code` and a `message`.
 
 ## List cost centers
@@ -390,3 +566,122 @@ To have Coverbase AI read a contract's documents for components and priced lines
 `GET /v1/contract-records/{contract_id}/document-intake` proposes what each document is (`role`: `root`, `amendment`, `restatement`, `sow`, `order_form`, `exhibit`, `evidence` or `redline_draft`) and how it relates to another document, with `confidence`, `rationale` and `needs_confirmation`. Pass `document_ids` to read only those against the rest. It writes nothing. To record the answer, send `POST .../document-intake/confirm` with `decisions`, each with `document_id`, `role`, `relation` and `related_document_id`. Coverbase stores each decision at full confidence and rebuilds the component slots. A document that is not on the contract, or one that relates to itself, returns `422` with code `invalid_decision`.
 
 To correct which components a document carries, send `PUT /v1/contract-records/{contract_id}/documents/{document_id}/components` with the whole set in `carries` (`component_type`, `effective_date`). The response lists what was `added`, `removed` and `redated`, and `reextraction_queued` says whether Coverbase queued the document to be read again.
+
+## Procurements and reference lists
+
+To open a procurement, send `POST /v1/procurements`; `PATCH /v1/procurements/{procurement_id}` changes one. Both take the fields the dashboard form takes, and a procurement Coverbase cannot save returns `422` with code `invalid_procurement`. Coverbase notifies anyone newly assigned.
+
+Cost centers, business units and contract approver roles are organization settings. `POST /v1/cost-centers/bulk`, `POST /v1/business-units/bulk` and `POST /v1/contract-approver-roles/bulk` add or update rows by name. `PATCH` changes one cost center or business unit, and `POST /v1/business-units/reorder` sets their order. These need `org_settings:update:org`, which API keys do not hold, so use a key created by a person whose role holds it. Setting `is_archived` needs a signed-in user.
+
+`GET /v1/clause-sets/{clause_set_id}/reference-clauses/{reference_clause_id}/versions` lists every saved version of a reference clause, newest first.
+
+## More on contract records
+
+These endpoints need Contracts v3 where the dashboard does, and return `404` with code `contract_not_found` for an unknown contract.
+
+- **Staged uploads.** `POST /v1/contract-assembly-batches/{batch_id}/files` takes up to 20 files as multipart `files`, with optional `source_paths`. A file Coverbase cannot read is listed in `rejected`. `POST /v1/contract-assembly-archive-plans` takes a zip listing and says what would be kept and skipped before you upload anything.
+- **Renewals and splits.** `GET .../suggested-renewals` proposes earlier contracts this one renews. `POST .../documents/{document_id}/split` moves a document onto a new contract, and `POST /v1/contract-records/separate-agreements` does that for several.
+- **Accounting and follow-ups.** `GET .../accounting-packet` shows what accounting receives, and `POST .../accounting-packet/send` emails it. `POST .../follow-up-rounds` opens a round of questions to the vendor and emails the vendor contact; `POST /v1/contract-follow-up-asks/{ask_id}/response` records an answer.
+- **Imports.** `POST /v1/contract-tracker-imports` and `POST /v1/contract-bulk-imports` take a workbook as multipart `file` with `dry_run`, and return a job. Poll `GET /v1/contract-import-jobs/{job_id}`.
+- **Decisions and links.** `POST .../renewal-decision` records `renew`, `terminate`, `under_review` or `undecided` with a `note`. `POST .../release-hold` releases an intake hold. `POST .../vendor-link` links a vendor, and `POST .../vendor-request` opens a vendor intake for a contract without one.
+- **Risk profile and AI.** `GET` and `PUT .../risk-profile` read and set the legal risk profile. `GET .../legal-suggestions` returns suggested legal terms. `POST .../summary` queues an AI summary and returns `202`; poll `GET .../summary`. `POST /v1/contract-records/fill-details` queues AI to fill empty fields from each contract's documents, and `POST /v1/contract-records/set-type` retypes up to 500 contracts.
+- **Exports.** `POST /v1/contract-exports` queues a spreadsheet and returns `202` with an `export_id`. Poll `GET /v1/contract-exports/{export_id}` until `download_url` is set. The link expires in 15 minutes and the response is never cached.
+- **Alerts.** `GET` and `PUT /v1/contract-alert-settings` read and set contract notification rules. `POST` and `DELETE .../alert-suppression` pause and resume alerts on one contract. `GET .../notification-preview` and `POST .../notification-rule-preview` show what a rule would send. `POST /v1/contract-reminder-presets` applies a preset set of reminder rules and needs a key created by a person.
+
+`GET /v1/contract-runway` returns upcoming renewals by month with each contract's readiness, and `GET /v1/vendor-contract-summaries` returns contract counts and value per vendor.
+
+## Contract approval
+
+`GET /v1/contract-records/{contract_id}/approval` returns the approval state and its steps. `POST .../approval/validate-metadata` lists required fields still empty. To submit, send `POST .../approval/submit`. Coverbase emails the first approvers. When no approval is needed and the policy sends automatically, the contract goes to DocuSign, which emails the signers.
+
+`GET` and `PUT .../approval-plan` read and change the planned approvers before the round opens. A contract administrator can `reassign` a step or `resend-link` to an outside approver; resending emails that approver. `GET .../timeline` lists every approval event.
+
+Deciding an approval stays in Coverbase with the approver. No API route approves or rejects.
+
+`GET /v1/contract-approval-policies` lists policies. `POST` creates one and `PUT /v1/contract-approval-policies/{policy_id}` replaces it. These need organization settings permission, so use a key created by a person whose role holds it. `DELETE` archives a policy and needs a signed-in user.
+
+## Change requests
+
+These need rating override approval. Without it they return `404` with code `not_enabled`.
+
+`GET /v1/change-requests` lists change requests, newest first, filtered by `status`, `target_type`, `target_id`, `vendor_id` and `assessment_id`. `GET /v1/change-requests/{change_request_id}` returns one. API keys hold `change_request:read:org`, so a key reads them.
+
+To request a change, send `POST /v1/change-requests` with the target and the changes. You need update permission on the target. The requester can `POST .../withdraw` an open request. Approving or rejecting stays with the approver group in Coverbase.
+
+## Contracts Repository
+
+These endpoints need the Contracts Repository. Without it they return `404` with code `not_enabled`.
+
+`GET` and `PATCH /v1/repository-settings` read and change the inbox address, filing scheme and accepted sender domains. An address another organization holds returns `409` with code `local_part_taken`. `GET /v1/repository-summary` returns document, review and inbox counts.
+
+`GET /v1/repository-folders` lists folders with their document counts. `POST` creates one, and `PATCH /v1/repository-folders/{folder_id}` renames, describes or moves it. `DELETE` archives a folder and its subfolders, moves their documents up, and needs a signed-in user. `GET /v1/repository-folder-templates` lists folder templates, and `POST .../{template_key}/apply` creates the folders a template adds.
+
+`GET /v1/repository-documents` lists filed documents. Filter with `folder_id`, `include_subfolders`, `unfiled_only`, `search`, `document_types`, `categories`, `statuses`, `from_email`, `to_email` and `counterparty`. `GET .../{document_id}` returns one with its versions and history, and `PATCH` renames, refiles or reclassifies it. `POST /v1/repository-documents/move` files several at once. `archive` and `restore` need a signed-in user. `GET .../{document_id}/download` returns a link that expires in 15 minutes; pass `version` for an earlier file.
+
+To file documents, send `POST /v1/repository-uploads` with up to 50 multipart `files`. Coverbase classifies and files them in the background and returns `202` with an inbox entry. `GET /v1/repository-inbound-emails` lists the inbox log, and `POST .../{inbound_email_id}/retry` files a message's attachments again.
+
+## Engagement records
+
+To create an engagement, send `POST /v1/engagement-records` with `vendor_id`, `status_id`, `name`, and the other fields the dashboard form takes. Coverbase returns `201` with the engagement. `POST /v1/engagement-records/archive` archives up to 100 engagements and needs a signed-in user.
+
+`GET .../risk-domain-scores` lists the engagement's score per risk domain, and `POST` sets one. A `manual` score that changes a value needs a `note`, or the call returns `422` with the override rule's code.
+
+These need the engagement lifecycle, and return `404` with code `not_enabled` without it:
+
+- `GET .../lifecycle` says where the engagement is and who each risk domain is with.
+- `GET .../assessment-links` lists assessments counted toward due diligence. `POST` links one, and Coverbase notifies the people who run a performed assessment. `DELETE .../assessment-links/{link_id}` removes a link and needs a signed-in user.
+- `GET .../other-engagements` lists the vendor's other live engagements with their latest assessment and Risk Summary outcome.
+- `GET .../risk-summary` returns the Risk Summary.
+- `GET .../access-scope` compares the approved application access with what Okta and Entra assign. `PUT` approves a scope, replacing the last one. `POST .../access-scope/proposal` drafts a scope from the inherent risk answers and saves nothing. Access scopes also need Inspect.
+
+The offboarding request routes `cancel`, `regenerate` and `remind` act on a filed request; `remind` emails the people who own open exit steps. The exit step routes set owners, attach evidence, request a vendor attestation, which emails the vendor contact, and `check-access` counts the vendor's remaining Okta and Entra access again. `POST .../continuity-plan/reopen` reopens a submitted plan. `GET` and `POST .../contract-handoff` read and open the contract handoff, and `.../complete` finishes it with a file. `GET .../contract-context` returns the engagement's contracts as the CLM sees them. `POST .../risk-summary/pdf-exports` queues the Risk Summary PDF; poll the export until its `download_url` is set.
+
+## Obligation documents
+
+`GET /v1/obligations/{obligation_id}/commitment` returns the obligation's active commitment, or `404` with code `commitment_not_found`. `GET /v1/obligations/{obligation_id}/documents` lists its documents. To attach one, send `POST` with the file as multipart `file` and an optional `note`. `PATCH .../documents/{document_id}` replaces the note. `GET .../download` returns a link that expires in 15 minutes. `DELETE` removes a document and needs a signed-in user.
+
+## E-signature
+
+These endpoints need e-signature. Without it they return `404` with code `not_enabled`.
+
+`GET /v1/signature-envelopes` lists envelopes. Filter with `contract_id`, `vendor_id`, `status` and `search`. `POST /v1/signature-envelopes/query` takes the dashboard's filter language: `filter`, `sort`, `search`, `limit` and `offset`. `GET /v1/signature-envelopes/{envelope_id}` returns one with its recipients and their progress. `GET .../audit` returns every event and whether the hash chain verifies. `GET .../verify` checks the chain and the seal against the stored executed copy now, and records the result. `GET .../documents/{kind}` returns a link to the `source`, `executed` or `certificate` PDF; it needs `contract:export:org` and expires in 15 minutes.
+
+`POST .../send` sends a draft envelope. Coverbase emails the first routing step its signing links, and each later step when its turn comes. `POST .../remind` emails the people the current step waits on. No response returns a signing link. `POST .../void` closes every link on a sent envelope and needs a signed-in user. Signing or applying a signature for someone else is not possible through the API.
+
+### Build templates and envelopes
+
+`POST /v1/signature-templates` creates a draft on a vendor document (`source_document_id`) or an uploaded file (`source_file_id`), with its `roles`. Coverbase converts the document to a PDF in the background. `GET .../document` returns a link to that PDF, with `is_ready` false until the conversion lands. `PUT .../layout` replaces the roles and fields in one write. Each field names its role by `role_key`, and positions run from 0 to 1 across the page. `PATCH` changes the details. Once an envelope is sent from a version, that version is fixed and returns `409` with code `template_locked`, so `POST .../fork` copies it into a new draft. `POST .../publish` makes a draft available to senders and retires the version it came from. Publishing and `POST .../archive` need a signed-in user.
+
+`POST /v1/signature-envelopes` opens a draft, seeded from a published template when you pass `template_id`. It emails nobody. `PUT .../recipients` and `PUT .../fields` replace the draft's parties and fields, and `PATCH` changes its details. A recipient's `access_code` is hashed and never returned. After a send, only `name` and `vendor_id` can change. To fix a sent envelope, `POST .../correct` voids it, then create a draft with `corrected_from_id` and send that. Correcting needs a signed-in user.
+
+`GET /v1/signature-sources/{source_id}/document` returns a link to a vendor document or uploaded file as a PDF, or `is_ready` false while it converts. `GET /v1/signature-contract-documents?contract_ids=...` lists the documents filed against up to 25 contracts. `POST /v1/signature-send-copy` suggests a subject, an opening line and a signing meaning, and saves nothing.
+
+### Signing policy
+
+`GET /v1/signature-config` returns the org's signing policy and the seal level it can produce now. `PATCH` changes it, and changing the consent disclosure starts a new version. `POST .../email-preview` renders one signing email against sample values and sends nothing. Changing the policy and previewing need organization settings permission, which API keys do not hold, so use a key created by a person whose role holds it.
+
+### Content library and written documents
+
+`GET /v1/signature-content-blocks` lists your reusable passages, and `POST` adds one. `GET .../library` lists the starter passages Coverbase ships, and `POST .../library/{slug}/adopt` copies one into your library. `PATCH .../{block_id}` changes a passage. Setting `is_archived` needs a signed-in user.
+
+`POST /v1/signature-authored-documents` writes a document in Markdown and renders it to a PDF. Use its `rendered_file_id` as a template's `source_file_id` or an envelope's `file_ids`. `PUT .../{document_id}` saves a new version, and the earlier PDF stays for envelopes that use it.
+
+### Bulk send
+
+`GET /v1/signature-bulk-sends/preflight?template_id=...` returns the roles each row must name, the labels a row may prefill, and how many envelopes your plan still allows. `POST /v1/signature-bulk-sends` sends one envelope per row from a published template and emails every recipient their own signing link. It checks the whole list first and refuses it with `422` and code `rows_not_sendable` if any row cannot be sent. Send `dry_run: true` to run that check without writing or sending anything. `GET /v1/signature-bulk-sends/{batch_id}` shows each row's progress, and `POST .../cancel` stops the rows not yet sent. No response returns a signing link or an access code.
+
+### DocuSign
+
+`GET /v1/contract-records/{contract_id}/signature` lists a contract's envelopes. `POST .../send-for-signature` sends an approved contract through DocuSign, which emails each recipient. It sends as the DocuSign account connected by the user the key acts as, and returns `409` with code `docusign_not_connected` when there is none.
+
+`PUT .../signature-plan` names who signs before approval, for a policy that sends without asking once the last approver signs off. The send leaves as the DocuSign account of the user the key acts as. Send an empty `recipients` list to turn the automatic send off. `POST .../signature-envelopes/{envelope_id}/sync` pulls a DocuSign envelope's state now and files the executed copy once everyone signs. `POST .../abandon` frees a contract whose send never reached DocuSign. Check DocuSign first. Abandoning needs a signed-in user.
+
+`POST /v1/signature-requests` sends a vendor document through DocuSign, with one signer per signature anchor in the document. DocuSign emails each signer.
+
+## Data share
+
+These endpoints need the engagement lifecycle. Without it they return `404` with code `not_enabled`. They need organization settings permission, which API keys do not hold, so use a key created by a person whose role holds it.
+
+`GET /v1/data-share/tables` lists the tables every destination receives, and `GET /v1/data-share/setup` returns the role your S3 share role must trust. `GET /v1/data-share/destinations` lists destinations with their `health`. `POST` adds a Snowflake, S3 or BigQuery destination, and `PATCH .../{destination_id}` changes it. A `credential` you send goes to secret storage. No response returns it, only `has_credential` and `credential_hint`. `DELETE` archives a destination, deletes its credential, and needs a signed-in user.
+
+`GET .../runs` lists a destination's syncs. `POST .../test` writes a probe with the stored credential. `POST .../sync` queues a sync and returns `202` with `queued: false` when one is already running. `GET /v1/data-share/distribution` lists everywhere your data goes out: destinations, the board pack and scheduled reports.

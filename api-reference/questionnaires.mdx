@@ -57,6 +57,71 @@ All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token
 | `GET` | `/v1/portal-templates` | Read portals |
 | `GET` | `/v1/portal-templates/{portal_template_id}` | Read portals |
 | `POST` | `/v1/portal-templates/{portal_template_id}/portals` | Create portals |
+| `POST` | `/v1/portal-templates` | Update portals |
+| `PATCH` | `/v1/portal-templates/{portal_template_id}` | Update portals |
+| `POST` | `/v1/portal-templates/{portal_template_id}/publish` | Update portals |
+| `POST` | `/v1/portal-templates/{portal_template_id}/rotate-link` | Update portals |
+| `GET` | `/v1/portal-templates/defaults` | Read portals |
+| `PUT` | `/v1/portal-templates/defaults` | Update portals |
+| `GET` | `/v1/portal-templates/invitation-email-template` | Read portals |
+| `GET` | `/v1/portal-templates/sending-invitation` | Read portals |
+| `POST` | `/v1/portals/{portal_id}/submissions` | Update portals |
+| `GET` | `/v1/portals/{portal_id}/reminder-email-template` | Read portals |
+| `GET` | `/v1/portals/{portal_id}/invitation-email-template` | Read portals |
+| `GET` | `/v1/portals/{portal_id}/invitation-recipients` | Update portals |
+| `POST` | `/v1/portals/{portal_id}/apply-template` | Update portals |
+| `POST` | `/v1/portal-directory-exposure-checks` | Update portals |
+| `GET` | `/v1/portals/{portal_id}/review` | Read questionnaires |
+| `POST` | `/v1/questionnaires/default-know-your-vendor` | Create questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses` | Update questionnaires |
+| `PATCH` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}` | Update questionnaires (not API keys to approve, reject or archive) |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/finalize` | Update questionnaires (not API keys) |
+| `PUT` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/reviewer` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/answers` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/question-notes` | Update questionnaires |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation` | Update questionnaires (not API keys) |
+| `POST` | `/v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation/clear` | Update questionnaires |
+| `GET` | `/v1/questionnaire-responses/{response_id}/documents` | Read questionnaires and vendors |
+| `GET` | `/v1/questionnaire-responses/{response_id}/diff` | Read questionnaires |
+| `GET` | `/v1/vendors/{vendor_id}/questionnaire-matches` | Read questionnaires and vendors |
+| `PUT` | `/v1/questions/{question_id}/option-source` | Update questionnaires |
+| `DELETE` | `/v1/questions/{question_id}/option-source` | Update questionnaires |
+| `GET` | `/v1/custom-fields/{custom_field_id}/autofill-questions` | Read custom fields |
+| `GET` | `/v1/custom-fields/autofill-sources` | Read custom fields |
+| `GET` | `/v1/question-autofill/record-fields` | Read questionnaires |
+| `GET` | `/v1/intake-sessions` | Read intake requests |
+| `POST` | `/v1/intake-sessions/query` | Read intake requests |
+| `POST` | `/v1/intake-sessions/exports` | Export intake requests |
+| `PATCH` | `/v1/intake-sessions/{id}` | Update intake requests (not API keys to accept or reject) |
+| `PUT` | `/v1/intake-sessions/{id}/questionnaire-response` | Update intake requests |
+| `POST` | `/v1/intake-sessions/{id}/vendor-info` | Update intake requests |
+| `POST` | `/v1/intake-sessions/{id}/potential-vendors` | Update intake requests |
+| `POST` | `/v1/intake-sessions/{id}/vendor-suggestions` | Update intake requests |
+| `POST` | `/v1/intake-sessions/{id}/follow-up-questions` | Update intake requests |
+| `POST` | `/v1/intake-sessions/{id}/process-questions` | Update intake requests |
+| `GET` | `/v1/intake-sessions/{id}/prequalification` | Read vendors |
+| `GET` | `/v1/intake-sessions/{id}/requester-journey` | Read intake requests |
+| `GET` | `/v1/workflows/runs/{workflow_run_id}/requester-journey` | Read intake requests |
+| `GET` | `/v1/intake-sessions/{id}/triage` | Read vendors |
+| `PUT` | `/v1/intake-sessions/{id}/triage/identifiers` | Update intake requests, and update vendors or be the requester |
+| `PUT` | `/v1/intake-sessions/{id}/triage/blocked-override` | Update vendors (not API keys) |
+| `PUT` | `/v1/intake-sessions/{id}/triage/disposition` | Update vendors |
+| `POST` | `/v1/intake-sessions/{id}/triage/disposition/sign-off` | Update vendors (not API keys) |
+| `POST` | `/v1/intake-sessions/{id}/triage/disposition/decline` | Update vendors (not API keys) |
+| `POST` | `/v1/intake-sessions/{id}/triage/questions` | Update vendors |
+| `POST` | `/v1/intake-sessions/{id}/triage/questions/{question_id}/answer` | Update intake requests; the requester only |
+| `POST` | `/v1/intake-sessions/{id}/triage/irqs/send` | Update vendors |
+| `PUT` | `/v1/intake-sessions/{id}/triage/procurement-origin` | Update vendors |
+| `PUT` | `/v1/intake-sessions/{id}/triage/budget-exception` | Update vendors (not API keys) |
+| `POST` | `/v1/intake-sessions/{id}/triage/material-change/irq-refresh` | Update vendors |
+| `GET` | `/v1/intake-sessions/{id}/triage/budget-lines` | Read intake requests, and read integrations or be the requester |
+| `GET` | `/v1/intake-sessions/{id}/triage/requester-notice` | Read intake requests |
+| `GET` | `/v1/intake-triage/config` | Read org settings |
+| `PUT` | `/v1/intake-triage/config` | Update org settings |
+| `GET` | `/v1/zero-form/settings` | Read integrations |
+| `PUT` | `/v1/zero-form/settings` | Update integrations |
+| `GET` | `/v1/zero-form/conversations` | Read integrations |
+| `GET` | `/v1/zero-form/conversations/{conversation_id}` | Read integrations |
 
 To list requests and read one request, use the [Portals API](/api-reference/portals). The request object these endpoints return is the same one.
 
@@ -410,3 +475,86 @@ Returns one template, or `404` with code `portal_template_not_found`.
 </ParamField>
 
 Opens a request from an ephemeral template and returns `201` with the request. It emails nobody. The body takes `vendor_id`, `due_at`, `service_ids`, and `engagement_id`. A persistent template, or an IRQ that needs a scope, returns `422` with code `instantiate_refused`.
+
+## Manage portal templates
+
+To create a template, send `POST /v1/portal-templates` with `name`, `portal_type`, and any of `description`, `display_name`, `preamble`, `due_days`, `auth_config`, `ask_specs`, `reminder_config`, `invitation_email_template_id`, `default_assignee_ids`, `supplier_initiable`, and `recurrence_months`. It returns `201` with the template. A persistent template publishes its portal at once.
+
+To change a template, send `PATCH /v1/portal-templates/{portal_template_id}` with the fields to change. Send `null` to clear `description`, `due_days`, `recurrence_months`, or `invitation_email_template_id`. A persistent template republishes its portal.
+
+`POST /v1/portal-templates/{portal_template_id}/publish` publishes a persistent template to its one portal. Publishing again updates that portal in place, so the link stays the same. `POST /v1/portal-templates/{portal_template_id}/rotate-link` gives the portal a new link, and the old link stops working at once. An ephemeral template returns `422`. Neither call emails anyone.
+
+`GET /v1/portal-templates/defaults` returns `default_portal_template_ids`, the org's default template for each portal type. To set one, send `PUT /v1/portal-templates/defaults` with `portal_type` and `portal_template_id`, or `null` to clear it.
+
+`GET /v1/portal-templates/invitation-email-template` returns the invitation email a portal built from a template would send, and its `source`. Pass `portal_template_id`, or `portal_type` to read the org default for that type. `GET /v1/portal-templates/sending-invitation?email_template_id=...` lists the templates whose invitations send that email template.
+
+## Portal settings and checks
+
+- `POST /v1/portals/{portal_id}/submissions` starts a draft round on an open persistent portal and returns `201`. On an intake portal it also opens the intake request and assigns its reviewers. Nobody outside your org is contacted.
+- `GET /v1/portals/{portal_id}/reminder-email-template` returns the portal's reminder template, or `null`. Add `inherit=true` to fall back to the template it inherits.
+- `GET /v1/portals/{portal_id}/invitation-email-template` returns the email the portal's invitation sends.
+- `GET /v1/portals/{portal_id}/invitation-recipients` returns the `to`, `cc`, and `bcc` an invitation would address. Pass `email_template_id` to apply that template's default copy recipients. It sends nothing.
+- `POST /v1/portals/{portal_id}/apply-template` rebuilds one assessment portal from `portal_template_id`, or from the org default when you send `null`. The template and the assessment plan keep their settings.
+- `POST /v1/portal-directory-exposure-checks` takes `auth_config` and `ask_configs` and returns `exposes_directory`: whether people outside your org could read your own people through that portal. It saves nothing.
+
+## Start, answer, and decide a response
+
+To start a response, send `POST /v1/questionnaires/{questionnaire_id}/responses` with `vendor_id`, and optionally `respondent_email_address`, `portal_id`, and first `responses`. It returns `201` and emails nobody.
+
+To save one answer, send `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/answers` with `question_id` or `question_source_id`, and the answer fields (`text`, `option_id`, `selected_option_ids`, `response_data`, `comment`). A changed answer clears the closing attestation, so the respondent signs again. A questionnaire that asks for an opening attestation returns `409` until it is signed.
+
+To leave an internal note about one question, send `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/question-notes` with `note` and `question_id`. It returns `204`. Vendors never see notes.
+
+`PUT /v1/questionnaires/{questionnaire_id}/responses/{response_id}/reviewer` assigns the internal reviewer. Send `assignee_id`, a user or a user group, or `null` to clear it. The new reviewer is notified.
+
+To approve or reject a response that is ready for review, send `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/finalize` with `action` (`approve` or `deny`). Approving an inherent risk questionnaire writes its tags, contacts, and inherent risk scores to the vendor. `PATCH /v1/questionnaires/{questionnaire_id}/responses/{response_id}` changes `status` or `is_archived`. API keys cannot approve, reject, archive, or unarchive a response, and get `403` with code `api_key_not_allowed`.
+
+`GET /v1/portals/{portal_id}/review` lists the responses a portal's review covers, in the order Approve all decides them, and `review_mode`. Approving the whole set is done by a person in Coverbase or over MCP.
+
+`GET /v1/questionnaire-responses/{response_id}/documents` lists every document attached to the response's current answers. `GET /v1/questionnaire-responses/{response_id}/diff` compares the response with an earlier one of the same questionnaire from the same vendor: `against_response_id`, or else the latest one before it. `GET /v1/vendors/{vendor_id}/questionnaire-matches` lists the informational questionnaires that apply to a vendor through its tags or inherent risk.
+
+To create the default know-your-vendor questionnaire, send `POST /v1/questionnaires/default-know-your-vendor`. `success` is false when it could not be created.
+
+## Attestations
+
+To sign the opening or closing attestation on a response your own team answered, send `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation` with `slot`, `agreed: true`, `signatory_name`, and optionally `signatory_title` and `mark`. The record names the signed-in user's email address, so API keys get `403` with code `api_key_not_allowed`. A signature the questionnaire's settings refuse returns `400`.
+
+To ask the respondent to sign again, send `POST /v1/questionnaires/{questionnaire_id}/responses/{response_id}/attestation/clear?slot=closing`. The old record stays on the ledger. An unknown response returns `404` with code `response_not_found`.
+
+## Options and autofill sources
+
+`PUT /v1/questions/{question_id}/option-source` with `custom_field_config_id` makes a select question take its options from that custom field. `DELETE /v1/questions/{question_id}/option-source` stops it. The current options stay as ordinary options. An unknown question returns `404` with code `question_not_found`.
+
+`GET /v1/custom-fields/{custom_field_id}/autofill-questions` lists the questions that fill one custom field. `GET /v1/custom-fields/autofill-sources` does the same for every mapped field. A credential without questionnaire read access sees no questions. `GET /v1/question-autofill/record-fields` lists the record columns a mapping may name. `prefill_only` marks a column a mapping may read but never write.
+
+## Intake requests
+
+Your systems can also open intake requests with `/v1/intake/api/sessions`. The routes below read and work the requests your org already has.
+
+- `GET /v1/intake-sessions` lists intake requests, newest first. Filter with `statuses`, `vendor_id`, `user_id`, `submitter_scope`, and `search` (the vendor name). `POST /v1/intake-sessions/query` takes a unified filter, `search`, `sort`, `limit`, and `offset`.
+- `POST /v1/intake-sessions/exports` takes the same filter and returns `download_url`, `file_name`, and `expires_in_seconds` for an Excel workbook. The link is short-lived, and the response is not cached.
+- `PATCH /v1/intake-sessions/{id}` updates vendor details, `session_data`, or `status`. Setting `status` to `submitted` submits the request with the same checks as the dashboard. Accepting or rejecting a request stays a human decision: API keys get `403` with code `api_key_not_allowed` for `accepted`, `rejected`, or `partial`.
+- `PUT /v1/intake-sessions/{id}/questionnaire-response` saves one draft answer and merges it onto the stored one.
+- `POST /v1/intake-sessions/{id}/vendor-info` researches the vendor in `vendor_search_input`. `POST /v1/intake-sessions/{id}/potential-vendors` stores `use_case` and proposes vendors from the web. `POST /v1/intake-sessions/{id}/vendor-suggestions` suggests qualified vendors. These run AI and web search and can take a minute.
+- `POST /v1/intake-sessions/{id}/follow-up-questions` generates the follow-up questions the request's questionnaires need. `POST /v1/intake-sessions/{id}/process-questions` starts drafting every answer in the background. Poll the request until `is_processing_questions` is false.
+- `GET /v1/intake-sessions/{id}/prequalification` returns the prequalification standing of the request's vendor.
+- `GET /v1/intake-sessions/{id}/requester-journey` and `GET /v1/workflows/runs/{workflow_run_id}/requester-journey` show where a request stands and what blocks it.
+
+An unknown request returns `404` with code `intake_session_not_found`. The prequalification and requester journey routes return `404` with code `not_enabled` when your org does not use the third-party lifecycle.
+
+## Front Door triage
+
+These routes need Front Door triage. Without it they return `404` with code `not_enabled`.
+
+- `GET /v1/intake-sessions/{id}/triage` returns the review card: duplicate and Do Not Use matches, IRQ scoping, the disposition and its sign-offs, and the reviewer's questions.
+- `PUT .../triage/identifiers` sets `tax_id`, `duns_number`, and `lei`. The requester may set them too.
+- `PUT .../triage/disposition` records or revises the disposition. A revision clears both sign-offs and notifies the sign-off groups. When the scoping requires IRQs, they go to the requester.
+- `POST .../triage/disposition/sign-off` (with `role`) and `POST .../triage/disposition/decline` (with `reason`) are a sign-off group's decision. `PUT .../triage/blocked-override` (with `rationale`) lets a request go ahead although its vendor is Do Not Use. `PUT .../triage/budget-exception` decides a budget exception. API keys get `403` with code `api_key_not_allowed` on all four.
+- `POST .../triage/questions` sends the request back to its requester with `questions`. The requester is notified in Coverbase, or emailed when they have no account. The requester answers with `POST .../triage/questions/{question_id}/answer`.
+- `POST .../triage/irqs/send` sends the IRQs the scoping requires, if they have not gone yet. `PUT .../triage/procurement-origin` records the requisition the request came from. `POST .../triage/material-change/irq-refresh` opens an engagement's IRQ refresh.
+- `GET .../triage/budget-lines` lists the synced budget lines the spend can map to. `GET .../triage/requester-notice` returns what the requester is told.
+- `GET /v1/intake-triage/config` and `PUT /v1/intake-triage/config` read and replace your Front Door settings. They need the org settings permission, which API keys do not hold. Use a key created by a person whose role holds it.
+
+## Zero-form intake
+
+`GET /v1/zero-form/settings` returns which channels accept intake requests without a form, and the inbox address. `PUT /v1/zero-form/settings` turns `slack_enabled`, `teams_enabled`, `email_enabled`, and `mcp_enabled` on or off. `GET /v1/zero-form/conversations` lists the conversations requesters started, filtered by `channel`, and `GET /v1/zero-form/conversations/{conversation_id}` returns one with its messages. These routes return `404` with code `not_enabled` when your org does not use the third-party lifecycle.

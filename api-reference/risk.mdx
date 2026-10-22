@@ -126,6 +126,8 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `POST` | `/v1/work-queue-items/complete` | `assessment:update:org` |
 | `GET` | `/v1/findings/{finding_id}/related-findings` | `finding:read:org` |
 | `GET` | `/v1/findings/{finding_id}/jira` | `finding:read:org` |
+| `GET` | `/v1/findings/{finding_id}/jira/draft` | `finding:update:org` or `finding:update:assigned` |
+| `POST` | `/v1/findings/{finding_id}/jira` | `finding:update:org` or `finding:update:assigned` |
 | `POST` | `/v1/commitments/{commitment_id}/regenerate-review` | `portal:update:org` and `commitment:update:org` |
 | `POST` | `/v1/obligations/bulk-action` | `obligation:update:org`, and `obligation:archive:org` for `delete` |
 | `POST` | `/v1/obligations/extract-from-documents` | `obligation:create:org` |
@@ -143,6 +145,33 @@ Every endpoint is scoped to the organization of the API key. See [API convention
 | `POST` | `/v1/agent-actions/exports` | `org_settings:read:org` |
 | `GET` | `/v1/agent-actions/exports/{export_id}` | `org_settings:read:org` |
 | `POST` | `/v1/responsibility-topics/import` | `org_settings:update:org` |
+| `POST` | `/v1/risk-narrative/jobs` | `risk:run:org` |
+| `POST` | `/v1/finding-suggestions` | `finding:create:org` |
+| `POST` | `/v1/vendor-finding-suggestions` | `finding:create:org` |
+| `POST` | `/v1/commitment-description-suggestions` | `commitment:create:org` |
+| `GET` | `/v1/text-jobs/{job_id}` | The permission that started the job |
+| `GET` | `/v1/services/{service_id}/risk-score-history` | `service:read:org` |
+| `GET` | `/v1/engagements/{engagement_id}/risk-score-history` | `vendor:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/risk-score-history` | `assessment:read:org` |
+| `POST` | `/v1/agent-actions/{action_id}/decision` | `org_settings:update:org`; needs a user key |
+| `POST` | `/v1/agent-actions/decisions` | `org_settings:update:org`; needs a user key |
+| `POST` | `/v1/vendors/{vendor_id}/findings-portal` | `commitment:update:org` |
+| `POST` | `/v1/commitments/query` | `commitment:read:org`, or `commitment:read:assigned` for your own |
+| `POST` | `/v1/commitments/send-to-vendor` | `commitment:update:org` |
+| `POST` | `/v1/commitments/send-obligations-to-vendor` | `commitment:create:org` |
+| `PATCH` | `/v1/commitments/{commitment_id}` | `commitment:update:org`, or your own commitment with `commitment:update:assigned`; archiving needs `commitment:archive:org` and a user key |
+| `POST` | `/v1/commitments/{commitment_id}/resolve-round` | `commitment:update:org`; `commitment:approve:org` to accept; `portal:update:org` to send back or on a portal commitment; deciding needs a user key |
+| `GET` | `/v1/commitments/{commitment_id}/documents` | `commitment:read:org` |
+| `POST` | `/v1/commitments/{commitment_id}/documents` | `commitment:update:org` |
+| `PATCH` | `/v1/commitments/{commitment_id}/documents/{document_id}` | `commitment:update:org` |
+| `POST` | `/v1/commitments/{commitment_id}/documents/{document_id}/archive` | `commitment:update:org`; needs a user key |
+| `GET` | `/v1/commitments/{commitment_id}/documents/{document_id}/download` | `commitment:read:org` |
+| `GET` | `/v1/findings/{finding_id}/documents` | `finding:read:org` |
+| `POST` | `/v1/findings/{finding_id}/documents` | `finding:update:org` |
+| `PATCH` | `/v1/findings/{finding_id}/documents/{document_id}` | `finding:update:org` |
+| `POST` | `/v1/findings/{finding_id}/documents/{document_id}/archive` | `finding:update:org`; needs a user key |
+| `GET` | `/v1/findings/{finding_id}/documents/{document_id}/download` | `finding:read:org` |
+| `POST` | `/v1/findings/bulk` | `finding:create:org` |
 
 The `/v1/risks`, `/v1/risk-exposure`, `/v1/risk-report`, `/v1/risk-config` and `/v1/risk-scenarios` endpoints need the Risk module. When your organization does not have it, they return `404` with the code `not_enabled`.
 
@@ -162,8 +191,17 @@ Errors return a `detail` object with a `code` and a `message`.
 | `404` | `signal_not_found` | The risk has no signal with that ID. |
 | `404` | `scenario_not_found` | No saved scenario has that ID. |
 | `404` | `risk_domain_not_found` | No risk domain has that ID. |
+| `404` | `job_not_found` | No narrative or suggestion job you started has that ID. |
 | `422` | `invalid_risk` | The risk is missing a description or a score is off the scale. |
 | `400` | `invalid_risk_domain` | The risk domain change is not valid, for example a duplicate name. |
+| `404` | `commitment_not_found` | No commitment has that ID. |
+| `404` | `finding_not_found` | No finding has that ID. |
+| `404` | `document_not_found` | The finding or commitment has no document with that ID. |
+| `400` | `round_action_not_available` | The commitment's round does not offer that action, or no round awaits you. |
+| `400` | `commitment_not_editable` | The commitment cannot take that edit, for example an archived commitment. |
+| `400` | `commitment_has_no_finding` | The commitment belongs to an obligation, so it takes no documents here. |
+| `422` | `invalid_upload` | The uploaded file is empty or too large. |
+| `400` | `invalid_finding_source` | The bulk create's source does not exist or does not fit the rows. |
 
 ## Query the register
 
@@ -613,7 +651,7 @@ These need Responsibilities enabled.
 
 ## Findings, commitments, obligations and assessments
 
-`GET /v1/findings/{finding_id}/related-findings` lists the same third party's other open findings, newest first, and needs the TPRM lifecycle. `GET /v1/findings/{finding_id}/jira` returns whether Jira is connected and the ticket linked to the finding. It needs TPRM expansion.
+`GET /v1/findings/{finding_id}/related-findings` lists the same third party's other open findings, newest first, and needs the TPRM lifecycle. `GET /v1/findings/{finding_id}/jira` returns whether Jira is connected and the ticket linked to the finding. `GET /v1/findings/{finding_id}/jira/draft` drafts a Jira ticket from the finding for you to edit and sends nothing. Both need TPRM expansion, and the draft also needs a connected Jira.
 
 `POST /v1/commitments/{commitment_id}/regenerate-review` runs the AI review of the vendor's latest round again, with your current review instructions, and returns `202 Accepted`. When the latest round is not awaiting review it returns `400` with the code `review_not_pending`.
 
@@ -660,3 +698,69 @@ Exports run in the background. Each start call returns `202 Accepted` with the e
 `POST /v1/agent-actions/exports` writes a CSV of the Agent Ledger actions an optional `filter` matches. It needs the TPRM lifecycle and a user key.
 
 `POST /v1/responsibility-topics/import` creates or updates topics from an uploaded workbook, sent as multipart form data with `file` and an optional `dry_run`. Rows match existing topics by name. With `dry_run=true` nothing is saved, and the response shows what would change. A workbook that cannot be read returns `422`. It needs Responsibilities and a user key.
+
+## AI narratives and suggestions
+
+The app writes these texts as you watch. Through the API you start a job and poll it, since the model takes a few seconds to answer.
+
+Each start call returns `202 Accepted` with the job's `id`, its `kind` and `status: pending`. Poll `GET /v1/text-jobs/{job_id}` until `status` is `completed` or `failed`. A completed job carries `result`; a failed one carries `error_message`. You can read only jobs you started.
+
+`POST /v1/risk-narrative/jobs` writes a report's narrative and saves it as the report's narrative, as **Regenerate** does in the app. Send `report_type`, and optionally `scope_key`, `subject_id` and `regenerate`. Unless you set `regenerate`, a saved narrative that is still fresh, or one a person edited, comes back completed at once. Its `result` is the saved narrative: `content`, `title`, `generated_at` and `is_user_edited`. It needs the Risk module.
+
+`POST /v1/finding-suggestions` suggests a finding's `title`, `description` or levels (`finding_levels_bundle`) from an assessment. Send `assessment_id`, `field_name`, `suggest_context` (`evals` or `document_requirement`), `eval_ids`, and optionally the `existing_finding_levels` already chosen. When every level is already chosen, the job completes at once. An unknown assessment returns `404` with the code `assessment_not_found`.
+
+`POST /v1/vendor-finding-suggestions` makes the same suggestion for a vendor finding raised from a Radar alert. Send `vendor_id`, `field_name` and `radar` (`alert_id`, `severity`, `summary` and `detector_name`). An unknown vendor returns `404` with the code `vendor_not_found`.
+
+`POST /v1/commitment-description-suggestions` suggests a commitment description. Send a `finding_id`, or `obligation_ids` with an optional `vendor_id`, and optionally `source` (`finding` or `obligation`). An unknown finding returns `404` with the code `finding_not_found`.
+
+A suggestion's `result` is `{"text": ...}`: the model's answer inside `<output>`, with a `<value>` and a short `<reasoning>`, or the chosen level IDs for `finding_levels_bundle`. Nothing is saved on a finding or commitment; you apply the text yourself.
+
+## Score history and AI action decisions
+
+`GET /v1/services/{service_id}/risk-score-history`, `GET /v1/engagements/{engagement_id}/risk-score-history` and `GET /v1/assessments/{assessment_id}/risk-score-history` list how a record's overall and per-domain scores changed, newest first, with `limit` and `offset`, the same way the vendor history does. The assessment history needs the TPRM lifecycle.
+
+`POST /v1/agent-actions/{action_id}/decision` records what you decided about one Agent Ledger action: `decision` is `accepted`, `edited` or `rejected`, with an optional `note`. `POST /v1/agent-actions/decisions` accepts or rejects many pending actions at once from `action_ids`; actions no longer waiting on a person come back in `skipped` with the reason. Deciding on an AI action is a person's call, so an API key gets `403` with the code `api_key_not_allowed`. Use a key created by a person whose role holds `org_settings:update:org`.
+
+`POST /v1/commitments/query` returns the commitments that match a unified filter, search and sort, one page at a time. A key that reads only assigned commitments sees its own.
+
+## Send commitments to a vendor
+
+A vendor answers commitments on its persistent findings portal. These routes put commitments on that portal. None of them emails the vendor: to tell the vendor, invite them to the returned portal.
+
+`POST /v1/vendors/{vendor_id}/findings-portal` opens the vendor's findings portal without adding anything to it.
+
+`POST /v1/commitments/send-to-vendor` creates or updates a commitment per finding and puts them all on the vendor's portal, all or nothing. Send `vendor_id` and `items`, each with a `finding_id`, `description` and `due_at`, and a `commitment_id` to update an existing commitment. A finding of another vendor, or a commitment the vendor already locked, rejects the whole batch with `400`.
+
+`POST /v1/commitments/send-obligations-to-vendor` puts a commitment per obligation in `obligation_ids` on the vendor's portal, due at `due_at`. An obligation's open commitment is reused.
+
+## Edit a commitment and answer the vendor's round
+
+`PATCH /v1/commitments/{commitment_id}` edits a commitment's terms, status or assignee. A field you omit keeps its value, and `null` clears it. Changing terms the vendor already accepted reopens their round on the portal, with your optional `revision_message`. A status change notifies the finding's people. Archiving or unarchiving with `is_archived` needs a user key; an API key gets `403` with the code `api_key_not_allowed`.
+
+`POST /v1/commitments/{commitment_id}/resolve-round` answers the vendor's latest round with one of the two actions the commitment's `round_actions` offers:
+
+| Action | What it does |
+| ------ | ------------ |
+| `accept` | Closes the commitment. |
+| `accept_risk` | Accepts the vendor's decline and closes the commitment. |
+| `adopt_terms` | Takes the vendor's proposed due date; mitigation starts. |
+| `request_more_work` | Rejects a completion; the round reopens and mitigation stays underway. |
+| `re_request` | Rejects a decline or a compensating control; back to negotiating. |
+| `hold_terms` | Keeps your terms and sends them back. |
+
+A send-back reopens the vendor's round on the portal with your `message`. Nobody is emailed. `note` is kept as an internal comment. `accept`, `accept_risk`, `adopt_terms` and `request_more_work` are decisions, so an API key gets `403` with the code `api_key_not_allowed`. An action the round does not offer returns `400` with the code `round_action_not_available`.
+
+## Commitment and finding documents
+
+`GET /v1/findings/{finding_id}/documents` lists a finding's documents: its own, then each of its commitments'. A commitment's documents carry its `commitment_id`. `GET /v1/commitments/{commitment_id}/documents` lists one commitment's documents.
+
+`POST .../documents` attaches a file as multipart form data with `file`, and an optional `note`. It returns `201 Created`. `PATCH .../documents/{document_id}` replaces the `note`; `null` clears it. `POST .../documents/{document_id}/archive` takes a document off. An uploaded document is archived, while a vendor document stays in the vendor's library. Archiving needs a user key.
+
+A document never carries its storage location. `GET .../documents/{document_id}/download` returns a `url` to download it, valid for an hour, with `Cache-Control: no-store`.
+
+## Create findings in bulk
+
+`POST /v1/findings/bulk` creates up to 50 findings on one source. Send `source_type` (`assessment`, `vendor` or `org_document`), `source_id` and `rows`. Each row has your own `client_row_id` and a `title`, and optionally `body`, `assigned_to_id`, `vendor_id`, `due_date`, `eval_ids`, `finding_status_id` and the level IDs. A row from a document's finding extraction sends `approved_candidate_id`, and `extraction_source_document_id` on an assessment.
+
+Each row lands or fails on its own. The response has the created findings in `data`, and each failed row's `client_row_id` and `reason` in `failed_records`. An unknown source returns `400` with the code `invalid_finding_source`. Assignees and the finding's people are emailed once each. The vendor is not.
+

@@ -305,6 +305,11 @@ An API key cannot archive or restore a source or a detector, delete a detector e
 | Archive or restore a source | `mutate(entity="radar_source", action="archive")` | Not available with an API key |
 | Pull a source on the next scheduler run | `mutate(entity="radar_source", action="pull")` | `POST /v1/radar/sources/{source_id}/pull` |
 | Read or configure the Black Kite monitor | `query_radar(kind="black_kite_config")`, `mutate(entity="black_kite", action="configure")` | `GET` and `PUT /v1/radar/black-kite` |
+| Read what a snapshot source captured and what changed | `query_radar(kind="source_snapshot")` | [`GET /v1/radar/sources/{source_id}/snapshot`](/api-reference/radar#read-a-sources-snapshot) |
+| Review or accept a generated extractor | `query_radar(kind="source_extractor_run")`, `mutate(entity="radar_source", action="accept_extractor")` | [`GET` and `POST /v1/radar/sources/{source_id}/extractor/accept`](/api-reference/radar#review-a-generated-extractor) |
+| Test an API source | Not available through MCP | [`POST /v1/radar/sources/{source_id}/test`](/api-reference/radar#test-a-source) |
+| Read the raw items Radar pulled | `query_radar(kind="radar_data")`, `kind="radar_data_detail"`, `kind="radar_data_content"` | [`GET /v1/radar/data`](/api-reference/radar#read-radar-data) |
+| Read pull runs and their logs | `query_radar(kind="runs")`, `kind="run_detail"` | [`GET /v1/radar/runs`](/api-reference/radar#read-radar-runs) |
 
 Adding, editing and archiving a source need `radar_detector:update:org`. Pulling a source needs `radar_detector:run:org`.
 
@@ -324,6 +329,7 @@ Adding, editing and archiving a source need `radar_detector:update:org`. Pulling
 | List a detector's learning examples | `query_radar(kind="dismissal_examples")` | `GET /v1/radar/detectors/{detector_id}/dismissal-examples` |
 | Add, edit or remove a learning example | `mutate(entity="radar_dismissal_example", action="create")`, `action="update"`, `action="delete"` | `POST /v1/radar/detectors/{detector_id}/dismissal-examples`, `PATCH` and `DELETE /v1/radar/dismissal-examples/{example_id}` |
 | Get a suggested rewrite of a detector's instructions | `query_radar(kind="suggest_detector_instructions")` | [`POST /v1/radar/detectors/{detector_id}/suggest-instructions`](/api-reference/radar#suggest-instructions) |
+| Run a detector on one event | `mutate(entity="radar_event", action="run_detector")` | [`POST /v1/radar/events/{event_id}/detector-runs`](/api-reference/radar#run-a-detector-on-an-event) |
 
 A suggested rewrite saves nothing. To use it, send it as a detector update.
 
@@ -337,6 +343,7 @@ A suggested rewrite saves nothing. To use it, send it as a detector update.
 | Restore a dismissed alert | `mutate(entity="radar_alert", action="undismiss")` | [`POST /v1/radar/alerts/{alert_id}/undismiss`](/api-reference/radar#restore-a-dismissed-alert) |
 | Edit an alert's summary, reasoning or confidence | `mutate(entity="radar_alert", action="update")` | [`PATCH /v1/radar/alerts/{alert_id}`](/api-reference/radar#update-a-radar-alert) |
 | Replace or clear a dismissal reason | `mutate(entity="radar_alert", action="set_dismiss_reason")` | [`PUT /v1/radar/alerts/{alert_id}/dismiss-reason`](/api-reference/radar#set-a-dismissal-reason) |
+| Write an alert by hand | `mutate(entity="radar_alert", action="create")` | [`POST /v1/radar/alerts`](/api-reference/radar#write-an-alert-by-hand) |
 
 Through MCP, one dismiss call takes several alerts in `alert_ids`. Each person mentioned in the reason gets a notification.
 
@@ -355,6 +362,10 @@ Through MCP, one dismiss call takes several alerts in `alert_ids`. Each person m
 | Rename an event or link more vendors to it | `mutate(entity="radar_event", action="update")` | [`PATCH /v1/radar/events/{event_id}`](/api-reference/radar#update-a-radar-event) |
 | Read an event's updates | `query_radar(kind="event_updates")` | [`GET /v1/radar/events/{event_id}/updates`](/api-reference/radar#list-an-events-updates) |
 | Find out why an event did not reach you | `query_radar(kind="event_diagnostics")` | [`GET /v1/radar/events/{event_id}/diagnostics`](/api-reference/radar#diagnose-an-event) |
+| List events, or count them by when they happened | `query_radar(kind="events")`, `kind="event_detail"` | [`GET /v1/radar/events`](/api-reference/radar#list-radar-events) |
+| Read an event's data items, time to signal or exposed vendors | `query_radar(kind="event_data_items")`, `kind="event_time_to_signal"`, `kind="event_exposure_vendors"` | [`GET /v1/radar/events/{event_id}/data-items`](/api-reference/radar#read-an-events-data-items) |
+| List the alerts a signal acts on | `query_radar(kind="signal_alerts")` | [`GET /v1/radar/signals/{signal_id}/alerts`](/api-reference/radar#list-a-signals-alerts) |
+| Read a vendor's Radar stories | `query_radar(kind="vendor_stories")`, `kind="vendor_story"` | [`GET /v1/radar/vendors/{vendor_id}/stories`](/api-reference/radar#read-a-vendors-stories) |
 
 Acknowledging a signal proposes a residual-risk change for the affected vendors. The change waits until you decide it with `decide_risk_impact`. Rewriting a summary replaces any title or summary your organization edited by hand.
 
@@ -376,6 +387,9 @@ Acknowledging a signal proposes a residual-risk change for the affected vendors.
 | Add up to 200 vendors to a case | `mutate(entity="case_thread", action="bulk_create")` | [`POST /v1/radar/cases/{case_id}/threads/bulk`](/api-reference/radar#add-vendors-to-a-case-in-bulk) |
 | Change a thread's status, owner or due date | `mutate(entity="case_thread", action="update")` | [`PATCH /v1/radar/cases/{case_id}/threads/{thread_id}`](/api-reference/radar#update-a-case-thread) |
 | Stop a thread's automatic follow-up emails | `mutate(entity="case_thread", action="pause_follow_ups")` | [`POST /v1/radar/cases/{case_id}/threads/{thread_id}/pause-follow-ups`](/api-reference/radar#pause-a-threads-follow-ups) |
+| Fill threads that have no contacts | `mutate(entity="case_thread", action="source_contacts")`, `query_radar(kind="case_contact_search")` | [`POST /v1/radar/cases/{case_id}/threads/source-contacts`](/api-reference/radar#fill-case-contacts) |
+| Email the vendor on a thread | `mutate(entity="case_thread", action="send_email")` | [`POST /v1/radar/cases/{case_id}/threads/{thread_id}/emails`](/api-reference/radar#email-a-vendor-from-a-case) |
+| Export a case | Not available through MCP | [`GET /v1/radar/cases/{case_id}/export`](/api-reference/radar#export-a-case) |
 
 Closing a case as `resolved` or `wont_fix` raises the residual risk of the case's vendors, as **Finalize Case** does. Adding a vendor to a case notifies the vendor's owners and analysts, and nothing reaches the vendor. Marking a thread `email_sent` records that you emailed the vendor and sends nothing.
 

@@ -64,9 +64,84 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/slas/{sla_id}/measurements` | `vendor:read:org` |
 | `GET` | `/v1/scales` | `assessment:read:org` |
 | `GET` | `/v1/scales/{scale_id}` | `assessment:read:org` |
+| `POST` | `/v1/scales` | `org_settings:update:org` |
+| `PATCH` | `/v1/scales/{scale_id}` | `org_settings:update:org` |
+| `POST` | `/v1/scales/{scale_id}/levels` | `org_settings:update:org` |
+| `PATCH` | `/v1/scales/{scale_id}/levels/{level_id}` | `org_settings:update:org` |
+| `POST` | `/v1/scales/{scale_id}/apply` | `org_settings:update:org` |
 | `POST` | `/v1/monitoring-records/{record_id}/entries` | `radar_alert:update:org` |
 | `POST` | `/v1/monitoring-records/{record_id}/entries/{entry_id}/disposition` | `radar_alert:update:org` |
 | `POST` | `/v1/vendors/{vendor_id}/monitoring-record/refresh` | `radar_alert:update:org` |
+| `POST` | `/v1/monitoring-records/query` | `vendor:read:org` |
+| `GET` | `/v1/monitoring-records/{record_id}` | `vendor:read:org` |
+| `GET` | `/v1/vendors/{vendor_id}/monitoring-records` | `vendor:read:org` |
+| `GET` | `/v1/monitoring-policy` | `org_settings:read:org` |
+| `PUT` | `/v1/monitoring-policy` | `org_settings:update:org` |
+| `GET` | `/v1/ai-jobs/{job_id}` | The permission that started the job |
+| `POST` | `/v1/assessments/{assessment_id}/follow-up-suggestions` | `follow_up:create:org` |
+| `POST` | `/v1/assessments/{assessment_id}/template-filler-jobs` | `assessment:read:org` |
+| `POST` | `/v1/evals/{eval_id}/analysis-summary` | `assessment:update:org` |
+| `POST` | `/v1/evals/bulk-correct-response` | `assessment:update:org` |
+| `POST` | `/v1/assessments/{assessment_id}/exports/pdf` | `assessment:export:org` |
+| `POST` | `/v1/assessments/{assessment_id}/exports/word` | `assessment:export:org` |
+| `POST` | `/v1/assessment-exports` | `assessment:export:org` |
+| `POST` | `/v1/assessment-exports/evals` | `assessment:export:org` |
+| `POST` | `/v1/assessment-exports/portfolio` | `assessment:export:org` |
+| `GET` | `/v1/assessment-exports/{export_id}` | `assessment:export:org` |
+| `POST` | `/v1/assessments/{assessment_id}/library-documents` | `assessment:update:org` |
+| `GET` | `/v1/assessments/{assessment_id}/trust-center-runs` | `assessment:read:org` |
+| `POST` | `/v1/assessments/{assessment_id}/trust-center-runs` | `assessment:run:org` |
+| `GET` | `/v1/assessments/{assessment_id}/trust-center-runs/{run_id}/events` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/trust-center-status` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/trust-center-request-identity` | `assessment:read:org` |
+| `GET` | `/v1/trust-center-access-requests/{access_request_id}` | `vendor:read:org` |
+| `GET` | `/v1/questionnaire-responses/{response_id}/claim-checks` | `vendor:read:org` |
+| `POST` | `/v1/questionnaire-responses/{response_id}/claim-checks/run` | `vendor:update:org` |
+| `POST` | `/v1/questionnaire-responses/{response_id}/claim-checks/cancel` | `vendor:update:org` |
+| `POST` | `/v1/questionnaire-responses/{response_id}/claim-checks/raise-issues` | `finding:create:org` |
+| `POST` | `/v1/questionnaire-responses/{response_id}/claim-checks/ask-vendor` | `portal:update:org` |
+| `POST` | `/v1/assessments/query` | `assessment:read:org` or `assessment:read:assigned` |
+| `POST` | `/v1/assessments/bulk` | `assessment:create:org` |
+| `PATCH` | `/v1/assessments/{assessment_id}` | `assessment:update:org` |
+| `POST` | `/v1/assessments/{assessment_id}/complete` | `assessment:approve:org`, not with an API key |
+| `POST` | `/v1/assessments/{assessment_id}/portal` | `portal:create:org` |
+| `GET` | `/v1/assessments/{assessment_id}/run-status` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/evidence-sufficiency` | `assessment:read:org` |
+| `GET` | `/v1/assessment-collection-stage-stats` | `assessment:read:org` |
+| `PUT` | `/v1/assessments/{assessment_id}/summary-instructions` | `assessment:update:org` |
+| `GET` | `/v1/assessments/{assessment_id}/control-set-compliance` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/residual-step-down-holds` | `assessment:read:org` |
+| `GET` | `/v1/assessments/{assessment_id}/irq-review` | `assessment:read:org` |
+| `POST` | `/v1/assessments/{assessment_id}/irq-review/skip` | `assessment:run:org` |
+| `PUT` | `/v1/assessments/{assessment_id}/vendor-rating/{control_set_id}` | `assessment:update:org` |
+| `POST` | `/v1/assessment-plans/document-requirements-preview` | `assessment:read:org` |
+| `POST` | `/v1/assessment-plans/{assessment_plan_id}/document-requirements` | `assessment:read:org` |
+| `GET` | `/v1/assessment-properties-fields` | `assessment:read:org` |
+| `POST` | `/v1/assessment-properties-fields` | `assessment:update:org` |
+| `PATCH` | `/v1/assessment-properties-fields/{field_id}` | `assessment:update:org` |
+| `DELETE` | `/v1/assessment-properties-fields/{field_id}` | `assessment:update:org`, not with an API key |
+| `GET` | `/v1/doc-evals` | `assessment:read:org` |
+| `GET` | `/v1/doc-evals/{doc_eval_id}` | `assessment:read:org` |
+| `PATCH` | `/v1/doc-evals/{doc_eval_id}` | `assessment:update:org` |
+| `POST` | `/v1/evals/query` | `assessment:read:org` or `assessment:read:assigned` |
+| `GET` | `/v1/evals/override-report` | `control_set:read:org` |
+| `GET` | `/v1/evals/{eval_id}` | `assessment:read:org` or `assessment:read:assigned` |
+| `GET` | `/v1/evals/{eval_id}/response-dependencies` | `assessment:update:org` |
+| `GET` | `/v1/follow-up-rounds/{round_id}/email-recipients` | `follow_up:read:org` |
+| `POST` | `/v1/follow-up-rounds/{round_id}/import` | `follow_up:update:org` |
+| `POST` | `/v1/reviews` | `assessment:update:org` or `assessment:update:assigned` |
+| `PATCH` | `/v1/reviews/{review_id}` | `assessment:update:org` or `assessment:update:assigned`, as the review's assignee or a reviewer of the assessment |
+| `GET` | `/v1/summary-instructions/default` | `assessment:read:org` |
+| `GET` | `/v1/summary-instructions/{prompt_id}/revisions` | `assessment:read:org` |
+| `POST` | `/v1/summary-instructions/{prompt_id}/rename` | `org_settings:update:org` |
+| `GET` | `/v1/assessment-rating-scale` | `assessment:read:org` |
+| `GET` | `/v1/assessment-rating-scale/suggested-levels` | `assessment:read:org` |
+| `PUT` | `/v1/assessment-rating-scale/levels` | `org_settings:update:org` |
+| `DELETE` | `/v1/assessment-rating-scale` | `org_settings:update:org`, not with an API key |
+| `POST` | `/v1/interrogate-sessions` | Read access to the subject |
+| `GET` | `/v1/interrogate-sessions` | Read access to the subject |
+| `GET` | `/v1/interrogate-sessions/{session_id}` | Read access to the subject |
+| `POST` | `/v1/interrogate-sessions/{session_id}/messages` | Read access to the subject |
 
 ## Errors
 
@@ -74,10 +149,11 @@ Every error body has a `detail` object with a `code` and a `message`.
 
 | Status | Code | When |
 | ------ | ---- | ---- |
-| `403` | `api_key_not_allowed` | An API key tried an action that stays a human decision: setting summary instructions, archiving a follow-up or an SLA, closing an issue on evals, or waiving a monitoring entry. |
-| `404` | `assessment_not_found`, `assessment_plan_not_found`, `reassessment_trigger_not_found`, `review_not_found`, `follow_up_not_found`, `follow_up_round_not_found`, `sla_not_found`, `scale_not_found`, `eval_not_found`, `scale_level_not_found`, `monitoring_record_not_found`, `monitoring_entry_not_found` | The ID does not exist in your organization. |
-| `404` | `not_enabled` | Monitoring records are not enabled for your organization. |
-| `409` | `prompt_busy`, `monitoring_record_closed`, `assessment_run_active`, `summary_conflict`, `eval_not_an_issue`, `eval_correction_rejected` | The summary prompt is being edited, the monitoring record is closed, an AI run is already active, the summary changed since you read it, a closing outcome was sent for an eval that is not an issue, or an eval cannot take an answer correction. |
+| `403` | `api_key_not_allowed` | An API key tried an action that stays a human decision: setting summary instructions, archiving a follow-up or an SLA, closing an issue on evals, waiving a monitoring entry, completing or archiving an assessment, changing its lifecycle status or outcome, recording a review decision, deleting a properties field, turning the assessment scale off, or retiring or restoring a scale. |
+| `404` | `assessment_not_found`, `assessment_plan_not_found`, `reassessment_trigger_not_found`, `review_not_found`, `follow_up_not_found`, `follow_up_round_not_found`, `sla_not_found`, `scale_not_found`, `eval_not_found`, `scale_level_not_found`, `monitoring_record_not_found`, `monitoring_entry_not_found`, `ai_job_not_found`, `assessment_export_not_found`, `template_not_found`, `trust_center_run_not_found`, `trust_center_access_request_not_found`, `questionnaire_response_not_found`, `assessment_properties_field_not_found`, `doc_eval_not_found`, `irq_review_not_found`, `summary_instructions_not_found`, `interrogate_session_not_found` | The ID does not exist in your organization. |
+| `404` | `not_enabled`, `not_found` | Monitoring records, portfolio PDF reports or claim checks are not enabled for your organization. |
+| `400` | `trust_center_url_required`, `trust_center_url_invalid`, `no_requested_documents` | The vendor has no usable trust center URL, or the run would ask for no document. |
+| `409` | `claim_check_not_queued`, `run_starting`, `prompt_busy`, `monitoring_record_closed`, `assessment_run_active`, `summary_conflict`, `eval_not_an_issue`, `eval_correction_rejected` | The summary prompt is being edited, the monitoring record is closed, an AI run is already active, the summary changed since you read it, a closing outcome was sent for an eval that is not an issue, or an eval cannot take an answer correction. |
 | `422` | `invalid_assessment_plan`, `invalid_reassessment_trigger`, `invalid_monitoring_entry` | The request refers to something that does not exist or breaks a rule. The message says which. |
 
 ## Assessment plans
@@ -352,6 +428,14 @@ To track an SLA on a vendor, send `POST /v1/slas` with `vendor_id` and `name`. T
 
 `GET /v1/scales` lists control scales with their levels (`include_archived` includes archived ones). `GET /v1/scales/{scale_id}` returns one scale.
 
+`POST /v1/scales` creates a control scale from `name`, `description` and `levels` (each with `name`, `criteria`, `value`, `color` and `raise_issue`) and returns `201 Created`. `PATCH /v1/scales/{scale_id}` renames it, reorders its levels with `level_ids`, or sets `is_default`. To drop a level from a risk scale, send `remap` to move what used it to another level. An API key cannot send `is_archived`, so a person retires and restores scales.
+
+`POST /v1/scales/{scale_id}/levels` adds a level and returns `201 Created`. `PATCH /v1/scales/{scale_id}/levels/{level_id}` edits one; send `residual_risk_remaining` as `null` to go back to the derived share. The assessment rating scale changes only through its own endpoints and returns `422 assessment_scale` here.
+
+`POST /v1/scales/{scale_id}/apply` puts controls on the scale. Send `controls_by_control_set`, a map from control set ID to control IDs. The response returns the controls now on the scale.
+
+Every scale write needs a key created by a person whose role holds `org_settings:update:org`. An unknown scale returns `404 scale_not_found`, and an unknown level `404 scale_level_not_found`.
+
 ## Monitoring records
 
 A **monitoring record** collects what monitoring observed about a vendor between two assessments. These endpoints return the record's `id`, `vendor_id`, `status`, `verdict` and `qualifying_count`.
@@ -375,3 +459,88 @@ The body also accepts `severity` and `note`.
 To change how an entry counts, send `POST /v1/monitoring-records/{record_id}/entries/{entry_id}/disposition` with `disposition` set to `counts`, `informational` or `null` (back to the policy). An API key cannot send `waived`.
 
 To re-sync a vendor's record now, send `POST /v1/vendors/{vendor_id}/monitoring-record/refresh`. It returns `null` when the vendor has no completed assessment to monitor from.
+
+To read records in full, send `POST /v1/monitoring-records/query`. It filters by `status` (default `open`), `verdicts`, `vendor_ids`, `closes_before`, `closes_after` and `search`, sorts with `sort` and `descending`, and pages with `limit` and `offset`. It returns `items`, `total` and `verdict_counts`. `GET /v1/monitoring-records/{record_id}` returns one record with its entries, and `GET /v1/vendors/{vendor_id}/monitoring-records` returns the vendor's chain of records and the open one in `current`.
+
+`GET /v1/monitoring-policy` returns the policy records are scored under. `PUT /v1/monitoring-policy` replaces it, and open records use it from their next sync. Replacing it needs a key created by a person whose role holds `org_settings:update:org`; a policy that breaks a rule returns `422 invalid_monitoring_policy`. When monitoring records are not enabled for your organization, these routes return `404 not_enabled`.
+
+## Background AI jobs
+
+A model call from the API runs in the background. The route that starts one returns `202 Accepted` with a job: `id`, `kind`, `status` (`pending`, `completed` or `failed`), `created_at`, `started_at`, `completed_at`, `error` and `result`. Poll `GET /v1/ai-jobs/{job_id}` until `status` leaves `pending`. Only the key that started a job reads it back, and it needs the permission that started it.
+
+- `POST /v1/assessments/{assessment_id}/follow-up-suggestions` asks for a follow-up question or the documents to request for each eval. Send `target` (`question` or `required_document_types`) and up to 200 `eval_ids`. The result lists one item per eval. Nothing is saved.
+- `POST /v1/assessments/{assessment_id}/template-filler-jobs` runs the report template agent on one `prompt`, with dates in `timezone`. The result's `result` is the text. Nothing is saved.
+- `POST /v1/evals/{eval_id}/analysis-summary` writes a new short summary of the eval's analysis and saves it when the job completes. The job fails if the analysis changed while the summary was written.
+
+`POST /v1/evals/bulk-correct-response` keeps each eval's current answer and evaluates it again. Send up to 500 `eval_ids`. It returns `202 Accepted` with `queued_eval_ids`.
+
+## Assessment exports
+
+Every export runs in the background and returns `202 Accepted` with an export: `id`, `status`, `progress` and `file_name`. Poll `GET /v1/assessment-exports/{export_id}`. Once `status` is `complete`, the response carries a presigned `download_url` valid for `expires_in` seconds. Follow it with a plain `GET` and no auth header. The response is sent with `Cache-Control: no-store`.
+
+- `POST /v1/assessments/{assessment_id}/exports/pdf` builds the PDF report. It takes `export_filename`, `export_mode` (`standard` or `detailed`), `timezone` and the `include_*` switches the dashboard offers. Snippet images citing a record your key cannot read are left out.
+- `POST /v1/assessments/{assessment_id}/exports/word` fills one of your Word report templates. Send `export_filename`, `template_id` and `timezone`.
+- `POST /v1/assessment-exports` exports the assessments a `filter` selects to a workbook named `file_name`. Omit `filter` for every assessment.
+- `POST /v1/assessment-exports/evals` exports every result between `start_date` and `end_date`.
+- `POST /v1/assessment-exports/portfolio` builds the portfolio PDF over the slice `request` selects. It needs the new PDF report, and returns `404` with `not_enabled` without it.
+
+## Library documents
+
+To copy documents from Coverbase's library for the vendor onto the vendor and attach them to an assessment, send `POST /v1/assessments/{assessment_id}/library-documents` with up to 100 `entity_document_ids`. A file the assessment already has, or one that cannot be copied, is listed in `skipped_entity_documents` with the reason.
+
+## Trust center
+
+`POST /v1/assessments/{assessment_id}/trust-center-runs` sends Coverbase's agent to the vendor's trust center to collect the assessment's documents. **This contacts the vendor**: the agent visits the vendor's trust center. From the API it never submits an access request form and never accepts an NDA or terms. A person does that from Coverbase. Omit `requested_document_names` to ask for the documents the assessment still needs, or set `document_retrieval_scope` to `retrieve_everything`. An assessment with a run under way returns that run.
+
+Read the runs with `GET /v1/assessments/{assessment_id}/trust-center-runs` and what the agent did on one with `GET .../trust-center-runs/{run_id}/events`. `GET /v1/assessments/{assessment_id}/trust-center-status` says where collection stands, and `GET .../trust-center-request-identity` says who an access request would come from. `GET /v1/trust-center-access-requests/{access_request_id}` returns an access request and its decision.
+
+## Claim checks
+
+A **claim check** tests each answer on a submission against the vendor's evidence. These routes need claim checks to be enabled for your organization, and return `404` with `not_found` otherwise.
+
+- `GET /v1/questionnaire-responses/{response_id}/claim-checks` returns the latest run and every answer's verdict with its citations.
+- `POST .../claim-checks/run` checks the submission in the background, or only the `question_ids` you send. A run already queued or running is returned instead.
+- `POST .../claim-checks/cancel` stops a run that has not started. It returns `409` with `claim_check_not_queued` when no run is waiting.
+- `POST .../claim-checks/raise-issues` raises one issue per answer in `question_ids`.
+- `POST .../claim-checks/ask-vendor` asks the vendor about each answer in `question_ids` with your `message`. **This contacts the vendor**: the message is posted on the supplier request thread the vendor reads.
+
+## Assessments
+
+These routes run the same logic as the dashboard and return its shapes.
+
+- `POST /v1/assessments/query` filters, sorts and pages assessments with the dashboard's filter language.
+- `POST /v1/assessments/bulk` starts one assessment per vendor in `vendor_service_ids`.
+- `PATCH /v1/assessments/{assessment_id}` updates an assessment. An API key cannot set `is_archived`, `status_id`, `recommendation` or the approval option, or move the assessment to complete.
+- `POST /v1/assessments/{assessment_id}/complete` completes an assessment with its outcome. It needs a person's key.
+- `POST /v1/assessments/{assessment_id}/portal` opens a vendor portal with the `questionnaire_ids` you send. Nothing is sent to the vendor.
+- `GET .../run-status`, `GET .../evidence-sufficiency`, `GET .../control-set-compliance` and `GET .../residual-step-down-holds` read the assessment. `GET /v1/assessment-collection-stage-stats` says how long each collection stage takes in your org.
+- `PUT .../summary-instructions` chooses the saved summary instructions the summary uses.
+- `GET .../irq-review` reads the inherent risk check a reassessment opened with, and `POST .../irq-review/skip` starts the assessment without it.
+- `PUT .../vendor-rating/{control_set_id}` sets or clears an analyst level on the vendor rating.
+
+`POST /v1/assessment-plans/document-requirements-preview` and `POST /v1/assessment-plans/{assessment_plan_id}/document-requirements` show the documents a plan's collection would pursue.
+
+## Properties fields, doc evals and evals
+
+`/v1/assessment-properties-fields` lists, adds (`POST`), changes (`PATCH`) and removes (`DELETE`) the fields the assessment properties panel shows. Removing one needs a person's key.
+
+`GET /v1/doc-evals` and `GET /v1/doc-evals/{doc_eval_id}` read document evaluations, and `PATCH` corrects one. `POST /v1/evals/query` filters evals, `GET /v1/evals/{eval_id}` reads one, and `GET /v1/evals/{eval_id}/response-dependencies` lists the evals that depend on its answer. `GET /v1/evals/override-report` takes `start_ts` and `end_ts` and reports how often reviewers overturned each control.
+
+## Follow-up workbooks, reviews and summary instructions
+
+`GET /v1/follow-up-rounds/{round_id}/email-recipients` returns who a round's invitation would go to. `POST /v1/follow-up-rounds/{round_id}/import` takes a filled-in workbook as a multipart `file` and lands it as if the vendor had answered in the portal. Send `dry_run=true` to preview the rows. A preview writes nothing.
+
+`POST /v1/reviews` requests a review of an assessment. `PATCH /v1/reviews/{review_id}` renames, rewords or reassigns it. Recording its decision needs a person's key.
+
+`GET /v1/summary-instructions/default` returns Coverbase's built-in summary instructions. `GET /v1/summary-instructions/{prompt_id}/revisions` lists earlier revisions. `POST /v1/summary-instructions/{prompt_id}/rename` renames them, with the `expected_name` you read. Renaming needs a key created by a person whose role holds `org_settings:update:org`.
+
+## Assessment rating scale
+
+`GET /v1/assessment-rating-scale` returns the scale, or `null` when assessments take their label from control scales. `GET .../suggested-levels` proposes levels from the default control scale. `PUT .../levels` creates the scale or replaces its levels, and `DELETE` turns it off. Both need a key created by a person whose role holds `org_settings:update:org`, and turning it off needs a person's key.
+
+## Coverbase AI conversations
+
+`POST /v1/interrogate-sessions` opens a conversation about an assessment, a vendor, a radar event or your org, with `subject_type` and `subject_id`. `GET /v1/interrogate-sessions?subject_type=...&subject_id=...` lists conversations about one subject, and `GET /v1/interrogate-sessions/{session_id}` returns one with every message.
+
+To ask a question, send `POST /v1/interrogate-sessions/{session_id}/messages` with `content`. It returns `202 Accepted` with a job. Poll `GET /v1/ai-jobs/{job_id}`: the result holds the `answer` and any `tool_proposals`. The answer is also saved on the conversation. The API never applies a proposed change; a person applies it in Coverbase.
+

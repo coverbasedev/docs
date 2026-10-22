@@ -199,11 +199,15 @@ The **Integrity** panel beside it names the seal level applied (or **Not sealed*
   </Accordion>
 </AccordionGroup>
 
-## Track envelopes from MCP
+## Work with envelopes from MCP or the API
 
-You can read envelopes from an MCP client with `query_engagements_contracts(kind="signature_envelopes")`. It lists the signature inbox, filters by contract, vendor or status, and returns one envelope with its recipients by ID. See the [MCP tool reference](/mcp/tool-reference#reads).
+You can read envelopes from an MCP client with `query_engagements_contracts(kind="signature_envelopes")`. It lists the signature inbox, filters by contract, vendor or status, and returns one envelope with its recipients by ID. `signature_envelope_query` takes the inbox's filters, and `signature_envelope_detail` shows one envelope's recipients and placed fields. `signature_envelope_audit` returns the audit trail and `signature_document_link` a link to a PDF. See the [MCP tool reference](/mcp/tool-reference#reads).
 
-Creating, sending and voiding an envelope stay in the dashboard. The public API has no signature routes.
+An MCP client builds and sends with `mutate(entity="signature_envelope", action=...)`: `create`, `update`, `set_recipients`, `set_fields`, `send`, `remind`, `correct` and `void`. Templates use `mutate(entity="signature_template", action=...)` with `create`, `update`, `set_layout`, `publish`, `fork` and `archive`. Layouts, fields and recipients go in as JSON and are checked the same way the dashboard checks them. `signature_bulk_send` sends a template to a list, and it only checks the list until you pass `dry_run: false`. Sending, reminding and bulk sends email the recipients.
+
+With an API key, use `/v1/signature-envelopes` and `/v1/signature-templates`. Publishing, archiving, voiding and correcting need a signed-in user. Changing your signing policy needs a key created by a person whose role holds organization settings permission. See [E-signature](/api-reference/contract-administration#e-signature).
+
+No tool or endpoint returns a signing link, takes an access code over MCP, or signs for anyone. Writing a document in the product, downloading the evidence packet and checking a seal again work through the API but not over MCP. Anything that goes through DocuSign also works only through the API.
 
 ## Related
 
