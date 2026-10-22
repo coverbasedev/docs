@@ -257,6 +257,12 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 
 `200 OK`: returns the same shape as [List API keys](#list-api-keys), with `revoked: true`.
 
+## What a key can do
+
+A key acts with the permissions of the service account role, whatever your organization's role-based access setting. When a key calls an endpoint that needs a permission its role does not hold, the endpoint returns `403` with the code `api_key_not_allowed` and a message that names the permission. The default service account role does not hold `org_settings`, `billing`, `audit_trail`, `dark_web_exposure`, `screening_match`, `rfp:approve` or `rfp:archive`, so a key cannot use the endpoints that need them. A signed-in user calling the same endpoint is checked against their own role.
+
+The same code also means the action stays a human decision. A key never archives, unarchives, deletes or approves, whatever its role holds.
+
 ## Authorization & audit
 
 - Each endpoint accepts **either** an admin dashboard JWT (org **`admin` role**) **or** an `ak_*` key carrying the `keys:manage` scope. A JWT caller without the admin role, or a key without `keys:manage`, is rejected.
@@ -272,6 +278,7 @@ curl -X POST "https://api.coverbase.app/v1/api-keys/ak_2YkL.../revoke" \
 | 403 | `{"detail": "Not authenticated"}` | No `Authorization` header. |
 | 403 | `{"detail": {"code": "insufficient_scope", "message": "..."}}` | The `ak_*` key is valid but lacks the `keys:manage` scope required for this endpoint. |
 | 403 | `{"detail": {"code": "scope_grant_forbidden", "message": "..."}}` | A non-admin or scoped-key caller tried to grant `scopes` on create. Scopes can only be granted from an admin dashboard session. |
+| 403 | `{"detail": {"code": "api_key_not_allowed", "message": "..."}}` | On any endpoint: the key's role does not hold the permission the endpoint needs, or the action stays a human decision. See [What a key can do](#what-a-key-can-do). |
 | 403 | `{"detail": {"code": "user_not_provisioned", "message": "..."}}` | The admin user record has no Clerk identity (rare; re-provision via support). |
 | 404 | `{"detail": {"code": "api_key_not_found", "message": "API key not found."}}` | The `api_key_id` does not belong to your org or no longer exists. |
 | 502 | `{"detail": {"code": "clerk_upstream_error", "message": "..."}}` | The upstream identity provider returned an error. Retry; contact support if it persists. |
