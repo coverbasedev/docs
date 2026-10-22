@@ -197,13 +197,13 @@ All three return the refreshed [reassessment object](#reassessment-object).
   `GET /v1/reassessment-rules`
 </ParamField>
 
-Returns how often vendors are reassessed: `risk_basis`, the organization's default timeline in `org_timeline`, and for each assessment plan its `rules` (`risk_level_ids` and `interval_months`) and its own `timeline`. It also returns a `revision`. Reading needs `org_settings:read:org`.
+Returns how often vendors are reassessed: `risk_basis`, the organization's default timeline in `org_timeline`, and for each assessment plan its `rules` (`risk_level_ids` and `interval_months`) and its own `timeline`. It also returns a `revision`. Reading needs `org_settings:read:org`. An API key gets `403 api_key_not_allowed` unless its service-account role holds it.
 
 <ParamField path="method" type="PUT">
   `PUT /v1/reassessment-rules`
 </ParamField>
 
-Replaces every rule and timeline. Send the `revision` from your last read, the `risk_basis`, and every plan in `plans`; send `plans: []` to clear the rules. A `revision` that changed since you read it returns `409 revision_conflict`, and a configuration Coverbase rejects returns `422 invalid_reassessment_rules`. Replacing needs a key created by a person whose role holds `org_settings:update:org`.
+Replaces every rule and timeline. Send the `revision` from your last read, the `risk_basis`, and every plan in `plans`; send `plans: []` to clear the rules. A `revision` that changed since you read it returns `409 revision_conflict`, and a configuration Coverbase rejects returns `422 invalid_reassessment_rules`. Replacing needs `org_settings:update:org`. An API key gets `403 api_key_not_allowed` unless its service-account role holds it.
 
 ## Related
 

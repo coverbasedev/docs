@@ -41,6 +41,8 @@ Every error body has a `detail` object with a `code` and a `message`.
 | `400` | `rfp_not_draft`, `nothing_to_research` | You tried to publish an RFP that is not a draft, or a silent RFP has no rubric or no vendor left to research. |
 | `403` | `api_key_not_allowed` | An API key tried to award an RFP. Awarding is a decision a person makes. |
 | `404` | `rfp_not_found`, `submission_not_found`, `ai_job_not_found` | The ID does not exist in your organization. |
+| `404` | `vendor_not_found` | An invitation names a vendor that is not in your organization. Nothing is invited. |
+| `422` | `vendor_not_invited` | An award names a vendor this RFP did not invite. Nothing is awarded. |
 | `422` | | The request body breaks a rule, for example a vendor without a `vendor_id`. |
 
 ## Read RFPs
@@ -66,7 +68,7 @@ The drafting steps write nothing. Each returns `202 Accepted` with a job. Poll `
 
 ## Invite and publish
 
-`POST /v1/rfp-records/{rfp_id}/invitations` adds existing vendors by `vendor_ids`, with an optional `contact_email` and `response_due_at`. No email is sent.
+`POST /v1/rfp-records/{rfp_id}/invitations` adds existing vendors by `vendor_ids`, with an optional `contact_email` and `response_due_at`. No email is sent. Every vendor must belong to your organization, or the request returns `404` with `vendor_not_found` and invites none of them.
 
 `POST /v1/rfp-records/{rfp_id}/publish` moves a draft RFP to open.
 
