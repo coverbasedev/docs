@@ -18,6 +18,7 @@ All endpoints are org-scoped to the credential: an `ak_*` key or an [OAuth token
 | ------ | ---- |
 | `GET` | `/v1/portals` |
 | `GET` | `/v1/portals/{portal_id}` |
+| `GET` | `/v1/portals/{portal_id}/questionnaires` |
 
 ## States
 
@@ -107,7 +108,10 @@ curl "https://api.coverbase.app/v1/portals?vendor_id=cbvndr_e448ba62882143f3ba0c
       "due_at": 1762300800,
       "paused": false,
       "submitted_at": null,
-      "created_at": 1760313600
+      "created_at": 1760313600,
+      "forms_total": 3,
+      "forms_completed": 1,
+      "percent_complete": 33
     }
   ],
   "total": 1,
@@ -133,6 +137,11 @@ Rows are ordered by `created_at` descending, with ties broken by `id`, so paging
 <ResponseField name="paused" type="boolean">`true` while you have put the request on hold. A paused request reads `open`, never `overdue`, and no reminders go out.</ResponseField>
 <ResponseField name="submitted_at" type="integer | null">Unix timestamp (seconds) of the vendor's first submission, or `null`.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
+<ResponseField name="forms_total" type="integer">How many forms the request asks for: each questionnaire, document upload, or other section the recipient sees. A form you have withdrawn from the request is not counted.</ResponseField>
+<ResponseField name="forms_completed" type="integer">How many of those forms the recipient has completed. A form resubmitted after a reopen counts once.</ResponseField>
+<ResponseField name="percent_complete" type="integer | null">`forms_completed` as a whole-number share of `forms_total`, rounded down (1 of 3 is `33`). `null` for a request with no forms.</ResponseField>
+
+The three progress fields are the same progress the Coverbase app shows on the request. For how many questions are answered inside each questionnaire, see [Questionnaire progress on a portal](#questionnaire-progress-on-a-portal).
 
 ## Retrieve a portal
 
@@ -141,6 +150,97 @@ Rows are ordered by `created_at` descending, with ties broken by `id`, so paging
 </ParamField>
 
 Returns the [portal object](#portal-object), or `404 portal_not_found`. A portal that the list would not return (one with no vendor, or of a type outside the [request types](#request-types)) is also a `404`.
+
+### Error responses
+
+| Status | Body | When |
+| ------ | ---- | ---- |
+| 404 | `{"detail": {"code": "portal_not_found", ...}}` | Not found, not in the API key's org, or not a vendor request. |
+
+## Questionnaire progress on a portal
+
+<ParamField path="method" type="GET">
+  `GET /v1/portals/{portal_id}/questionnaires`
+</ParamField>
+
+Returns one row per questionnaire on the request, with how many of its questions the recipient has answered. Use it when the portal's `percent_complete` is too coarse: a request with one questionnaire reads `0` until the recipient submits, while this endpoint shows the questionnaire filling in question by question.
+
+### Path parameters
+
+<ParamField path="portal_id" type="string" required>
+  The portal (`cbsbpt_...`). Same `404 portal_not_found` rules as [Retrieve a portal](#retrieve-a-portal).
+</ParamField>
+
+### Example request
+
+```bash cURL
+curl "https://api.coverbase.app/v1/portals/cbsbpt_9c1f0e2a7b3d4e5f8a6b7c8d9e0f1a2b/questionnaires" \
+  -H "Authorization: Bearer ak_live_xxx"
+```
+
+### Example response
+
+```json
+{
+  "portal_id": "cbsbpt_9c1f0e2a7b3d4e5f8a6b7c8d9e0f1a2b",
+  "items": [
+    {
+      "questionnaire_id": "cbqst_4d2c1b0a9f8e7d6c5b4a39281706f5e4",
+      "questionnaire_name": "Security basics",
+      "response_id": "cbqstr_7e6d5c4b3a2918070f6e5d4c3b2a1908",
+      "status": "pending",
+      "questions_total": 42,
+      "questions_answered": 30,
+      "required_total": 25,
+      "required_answered": 20,
+      "percent_complete": 80,
+      "last_activity_at": 1761177600
+    },
+    {
+      "questionnaire_id": "cbqst_0a1b2c3d4e5f60718293a4b5c6d7e8f9",
+      "questionnaire_name": "Privacy",
+      "response_id": "cbqstr_1f2e3d4c5b6a79880a1b2c3d4e5f6a7b",
+      "status": "submitted",
+      "questions_total": 12,
+      "questions_answered": 12,
+      "required_total": 12,
+      "required_answered": 12,
+      "percent_complete": 100,
+      "last_activity_at": 1761091200
+    }
+  ],
+  "questionnaires_total": 2,
+  "questionnaires_completed": 1,
+  "percent_complete": 50
+}
+```
+
+Rows follow the order the request asks for its questionnaires.
+
+### Response fields
+
+<ResponseField name="portal_id" type="string">The portal the rows belong to.</ResponseField>
+<ResponseField name="items" type="array">One row per questionnaire on the request. See [Questionnaire progress row](#questionnaire-progress-row).</ResponseField>
+<ResponseField name="questionnaires_total" type="integer">How many questionnaires the request asks for.</ResponseField>
+<ResponseField name="questionnaires_completed" type="integer">How many of them the recipient has submitted: the row's `status` is `submitted`, `ready_for_review`, or `approved`.</ResponseField>
+<ResponseField name="percent_complete" type="integer | null">`questionnaires_completed` as a whole-number share of `questionnaires_total`, rounded down. `null` for a request with no questionnaires.</ResponseField>
+
+### Questionnaire progress row
+
+<ResponseField name="questionnaire_id" type="string">The questionnaire template (`cbqst_...`).</ResponseField>
+<ResponseField name="questionnaire_name" type="string | null">The questionnaire's name as the recipient sees it.</ResponseField>
+<ResponseField name="response_id" type="string | null">The recipient's response (`cbqstr_...`), or `null` until they have opened the questionnaire. Pass it to [`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}`](/api-reference/questionnaires#get-a-submission) for the answers themselves.</ResponseField>
+<ResponseField name="status" type="string | null">The response's status: `pending`, `processing`, `processing_complete`, `processing_failed`, `submitted`, `ready_for_review`, `approved`, or `rejected`. `null` until the recipient has opened the questionnaire.</ResponseField>
+<ResponseField name="questions_total" type="integer">Questions the recipient sees. Internal-only questions are left out. `0` until the recipient has opened the questionnaire, and for a questionnaire derived from a control set.</ResponseField>
+<ResponseField name="questions_answered" type="integer">How many of those questions have an answer. See [What counts as answered](#what-counts-as-answered).</ResponseField>
+<ResponseField name="required_total" type="integer">How many of the questions are required.</ResponseField>
+<ResponseField name="required_answered" type="integer">How many required questions have an answer.</ResponseField>
+<ResponseField name="percent_complete" type="integer | null">`required_answered` as a whole-number share of `required_total`, rounded down (20 of 25 is `80`). When no question is required it is `questions_answered` over `questions_total` instead. `null` when there is nothing to count: the recipient has not opened the questionnaire, or it has no questions.</ResponseField>
+<ResponseField name="last_activity_at" type="integer | null">Unix timestamp (seconds) the response last changed, or `null` for a questionnaire the recipient has not opened.</ResponseField>
+
+### What counts as answered
+
+A question is answered by the same rule the recipient's **Submit** button uses: it has a text or numeric value, a selected option, or an attached document where the question requires one. A comment alone does not count unless the question requires a comment. Every question the recipient sees is counted, including one a show rule currently hides, so a questionnaire with conditional questions can read below 100% after the recipient has answered everything visible to them. The recipient can still submit in that case.
 
 ### Error responses
 
