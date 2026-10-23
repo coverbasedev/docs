@@ -96,6 +96,24 @@ A vendor with nothing to review still shows its run history.
   An empty match list and a vendor that was never screened look similar and mean opposite things. Check the run history before you write "no sanctions exposure" into an assessment.
 </Warning>
 
+## Prove a vendor was screened
+
+An auditor usually asks two things: when did you start screening this vendor, and when did you last screen it. A vendor's **Screening** tab answers both in **First screened** and **Last screened**. A vendor that is enrolled but has not finished a screen yet reads **Never screened**.
+
+To answer for every vendor at once, click **Download evidence** on the queue. You get a CSV with one row per screened vendor:
+
+| Column | What it holds |
+| --- | --- |
+| **Vendor**, **Vendor ID** | The vendor, as named in Coverbase |
+| **First screened** | The date of the vendor's earliest completed screen |
+| **Last screened** | The date of its latest completed screen |
+| **Last outcome** | **Clear**, **Matches found** or **Failed** for its latest screen |
+| **Open matches**, **Confirmed matches** | How many of its matches are waiting for a decision, and how many were confirmed |
+
+The dates count only screens that completed, but **Last outcome** reads the latest screen whatever happened to it. So a vendor can show a **Last screened** date from last month beside a **Last outcome** of **Failed**: its latest screen failed, and last month's is the last one that ran. Check for **Failed** rows before you hand the file over.
+
+The two dates show the first and the latest screen, not every screen in between. To see every screen of one vendor, read the run history on its tab.
+
 ## Screen a vendor now, or someone it missed
 
 **Screen now**, at the top of a vendor's Screening tab, screens everyone enrolled for that vendor straight away instead of waiting for the schedule. The page opens the result when the provider answers. If nobody is enrolled yet, it says so and nothing runs.
@@ -150,6 +168,8 @@ An administrator configures screening once, under **Configuration → Monitoring
 
 The decisions that matter:
 
+**Which provider.** Under **Screening Provider**, **Coverbase screening** is the default. If your organization has its own LSEG World-Check One license, you can screen through it instead. See [Screen through your World-Check One license](#screen-through-your-world-check-one-license). The rest of this section describes Coverbase screening.
+
 **Which sources.** Sanctions, PEP, criminal and legal are on by default. Adverse media is off, and should stay off until the rest is running cleanly. It is the highest-volume and lowest-precision source, and it will dominate your queue. When you do turn it on, keep the category list narrow.
 
 **Who gets screened.** The vendor's legal entity is screened by default. Directors, officers and beneficial owners are opt-in, because screening a person means storing watchlist assertions about a named individual. Turn them on only when you need them. Under **Automation**, **Screen a vendor when its intelligence refresh completes** screens as soon as a refresh has established the vendor's leadership instead of waiting for the nightly sweep. It is off by default, because every refresh then costs a screen per subject.
@@ -174,6 +194,52 @@ Nothing is monitored until you switch a level on, and vendors with no risk score
   A source switched off at the top level never runs, whatever the monitoring table says. One switch turns a source off everywhere, rather than making you clear a row per risk level.
 </Note>
 
+## Screen through your World-Check One license
+
+If your organization already licenses LSEG World-Check One, Coverbase can screen your vendors through your own account. Matches still come to the Coverbase queue and are decided there, and the evidence above covers them the same way.
+
+The mistake to avoid is switching providers before you check what World-Check One screens. It screens organizations only, so it leaves out the people behind a vendor and adverse media.
+
+### Connect your account
+
+1. Ask your World-Check One administrator for a service account, and to add it to the group your vendor cases should go in.
+2. In Coverbase, go to **External Integrations** and open the **LSEG World-Check One** tile, under **Risk Intelligence & Analytics**.
+3. Paste the **Service Account UUID** and **Service Account Secret**, then click **Save credentials**.
+4. Click **Test connection**. A working account lists the groups it can use. If it says the account is not in any group, ask your World-Check One administrator to add it to one.
+
+### Choose it in your settings
+
+1. Under **Configuration → Monitoring → Screening**, pick **World-Check One (your license)** under **Screening Provider**, and confirm the switch.
+2. Pick a **World-Check One Group**. Coverbase creates each vendor's case in this group. Changing the group later does not move cases already created.
+3. Set **Who is monitored** by risk level, as for Coverbase screening.
+4. Switch on **Screen vendors on a schedule**.
+
+<Warning>
+  You can change the provider only while screening is switched off. Once Coverbase has screened vendors through a provider, only Coverbase support can change it.
+</Warning>
+
+### What changes with World-Check One
+
+| | Coverbase screening | World-Check One |
+| --- | --- | --- |
+| **Who is screened** | The vendor's legal entity, and directors, officers and owners if you opt in | The vendor's legal entity only |
+| **Sources** | Sanctions, PEP, criminal, legal and adverse media | World-Check One's Sanctions, PEP, Law Enforcement and Regulatory Enforcement categories, shown as sanctions, PEP, criminal and legal. No adverse media. |
+| **Identifying details sent** | Name, country, registration number and more | Name and headquarters country |
+| **How often** | Set by the provider profile group | On enrollment, then every 350 days |
+| **Ad hoc screen** | An organization or a person, with any identifying details | An organization, by name and country |
+
+A matched record can carry other World-Check One categories too. They show on the match as context, but only the four above raise a match.
+
+Coverbase screens each monitored vendor when it is enrolled, then again 350 days after its last completed screen. That leaves room for a failed screen to be retried and still keep every vendor inside a yearly screen. **Next screen due** on a vendor's tab shows the date. To screen a vendor sooner, use **Screen now**.
+
+When you switch on screening, Coverbase works through your monitored vendors in hourly batches. A long vendor list takes a while to screen the first time, and each vendor reads **Never screened** until its first screen completes.
+
+Decisions stay in Coverbase. Confirming, dismissing or allowlisting a match does not change the case in World-Check One.
+
+The pre-qualification sanctions check at intake screens through World-Check One too. On the intake template it shows as **World-Check One sanctions screening**.
+
+If World-Check One rejects the service account, scheduled screening for your organization pauses, and the settings page shows **The last screen failed** with World-Check One's reason. It resumes once you save working credentials on the tile. Removing the service account switches screening off.
+
 ## Who can do what
 
 Screening has its own permission, separate from the vendor record, so the person who reviews matches need not be the person who administers vendors.
@@ -182,7 +248,8 @@ Screening has its own permission, separate from the vendor record, so the person
 | --- | --- |
 | `screening_match:read` | See the queue, the vendor tab, and match detail |
 | `screening_match:update` | Confirm, dismiss or allowlist a match; screen a vendor now; enroll a person; run an ad hoc screen |
-| `integration:read` / `integration:update` | See and change the screening configuration |
+| `screening_match:export` | Download the screening evidence CSV |
+| `integration:read` / `integration:update` | See and change the screening configuration, and the World-Check One service account |
 
 There is no create or delete. Matches come from the provider and are closed by decision, never removed.
 
@@ -205,6 +272,12 @@ These routes need `screening_match` permission, which API keys do not hold, so u
 | **Screen now** says nobody is enrolled | The settings screen nobody for this vendor. Check **Who we screen**. |
 | A director named on the People tab is not screened | Directors and officers are opt-in, and only people a registry filing names are enrolled automatically. Use **Confirm & screen** under **People not screened**. |
 | A dismissed match is back | An allowlist lasts 180 days, then the match is raised again for a fresh look. A match you marked **Not a match** stays closed. |
+| A screen says **Could not get this screen's result** | The provider did not return a result. The screen is retried, and lands in the queue when it finishes. It never reads as clear. |
+| **World-Check One (your license)** cannot be picked | Switch off **Screen vendors on a schedule** first. If the page says to contact support, vendors have already been screened through the current provider. |
+| No **World-Check One Group** to pick | The service account is not in a group. Ask your World-Check One administrator to add it to one, then test the connection again. |
+| Scheduled World-Check One screens stopped | World-Check One rejected the service account. Save working credentials on the **LSEG World-Check One** tile and screening resumes. |
+| **People not screened** is missing from a vendor's tab | Your organization screens through World-Check One, which screens organizations only. |
+| The evidence CSV shows **Failed** for a vendor | Its latest screen failed. Run **Screen now** on the vendor, and check the settings page for a provider error. |
 
 ## Related
 
