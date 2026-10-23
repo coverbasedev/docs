@@ -712,7 +712,9 @@ To import vendors, services and locations, send the dashboard's vendor workbook 
 
 `GET /v1/document-type-groups` lists document type groups, and `POST /v1/document-type-groups/enable` turns optional ones on. The passive assessment routes read and edit the fields Coverbase fills in from public sources: `/v1/passive-assessment-configs`, `/v1/passive-assessment-groups`, `GET /v1/vendors/{vendor_id}/passive-assessment` and `POST /v1/passive-assessment-data`. The settings writes need `org_settings:update:org`, which API keys do not hold.
 
-`PUT /v1/screening/settings` changes the screening policy, `GET /v1/screening-profile-groups` lists the provider's profile groups, and `GET /v1/screening/evidence-export` returns a CSV of every screened vendor's first and last screen.
+`PUT /v1/screening/settings` changes the screening policy. To screen through your own World-Check One license, send `provider` set to `world_check_one`, and `settings.provider_group_id` set to the World-Check One group. Save the service account on the **LSEG World-Check One** tile first, and ask your World-Check One administrator for the group ID. Switching returns `409 conflict` once the current provider holds profiles or cases for your vendors.
+
+`GET /v1/screening-profile-groups` lists the provider's profile groups. It is for Coverbase screening only, and returns `409 conflict` for a World-Check One organization. `GET /v1/screening/evidence-export` returns a CSV of every enrolled vendor's first and last screen.
 
 ## Submitted financial statements
 
