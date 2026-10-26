@@ -453,6 +453,7 @@ A site is one place the supplier operates, at whatever precision is known: a ful
 <ResponseField name="tax_region" type="string | null">Derived from the address unless the API sets it: the country code, or the country and subdivision (`US-NY`) in the United States, Canada, India and Brazil. The supplier is never asked for it.</ResponseField>
 <ResponseField name="po_emails" type="string[]">Where purchase orders for this address are emailed.</ResponseField>
 <ResponseField name="remittance_emails" type="string[]">Where remittance advice for this address is emailed.</ResponseField>
+<ResponseField name="po_language" type="string | null">The language purchase orders for this address are sent in, as a lowercase ISO 639-1 code.</ResponseField>
 <ResponseField name="is_primary" type="boolean">Whether this is the vendor's primary site. A vendor has at most one.</ResponseField>
 <ResponseField name="latitude" type="number | null">Filled in by Coverbase after the site is saved, from the address. `null` until then, and always `null` for a country-only site.</ResponseField>
 <ResponseField name="longitude" type="number | null">As `latitude`.</ResponseField>
@@ -606,6 +607,7 @@ Adds a site and returns `201 Created` with the [site object](#the-site-object). 
 <ParamField body="tax_region" type="string">Up to 60 characters. Your finance system's own tax region for this address. Omit it and Coverbase derives one from the address.</ParamField>
 <ParamField body="po_emails" type="string[]">Up to 20 addresses where purchase orders for this address are emailed. A malformed address is refused with `422`. A primary site with an address line and no PO email saves with an `email.missing` warning, except in China, where no PO email is asked for.</ParamField>
 <ParamField body="remittance_emails" type="string[]">Up to 20 addresses where remittance advice for this address is emailed. A site whose `address_purpose` is `remittance` and has none saves with an `email.missing` warning.</ParamField>
+<ParamField body="po_language" type="string">The language purchase orders for this address are sent in, as an ISO 639-1 code: `ar`, `zh`, `hr`, `cs`, `da`, `nl`, `en`, `fi`, `fr`, `de`, `el`, `he`, `hu`, `id`, `it`, `ja`, `ko`, `ms`, `no`, `pl`, `pt`, `ro`, `ru`, `sk`, `sl`, `es`, `sv`, `th`, `tr`, `uk`, `vi`. Case is ignored. Any other value is refused with `422` and a `field.enum` result on `po_language`.</ParamField>
 <ParamField body="is_primary" type="boolean" default="false">`true` makes this the vendor's primary site and demotes the current one.</ParamField>
 <ParamField body="external_id" type="string">Up to 120 characters. Your finance system's id for this address. On an update, omitting it keeps the stored id and an empty string clears it.</ParamField>
 <ParamField body="is_inactive" type="boolean">`true` makes the address inactive and `false` makes it active again. Omit it to leave the address as it is. The primary address cannot be made inactive.</ParamField>
@@ -654,6 +656,7 @@ Treat it as a replacement of the address rather than a partial update:
 - Omitting an address line, `city`, `state_province`, `county`, `postal_code`, `location_code`, `csp_remit_to_id` or `description` clears it. Send every value you want to keep.
 - Omitting `site_name`, `site_context` or `address_purpose` keeps the stored value. An empty `site_name` clears it; the other two cannot be cleared here.
 - Omitting `po_emails` or `remittance_emails` keeps the stored list. Send `[]` to clear one.
+- Omitting `po_language` keeps the stored language. Send `""` or `null` to clear it.
 - Omitting `tax_region` derives it from the address again.
 - `is_primary: true` makes the site primary. `false` does not demote it; mark another site primary instead.
 - Changing the address (other than `address_line2`) clears `latitude` and `longitude` until Coverbase places the new one.
