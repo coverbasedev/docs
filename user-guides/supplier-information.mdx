@@ -17,7 +17,7 @@ Onboarding a supplier eventually comes down to a handful of facts you have to ge
 This part of Coverbase is built around one idea: the country decides the questions. A supplier banking in the United Kingdom is asked for a sort code and an eight digit account number. A supplier banking in Japan is asked for a bank code, a branch code and a deposit type. Nobody is asked for a field their country does not use, and nothing is accepted that the country's own format rules reject.
 
 <Note>
-  This is a gated feature. If you do not see a **Know-Your-Vendor** tab on your vendors, it has not been switched on for your organization yet. Ask your Coverbase contact.
+  This is a gated feature. If you do not see a **Vendor Onboarding Information** tab on your vendors (it carries your organization's word for vendor, such as **Supplier Onboarding Information**), it has not been switched on for your organization yet. Ask your Coverbase contact.
 </Note>
 
 ## The short version
@@ -46,7 +46,7 @@ Three places, depending on who you are.
 
 <CardGroup cols={3}>
   <Card title="On the vendor" icon="building">
-    A **Know-Your-Vendor** tab on every vendor. **Onboarding** holds the questionnaire sent to the vendor and its verification checks; **Records on file** holds bank accounts, sites, tax registrations, diversity records, legal entity assignments, pending changes, and the full change history.
+    A **Vendor Onboarding Information** tab on every vendor. **Onboarding** holds the questionnaire sent to the vendor and its verification checks; **Records on file** holds bank accounts, sites, tax registrations, diversity records, legal entity assignments, pending changes, and the full change history.
   </Card>
   <Card title="In a questionnaire" icon="clipboard-list">
     Four question types you can drop into any Know-Your-Vendor questionnaire. This is how suppliers fill things in.
@@ -56,8 +56,8 @@ Three places, depending on who you are.
   </Card>
 </CardGroup>
 
-<Frame caption="Records on file, on a vendor's Know-Your-Vendor tab. Bank accounts are masked to the last four digits until someone with the reveal permission asks to see one.">
-  <img src="/images/user-guides/supplier-know-your-supplier-tab.png" alt="The Records on file section of a vendor's Know-Your-Vendor tab, showing masked bank accounts with validation badges, sites, tax registrations and the change history." />
+<Frame caption="Records on file, on a vendor's Vendor Onboarding Information tab. Bank accounts are masked to the last four digits until someone with the reveal permission asks to see one.">
+  <img src="/images/user-guides/supplier-know-your-supplier-tab.png" alt="The Records on file section of a vendor's Vendor Onboarding Information tab, showing masked bank accounts with validation badges, sites, tax registrations and the change history." />
 </Frame>
 
 ## Asking a supplier: the four question types
@@ -88,6 +88,10 @@ They do not appear on assessments or RFPs, because there is no supplier profile 
 This matters if you export questionnaire responses.
 
 The answer to one of these questions is a **reference, not a payload**. When the supplier submits, the real values go into their own table, encrypted. What lands in the questionnaire response is a row id plus a masked summary: the last four digits, the country, and the validation outcome. Every reader of questionnaire responses, including the CSV export, the follow up spreadsheet round trip and autofill, therefore sees the summary and never the identifier.
+
+A reviewer reading the response sees each saved bank account and tax registration labelled field by field: country, the last four digits of the account number and IBAN, and the validation outcome. A reviewer with **Supplier banking: read** can click **Show full details** to see the whole account, including one still waiting for approval. Each reveal is recorded.
+
+The supplier sees bank identifiers in full while typing them, so they can check what they entered. Once saved, only the last four digits are shown.
 
 <Warning>
   These answers cannot be edited through the follow up spreadsheet. A spreadsheet is a text file that anyone in the chain can edit, and accepting one would let a pasted row point an answer at a record it should not reference. The spreadsheet skips these questions and says so.
@@ -199,7 +203,7 @@ Each of these question types has settings in the questionnaire builder, under th
 
 | Setting | Question | What it does |
 |---|---|---|
-| **Multiple Entries** | Site, tax registration, diversity | Lets the supplier add more than one record, or narrows the question to one. |
+| **Multiple Entries** | Site, tax registration, diversity, bank details | Lets the supplier add more than one record, or narrows the question to one. A bank details question takes several accounts unless narrowed, up to the **Maximum bank accounts** your settings allow. |
 | **Address Type** | Site | **Primary address** makes the answer the supplier's main address. **Remit-to address** makes it the address payments are remitted to. Either one must be a complete address before it saves. **Any location** also accepts a country on its own. |
 | **Exemption Document** | Tax registration | **Suggested** asks for the document behind a tax exemption but lets the supplier submit without it. **Required** blocks the submission until it is attached. |
 
@@ -217,9 +221,10 @@ An address carries the details your finance system needs to pay against it, not 
 
 - **Your finance system's structure.** Line 1 is the building number (up to 16 characters) and line 2 the street name (up to 70). The city (up to 35) is required, the postal code (up to 16) is required everywhere except countries with no postal codes, and the state or province is required in the United States and Canada. The form shows a running character count and says which field is missing before the supplier saves. An address that is only a country is still accepted where the question allows any location.
 - **Purpose.** An address is a **Primary** or a **Remittance** address. An address is a registration address by carrying a tax registration rather than by being marked as one, so a single address can be both where the supplier is registered and where remittance advice goes.
-- **Email lists.** Two lists per address: where purchase orders go, and where remittance advice goes. A malformed address is refused. A missing one is a warning, on the primary address and on any remittance address, and is never asked for in China.
+- **Email lists.** Two lists per address: where purchase orders go, and where remittance advice goes. A primary address question asks for the purchase order list only, and a remit-to address question for the remittance list only. A malformed address is refused. A missing one is a warning, on the primary address and on any remittance address, and is never asked for in China.
+- **PO language.** The language your finance system sends purchase orders in, chosen under the purchase order emails on the primary address. It is optional unless the question makes it required.
 - **Tax registrations.** A tax registration can attach to one address rather than to the supplier as a whole, which is how a supplier registered in more than one region records each registration against the site it belongs to.
-- **Inactive addresses.** An address the supplier no longer uses can be kept on file as inactive rather than deleted, the way your finance system keeps a superseded address. It shows an **Inactive** label on the **Know Your Supplier** tab. The primary address cannot be made inactive until another address takes its place.
+- **Inactive addresses.** An address the supplier no longer uses can be kept on file as inactive rather than deleted, the way your finance system keeps a superseded address. It shows an **Inactive** label on the **Vendor Onboarding Information** tab. The primary address cannot be made inactive until another address takes its place.
 
 ## Registrations a supplier is exempt from
 
@@ -245,7 +250,7 @@ A diversity record takes the same shape as a business classification in Oracle F
 
 Use an update request when a supplier you already hold needs to change something specific: a new bank account, an account in a new currency, a moved address, a new PO email address, or their contacts. It works the same for a supplier you onboarded in Coverbase and one whose details were loaded from your finance system.
 
-1. Open the vendor and go to the **Know Your Vendor** tab.
+1. Open the vendor and go to the **Vendor Onboarding Information** tab.
 2. In **Update Requests**, click **Request update**.
 3. Enter the supplier contact who should receive it.
 4. Tick each section the supplier should update. For each one, choose what you need and write a note:
@@ -289,6 +294,7 @@ The queue is the **Vendor changes** page. Open it from the **Vendor changes** bu
 Two things enforce the control:
 
 - **Submitting and approving are different permissions.** Someone who can enter a change cannot necessarily approve it. That includes your own staff entering details on a supplier's behalf from the vendor tab.
+- **Approving the form approves its bank changes.** When a reviewer with **Supplier banking: approve** approves or rejects a questionnaire, the bank changes the supplier entered in it are approved or rejected with it. A reviewer without that permission leaves them in the queue, and a change that would take the supplier past your bank account limit stays there too.
 - **The change history is append only.** Every supplier visible change writes an event, and nothing updates or deletes one. That history is the same source the API delta feed and the webhook payloads read from, so what a reviewer sees and what your finance system received cannot drift apart.
 
 ## Who can see and do what
