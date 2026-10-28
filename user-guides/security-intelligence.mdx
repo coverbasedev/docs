@@ -162,6 +162,59 @@ Peers and their ratings are shared research. Every organization that buys the sa
 
 **Export PDF** includes the comparison: the chart with the figures beside it, then a tile for every company.
 
+## Breach and ransomware risk
+
+Two indicators sit under **Next steps**: **Ransomware Risk** and **Breach Risk**. Each reads **Low**, **Elevated**, **High** or **Severe**, with a score out of 100. The same two levels appear as chips under the rating.
+
+Each indicator lists **What raises it**, one row per fact the scan observed, with the points that fact adds. The points add up to the score, so you can check the arithmetic yourself. Click a row to jump to the section that holds the evidence.
+
+| Raises ransomware risk | Raises breach risk |
+| --- | --- |
+| Remote access open to the internet (RDP, SMB, VNC, Telnet, FTP) | A database open to the internet |
+| A vulnerability used in ransomware campaigns, or one attackers exploit now | A breach in the last 12 months, or the last 3 years |
+| A vulnerability likely to be exploited soon | A breach that exposed passwords |
+| Forged email from their domain is not rejected | A vulnerability attackers exploit now |
+| A breach that exposed passwords | Weaknesses left open for more than 6 months |
+| A lookalike domain that can receive mail | Servers on outdated or broken TLS |
+| Servers on outdated or broken TLS | Weak web security headers |
+| Flagged as malicious by reputation feeds | Flagged as malicious by reputation feeds |
+
+Under the rows, **Not seen** lists the checks that ran and found nothing. **Not measured** lists the checks whose source did not run, for example remote access when your organization has not connected Shodan or Censys. A check that was not measured is not a clean result.
+
+<Note>
+  The indicators help you compare vendors and spot change. They are not a probability that a vendor will be attacked. The **Exploitation index** beside the heading is the forward-looking score both indicators draw on.
+</Note>
+
+## Hosting locations
+
+**Hosting Locations** shows where the servers behind the vendor's domains are, one row per country. Expand a row to see each host, its address, and how it was placed.
+
+- **Cloud region.** A host on Amazon Web Services or Google Cloud is placed in the region the provider publishes for its address, for example eu-central-1 in Germany.
+- **Address registry.** Any other host is placed in the country its address block is registered to. That is usually, but not always, where the server is.
+- **Global edge network.** A host behind a content delivery network such as Cloudflare or Fastly answers from the location nearest each visitor, so it has no single country.
+
+When your organization has set approved hosting countries, the heading shows them, and a country outside them is marked **Outside approved** and listed first. **Next steps** then asks the vendor what data they hold there. An administrator sets the countries under **Configuration** > **Security Rating**, or from **Set approved countries** on this section.
+
+<Warning>
+  A host's location says where it answers from, not where your data is stored. Use it to ask the right question, and confirm with the vendor before you rely on it for a data transfer decision.
+</Warning>
+
+## Certifications on file
+
+When your workspace has the certificate vault, **Certifications on File** lists the vendor's certificates, such as ISO 27001 or a SOC 2 report, with their expiry. An expired or expiring certificate is marked. **Open documents** goes to the vendor's documents.
+
+A current certification and a strong rating answer different questions. Read them together: a clean certificate over an exposed estate is worth a question.
+
+## How much to trust the rating
+
+The chip beside the risk levels reads **Confidence: High**, **Moderate** or **Low**. Click it to see why:
+
+- how much of the rating was measured, and how much was measured directly on the vendor's servers rather than read from an outside feed
+- how old the scan is
+- how many assets your team has disputed, and how many are not yet reviewed
+
+Confidence drops when part of the model had no source, when most of the evidence came from outside feeds, or when the scan is more than two weeks old. A low-confidence rating is a starting point for questions, not a conclusion.
+
 ## The rating is a floor, not a verdict
 
 Everything measured here is visible from the public internet. That is both its strength and its limit.
@@ -232,6 +285,18 @@ Transport checks run per host rather than only against the vendor's main domain,
 <Frame caption="Each attributed host handshaken separately, with its own chain, protocol and expiry.">
   <img src="/images/user-guides/vendor-intelligence-tls-by-host.png" alt="A certificates-by-host table listing two hosts with their trusted-chain status, negotiated protocol, days to expiry and issuer." />
 </Frame>
+
+## Related domains
+
+The scan rates the vendor's domain and its subdomains. A company it acquired, a regional brand, or a separate mail domain is outside that, so **Related Domains** lists the domains the scan saw tied to the vendor:
+
+- a domain on the same certificate as one of the vendor's hosts
+- a domain the vendor's website redirects to
+- a domain carrying the vendor's name in its DNS, such as its name servers or mail servers
+
+For each one, click **Include** to add it to the estate and rate it with the rest, or **Not theirs** to record that it belongs to someone else. Either way it leaves the list. **Include** starts a rescan; **Not theirs** does not.
+
+When the vendor's corporate group lists companies with no domain in the estate, they are named under the list. Use **Add a domain** to add one by hand.
 
 ## Attributed estate
 
@@ -319,6 +384,10 @@ Before an MCP client sends a write, it shows you the change and waits for you to
 
 | Symptom | Fix |
 | --- | --- |
+| A host is marked Outside approved but the vendor says the data stays in your country | The host may serve content from that country without storing your data there. Ask the vendor which data that host holds, and record their answer. |
+| Hosting Locations shows no Status column | Your organization has not set approved hosting countries. An administrator sets them under **Configuration** > **Security Rating**. |
+| An indicator reads Low but lists checks as Not measured | Those checks did not run. Connect the missing source, such as Shodan, Censys or Have I Been Pwned, under **Configuration** > **External Integrations**. |
+| A related domain belongs to someone else | Click **Not theirs**. It is recorded as disputed and never suggested again. |
 | The page says not yet scanned | The vendor has no website on file, or the first scan has not run. Add a website if it is missing. |
 | The rating is for the wrong domain | Click **Scan a different domain** beside the verdict and point the scan at the vendor's real domain. |
 | The whole page describes a different company | Open the actions menu (**...**), pick **Correct the AI**, choose **This is a different company**, and say why under **What should the model know?**. Give the right website if you know it. The tab is researched again straight away. |
@@ -347,5 +416,8 @@ Before an MCP client sends a write, it shows you the change and waits for you to
   </Card>
   <Card title="Zero Touch Assessments" icon="bolt" href="/user-guides/zero-touch-assessments">
     Security posture as a scored component.
+  </Card>
+  <Card title="Your security rating" icon="shield-check" href="/user-guides/security-rating">
+    The same rating pointed at your own organization.
   </Card>
 </CardGroup>
