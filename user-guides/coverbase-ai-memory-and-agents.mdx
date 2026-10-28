@@ -1,0 +1,123 @@
+---
+title: "Coverbase AI: memory, permissions and standing agents"
+description: "Review what Coverbase AI remembers from your corrections, choose which changes it may make without asking, and set up agents that run on a schedule or when something happens."
+icon: "gear"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Configuration > Coverbase AI Memory** and **Configuration > Coverbase AI Agents**. For starting and steering a run, see [Working with Coverbase AI](/user-guides/coverbase-ai).
+</Info>
+
+Coverbase AI learns from the corrections you make, and you decide how much it may do without you. Both live under **Configuration**.
+
+The mistake people make most often is correcting the same thing run after run. Say it once as a standing instruction, such as "From now on, always attach the SOC 2 report to an intake request", and every later run reads it.
+
+## Memory
+
+Open **Configuration > Coverbase AI Memory**. Each row is one preference, with where it came from and how many runs used it.
+
+### Where preferences come from
+
+| Source | When it is added |
+| --- | --- |
+| From a risk review | You moved an inherent risk level and said why |
+| From a declined checkpoint | You declined a step the run asked about |
+| From a change you kept as it was | You kept a record as it was instead of applying a proposed change |
+| From an instruction to a run | Your instruction started with "always", "never" or "from now on" |
+| Added here | You typed it into **Tell Coverbase AI something to remember** |
+| From the guided setup | It came from your organization's setup |
+
+To add one by hand, type it into **Tell Coverbase AI something to remember** and click **Add to memory**.
+
+### Choose where a preference applies
+
+Set **Applies To** on a preference to limit it to one kind of run, such as **Onboarding a vendor**, **Reviewing assessments** or **Radar monitoring**. **Every run** applies it everywhere.
+
+### Edit, turn off or forget
+
+- **Edit** changes the wording.
+- Turn off **Use this preference** to stop runs reading it while keeping it for later.
+- **Delete** forgets it. No run reads it again, though a later correction can teach it again.
+
+A run's report lists the preferences that changed what it did under **Because you told me**, with a link back here.
+
+## What Coverbase AI may do on its own
+
+Under **What Coverbase AI May Do on Its Own** on the same page, each kind of change has a policy. It applies when a run is set to **Don't stop to ask**:
+
+| Policy | What happens |
+| --- | --- |
+| Applies on its own | The run makes the change without asking |
+| Always asks | The run stops and asks, even when told not to |
+| Off | The run never makes this change |
+
+Archiving a record, submitting an intake request and anything else that cannot be undone always ask, and their policy cannot be changed.
+
+## Standing agents
+
+A standing agent keeps working without being asked: on a schedule, or when something happens in Coverbase. Open **Configuration > Coverbase AI Agents**.
+
+### Add an agent
+
+Click **New agent**, or click **Add** on a template under **Templates**. A new agent starts turned off.
+
+| Field | What it sets |
+| --- | --- |
+| Name | What the agent is called in lists and notifications |
+| Standing Instructions | The job, in your own words, such as "Clear the Radar alert queue and ask me only about the alerts that change a vendor's residual risk" |
+| Owner | The person or group it acts as, with their permissions. A group's agent asks whoever is on duty under the group's assignment rules. Leave it empty to own it yourself. |
+| Escalate After (Minutes) | When nobody answers in time, the question moves to the next person on duty |
+| Schedule | Every day, every weekday, every Monday, the 1st of every month, or a custom schedule, at a time and timezone you choose |
+| Starts When | Events that start a run, each with the record it is about |
+| Playbooks | The playbooks it may use, or any playbook |
+| Approval | **Ask before writes**, or **Don't stop to ask** |
+| Runs per Day and Spend Cap per Day | Daily limits. Caps reset at midnight in the agent's timezone. |
+| Quiet From and Quiet Until | Hours when it starts no scheduled run. Anything it would tell you waits until they end. |
+
+**Starts When** can be:
+
+- A Radar alert comes in
+- A finding goes overdue
+- A contract's notice date comes due
+- An intake request is submitted
+- An assessment finishes
+
+Click **Create agent**, check the settings, then turn it on.
+
+### Manage agents
+
+The list shows each agent's runs and spend today. From an agent's actions menu you can **Edit**, **Pause**, **Resume** or **Delete** it. Deleting an agent stops it starting runs, and the runs it already started stay with the people they ran for. **View in Agent Ledger** shows everything it did.
+
+When a scheduled run did not start, the row says why, such as "it fell in quiet hours" or "it had reached its spend cap for the day".
+
+**Pause every agent** stops all of them at once. Nothing starts, and live runs stop before their next step, until an admin turns it off.
+
+## Troubleshooting
+
+| Problem | What to do |
+| --- | --- |
+| A run ignored a preference | Check that it is turned on and that **Applies To** covers that kind of run. |
+| A run keeps doing something you corrected | Add it as a preference that starts with "always" or "never", or set the change's policy to **Always asks**. |
+| An agent never runs | Check that it is turned on, that it has a schedule or an event under **Starts When**, and that every agent is not paused. |
+| An agent stopped partway through the day | It reached **Runs per Day** or **Spend Cap per Day**. The row says which. |
+| Nobody answered an agent's question | Set **Escalate After** so it moves to the next person on duty. |
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Working with Coverbase AI" icon="sparkles" href="/user-guides/coverbase-ai">
+    Start a run, answer what it asks, steer it and read the report.
+  </Card>
+
+  <Card title="Files and records" icon="paperclip" href="/user-guides/coverbase-ai-files-and-records">
+    Attach documents and point a run at the right records.
+  </Card>
+
+  <Card title="Agent Ledger" icon="book-bookmark" href="/user-guides/agent-ledger">
+    Every action an agent took, and who decided.
+  </Card>
+</CardGroup>
