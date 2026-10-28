@@ -1,0 +1,194 @@
+---
+title: "Bank ownership check guide"
+description: "How Coverbase asks iPiD whether a supplier's new bank account exists and is held in the name given, before anyone approves it, and how to read and act on the answer."
+icon: "shield-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It builds on the bank change review in the [Supplier information guide](/user-guides/supplier-information#review-the-part-that-stops-fraud). For the fields each country collects, see [Supplier countries](/user-guides/supplier-countries/overview).
+</Info>
+
+The review queue stops a bank change from taking effect until someone approves it. The ownership check gives that reviewer something to approve against: before anyone decides, Coverbase asks iPiD whether the account exists and whether the bank holds it under the name the change gave.
+
+The mistake people most often make is reading **Name matches** as proof the supplier owns the account. The bank compares the account against the account name sent with the change, which the person submitting it typed. Check that this name is the supplier's own legal name before you rely on the match.
+
+<Note>
+  This is a gated feature, and it needs your own iPiD account. If you do not see the **iPiD** tile under **External Integrations**, ask your Coverbase contact.
+</Note>
+
+## The short version
+
+<Steps>
+  <Step title="Connect iPiD">
+    An admin saves your iPiD API key and customer ID under **External Integrations**, and tests the connection.
+  </Step>
+  <Step title="Choose when checks run">
+    In **Know Your Vendor settings**, switch on **Check new bank details**, then pick **Automatically** or **When a reviewer asks**. Automatic checks can be capped per supplier.
+  </Step>
+  <Step title="Read the answer on the change">
+    Every pending bank change shows an **Ownership Check** row with iPiD's answer. The people who hear about bank changes get it by email too.
+  </Step>
+  <Step title="Decide">
+    Approve or reject as usual. A flagged account adds a warning to the approval dialog. It never approves or rejects anything by itself.
+  </Step>
+</Steps>
+
+## Connect your iPiD account
+
+1. Ask your iPiD representative for an API key and customer ID. iPiD issues sandbox keys first and live keys later.
+2. Ask Coverbase support for the addresses Coverbase calls iPiD from, and send them to your iPiD representative. iPiD only accepts requests from addresses it has allowlisted, so a key that works elsewhere fails here until it does.
+3. In Coverbase, go to **External Integrations** and open the **iPiD** tile, under **Financial Crime & AML**.
+4. Paste the **API Key** and **Customer ID**, pick an **Environment**, and click **Save credentials**.
+5. Click **Test connection**. **Connected.** means iPiD accepted the key and customer ID.
+
+**Sandbox** runs against iPiD's test data, so its answers say nothing about real accounts. Switch to **Production** once iPiD issues live keys.
+
+The API key is write only. Once saved, the field shows that a key is stored but never shows the key itself. Leave it blank when you change only the customer ID or environment, and the saved key is kept.
+
+**Delete configuration** removes the credentials. Checks stop until a new key is saved. Results already on pending changes stay as they are.
+
+## Choose when checks run
+
+The **Bank Ownership Check** card is in **Configuration → Know Your Vendor Settings**, below **Review and approval**.
+
+<Frame caption="The Bank Ownership Check card with automatic checks capped at one a week per supplier.">
+  <img src="/images/user-guides/bank-ownership-check-settings.png" alt="The Bank Ownership Check settings card showing iPiD connected, the Check new bank details switch on, Automatically selected with Automatic Checks per Supplier set to At most once a week, and the When a reviewer asks option." />
+</Frame>
+
+The card stays switched off until iPiD is connected. It also needs **Bank changes need a reviewer** on, because a check runs on a change while it waits for review.
+
+| Setting | What it does |
+| --- | --- |
+| **Check new bank details** | Turns checks on for your organization. Off by default. Suppliers never see a result. |
+| **Automatically** | Runs a check as soon as a bank change reaches the review queue, whichever way it arrived: a questionnaire, the supplier portal, the API, an import, or your own staff. |
+| **When a reviewer asks** | Runs nothing on its own. Each pending change gets a **Check ownership** button. |
+| **Automatic Checks per Supplier** | With **Automatically**, how often one supplier can be checked without anyone asking: **At most once a week**, **once a month** (the default), **once a quarter**, **once a year**, or **No limit**. |
+
+### How the limit counts
+
+The limit caps how many checks Coverbase runs by itself for one supplier, so a supplier who changes their details repeatedly does not run up your iPiD usage. It counts automatic checks for that supplier that ran or are running inside the window, across all of its bank changes.
+
+A change that arrives inside the window is not checked. It shows **Not checked**, with when the last automatic check ran, and a **Check now** button.
+
+<Frame caption="A change that arrived inside the weekly window. A reviewer can still run the check.">
+  <img src="/images/user-guides/bank-ownership-check-limit.png" alt="A pending bank change whose Ownership Check row reads Not checked, explaining the supplier was checked automatically 3 days ago and automatic checks run at most once a week, with a Check now button." />
+</Frame>
+
+A check a reviewer runs is never blocked by the limit and never counts toward it.
+
+## Reading a result
+
+Every pending bank change shows an **Ownership Check** row under its header, on the **Vendor changes** page and on the vendor's own **Vendor Onboarding Information** tab. It sits above the field changes, so a flagged account is the first thing you read.
+
+<Frame caption="A flagged account. The bank holds the account under a different name from the one given with the change.">
+  <img src="/images/user-guides/bank-ownership-check-flagged.png" alt="A pending US bank change for Brightwater Chemicals. The Ownership Check row shows a red Name doesn't match badge and reads: The bank has this account under HOLLOWAY TRADING LLC. Confirm with the supplier before approving." />
+</Frame>
+
+While iPiD answers, the row reads **Checking with iPiD…**. It usually takes under 15 seconds, and the page updates by itself.
+
+| Result | What the bank said | What to do |
+| --- | --- | --- |
+| **Name matches** | The account exists, and the holder's name matches the name given with the change. | Confirm that name is the supplier's legal name, then approve as usual. |
+| **Partial name match** | The holder's name is close but not the same. The row shows the name the bank holds. | Usually a trading name or abbreviation. Confirm with the supplier if it is not obviously theirs. |
+| **Name doesn't match** | The account is held by someone else. The row shows the name when the bank returns it. | Confirm with the supplier through a contact you already hold, not one given in the change. |
+| **Account active** | The account exists and can receive payments, but the bank did not confirm the holder's name. | Treat it as an existence check only. |
+| **Format valid** | The IBAN is well formed. iPiD cannot confirm who holds accounts in that country. | Treat it as a format check only. |
+| **Account not found** | The bank has no open account with this number. | Ask the supplier to recheck the details. |
+| **Account closed or blocked** | The account is closed, dormant or blocked. | Do not pay it. Ask the supplier for current details. |
+| **Bank not recognized** | The bank code does not match a bank iPiD can reach. | Usually a mistyped bank or routing code. |
+| **Invalid account format** | The account number is not valid for this bank. | Usually a mistyped account number. |
+| **Registration ID needed** | The bank needs the supplier's company registration ID, which Coverbase does not send. | Confirm the account with the supplier directly. |
+| **Inconclusive** | The bank could not confirm the details either way. | Confirm with the supplier before approving. |
+| **Not available** | iPiD does not check accounts in this country. | Review the change as you would without a check. |
+| **Missing details** | The change lacks the bank or routing code iPiD needs for this country. | Ask the supplier to add it. |
+| **Check failed** | iPiD did not answer, or rejected your credentials. The row says which. | Click **Try again**. If iPiD rejected the key, an admin updates it under **External Integrations**. |
+
+Green results are not a reason to skip the rest of the review. They answer one question about the account, and the field changes below still need reading.
+
+### Approving a flagged account
+
+When the result is **Name doesn't match**, **Account not found**, **Account closed or blocked**, **Bank not recognized** or **Invalid account format**, clicking **Approve** adds the result to the confirmation dialog.
+
+<Frame caption="The approval dialog repeats the flag. You can still approve once you have confirmed the details.">
+  <img src="/images/user-guides/bank-ownership-check-approve-warning.png" alt="The Approve these payment details dialog with a red callout reading The ownership check flagged this account, followed by the bank's answer, above Cancel and Approve payment details buttons." />
+</Frame>
+
+The warning does not block approval. A supplier sometimes has a good reason, such as a payment agent or a recent rename, and you are the one who confirms it.
+
+## Running a check by hand
+
+With **When a reviewer asks**, each pending change shows **Check ownership**. With **Automatically**, the same button appears as **Check now** on a change the limit held back, and as **Try again** after a failed check.
+
+Running a check needs the **Supplier banking: approve** permission, the same one that decides the change. Clicking twice while a check runs does not start a second one.
+
+A change already decided cannot be checked. Neither can one in a country iPiD does not cover, which shows **Not available** with no button.
+
+## Which countries are covered
+
+iPiD confirms the holder's name for accounts in these 55 countries:
+
+Argentina, Australia, Austria, Bangladesh, Belgium, Brazil, Bulgaria, Chile, China, Colombia, Croatia, Cyprus, Ecuador, Estonia, Ethiopia, Finland, France, Germany, Ghana, Greece, India, Indonesia, Ireland, Italy, Kenya, Latvia, Lithuania, Luxembourg, Malaysia, Malta, Mexico, Nepal, Netherlands, Nigeria, Pakistan, Panama, Peru, Poland, Portugal, Saudi Arabia, Slovakia, Slovenia, South Africa, South Korea, Spain, Tanzania, Thailand, Türkiye, Uganda, United Arab Emirates, United Kingdom, United States, Uruguay, Vietnam and Zambia.
+
+For an account anywhere else that has an IBAN, iPiD checks only that the IBAN is well formed, and the result is **Format valid** at best. Any other account shows **Not available**, and Coverbase sends nothing to iPiD.
+
+In a covered country, an account given without an IBAN also needs its bank identified, by SWIFT/BIC or by the local bank code: the routing number in the United States, the sort code in the United Kingdom, the IFSC in India, the BSB in Australia, or the branch code in Chile, Colombia, Ecuador, Panama, South Africa, South Korea and Zambia. Mexico checks the CLABE and Peru the CCI on their own. A change missing what its country needs shows **Missing details**, and nothing is sent.
+
+## What is sent to iPiD
+
+For each check, Coverbase sends the bank country, the account identifiers from the change (account number or IBAN, and the bank code and SWIFT/BIC where given), and the account holder name. That name is the one given with the change, or the vendor's name when the change gave none.
+
+The request is encrypted to iPiD's own key before it leaves Coverbase. The check keeps iPiD's answer, including any holder name and bank name the bank returned, so the result can be shown on the change and in the email.
+
+## Who is told
+
+When a check finishes, Coverbase sends **Supplier bank ownership check finished**. It goes to the people your organization notifies about bank changes (**Notify these people** in Know Your Vendor settings, or the vendor's relationship owners when that is empty), and to the reviewer who ran the check. The email names the supplier, the result, and the last digits of the account, and links to the vendor's pending changes.
+
+It is on by default. Each person can turn it off under their notification settings. See [Email and notifications](/user-guides/email-notifications#the-notification-catalog).
+
+A check that fails or is held back by the limit sends nothing.
+
+## Who can do what
+
+| Permission | Allows |
+| --- | --- |
+| `integration:read` | See the iPiD connection |
+| `integration:update` | Save, test and delete the iPiD credentials |
+| Supplier banking: approve | Run a check on a pending change, and decide the change |
+
+Turning checks on and choosing when they run is part of **Know Your Vendor Settings**, and needs the same access as the rest of that page.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| The **Bank Ownership Check** card cannot be switched on | Connect iPiD under **External Integrations** first, and switch on **Bank changes need a reviewer**. |
+| **Test connection** fails with a key that works in iPiD's own tools | iPiD has not allowlisted Coverbase. Ask Coverbase support for the addresses and send them to your iPiD representative. |
+| **Test connection** is greyed out | Save the credentials first. The test runs against what is saved, not what is typed. |
+| Results for real accounts look wrong | Check the **Environment** on the iPiD tile. **Sandbox** answers from iPiD's test data. |
+| A new change shows **Not checked** with automatic checks on | The supplier was checked automatically inside your limit's window. Click **Check now**, or loosen **Automatic Checks per Supplier**. |
+| A change shows no **Ownership Check** row | Checks are switched off, iPiD is not connected, or the change has already been decided. |
+| **Check failed** with "iPiD didn't respond" | iPiD was unreachable after Coverbase retried. Click **Try again** later. |
+| **Check failed** with "iPiD rejected the API key" | The key was revoked or has expired. An admin saves a new one under **External Integrations**, then clicks **Try again** on the change. |
+| **Registration ID needed** on a change | The bank needs a company registration ID, which Coverbase does not send. Confirm the account with the supplier. |
+| A reviewer did not get the result email | Check **Notify these people** in Know Your Vendor settings, and the reviewer's own notification settings. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Supplier information guide" icon="building-columns" href="/user-guides/supplier-information">
+    How bank details are collected and validated, and the review queue a check runs in.
+  </Card>
+  <Card title="Supplier countries" icon="globe" href="/user-guides/supplier-countries/overview">
+    The fields, formats and check digits each country uses.
+  </Card>
+  <Card title="Email and notifications" icon="envelope" href="/user-guides/email-notifications">
+    Who receives which email, and how to turn one off.
+  </Card>
+  <Card title="Permissions and roles" icon="user-shield" href="/user-guides/permissions-and-roles">
+    Building a role that can decide bank changes.
+  </Card>
+</CardGroup>
