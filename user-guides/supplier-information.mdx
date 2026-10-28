@@ -297,6 +297,8 @@ Two things enforce the control:
 - **Approving the form approves its bank changes.** When a reviewer with **Supplier banking: approve** approves or rejects a questionnaire, the bank changes the supplier entered in it are approved or rejected with it. A reviewer without that permission leaves them in the queue, and a change that would take the supplier past your bank account limit stays there too.
 - **The change history is append only.** Every supplier visible change writes an event, and nothing updates or deletes one. That history is the same source the API delta feed and the webhook payloads read from, so what a reviewer sees and what your finance system received cannot drift apart.
 
+If your organization has an iPiD account, a pending change can also show whether the bank holds the account under the name given, before anyone decides it. See the [Bank ownership check guide](/user-guides/bank-ownership-check).
+
 ## Who can see and do what
 
 Two permission resources, each split three ways, so a reviewer does not have to also be an editor.
@@ -331,6 +333,9 @@ The **Know Your Vendor** section of **Configuration → Know Your Vendor Setting
 <AccordionGroup>
   <Accordion title="Review and approval" icon="user-check" defaultOpen>
     **Bank changes need a reviewer** is on by default and is the fraud control described above. **Legal entity assignments need approval** is off by default, because an assignment is an administrative fact rather than a payment instruction. **Notify these people** decides who hears about a queued change; leave it empty and the vendor's relationship owners are told instead, so a half configured organization still reaches a human.
+  </Accordion>
+  <Accordion title="Bank ownership check" icon="shield-check">
+    Whether each queued bank change is checked with iPiD, automatically or when a reviewer asks, and how often one supplier can be checked automatically. It needs a connected iPiD account. See the [Bank ownership check guide](/user-guides/bank-ownership-check#choose-when-checks-run).
   </Accordion>
   <Accordion title="What suppliers are asked for" icon="list-check">
     **Collect IBAN** and **Collect country specific extras** apply across every country. Turning an extra off skips fields such as a building society roll number or a branch code that only some countries use. **Diversity certifications** narrows certificate collection to named countries; leave it empty to collect everywhere.
