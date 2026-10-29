@@ -1,0 +1,120 @@
+---
+title: "Engagement scoping"
+description: "Decide how much each question matters for one vendor relationship before the assessment starts: internal context files and notes, per-question criteria, cited recommendations, the scoping chat, and approving the scope."
+icon: "list-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers a vendor's **Internal Context** tab, the **Scoping** view on a control, and an assessment's **Scoping** tab. It sits between [creating the assessment](/user-guides/running-an-assessment#part-2-create-the-assessment) and [collecting the evidence](/user-guides/running-an-assessment#part-3-collect-the-evidence).
+</Info>
+
+The same control library often goes to very different vendors. A payments network and an outside law firm can get the same questions, but the secure development questions matter far less for the law firm. Engagement scoping lets you decide, for one assessment, which questions to emphasize, which to ask as written, which are lower priority and which are out of scope. Coverbase recommends the scope from what your team knows about the relationship, and every reason points to the row, page or intelligence section it relied on.
+
+Your Coverbase representative turns on engagement scoping for your organization. When it is on, every new assessment is scoped first, and it starts only when someone approves the scope.
+
+The mistake people make most often is waiting for evidence collection on an assessment whose scope nobody has approved. The status card shows **Scoping · ready for review** until you click **Approve scope**.
+
+## Step 1: Add internal context to the vendor
+
+Internal context is what your own team knows about the relationship: inherent risk questionnaire (IRQ) answers, application inventory records, architecture documents, notes. The vendor never sees it, and Coverbase never uses it as evidence that the vendor has a control.
+
+1. Open the vendor and choose **Internal Context**.
+2. Click **New context**.
+3. Choose how to add it:
+   - **Upload files**: drop one or more PDF, Word, Excel, CSV or text files, up to 25 MB each. Before you save, each file shows what Coverbase read from it, for example **Coverbase read 19 records from 1 sheet**.
+   - **From vendor documents**: pick a document already on the vendor.
+   - **Write a note**: type the facts in plain text.
+4. Pick what the context **Applies To**: the whole relationship or one service, and its **Source**.
+5. Save.
+
+Coverbase reads a spreadsheet one record per row, including a sheet that holds a title and more than one table. A PDF is read page by page and a Word file section by section. Click a file's title to see the records it read and where each one sits, for example **Row 8**.
+
+An uploaded file also appears on the vendor's **Documents** tab, marked **Internal context, not evidence**. Evidence collection and evaluation never use it.
+
+## Step 2: Set criteria on a question (optional)
+
+A question can carry its own rules for when it matters more or less. Criteria are kept on the control, so they apply to every assessment that asks it.
+
+1. Open **Configuration → Controls**, open the control set, and open the control.
+2. Choose the **Scoping** tab.
+3. Click **Add criterion** and pick one:
+   - **When conditions hold**: choose a relevance and add conditions on a context field, for example **AI Model Usage?** **is empty** **in every record**. The fields come from the workbooks uploaded as internal context. Choose whether **all of these hold** or **any of these holds**.
+   - **When Coverbase judges a sentence true**: choose a relevance and write what must be true, for example "The vendor runs AI models that make or support decisions about our customers."
+4. Click **Save criteria**.
+
+Coverbase checks conditions first and then sentences, in the order listed, and the first that holds decides. A condition on a field holds only when at least one record has that column. Questions that no criterion decides get Coverbase's own recommendation. A relevance set by an assessment plan, or picked by an analyst, still wins over a criterion.
+
+## Step 3: Create the assessment and watch the scope run
+
+Create the assessment as usual. Coverbase opens it on the **Scoping** tab and starts the recommendation at once. A progress bar shows how many questions are scoped. You can leave the page while it runs.
+
+The status card shows a **Scoping** step ahead of **Collecting Documents**. While the scope waits for approval, the assessment stays at **Created** and you cannot move it to another status, except to cancel it.
+
+Coverbase reads:
+
+- the vendor's internal context, notes and files
+- the services in the assessment and their tags
+- the vendor's intelligence: security posture, financial health, compliance and legal, and radar alerts from the last year
+- each question's criteria and your assessment plan's rules
+
+The line under the summary says what was read. Click **Sources** for the list.
+
+## Step 4: Review the recommendation
+
+Each question shows its relevance and why. Under each reason are the sources it cites. Click a source to see the quoted words and where they sit, for example **Row 5** of a workbook, and click **Open file** to see the file.
+
+| Relevance | What happens in the evaluation |
+| --- | --- |
+| **Emphasize** | Held to a higher bar |
+| **Standard** | Evaluated as written |
+| **Lower priority** | A gap is recorded as an observation, or raised as an issue, as set under **Lower Priority Gaps** |
+| **Out of scope** | Left out of the evaluation |
+
+Under each question, the decision source says who decided it: Coverbase, a plan rule, the question's criteria, or an analyst. To change a question, pick another relevance and add a note. Your decision survives a **Regenerate**.
+
+## Step 5: Add context through the chat
+
+Use the box above the questions to tell Coverbase something about the engagement, or to ask why a question landed where it did. For example: "The wallet app never stores full card numbers. Cards are tokenized before they reach the vendor."
+
+When the answer would change the scope, Coverbase shows a proposal: the note it would save as internal context, and each question it would move, with the reason and its sources. Nothing changes until you click **Apply**. **Dismiss** changes nothing.
+
+When you apply a proposal, the note is saved on the vendor's **Internal Context** tab, marked as from the scoping chat. A question you or a workbook already decided is never moved.
+
+## Step 6: Approve the scope
+
+Click **Approve scope**. The dialog lists how many questions are in each relevance and what each one means for the evaluation. Click **Approve and start**. The assessment starts and Coverbase begins collecting evidence.
+
+To change an approved scope, click **Reopen**. The assessment keeps running. Your changes apply from the next evaluation run once you approve the scope again.
+
+## Troubleshooting
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| The assessment stays at **Created** | The scope is not approved. | Open the **Scoping** tab and click **Approve scope**. |
+| **This file has no text Coverbase can read.** | The file is empty, or a PDF is a scan with no text layer. | Upload a text PDF or the source document. |
+| A spreadsheet read fewer records than it has rows | A row with fewer than two filled cells is skipped, and so is a title row above a table. | Expected. Click the file title to see which rows were read. |
+| A condition on a field never holds | No uploaded workbook for this vendor has that column. | Upload the workbook as internal context, then **Regenerate**. |
+| A source shows no quote | The model's quote did not match the source word for word, so Coverbase kept the citation and dropped the quote. | Click the source to open the file at that place. |
+| **Reopen the scope to apply this.** on a proposal | The scope is approved. | Click **Reopen**, then **Apply**. |
+| A question did not move when you applied a proposal | Someone already decided that question, or its relevance changed since the proposal. | Expected. Change it by hand if you still want to. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="How to run an assessment" icon="list-check" href="/user-guides/running-an-assessment">
+    The full lifecycle, from creating the assessment to the export.
+  </Card>
+  <Card title="Admin setup" icon="gear" href="/user-guides/admin-setup">
+    Assessment plans and the rules that set question relevance.
+  </Card>
+  <Card title="The vendor record" icon="building" href="/user-guides/vendor-record">
+    Vendors, services and their documents.
+  </Card>
+  <Card title="Evidence quality and source credibility" icon="shield-check" href="/user-guides/evidence-quality">
+    How the evidence itself is graded.
+  </Card>
+</CardGroup>
