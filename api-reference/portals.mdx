@@ -139,9 +139,9 @@ Rows are ordered by `created_at` descending, with ties broken by `id`, so paging
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
 <ResponseField name="forms_total" type="integer">How many forms the request asks for: each questionnaire, document upload, or other section the recipient sees. A form you have withdrawn from the request is not counted.</ResponseField>
 <ResponseField name="forms_completed" type="integer">How many of those forms the recipient has completed. A form resubmitted after a reopen counts once.</ResponseField>
-<ResponseField name="percent_complete" type="integer | null">`forms_completed` as a whole-number share of `forms_total`, rounded down (1 of 3 is `33`). `null` for a request with no forms.</ResponseField>
+<ResponseField name="percent_complete" type="integer | null">`forms_completed` as a whole-number share of `forms_total`, rounded down (1 of 3 is `33`). `null` for a request with no forms. A form counts only once it is submitted, so a request with two forms reads `0`, `50`, or `100`.</ResponseField>
 
-The three progress fields are the same progress the Coverbase app shows on the request. For how many questions are answered inside each questionnaire, see [Questionnaire progress on a portal](#questionnaire-progress-on-a-portal).
+The three progress fields are the same progress the Coverbase app shows on the request. For how many questions the recipient has answered, across the whole request or per questionnaire, read `questions_percent_complete` from [Questionnaire progress on a portal](#questionnaire-progress-on-a-portal).
 
 ## Retrieve a portal
 
@@ -163,7 +163,7 @@ Returns the [portal object](#portal-object), or `404 portal_not_found`. A portal
   `GET /v1/portals/{portal_id}/questionnaires`
 </ParamField>
 
-Returns one row per questionnaire on the request, with how many of its questions the recipient has answered. Use it when the portal's `percent_complete` is too coarse: a request with one questionnaire reads `0` until the recipient submits, while this endpoint shows the questionnaire filling in question by question.
+Returns one row per questionnaire on the request, with how many of its questions the recipient has answered, and `questions_percent_complete` for the request as a whole. Use it when the portal's `percent_complete` is too coarse: a request with one questionnaire reads `0` until the recipient submits, while this endpoint shows the questionnaire filling in question by question.
 
 ### Path parameters
 
@@ -211,7 +211,10 @@ curl "https://api.coverbase.app/v1/portals/cbsbpt_9c1f0e2a7b3d4e5f8a6b7c8d9e0f1a
   ],
   "questionnaires_total": 2,
   "questionnaires_completed": 1,
-  "percent_complete": 50
+  "percent_complete": 50,
+  "counted_questions_total": 37,
+  "counted_questions_answered": 32,
+  "questions_percent_complete": 86
 }
 ```
 
@@ -224,6 +227,9 @@ Rows follow the order the request asks for its questionnaires.
 <ResponseField name="questionnaires_total" type="integer">How many questionnaires the request asks for.</ResponseField>
 <ResponseField name="questionnaires_completed" type="integer">How many of them the recipient has submitted: the row's `status` is `submitted`, `ready_for_review`, or `approved`.</ResponseField>
 <ResponseField name="percent_complete" type="integer | null">`questionnaires_completed` as a whole-number share of `questionnaires_total`, rounded down. `null` for a request with no questionnaires.</ResponseField>
+<ResponseField name="counted_questions_total" type="integer">The questions progress is measured against, across every questionnaire on the request. Each questionnaire adds its required questions, or all of its questions when none is required. This is the same set each row's `percent_complete` counts.</ResponseField>
+<ResponseField name="counted_questions_answered" type="integer">How many of those questions have an answer.</ResponseField>
+<ResponseField name="questions_percent_complete" type="integer | null">`counted_questions_answered` as a whole-number share of `counted_questions_total`, rounded down (32 of 37 is `86`). This is how far the recipient has got on the whole request. `null` when there is nothing to count.</ResponseField>
 
 ### Questionnaire progress row
 
@@ -231,7 +237,7 @@ Rows follow the order the request asks for its questionnaires.
 <ResponseField name="questionnaire_name" type="string | null">The questionnaire's name as the recipient sees it.</ResponseField>
 <ResponseField name="response_id" type="string | null">The recipient's response (`cbqstr_...`), or `null` until they have opened the questionnaire. Pass it to [`GET /v1/questionnaires/{questionnaire_id}/responses/{response_id}`](/api-reference/questionnaires#get-a-submission) for the answers themselves.</ResponseField>
 <ResponseField name="status" type="string | null">The response's status: `pending`, `processing`, `processing_complete`, `processing_failed`, `submitted`, `ready_for_review`, `approved`, or `rejected`. `null` until the recipient has opened the questionnaire.</ResponseField>
-<ResponseField name="questions_total" type="integer">Questions the recipient sees. Internal-only questions are left out. `0` until the recipient has opened the questionnaire, and for a questionnaire derived from a control set.</ResponseField>
+<ResponseField name="questions_total" type="integer">Questions the recipient sees. Internal-only questions, and questions a show rule currently hides, are left out. A questionnaire derived from a control set counts its controls' questions. `0` until the recipient has opened the questionnaire.</ResponseField>
 <ResponseField name="questions_answered" type="integer">How many of those questions have an answer. See [What counts as answered](#what-counts-as-answered).</ResponseField>
 <ResponseField name="required_total" type="integer">How many of the questions are required.</ResponseField>
 <ResponseField name="required_answered" type="integer">How many required questions have an answer.</ResponseField>
@@ -240,7 +246,11 @@ Rows follow the order the request asks for its questionnaires.
 
 ### What counts as answered
 
-A question is answered by the same rule the recipient's **Submit** button uses: it has a text or numeric value, a selected option, or an attached document where the question requires one. A comment alone does not count unless the question requires a comment. Every question the recipient sees is counted, including one a show rule currently hides, so a questionnaire with conditional questions can read below 100% after the recipient has answered everything visible to them. The recipient can still submit in that case.
+A question is answered by the same rule the recipient's **Submit** button uses: it has a text or numeric value, a selected option, or an attached document where the question requires one. A comment alone does not count unless the question requires a comment.
+
+Only questions the recipient can currently see are counted, the same as the progress bar on their side. A question a show rule hides is left out until an answer reveals it. Because of this, a count can go down: answering a question can reveal more required questions.
+
+If you archive the control set behind a questionnaire while a request is still open, that questionnaire's row reads `0` counts and `null` percent. The other rows and the request totals still answer.
 
 ### Error responses
 
@@ -261,6 +271,9 @@ The common integration: a partner or vendor portal of your own that lists everyt
   </Step>
   <Step title="Show the link">
     Render each row's `display_name`, `due_at`, and `url`. Mark `overdue` rows and `paused` rows so the reader knows which ones need action now.
+  </Step>
+  <Step title="Show how far each request has got">
+    For each open or overdue row, call `GET /v1/portals/{portal_id}/questionnaires` and read `questions_percent_complete`. A low number close to `due_at` is the request to follow up on.
   </Step>
 </Steps>
 
