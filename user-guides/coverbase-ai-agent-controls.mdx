@@ -1,0 +1,270 @@
+---
+title: "Coverbase AI agent: controls, approvals and governance"
+description: "How the Coverbase AI agent (Beta) is controlled: it acts as the person with their permissions, stops at checkpoints, always asks before archives and actions that cannot be undone, follows per-change organization policies, records its changes in the run log and the Agent Ledger, and handles your data under Coverbase's AI governance."
+icon: "shield-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This page is part of the [User Guides](/user-guides/overview) collection and the **Coverbase AI agent (Beta)** set. It covers the controls on a run, **Configuration > Coverbase AI Memory** and the Coverbase AI rows in **Configuration > Agent Ledger**. It sits beside [The Coverbase AI agent (Beta)](/user-guides/coverbase-ai-agent-overview), the [FAQ for approvers and administrators](/user-guides/coverbase-ai-agent-faq) and [Memory, permissions and standing agents](/user-guides/coverbase-ai-memory-and-agents).
+</Info>
+
+<Note>
+  Coverbase AI is in Beta. Your Coverbase team turns it on for your organization.
+</Note>
+
+Coverbase AI is controlled in layers. It can only do what the person who started the run can do. Within that, it stops for approval at checkpoints, always asks before archives and actions that cannot be undone, and follows a policy your admins set for each kind of change. Every change it makes is in the run's log, and changes to records are rows in the Agent Ledger with who asked and who decided.
+
+The mistake people make most often is assuming every change stops for approval. Changes you can undo in the product and that reach nobody, such as tagging a vendor, drafting follow-ups or changing a finding's owner, run without a checkpoint. If your program needs a person to approve one of those, an admin sets it to **Always asks**. See [Organization policies for each change](#organization-policies-for-each-change).
+
+## The layers at a glance
+
+| Layer | What it controls | Who sets it |
+| --- | --- | --- |
+| Turned on for the organization | Whether Coverbase AI exists in your organization at all | Your Coverbase team, during Beta |
+| The person's permissions | What a run can read and change | Your admins, through [roles](/user-guides/permissions-and-roles) |
+| Checkpoints | Which changes stop for approval by default | Built into each change |
+| Always asks | Archives and actions that cannot be undone stop under every setting | Built in. Cannot be changed. |
+| The run's approval setting | Whether the checkpoints that can be undone stop: asks before writes, or **Don't stop to ask** | The person, for each run |
+| **Approve all like this** | Approves one checkpoint and every later call of the same change in that run | The person, at a checkpoint |
+| Organization policies for each change | **Applies on its own**, **Always asks** or **Off**, for each change Coverbase AI can make | Admins, under **Configuration > Coverbase AI Memory** |
+| Stop | Ends a run at its next step | The person |
+| Standing agent limits | Runs per day, spend per day, quiet hours, pausing one or every agent | Admins, under **Configuration > Coverbase AI Agents** |
+| Agent Ledger | The record of the changes to records, with who decided | Recorded automatically. Read and exported by anyone who can read organization settings. |
+
+## Permissions: Coverbase AI acts as you
+
+A run acts as the person who started it, with that person's permissions at that moment. Runs work for active members with the **Admin**, **Member** or **Siloed Member** role. A run started by someone with another role, such as a custom role, **Auxiliary Member** or **Guest**, ends at its first step without doing anything, and so does a run whose person is no longer an active member.
+
+- **Each step checks a permission.** A step that needs a permission you do not hold is refused. The run says so in plain words and carries on with what it may do. It never looks for another way around the refusal.
+- **Assigned records stay assigned.** When your organization enforces roles and permissions and your role reaches only the records assigned to you, a run reaches only those records too. A record outside your reach is refused by its id, so a run cannot name another person's record to get around the page.
+- **Access is checked again on every step.** Each turn rebuilds your identity from your current membership. A record you could open when the run started and have lost access to since is left out of the run's context, and its tools refuse it.
+- **Runs are private.** Only the person who started a run sees it, answers it and steers it. A colleague who opens its link sees that it is not theirs.
+- **Files and records you pick are checked.** A record you add from the **+** menu must be one you can read in your organization. A file you attach must be one you uploaded.
+
+## What Coverbase AI changes without asking
+
+Coverbase AI makes a change without stopping when the change can be undone in the product and reaches nobody outside your team. Examples:
+
+- Opening an intake request and drafting its answers
+- Creating a Radar detector or a workflow, turned off
+- Adding a dashboard from a template, saving a list view for you, exporting a list
+- Updating a vendor's fields, tagging vendors, adding owners, setting a custom field
+- Changing a finding's severity, owner or due date
+- Drafting follow-ups for the vendor, without sending them
+- Adding a note and notifying the colleagues it mentions
+- Acknowledging a Radar alert, moving a signal's status
+- Adding a contract, updating an obligation, attaching evidence to a register entry
+- Marking your own work queue items done
+
+Each one is a row in the Agent Ledger that reads **Awaiting review** until someone decides on it. To make any of them stop for approval, an admin sets it to **Always asks**.
+
+## Checkpoints
+
+A checkpoint is a change that stops the run for your approval before it happens. The run's status becomes **Needs you**, the top bar shows it on every page, and you are notified.
+
+| Kind of change | Examples | Why it asks |
+| --- | --- | --- |
+| Starts work that costs time or a run | Launching an assessment or a Zero Touch run, cloning, rerunning or resuming an assessment, starting child runs | It runs evaluations and spends a run |
+| Acts on its own from then on | Turning a Radar detector or a workflow on, changing what a detector watches, setting which vendors a questionnaire applies to | It will alert or act on people without being asked |
+| Stops something people rely on | Turning a detector or a workflow off | People stop hearing about what it watched |
+| Changes an assessment's result | Marking a control's outcome, marking many controls, correcting the vendor's answer, taking a rerun's result, completing an assessment | The score and the vendor's record change |
+| Assigns work or records a position | Raising a finding, adding an obligation, a register entry, a commitment, a screening disposition, a renewal decision, a review request | People are assigned work, or your organization's position is recorded |
+| Changes what every future assessment uses | Creating a control set, any change to a control set, creating a questionnaire, importing questions, a risk domain | Your organization carries it from then on |
+| Admin configuration | Email and portal templates, tags, statuses, scales, reassessment rules, organization settings, assessment plans | It changes how Coverbase works for everyone |
+| Designs you approve | A custom dashboard or custom charts | You approve the chart list before it is written |
+| Radar triage | Dismissing an alert or alerts like it, opening a case, starting a reassessment, deciding a signal's risk impact | The alert leaves the queue, or people are pulled into an investigation |
+
+### What you can do at a checkpoint
+
+- **Approve.** The change happens and the run carries on. The ledger row reads **Accepted** with your name.
+- **Not now**, or type what to do instead. The change does not happen. The run reads your words and carries on with what it may do. The ledger records a **Rejected** row with what you typed as the note.
+- **Approve all like this.** Approves this change and every later call of the same change in this run, without stopping again. It is offered only on a checkpoint that can be undone and that your admins have not set to **Always asks**. You find it on the run page, on the Coverbase AI pill's card, and on the Slack message. Each later change is recorded as approved by you.
+
+### Questions, batches and the inherent risk review
+
+- **A question** comes as a short menu, never a blank prompt, with the option Coverbase AI would pick marked **Recommended**. You can type your own answer.
+- **A batch** is one pause for many proposed changes, used when the run is in the background. Each item shows its change and reason with a tick box. Untick what you disagree with and click **Apply**, or **Keep all as they are**. A batch holds at most 50 items. An archive or an action that cannot be undone is never part of a batch.
+- **The inherent risk review** shows each risk domain with its proposed level, confidence, rationale and evidence. You agree or disagree per domain, move a level and say why, tick the assessments to run, and confirm. Only the levels you confirm are written to the vendor. The proposal and your changes both stay on the run.
+
+### Answering from outside the app
+
+Only the person who started a run can answer it, wherever they answer from.
+
+| Where | How it works |
+| --- | --- |
+| Email | The needs-you email has one button per option. Each opens a page that asks you to confirm before it answers, because mail scanners open links. A link works once, only for its own question and person, and expires after 7 days. You can also reply to the email in your own words. A reply is taken only from your own address. |
+| Slack | When your organization has Slack connected, a checkpoint reaches you in a direct message with one button per option. A checkpoint that can be undone also gets an **Approve all like this** button. |
+| Microsoft Teams | When your Teams connection has interactive approvals on, a checkpoint with one approve option and one other option comes as an **Approve** and **Decline** card. |
+
+A batch, a question and the inherent risk review are answered in the app.
+
+## What always asks
+
+An archive or an action that cannot be undone stops for approval under every setting. **Don't stop to ask**, **Approve all like this** and organization policies cannot skip it. The checkpoint card says what will be lost, computed from the record and not written by the model, and its button carries the verb in the destructive style.
+
+| Always asks | What happens |
+| --- | --- |
+| Archiving a vendor | The vendor leaves every list with its assessments, documents and obligations |
+| Archiving an assessment, or many at once | It leaves every list with its evaluations and the findings only it holds |
+| Archiving an intake request, a control set, a workflow, a Radar detector, a dashboard, a finding, a vendor document, a questionnaire template, a portal template, a tag or a scale level | It leaves every list and report |
+| Merging duplicate vendors or services | The duplicate's records move to the one kept, and the duplicate is archived |
+| Submitting an intake request | It lands in your reviewers' queue |
+| Approving, declining or sending back an intake request | The decision, or the requester is notified or emailed |
+| Sending a request, a reminder, follow-ups or an email to a vendor | The vendor is emailed. It cannot be unsent. |
+| Emailing a vendor from a Radar case | The vendor is emailed. It cannot be unsent. |
+| Inviting a person to a vendor's supplier portal | The person gets access |
+| Reopening a submitted vendor request | The vendor can change what they submitted |
+| Launching an assessment plan that contacts the vendor | The vendor is asked for documents or sent the questionnaire |
+
+The report of every run ends with **What cannot be undone**: each action of this kind the run took. Read it first after a background run.
+
+## Don't stop to ask
+
+**Don't stop to ask** lets a run apply every checkpoint that can be undone without stopping. It is for batch work you have already decided to delegate.
+
+- Turn it on in the composer before you start, or on the run page of a live run. On a live run it applies from the next checkpoint. Turned on while the run waits on a checkpoint that can be undone, it approves that one too.
+- It never skips an archive or an action that cannot be undone, and never skips a change your admins set to **Always asks**. A change set to **Off** is refused either way.
+- Each change it applies reads **Applied under org policy** in the Agent Ledger.
+- A standing agent has the same setting, **Ask before writes** or **Don't stop to ask**.
+
+## Organization policies for each change
+
+Admins choose, for each change Coverbase AI can make, what happens. Open **Configuration > Coverbase AI Memory** and find **What Coverbase AI May Do on Its Own**. Changing a policy needs a role that can change organization settings.
+
+| Policy | What happens |
+| --- | --- |
+| **Applies on its own** (the default) | A checkpoint stops unless the run is set to **Don't stop to ask** or you chose **Approve all like this**. A change without a checkpoint runs. |
+| **Always asks** | The run stops and asks before this change under every setting, including changes that have no checkpoint of their own. **Approve all like this** is not offered. |
+| **Off** | The run never makes this change. It says so, puts it in the report's to-dos for the person, and carries on. |
+
+Archives and actions that cannot be undone show as **Always asks** and cannot be changed. Reads take no policy. A policy applies to every run in your organization, including standing agents.
+
+## Changes Coverbase AI never makes
+
+Some changes are outside Coverbase AI whatever the setting:
+
+- **Access and identity.** It never changes roles, permissions, members, sign-in, SSO, IP allowlists, API keys or billing. It refuses in one sentence and points to **Settings > Organization**.
+- **Accepting risk on its own.** It never closes a finding or accepts its risk, never sets a register entry's treatment to accept, and never accepts risk on a declined commitment. It records a control as risk accepted only when you or the evidence says your organization already accepted it, and that is a checkpoint.
+- **Approving on its own.** It approves an intake request, completes an assessment or records a Zero Touch decision only when you ask, and each of those is a checkpoint. Approving an intake request always asks. A Zero Touch decision never changes the vendor's status.
+- **Vendor responses.** It never edits a vendor's questionnaire response. A correction is recorded as your reviewer edit, and the vendor's own answer is kept.
+- **Other people's settings.** It changes your own notification settings only.
+- **Hard deletes.** It never deletes a record. It archives, and an admin restores an archived record from the archived view.
+- **Records you did not name.** It archives or turns off only the record you named, never a related one, and never more than you named. When a name matches several records, it asks which.
+- **Modules not covered in Beta.** RFPs, Inspect, risk scenarios, sending a contract for signature and allowlisting a screening match.
+
+## Stopping and steering a run
+
+- **Stop** on the run page or the top bar card ends the run. A run waiting on you stops at once. A working run stops within a few seconds, at its next step. Nothing more is written after that. What it already changed stays, and the plan shows which steps finished.
+- **Tell Coverbase AI to change course**, the box under a run, redirects it. A message while it waits on a checkpoint withdraws the checkpoint: the change is not made.
+- A finished run, including a stopped or failed one, takes a follow-up message and picks up with what it already knows.
+
+## Undoing a change
+
+- **Changes you can undo** are undone the way you would undo your own edit: on the record's page. The report and the Agent Ledger link every record the run changed. There is no single button that reverses a whole run.
+- **Archives** are restored by an admin from the record's archived view.
+- **Actions that cannot be undone** asked first, and the report lists them under **What cannot be undone**.
+- **Mistakes teach.** When you decline a checkpoint, untick a batch item or move a risk level and say why, Coverbase AI keeps a preference that later runs read. See [Memory](/user-guides/coverbase-ai-memory-and-agents#memory).
+
+### When a run is interrupted
+
+A run that loses its server mid-step picks up where it stopped, and the run's log says "Picked back up after an interruption." It never repeats a change it already made: each change is checked against the Agent Ledger, and a change already recorded returns its earlier result. When nothing can prove whether a change landed, the run refuses to make it again and says in its report what to check and redo by hand. A run interrupted twice ends with a report saying so, and you are told.
+
+## The Agent Ledger
+
+Coverbase AI records the changes it makes to records in the [Agent Ledger](/user-guides/agent-ledger) under the agent **Coverbase AI**. Open **Configuration > Agent Ledger**.
+
+| Row | When | Human Decision |
+| --- | --- | --- |
+| **Changed a record for a Coverbase AI run** | Each change, with the record it touched | **Accepted** by the person when they approved it at a checkpoint or in a batch. **Applied under org policy** under **Don't stop to ask**. **Awaiting review** for a change without a checkpoint, so a reviewer can accept or reject it. |
+| A declined change | Each checkpoint you declined and each batch item you unticked | **Rejected** by the person, with what they typed as the note |
+| **Ran a stretch of a Coverbase AI run** | Each turn of the run, with the model calls behind it | None |
+
+- Every row names the run and, for a standing agent, the agent. Filter the ledger to one run from the run page's **Agent Ledger** link, or to one agent with **View in Agent Ledger**.
+- A change row is written in the same transaction as the change it records.
+- A few actions are recorded in the run's log and report rather than as a change row: those that hand work to a background job (launching an assessment from a plan, rerunning one control, importing questionnaire questions, matching an intake request's vendor, starting child runs) and two that touch only your own view (saving a personal list view, marking your notifications read).
+- Reading the ledger needs a role that can read organization settings. The ledger links back to a run only for the person who ran it, because a run page is private.
+- **Export filtered for audit** downloads up to 50,000 rows as a CSV.
+- Deleting a run does not delete its ledger rows.
+
+## Runs, history and exports
+
+| Action | What happens |
+| --- | --- |
+| **Export** on a run | Downloads the whole run as a file: the instruction, every step, what you answered and the report |
+| **Copy report** | Copies the report as text |
+| **Archive** a run | Moves a finished run out of your list. Stop a live run first. |
+| **Restore** | Brings an archived run back |
+| **Delete permanently** | Deletes an archived run and everything it said. Records it created stay, and its Agent Ledger rows stay. It cannot be undone. |
+
+## Background runs and notifications
+
+A run started in the background, from chat, from MCP or by a standing agent works without your browser. You are told when it needs you and when it is done.
+
+| Notification | When | Default |
+| --- | --- | --- |
+| Needs you | A checkpoint, a question, a batch, the inherent risk review, or a failure | In-app and email on |
+| Done | The report is ready | In-app and email on |
+
+A checkpoint, a question, a batch and the inherent risk review are sent at high priority, so they reach you at once even when your email is set to a daily digest. To get them in your digest instead, turn off **Send urgent notifications immediately** under your notification settings. That setting covers every urgent notification, not only Coverbase AI's.
+
+When a run is about one vendor, each to-do in its report becomes an item in your [work queue](/user-guides/analyst-reviewer).
+
+## Standing agents
+
+A standing agent starts runs on a schedule or when something happens. It acts as its owner, or as the person on duty in its group, with the same checkpoints, policies and ledger rows. Admins set it up under **Configuration > Coverbase AI Agents** with limits that ordinary runs do not have:
+
+- **Playbooks** it may use
+- **Runs per Day** and **Spend Cap per Day**
+- **Quiet From** and **Quiet Until**, which hold scheduled starts and notifications
+- **Escalate After (Minutes)**, which moves an unanswered question to the next person on duty
+- **Pause** on one agent, and **Pause every agent** for all of them. Paused, nothing starts, and live runs stop before their next step.
+
+A new agent starts turned off. See [Standing agents](/user-guides/coverbase-ai-memory-and-agents#standing-agents).
+
+## Data handling
+
+These statements are consistent with Coverbase's [AI governance](/security/ai-governance) and [Data protection](/security/data-protection) pages, which apply to Coverbase AI as to every AI feature.
+
+| Topic | How Coverbase AI handles it |
+| --- | --- |
+| Model | Anthropic Claude Opus 5.5 through AWS Bedrock in Coverbase's AWS account. When Bedrock reports no capacity for it, the run falls back to Claude Sonnet 5.5. |
+| Where inference runs | Bedrock's cross-region inference can serve a request from an AWS region other than the one Coverbase runs in. See [Data residency](/security/data-protection#data-residency). |
+| Training | Customer data sent to the models is not used to train them. |
+| Model logs | Bedrock model-invocation logging records metadata only (model, timing, token counts), not prompt or response text. |
+| What it reads | Records you can read, the record you started from, the records you pick, files you attach, your organization's Coverbase AI memory, and public web results when a question reaches outside Coverbase. |
+| Web search | Search queries go to an external web search provider (Tavily). A result counts only when it is about the vendor or subject in question, and the source is named. |
+| Files you attach | Each file is uploaded to your organization as a document you uploaded, and the run reads its text. Text inside a file is treated as information, not as instructions, so a file that says "archive this vendor" does not make the run archive anything. |
+| Redaction | When **Redact personal data before model calls** is on, it applies to Coverbase AI's model calls. See [Redacting personal data](/security/ai-governance#redacting-personal-data-before-model-calls). |
+| Tenant isolation | Runs, their logs and memory belong to your organization and are enforced like every other record. See [Tenant isolation](/security/data-protection#tenant-isolation). |
+| Memory | Preferences are kept for your organization only, in plain words built from your corrections, and admins edit, turn off or delete them. |
+| Email | Emails to vendors and requesters go through the same sending path as the product's pages, from your organization's address. |
+
+## Troubleshooting
+
+| Problem | What to do |
+| --- | --- |
+| A run made a change nobody approved | It was a change you can undo with no checkpoint. Find it in the ledger (**Awaiting review**), undo it on the record if needed, and set that change to **Always asks**. |
+| **Approve all like this** is missing | The checkpoint is an archive, an action that cannot be undone, or a change your admins set to **Always asks**. |
+| **Don't stop to ask** still stopped | The change is an archive, an action that cannot be undone, or set to **Always asks**. |
+| A run says the organization turned a change off | An admin set it to **Off**. The report lists it as a to-do. |
+| A colleague cannot open your run | Runs are private to the person who started them. Share the report with **Copy report** or **Export**, or point them at the Agent Ledger. |
+| You cannot archive a run | Stop it first. |
+| An email approval link does not work | It was used already, the run moved past that question, or it is more than 7 days old. Answer in the app. |
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="FAQ for approvers and administrators" icon="circle-question" href="/user-guides/coverbase-ai-agent-faq">
+    The questions a risk or security committee asks, answered.
+  </Card>
+  <Card title="Memory, permissions and standing agents" icon="gear" href="/user-guides/coverbase-ai-memory-and-agents">
+    Preferences, per-change policies and agents that run on their own.
+  </Card>
+  <Card title="Agent Ledger" icon="book-bookmark" href="/user-guides/agent-ledger">
+    Read, decide on and export every agent action.
+  </Card>
+</CardGroup>

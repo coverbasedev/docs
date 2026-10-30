@@ -1,0 +1,146 @@
+---
+title: "The Coverbase AI agent (Beta)"
+description: "A white paper for risk, security and compliance approvers: what the Coverbase AI agent is, how a run works from instruction to Agent Ledger, what changes when your program moves from orchestrating assessments to agentic work, and how it stays under your control."
+icon: "file-lines"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This page is part of the [User Guides](/user-guides/overview) collection and opens the **Coverbase AI agent (Beta)** set. It sits beside [How the agent differs from earlier AI features](/user-guides/coverbase-ai-agent-vs-earlier-ai), [What the agent can do](/user-guides/coverbase-ai-agent-capabilities), [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls), the [FAQ for approvers and administrators](/user-guides/coverbase-ai-agent-faq) and [Example walkthroughs](/user-guides/coverbase-ai-agent-walkthroughs). For the day-to-day how-to, see [Working with Coverbase AI](/user-guides/coverbase-ai).
+</Info>
+
+<Note>
+  Coverbase AI is in Beta. Your Coverbase team turns it on for your organization. Until then it does not appear in the product, and no run can start. This page describes the product as of October 30, 2026.
+</Note>
+
+Coverbase AI is an agent that does third-party risk work inside Coverbase for you. You describe a job in your own words. Coverbase AI turns it into a plan, carries out each step with the product's own tools as you and with your permissions, stops for your approval before changes that matter, and hands back a report with a link to every record it touched. Its changes to records are recorded in the [Agent Ledger](/user-guides/agent-ledger).
+
+The mistake people make most often is evaluating Coverbase AI as a chat assistant. It writes to your records, so the question for an approval committee is not "is the answer good" but "which changes may it make, which must it ask about, and where is each one recorded". Those answers are set by controls you configure, described in [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls).
+
+## What Coverbase AI is
+
+Coverbase AI is the place in Coverbase to get something done. The [Ask Coverbase AI chat](/user-guides/coverbase-ai-agent-vs-earlier-ai#ask-coverbase-ai-chat) on a vendor, assessment or Radar signal remains the place to ask a question about one record. Coverbase AI answers questions too, but its purpose is to do the work an analyst does by hand:
+
+- Onboard a vendor from its name: research, intake, screening, the inherent risk questionnaire, the assessment, findings and monitoring.
+- Review an assessment control by control and propose an outcome for each, with the evidence.
+- Build control sets, questionnaires, workflows and dashboards to your description.
+- Triage the Radar alert queue, open cases and draft findings.
+- Change your organization's configuration, such as an email template or a scale level, as an admin would.
+
+Each of these runs through the same code the product's own pages call. When Coverbase AI launches an assessment, the assessment is created exactly as **Launch** on the assessment page creates it. Nothing it does is a shortcut around the product.
+
+## How a run works
+
+A run is one job, from your instruction to its report. It runs on Coverbase's servers, not in your browser, so closing the tab never stops it.
+
+<Steps>
+  <Step title="You give an instruction">
+    You type the job into the composer, such as "Onboard Figma for design collaboration". If you start from a record's page (a vendor, an assessment, a control's evaluation, a contract, a Radar signal), the run knows that record, so "this" and "it" mean that record. You can attach files (up to 100 a message, 50 MB each) and point at records from the **+** menu. See [Files and records](/user-guides/coverbase-ai-files-and-records).
+  </Step>
+  <Step title="Coverbase AI makes a plan">
+    Coverbase AI reads the instruction and picks a playbook: a named job with an ordered plan, the tools it may use and the checkpoints it stops at. When no playbook fits, it writes a custom plan. You see the plan before the first step runs, and you can stop the run at any time. The playbooks are listed in [What the agent can do](/user-guides/coverbase-ai-agent-capabilities#playbooks).
+  </Step>
+  <Step title="Coverbase AI works through the plan with tools">
+    Each step calls tools. A tool is one product action, such as reading a vendor, opening an intake request, marking a control's outcome or creating a Radar detector. Each tool acts as you: a tool that needs a permission you do not hold is refused, and the run says so in its report rather than working around it. The run narrates each step as it goes.
+  </Step>
+  <Step title="Coverbase AI stops at checkpoints">
+    Before a change that reaches another person, costs time or money, or is hard to undo, the run stops and asks. You approve, decline, or type what to do instead. When it needs a decision only you can make, it asks a question with a short menu of options and marks the one it recommends. Archives and anything that cannot be undone stop under every setting. See [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls#checkpoints).
+  </Step>
+  <Step title="You watch it work, or send it to the background">
+    In **Watch it work**, your browser follows the run through the product: it opens the page the run is working on, a cursor moves to each field, and a caption says what it is doing and why. In **Run in background**, nothing moves on your screen and you are notified when it needs you and when it is done. You can switch a live run between the two at any time. The cursor only shows what the run does on the server. It never submits a form for you.
+  </Step>
+  <Step title="Coverbase AI waits when the work takes time">
+    An assessment takes minutes to days. The run records what it waits on, frees its place on the server, and resumes on its own when the assessment finishes. The top bar shows what it is waiting on.
+  </Step>
+  <Step title="Coverbase AI writes a report">
+    Every run ends in a report: what it did in order with a link to each record, what you need to do with a reason each, what it could not do and why, and **What cannot be undone**, which lists every action the run took that has no way back. When the run is about one vendor, each to-do also lands in your [work queue](/user-guides/analyst-reviewer).
+  </Step>
+  <Step title="The Agent Ledger keeps the record">
+    Each change the run made to a record is a row in the Agent Ledger with the record it changed, who asked and who decided. The run's own log (every step, question, answer and change) stays on the run page, and **Export** downloads it as a file.
+  </Step>
+</Steps>
+
+## What changes for your program
+
+Today, most programs use Coverbase to orchestrate assessments. A person moves the work from page to page: opens the intake, reviews the match, launches the assessment, reads the results, raises findings, sets up monitoring. AI helps inside each page, for example by evaluating controls or drafting questionnaire answers, and a person takes each next step.
+
+With Coverbase AI, one instruction covers the whole sequence. The person's role moves from doing each step to approving the steps that matter and reading the report.
+
+| | Orchestration of assessments today | With Coverbase AI |
+| --- | --- | --- |
+| Who moves the work between steps | A person, page by page | Coverbase AI, following a plan you can read |
+| Where AI acts | Inside one feature: an evaluation, a draft answer, a summary | Across features: a run reads, writes and chains steps |
+| What AI writes | Its own output, such as a draft answer or an evaluation, for a person to review | Records in your organization, as the person who started the run |
+| Who approves | The person who takes the next step | The person who started the run, at each checkpoint, or the controls they and your admins set in advance |
+| Where it is recorded | Each feature's own history, and the Agent Ledger for AI outputs | The Agent Ledger for changes to records, plus the run's log and report |
+| How long it runs | While the person works the page | Until the job is done, including waits of days for an assessment |
+| Many records at once | One record at a time, or a bulk action per page | One instruction over a set: "every Critical vendor", up to 50 records a batch or 25 child runs |
+
+This is why a move to Coverbase AI needs its own approval. The question is no longer whether an AI output is accurate before a person accepts it. It is which writes a person delegates, and the controls on the [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls) page answer that.
+
+## Why it matters
+
+- **One instruction replaces a sequence.** Onboarding a vendor touches intake, screening, the inherent risk questionnaire, control sets, the assessment, findings and Radar. Coverbase AI runs them in order and stops only where you need to decide.
+- **Backlogs clear in the background.** "Review every assessment assigned to me that is in review" or "Run Zero Touch on every vendor with no assessment" becomes one run with one list of proposed changes to apply.
+- **Every step is the product's own step.** A record Coverbase AI creates is the same record a person would create on the page, with the same validation, notifications and history.
+- **Corrections carry forward.** When you decline a checkpoint or move a risk level and say why, Coverbase AI keeps it as a preference that later runs read. See [Memory](/user-guides/coverbase-ai-memory-and-agents#memory).
+- **The work can be audited.** A change to a record is a ledger row naming the run, the record and the decision. The run's log can be exported for an audit.
+
+## Built to stay under your control
+
+These are the properties an approval committee usually asks about first. Each one is detailed on the [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls) page.
+
+| Property | What it means |
+| --- | --- |
+| Acts as you | A run has the permissions of the person who started it and no more. Only that person sees the run. |
+| Asks before what matters | Checkpoints stop the run before launches, sends, submissions, turning monitors or automations on, archives and other changes that reach people or are hard to undo. |
+| Some actions always ask | Archives and actions that cannot be undone, such as emailing a vendor or submitting an intake request, ask under every setting. |
+| Your admins decide the rest | Each change Coverbase AI can make has an organization policy: applies on its own, always asks, or off. |
+| Never does some things | It never changes roles, permissions, members, sign-in, SSO, API keys or billing, never closes a finding or accepts its risk, and never hard-deletes a record. |
+| Recorded | Every change is in the run's log, and changes to records are rows in the Agent Ledger with who asked and who decided. |
+| Stoppable | **Stop** ends a run at its next step. Changes already made stay, and the report lists them. |
+| Survives interruptions | A run that loses its server picks up where it stopped and never repeats a change it already made. |
+
+## What Beta means
+
+Coverbase AI is in Beta. Your Coverbase team turns it on for your organization, and it is off until they do. A few modules are not available to Coverbase AI yet: RFPs, Inspect, risk scenarios, sending a contract for signature, and allowlisting a screening match. A run that touches one of them says so in its report and does the rest of the job.
+
+## Under the hood
+
+For a security or architecture review, these are the facts that usually matter. The [FAQ](/user-guides/coverbase-ai-agent-faq) answers more.
+
+| Topic | Fact |
+| --- | --- |
+| Where a run executes | On Coverbase's servers, as a background job for your organization. The browser is a window on it. |
+| Model | Anthropic Claude Opus 5.5 on AWS Bedrock in Coverbase's AWS account, falling back to Claude Sonnet 5.5 when Bedrock reports no capacity. See [AI governance](/security/ai-governance#model-selection-and-hosting). |
+| Training | Customer data sent to the models is not used to train them. |
+| Data it reads | The records you can read, the page you started from, the files you attach, and, when a question reaches outside Coverbase, public web search results. |
+| Data it writes | Records in your organization, through the same code the product's pages use, as you. |
+| Isolation | Runs are scoped to your organization like every other record. See [Tenant isolation](/security/data-protection#tenant-isolation). |
+| Audit | The [Agent Ledger](/user-guides/agent-ledger) and each run's exportable log. |
+
+## Troubleshooting
+
+| Problem | What to do |
+| --- | --- |
+| There is no Coverbase AI in the navigation | It is not on for your organization yet. Ask your Coverbase team. |
+| You need a document for an approval committee | Share this page with the [FAQ for approvers and administrators](/user-guides/coverbase-ai-agent-faq) and [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls). |
+| A reviewer asks what Coverbase AI changed last month | Filter the [Agent Ledger](/user-guides/agent-ledger#step-1-read-the-ledger) to the agent **Coverbase AI** and the date range, then export it. |
+| A run did something nobody expected | Open the run's report and its **Agent Ledger** link. Then set that change to **Always asks** under [What Coverbase AI May Do on Its Own](/user-guides/coverbase-ai-agent-controls#organization-policies-for-each-change). |
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Agent vs earlier AI features" icon="code-compare" href="/user-guides/coverbase-ai-agent-vs-earlier-ai">
+    How Coverbase AI differs from the chat, the AI in assessments and the Intake Agent.
+  </Card>
+  <Card title="What the agent can do" icon="list-check" href="/user-guides/coverbase-ai-agent-capabilities">
+    Example instructions for every product area, and what you approve.
+  </Card>
+  <Card title="Controls, approvals and governance" icon="shield-check" href="/user-guides/coverbase-ai-agent-controls">
+    Permissions, checkpoints, policies, the ledger and data handling.
+  </Card>
+</CardGroup>
