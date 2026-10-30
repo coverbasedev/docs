@@ -1,6 +1,6 @@
 ---
 title: "Engagement scoping"
-description: "Decide how much each question matters for one vendor relationship before the assessment starts: internal context files and notes, per-question criteria, cited recommendations, the scoping chat, and approving the scope."
+description: "Decide how much each question matters for one vendor relationship before the assessment starts: internal context files and notes, per-question criteria, cited recommendations, the scoping chat, approving the scope, and what the scope changed."
 icon: "list-check"
 ---
 
@@ -31,9 +31,25 @@ Internal context is what your own team knows about the relationship: inherent ri
 4. Pick what the context **Applies To**: the whole relationship or one service, and its **Source**.
 5. Save.
 
+<Frame caption="New context with two files read. Each file says what Coverbase read before you save.">
+  <img src="/images/user-guides/scoping-context-upload.png" alt="The New Context dialog on the Upload files tab. Applies To is Whole Relationship and Source is CMDB. Two staged files, northwind-app-inventory.xlsx reading Coverbase read 5 records from 1 sheet and northwind-irq.docx reading Coverbase read 1 section, each with a green check. Below, a note says files are also kept in the vendor's Documents marked Internal context, and the button reads Add 2 files." />
+</Frame>
+
+<Frame caption="A note written by hand. It needs a title and the facts.">
+  <img src="/images/user-guides/scoping-context-note.png" alt="The New Context dialog on the Write a note tab with Source set to Description, the title Payout timing and a body saying merchant payouts run once each business day at 6 PM Eastern." />
+</Frame>
+
 Coverbase reads a spreadsheet one record per row, including a sheet that holds a title and more than one table. A PDF is read page by page and a Word file section by section. Click a file's title to see the records it read and where each one sits, for example **Row 8**.
 
-An uploaded file also appears on the vendor's **Documents** tab, marked **Internal context, not evidence**. Evidence collection and evaluation never use it.
+<Frame caption="The Internal Context tab. A file opens to the records Coverbase read and where each one sits.">
+  <img src="/images/user-guides/scoping-context-list.png" alt="The Internal Context tab for Northwind Pay with three items under Whole Relationship. northwind-app-inventory.xlsx is expanded, listing Row 4 Card Vault API through Row 8 Support Portal, Showing 5 of 5 and an Open file link. Below it northwind-irq.docx and a note titled Payout timing." />
+</Frame>
+
+An uploaded file also appears on the vendor's **Documents** tab with an **Internal context** badge. Evidence collection and evaluation never use it.
+
+<Frame caption="Context files on the Documents tab carry an Internal context badge.">
+  <img src="/images/user-guides/scoping-vendor-documents.png" alt="The vendor's Documents tab listing northwind-irq.docx and northwind-app-inventory.xlsx, each with a gray Internal context badge beside its name." />
+</Frame>
 
 ## Step 2: Set criteria on a question (optional)
 
@@ -42,15 +58,36 @@ A question can carry its own rules for when it matters more or less. Criteria ar
 1. Open **Configuration → Controls**, open the control set, and open the control.
 2. Choose the **Scoping** tab.
 3. Click **Add criterion** and pick one:
-   - **When conditions hold**: choose a relevance and add conditions on a context field, for example **AI Model Usage?** **is empty** **in every record**. The fields come from the workbooks uploaded as internal context. Choose whether **all of these hold** or **any of these holds**.
+   - **When conditions hold**: choose a relevance and add conditions. Choose whether **all of these hold** or **any of these holds**.
    - **When Coverbase judges a sentence true**: choose a relevance and write what must be true, for example "The vendor runs AI models that make or support decisions about our customers."
 4. Click **Save criteria**.
 
-Coverbase checks conditions first and then sentences, in the order listed, and the first that holds decides. A condition on a field holds only when at least one record has that column. Questions that no criterion decides get Coverbase's own recommendation. A relevance set by an assessment plan, or picked by an analyst, still wins over a criterion.
+A condition can check one of four things:
+
+| Condition on | Holds when |
+| --- | --- |
+| **Context field** | A column of the workbooks uploaded as internal context matches, for example **Stores Card Numbers?** **is** **No** **in every record**. |
+| **Vendor tag** | The vendor has, or does not have, the tag. |
+| **Service tag** | Any service in the assessment has the tag, or none has it. |
+| **Service attribute** | Any service in the assessment includes the value, or none does, for example **Data Classes** **includes** **Cardholder data**. |
+
+<Frame caption="Each condition starts with what it checks.">
+  <img src="/images/user-guides/scoping-criteria-condition-kinds.png" alt="The Scoping tab of control DP 3 in the control drawer. Criterion 1 is Lower priority when all of these hold, with a context field condition Stores Card Numbers? is No in every record and a second condition whose Condition on menu is open, listing Context field, Vendor tag, Service tag and Service attribute." />
+</Frame>
+
+<Frame caption="Saved criteria. Conditions are checked first, then sentences, each in the order listed.">
+  <img src="/images/user-guides/scoping-criteria.png" alt="Two saved criteria on DP 3. Criterion 1 is Lower priority when all of these hold: Stores Card Numbers? is No in every record, and Vendor tag has Tier: Critical. Criterion 2 is Emphasize when Coverbase judges that the vendor stores full card numbers for us or on our behalf." />
+</Frame>
+
+Coverbase checks conditions first and then sentences, in the order listed, and the first that holds decides. A condition on a context field holds only when at least one record has that column. Questions that no criterion decides get Coverbase's own recommendation. A relevance set by an assessment plan, or picked by an analyst, still wins over a criterion.
 
 ## Step 3: Create the assessment and watch the scope run
 
 Create the assessment as usual. Coverbase opens it on the **Scoping** tab and starts the recommendation at once. A progress bar shows how many questions are scoped. You can leave the page while it runs.
+
+<Frame caption="A scope being recommended. The status card shows the Scoping step ahead of Collecting Documents.">
+  <img src="/images/user-guides/scoping-progress.png" alt="A new assessment on its Scoping tab. The status card reads Scoping 33% above Collecting Documents, Analyzing Controls and Review Results. The tab shows Recommending a scope for 15 questions with a progress bar at 5 of 15 questions scoped and four stages, two of them done." />
+</Frame>
 
 The status card shows a **Scoping** step ahead of **Collecting Documents**. While the scope waits for approval, the assessment stays at **Created** and you cannot move it to another status, except to cancel it.
 
@@ -63,9 +100,21 @@ Coverbase reads:
 
 The line under the summary says what was read. Click **Sources** for the list.
 
+<Frame caption="A recommended scope ready for review.">
+  <img src="/images/user-guides/scoping-draft.png" alt="The Scoping tab in Draft after run 1. The summary describes Northwind Pay, the line under it reads Read 2 files and 1 note with a Sources link, and a strip counts 15 questions: 10 Emphasize, 3 Standard, 2 Lower priority and 0 Out of scope. The status card reads Scoping, ready for review." />
+</Frame>
+
+<Frame caption="Sources lists every context item and intelligence section the run read.">
+  <img src="/images/user-guides/scoping-sources.png" alt="The Sources popover open under the summary, listing the two files, the note and the vendor intelligence sections the recommendation read." />
+</Frame>
+
 ## Step 4: Review the recommendation
 
 Each question shows its relevance and why. Under each reason are the sources it cites. Click a source to see the quoted words and where they sit, for example **Row 5** of a workbook, and click **Open file** to see the file.
+
+<Frame caption="A citation opens to the quoted words and where they sit.">
+  <img src="/images/user-guides/scoping-citation.png" alt="A citation popover on IAM 1 for northwind-app-inventory.xlsx, Row 6, marked Internal context, never shown to the vendor, quoting Moves settled funds to merchant bank accounts each business day, with an Open file link." />
+</Frame>
 
 | Relevance | What happens in the evaluation |
 | --- | --- |
@@ -76,11 +125,27 @@ Each question shows its relevance and why. Under each reason are the sources it 
 
 Under each question, the decision source says who decided it: Coverbase, a plan rule, the question's criteria, or an analyst. To change a question, pick another relevance and add a note. Your decision survives a **Regenerate**.
 
+<Frame caption="Changing a question's relevance. The note is for second line reviewers.">
+  <img src="/images/user-guides/scoping-relevance-picker.png" alt="The relevance picker open on GOV 1 with Lower priority selected and the note Governance is covered by the annual SOC 2 we already review." />
+</Frame>
+
+<Frame caption="Filtered to Lower priority. Each question says who decided it.">
+  <img src="/images/user-guides/scoping-decided-by.png" alt="The Lower priority filter showing GOV 1 decided by Analyst, Clarence Chio, with the analyst's note, and DP 3 decided by Question criteria, Stores Card Numbers? is No in every record and Vendor has tag Tier: Critical." />
+</Frame>
+
 ## Step 5: Add context through the chat
 
 Use the box above the questions to tell Coverbase something about the engagement, or to ask why a question landed where it did. For example: "The wallet app never stores full card numbers. Cards are tokenized before they reach the vendor."
 
 When the answer would change the scope, Coverbase shows a proposal: the note it would save as internal context, and each question it would move, with the reason and its sources. Nothing changes until you click **Apply**. **Dismiss** changes nothing.
+
+<Frame caption="A proposal from the chat. Nothing changes until you apply it.">
+  <img src="/images/user-guides/scoping-chat-proposal.png" alt="The Scoping Chat. The message says the fraud model only flags payments for a person to review. The answer proposes saving that as a note and moving AI 2 from Emphasize to Standard, with its reason and two cited sources, above Dismiss and Apply buttons." />
+</Frame>
+
+<Frame caption="Ask why a question landed where it did.">
+  <img src="/images/user-guides/scoping-chat-question.png" alt="After applying the proposal, the question Why is DP 3 lower priority? and an answer explaining that a rule on the question decides it, citing the questionnaire and the application inventory." />
+</Frame>
 
 When you apply a proposal, the note is saved on the vendor's **Internal Context** tab, marked as from the scoping chat. A question you or a workbook already decided is never moved.
 
@@ -88,7 +153,33 @@ When you apply a proposal, the note is saved on the vendor's **Internal Context*
 
 Click **Approve scope**. The dialog lists how many questions are in each relevance and what each one means for the evaluation. Click **Approve and start**. The assessment starts and Coverbase begins collecting evidence.
 
+<Frame caption="Approving starts the assessment.">
+  <img src="/images/user-guides/scoping-approve-dialog.png" alt="The Approve Scope and Start the Assessment dialog: 9 Emphasize held to a higher bar, 3 Standard evaluated as written, 3 Lower priority where a gap is recorded as an observation, and 0 Out of scope left out of the evaluation, with Cancel and Approve and start." />
+</Frame>
+
 To change an approved scope, click **Reopen**. The assessment keeps running. Your changes apply from the next evaluation run once you approve the scope again.
+
+## Step 7: See what the scope changed
+
+Once results are evaluated under the approved scope, the **Scoping** tab shows **Effect on Findings**: how many issues the results raised, how many gaps on lower priority questions were kept as observations, how many out of scope questions were left out, and how many issues the same results would have raised without the scope.
+
+<Frame caption="An approved scope and its effect on the results evaluated under it.">
+  <img src="/images/user-guides/scoping-approved-effect.png" alt="The approved Scoping tab with the line Approved by Clarence Chio, The assessment started on approval. Effect on Findings reads 6 results evaluated under this scope raised 2 issues and kept 2 gaps on lower priority questions as observations. No question was left out. Without the scope, the same results would have raised 4 issues. 2 of the issues are on emphasized questions." />
+</Frame>
+
+Each issue, and each finding raised from one, shows **Engagement Relevance**: the question's relevance and why it matters for this vendor. A gap on a lower priority question is marked **Observation** and does not raise a finding.
+
+<Frame caption="An issue on an emphasized question says why it matters here.">
+  <img src="/images/user-guides/scoping-issue-relevance.png" alt="An issue drawer titled No MFA evidence for privileged access. Engagement Relevance shows Emphasize and the reason that privileged access to the Payout Engine and Card Vault API could redirect merchant funds, from the scope this result was evaluated under." />
+</Frame>
+
+<Frame caption="A gap on a lower priority question is kept as an observation.">
+  <img src="/images/user-guides/scoping-observation-relevance.png" alt="A result titled Laptop patching runs on a 30 day cycle with No issue found. Engagement Relevance shows Lower priority and an Observation badge, set by the plan rule matching laptops and desktops, with the note that the gap is kept on the result and does not raise a finding." />
+</Frame>
+
+<Frame caption="A finding carries the relevance of each question it came from.">
+  <img src="/images/user-guides/scoping-finding-relevance.png" alt="A finding titled Privileged access to the Payout Engine has no second factor. The Why It Matters for This Engagement section lists IAM 1 as Emphasize with its reason, from the scope this result was evaluated under." />
+</Frame>
 
 ## Troubleshooting
 
@@ -100,6 +191,8 @@ To change an approved scope, click **Reopen**. The assessment keeps running. You
 | A condition on a field never holds | No uploaded workbook for this vendor has that column. | Upload the workbook as internal context, then **Regenerate**. |
 | A source shows no quote | The model's quote did not match the source word for word, so Coverbase kept the citation and dropped the quote. | Click the source to open the file at that place. |
 | **Reopen the scope to apply this.** on a proposal | The scope is approved. | Click **Reopen**, then **Apply**. |
+| **This scope applies on the next run** | Some results ran before the scope was approved. | Rerun the analysis. **Effect on Findings** counts only results evaluated under the scope. |
+| A tag or service condition never holds | The assessment has no service with that tag or attribute, or the vendor lacks the tag. | Add the services to the assessment, or tag the vendor, then **Regenerate**. |
 | A question did not move when you applied a proposal | Someone already decided that question, or its relevance changed since the proposal. | Expected. Change it by hand if you still want to. |
 
 ## Related
