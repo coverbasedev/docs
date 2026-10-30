@@ -1,0 +1,377 @@
+---
+title: "What the Coverbase AI agent can do"
+description: "A catalog of what the Coverbase AI agent (Beta) can do in each product area, with example instructions, what it does for each, and what it stops for you to approve."
+icon: "list-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This page is part of the [User Guides](/user-guides/overview) collection and the **Coverbase AI agent (Beta)** set. It sits beside [The Coverbase AI agent (Beta)](/user-guides/coverbase-ai-agent-overview), [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls) and [Example walkthroughs](/user-guides/coverbase-ai-agent-walkthroughs). To start a run, see [Working with Coverbase AI](/user-guides/coverbase-ai).
+</Info>
+
+<Note>
+  Coverbase AI is in Beta. Your Coverbase team turns it on for your organization.
+</Note>
+
+Coverbase AI can read, create and change records in almost every part of Coverbase, as you and with your permissions. Each example below is an instruction you can type, what Coverbase AI does with it, and what it stops for you to approve.
+
+The mistake people make most often is writing an instruction that names no record. "Review the findings" leaves Coverbase AI to search. "Review Snowflake's open findings", or the same words typed on Snowflake's page, starts on the right record.
+
+## How to read the tables
+
+The **You approve** column uses four values. They describe a run that asks before writes, which is how a run starts unless you turn on **Don't stop to ask**.
+
+| Value | What it means |
+| --- | --- |
+| **Nothing: read only** | The step changes nothing. |
+| **Nothing: it makes the change** | A change you can undo in the product. Coverbase AI makes it without stopping, and the [Agent Ledger](/user-guides/agent-ledger) records it. An admin can set any of these to **Always asks** or **Off**. |
+| **Checkpoint** | The run stops for your approval. **Approve all like this** or **Don't stop to ask** can skip it, unless an admin set it to **Always asks**. |
+| **Always asks** | An archive or an action that cannot be undone. It stops for your approval under every setting. |
+
+The details of each value are on [Controls, approvals and governance](/user-guides/coverbase-ai-agent-controls). Every example also needs the permission the matching page needs. Without it, the step is refused and the report says so.
+
+## Playbooks
+
+Coverbase AI picks a playbook for each instruction, or writes a custom plan when none fits. The playbooks are listed under **Playbooks** on the Coverbase AI home page, each with a ready-made instruction.
+
+| Playbook | What it does | Where it stops |
+| --- | --- | --- |
+| **Onboard a vendor** | From a vendor name to an assessed, monitored vendor: research, intake, screening, the inherent risk questionnaire, control sets, assessment, findings and Radar | Submitting the intake, the inherent risk review, launching, a new control set, turning a detector on |
+| **Inherent risk questionnaire** | Runs your inherent risk questionnaire for a vendor from research and reads the profile it produces | Submitting, the inherent risk review |
+| **New assessment** | Picks control sets for a vendor, launches, waits and summarizes the results with findings | Launching, raising findings, or one batch for many vendors |
+| **Zero Touch triage** | Launches Zero Touch runs for one vendor or a list and ranks what needs a full assessment | Launching, or one batch |
+| **Radar monitoring** | Deploys detector templates or writes a custom detector, left off, and clears the In Alert queue | Turning a detector on, dismissing, opening a case, starting a reassessment |
+| **Workflow** | Forks the workflow template that matches the instruction and sets it up, left off | Turning it on |
+| **Dashboard** | Forks the dashboard template that answers the question, adds library charts, or designs custom charts | A custom dashboard or custom charts: the card lists every chart |
+| **Review findings** | Reads a vendor's or an assessment's open findings and issues and says what to do | Each commitment change, anything sent to the vendor |
+| **Review an assessment** | Proposes an outcome for each control that needs a person, raises findings and obligations, and works an existing assessment | Each control while you watch, one batch in the background |
+| **Breach response** | Works up a filing or a Radar signal that names a vendor in a breach | Confirming the vendor, the case, the finding, the reassessment |
+| **Build or edit a workflow, control set or questionnaire** | Builds a draft, shows it, applies your edits, and publishes or turns it on after you approve | Creating, turning on, publishing, every control set change, archiving |
+| **Archive or turn off** | Archives a record you name or turns a workflow or detector off, and says what goes with it | Always |
+| **Configuration** | Changes email and portal templates, tags, statuses, scales, reassessment rules and settings as an admin would | Every change except your own notification settings |
+| **Answer a question** | Answers from the record on the page, your records and the web, with a link for every record cited | Never: it writes nothing |
+| **Set up your vendor risk program** | A new organization's first setup, watched: learns how your program works, sets up controls, onboards the first vendor and launches its first assessment | Submitting, launching, a new control set |
+
+## Questions and research
+
+Coverbase AI answers a question without changing anything. It reads the record you are on first, then your other records, then the public web when the question reaches outside Coverbase. Each record it cites is a link, and each claim from the web names its source.
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| What is still open on this assessment? (on an assessment) | Reads the assessment and answers with a link to each open item | Nothing: read only |
+| Why is this finding still open? (on a finding) | Reads the finding's history and answers with a dated chain: each date, who acted and what they did, ending with what it waits on | Nothing: read only |
+| What changed on Okta this quarter? | Reads the vendor's history and the records on it, and lists the changes by date | Nothing: read only |
+| Has Okta reported a breach in the last 12 months? | Searches the web, counts only results about Okta, and names each source | Nothing: read only |
+| What would Snowflake's inherent risk be? (no Snowflake record) | Scores your risk domains from research in shadow mode, which saves nothing, and leads with the level and the domains that drive it | Nothing: read only |
+| Which of our vendors depend on AWS? | Reads your Nth parties and lists the vendors that rely on the company | Nothing: read only |
+| How many High findings are overdue, by owner? | Reads the findings register with that filter and gives the counts | Nothing: read only |
+| What does our Vendor risk dashboard say about Critical vendors? | Reads the dashboard and names the chart each number comes from | Nothing: read only |
+| Which intake requests are waiting on review? | Lists the open intake requests | Nothing: read only |
+| What has Acme uploaded through its portal? | Lists Acme's live documents with their type and upload date | Nothing: read only |
+| Compare these two vendors (two vendors picked from **+**) | Builds a table of status, tier, inherent risk and open findings from the records, and names the gaps | Nothing: read only |
+| List the opinion and every exception in this SOC 2 report (file attached) | Reads the report page by page and quotes each exception with its page | Nothing: read only |
+
+## Vendors and services
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Add Linear as a vendor directly. We approved it outside Coverbase. | Researches Linear and adds a vendor record without intake. The record starts in the **Created** status, which is not approval. An existing vendor by that name comes back instead of a duplicate. | Nothing: it makes the change |
+| Set Okta's status to Approved and add Priya as relationship owner | Finds the status and the person, then updates the vendor | Nothing: it makes the change |
+| Tag every vendor headquartered in Germany with Region: EU | Resolves the vendors through the Vendors page's filters (at most 50), names them, then tags them | Nothing: it makes the change |
+| Make Sam the risk analyst on every Critical vendor | Resolves the set, then adds Sam as analyst on each | Nothing: it makes the change |
+| Set Data residency to EU on Figma | Finds the custom field and sets its value with the field's own option label | Nothing: it makes the change |
+| Add a Payroll processing service under ADP and set its inherent risk to High because it holds every employee's bank details | Adds the service and sets its level with your reason | Nothing: it makes the change |
+| Set Vanta's Privacy domain to High: it now processes HR data | Sets one risk domain's level on the vendor with your reason | Checkpoint |
+| Add jane@acme.com as Acme's security contact | Adds the contact. Nobody is emailed. | Nothing: it makes the change |
+| Add a new engagement under Okta for the SSO rollout | Creates the engagement on the vendor | Nothing: it makes the change |
+| Merge "Salesforce Inc" into "Salesforce" | Says which vendor is kept and what moves to it, then merges | Always asks |
+| Refresh Datadog's vendor intelligence | Starts the refresh, which runs for a few minutes in the background | Nothing: it makes the change |
+| Export every Critical vendor to Excel | Exports the vendor list with that filter | Nothing: it makes the change |
+| Give me Okta's vendor profile as a PDF | Produces the vendor's profile report | Nothing: it makes the change |
+| Import the vendors in this workbook (file attached) | Previews the import, shows how many rows create, update or will not import and why, then imports | Checkpoint |
+| Invite jane@acme.com to Acme's supplier portal as a contributor | Checks Acme has a supplier portal, then invites her | Always asks |
+| Archive the Okta vendor | Says what goes with it, such as "Its 3 assessments, 12 documents and 2 obligations go with it", then archives | Always asks |
+
+## Intake and onboarding
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Onboard Figma for design collaboration | Researches Figma, opens the intake request, confirms the match and use case, runs screening, drafts the inherent risk questionnaire, submits, researches inherent risk, decides whether an assessment is needed, launches it, waits, raises findings and sets up a Radar detector | Submitting (always asks), the inherent risk review, launching, turning the detector on |
+| Onboard the vendor in this email (email attached) | Reads the email, then onboards the vendor it names, asking you to confirm the match | As above |
+| Which intake requests are waiting for review? | Lists the open requests, most recently updated first | Nothing: read only |
+| Assign the Notion intake request to the Security review group | Assigns the reviewer of the request's submitted questionnaires | Nothing: it makes the change |
+| Approve the Notion intake request. Screening is clean. | Reads the Front Door review and the request's status, then approves with the reason. A vendor on your Do Not Use list needs your own rationale. | Always asks |
+| Send the Miro request back asking what data the team will store in it | Sends the request back with one question per item. A requester with an account is notified, and one who filed through a public portal is emailed. | Always asks |
+| Deny the Zoom request. We already pay for Microsoft Teams. | Denies the request with your reason, which is kept in the Agent Ledger | Always asks |
+| Attach this DPA to the open Notion intake request (file attached) | Adds the file to the request's documents | Nothing: it makes the change |
+| Archive the test intake request called Demo | Archives the request so it leaves the reviewers' queue | Always asks |
+
+When Coverbase AI fills in an intake request, it asks you only what your organization alone knows, such as what data the vendor will hold, at most three questions. It answers questions about the vendor's own practices from research, or leaves them blank with the evidence that would answer them.
+
+## Inherent risk and risk scoring
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Run the inherent risk questionnaire for Snowflake | Drafts every required answer from research and Snowflake's records, submits, researches inherent risk and reads the profile | Submitting (always asks), the inherent risk review |
+| Research Okta's inherent risk | Gathers the vendor intelligence profile, a web search for incidents, Radar's alert history for 24 months and a live scan, the security rating, any Zero Touch result and the questionnaire answers, then scores each of your risk domains with a level, a confidence, a rationale and the evidence | The inherent risk review: agree or disagree per domain, move a level and say why, tick the assessments to run, and confirm. Only the confirmed levels are written to the vendor. |
+| Add an AI use risk domain and set its weight to 10 | Checks the domain does not exist yet, adds it, and sets its weight | Checkpoint for each change |
+| Rename the Medium level on our risk scale to Moderate | Reads the scale, says the change as old against new, then renames it | Checkpoint |
+| Reassess High and Critical vendors every 12 months | Sets the interval for those levels under your default assessment plan, leaving other rules as they are | Checkpoint |
+
+## Assessments
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Assess Okta against NIST CSF 2.0 | Researches inherent risk, uses or adds the control set, launches, waits for the results, summarizes them and raises a finding for each flagged control | The inherent risk review, launching, each finding |
+| Launch the Critical-tier plan for Datadog | Finds the assessment plan by name and launches it | Checkpoint, or always asks when the plan contacts the vendor |
+| Assess every Critical vendor with no assessment in 2026 against SOC 2 | Resolves the vendors through the Vendors page's filters (at most 50), names them, then proposes the launches as one batch | One batch: untick any vendor you do not want |
+| Run Zero Touch on CrowdStrike, ServiceNow and GitHub | Launches one Zero Touch run each, waits, and ranks the vendors by what the runs found | Launching, or one batch |
+| Approve the Zero Touch runs that found nothing material and escalate the rest | Reads each run's results and records a reviewer decision only where the results support it. The vendor's status stays with you. | One batch |
+| Clone last year's Okta assessment for 2027 | Copies the assessment with its vendor, documents, control sets and assignee under a new name | Checkpoint |
+| Reassign all of Tom's open assessments to Priya | Resolves the set through the Assessments page's filters, says how many and which, then reassigns them together | Checkpoint |
+| Rerun the Snowflake assessment now that the new SOC 2 is attached | Reruns the analysis from the assessment's documents | Checkpoint |
+| Resume the Atlassian assessment | Resumes an assessment parked for documents or a go-ahead | Checkpoint |
+| Complete this assessment as Approved. I reviewed it. | Completes it with your outcome: its risk scores move to the vendor and the vendor request closes. It completes an assessment only when you say you reviewed it. | Checkpoint |
+| Move the due date on the Okta assessment to next Friday | Reads the assessment's vendor request, works out the date, and moves it. The vendor is not emailed. | Nothing: it makes the change |
+| Add the SOC 2 report Okta already has on file to this assessment | Links the document on file so the assessment does not wait for it | Nothing: it makes the change |
+| Open the vendor portal on this assessment and invite Okta's security contact | Opens the portal from the plan's template, then emails the invitation | Opening is a checkpoint. The invitation always asks. |
+| Regenerate this assessment's summary | Writes the summary again from the controls as they stand | Nothing: it makes the change |
+| Export this assessment's report in our Word template | Produces the report as a file on the assessment | Nothing: it makes the change |
+| Export every assessment completed in 2026 | Exports the Assessments list with that filter | Nothing: it makes the change |
+| Archive every cancelled assessment from 2024 | Resolves the set, names every assessment, then archives them together | Always asks |
+
+## Reviewing results and controls
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Review this assessment with me (watching) | Reads each control that needs a person (flagged, low confidence or marked for review), the evidence and the vendor's answer, and proposes keep the issue, not an issue, mitigated, risk accepted, a finding or an obligation, one control at a time | Each control |
+| Review the 2026 Atlassian initial assessment (in the background) | Works through every control, then pauses once on a list of proposed changes, each with its reason | One batch of up to 50 changes: untick what you disagree with and apply the rest |
+| Mark controls 3.1 to 3.4 as not an issue. The pen test letter covers them. | Marks them together with your reason. The assessment's scores are recomputed. | Checkpoint |
+| Rate every encryption control Low | Rates the controls at that level of their scale | Checkpoint |
+| Okta's answer on 5.2 is wrong. It should be Yes. | Corrects the vendor's answer and re-evaluates the control | Checkpoint |
+| Rerun control 4.2 and show me the new verdict | Reruns the control without changing it, shows the new verdict beside the old, and takes the new result only if you want it | Taking the result is a checkpoint |
+| Draft follow-ups for every issue the evidence fell short on | Drafts the round's questions and document requests | Nothing: it makes the change. Nothing is sent. |
+| Reword follow-up 3 and remove the duplicates | Edits the drafted follow-ups | Nothing: it makes the change |
+| Send the follow-ups to Okta, due December 15, 2026 | Opens the round on the portal and emails the vendor the link | Always asks |
+| Ask the Security group to sign off this assessment | Requests the review, which lands in the reviewer's work queue | Checkpoint |
+| Record my approval on the review I was asked for | Records only the decision you stated | Checkpoint |
+| Leave a note on control 4.2 and mention Priya | Posts the note as you and notifies the colleagues you mention, at most five | Nothing: it makes the change |
+
+## Questionnaires
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Build an intake questionnaire for AI vendors | Creates the template with sections and questions of the right response types, and summarizes it. Nobody receives it until someone sends it. | Checkpoint |
+| Add a question asking whether the vendor trains models on our data, shown only when they say they use AI | Adds the question and the show rule, checked by the product's own validators | Nothing: it makes the change |
+| Score "Yes, production data" as 10 in our inherent risk questionnaire | Sets the option's score on a draft or unsent version. A version with responses is refused. | Nothing: it makes the change |
+| Apply the AI questionnaire automatically to vendors tagged AI, reviewed by Priya | Sets the reviewers and which vendors receive it | Checkpoint |
+| Import the questions in this spreadsheet into the draft AI questionnaire (file attached) | Previews the import with counts and row problems, then imports | Checkpoint |
+| Send our annual due-diligence questionnaire to Acme's security contact, due December 15, 2026 | Picks the request template (asking when several fit), builds the request, then emails it | Building is a checkpoint. Sending always asks. |
+| Autofill Acme's latest questionnaire submission from its documents | Starts autofill, which drafts answers for a reviewer, then says what is still unanswered | Checkpoint |
+| Correct Acme's answer to question 12 to No | Records the correction as your reviewer edit. The vendor's own answer is kept. | Checkpoint |
+| Archive the 2024 onboarding questionnaire | Archives the template | Always asks |
+
+Coverbase AI never edits a vendor's response itself.
+
+## Control sets and risk domains
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Add SOC 2 Type II Standard Requirements from the library | Forks the library template into a control set your organization owns | Checkpoint |
+| Build a control set from this policy (file attached) | Builds a control set from the document, as **Controls > New** does. The set fills in the background for you to review. | Checkpoint |
+| Create a control set called AI vendor controls with domains for data use, model governance and security | Creates the set and adds the three domains | Checkpoint for each change |
+| Add a control requiring vendors to disclose AI subprocessors, with evidence required | Adds the control with its expectation, question and evidence requirement | Checkpoint |
+| Map the Access control domain to our Information security risk domain | Moves the domain to that risk domain by name. A name that matches none of yours is refused with your real names. | Checkpoint |
+| Make control 2.3 optional and move it to Data protection | Changes the control's required flag and domain | Checkpoint |
+| Rewrite the guidance on control 4.1 | Reads the control, then changes its guidance | Checkpoint |
+| Copy the encryption controls from NIST CSF 2.0 into our AI set | Proposes one new control per item as one batch | One batch |
+| Export the NIST CSF 2.0 control set to Excel | Exports the set to a workbook | Checkpoint |
+| Archive the Legacy 2023 control set | Archives the set with its domains and controls | Always asks |
+
+Each control set checkpoint says how many assessments in progress use the set.
+
+## Findings and remediation
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| What should I do about Snowflake's open findings? | Reads the open findings and the latest assessment's flagged controls, groups them by what you should do, and raises a finding only for a flagged control that has none | Each finding |
+| Show every High finding that is more than 30 days overdue, by owner | Reads the findings register with that filter | Nothing: read only |
+| Set the three Okta findings to High, assign them to Priya and make them due January 31, 2027 | Changes each finding's severity, owner and due date. Their owners get the usual notifications. | Nothing: it makes the change |
+| Close the MFA finding on Okta | Refuses: closing a finding and accepting its risk stay with a person | Not available |
+| Ask Okta to commit to enforcing SSO by March 31, 2027 | Records the commitment on the finding. Sending it to the vendor stays your step. | Checkpoint |
+| Extend Okta's SSO commitment by 30 days. Their fix is underway. | Moves the commitment's due date | Checkpoint |
+| Accept Okta's submitted work on the MFA commitment | Accepts the round, which closes the commitment, or asks for more work with a message to the vendor | Checkpoint |
+| Remind Okta about the MFA commitment | Emails the vendor a reminder of a commitment already sent | Always asks |
+| Which commitments are waiting on us? | Lists the commitments the vendor answered | Nothing: read only |
+| Pause Acme's questionnaire until after their audit | Puts the request on hold. Reminders stop. | Nothing: it makes the change |
+| Reopen Acme's submitted questionnaire so they can fix section 3 | Reopens the request for the vendor | Always asks |
+| Archive the duplicate MFA finding on Okta | Archives the finding | Always asks |
+
+## Contracts, obligations and the risk register
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Add this signed MSA as a contract with Okta (file attached) | Creates the contract, puts the file on it and on the vendor's documents, and reads it for its terms | Nothing: it makes the change |
+| Change the Okta MSA's end date to June 30, 2027 | Updates the contract | Nothing: it makes the change |
+| Summarize the Okta MSA | Reads the contract's key terms and asks for its stored summary when it has none | Nothing: it makes the change |
+| What does the Okta contract cost, and what else do we buy in that category? | Reads the contract's spend line by line and what else your organization buys | Nothing: read only |
+| Run the Clause Review on the Okta MSA against our Security clause set | Starts the Clause Review and reads it when it finishes | Nothing: it makes the change |
+| We are renewing the Okta contract | Records the renewal decision. Nothing goes to the counterparty. | Checkpoint |
+| Link the Acme NDA to the Acme vendor | Links a contract with no vendor to an existing vendor. It never creates a vendor for this. | Checkpoint |
+| Extract the obligations from the Okta MSA | Starts extraction over the contract's documents. You are emailed when it finishes. | Nothing: it makes the change |
+| Add an obligation: we must notify Okta of a breach within 72 hours | Adds the obligation, not satisfied, linked to the control it serves | Checkpoint |
+| Make the Legal group owner of the breach notification obligation | Assigns the owner | Nothing: it makes the change |
+| Mark the annual audit obligation as satisfied | Moves the obligation's status as you said | Nothing: it makes the change |
+| Add a register entry for our dependency on AWS us-east-1, likelihood Medium, impact High | Adds the risk, open, with a treatment of mitigate, transfer, avoid or none. It never sets accept. | Checkpoint |
+| Attach the AWS outage signal to that register entry | Attaches the signal as evidence | Nothing: it makes the change |
+| What did Document Insights extract from the Okta DPA? | Reads the insights already extracted from the document | Nothing: read only |
+
+## Radar
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Watch Salesforce and DocuSign on Radar for breaches and outages | Deploys the matching library detectors for those vendors, turned off | Turning each detector on |
+| Write a detector that alerts when any of our payment vendors is fined by a regulator | Writes a custom detector from your words, turned off | Turning it on |
+| Narrow the ransomware detector to our Critical vendors | Resolves the vendors and changes which vendors the detector watches | Checkpoint |
+| Turn on the library source the vendor financial distress detector needs | Turns on the source. A source only feeds detectors and alerts nobody on its own. | Nothing: it makes the change |
+| Clear the In Alert queue | Reads each signal, its exposure and each alert, then acknowledges, dismisses with a reason, opens a case or starts a reassessment, per alert | Dismissing, a case and a reassessment are checkpoints. Acknowledging makes the change. In the background, it can propose them as one batch. |
+| Dismiss every alert like this one from the same detector on Acme | Dismisses this alert and the other open alerts the detector raised on Acme, at most 50, with one reason that teaches the detector | Checkpoint |
+| Open a case on the Okta breach signal and add Okta and Auth0 to it | Opens the case, unassigned, and adds the vendors | Opening is a checkpoint. Adding vendors makes the change. |
+| Email Okta from the case asking whether our data was affected | Writes a short plain-text email and sends it to the case thread's contacts | Always asks: the card shows the recipients, subject and body |
+| Accept the residual risk change this signal proposes | Applies the decision you named to each vendor's score | Checkpoint |
+| Move this signal to Resolved | Moves the signal to the status you named | Nothing: it makes the change |
+| An 8-K filing says Okta had a breach. Work it up. | Reads the signal and who it touches, asks you to confirm the filer is your Okta, reads the engagements and contracts, opens a case, drafts a finding and proposes a reassessment | Confirming the vendor, the case, the finding, the reassessment |
+| Turn off the outage detector | Turns the detector off | Checkpoint |
+| Archive the old vendor news detector | Archives the detector | Always asks |
+
+A reassessment Coverbase AI starts from a signal is a draft. It sends nothing, and you pick the assessment plan and run it.
+
+## Workflows
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Notify the owner when a finding goes overdue | Picks the matching template, forks it, and sets the trigger, conditions and recipients you named, turned off | Turning it on |
+| Build a workflow that assigns every new intake request for AI tools to the AI review group | Checks the steps with the product's own validators, then creates the workflow, turned off | Creating is a checkpoint. Turning it on is another. |
+| Change the reminder in the overdue findings workflow to 7 days | Edits the step while the workflow is off | Nothing: it makes the change |
+| Turn on the overdue findings workflow | Names any other live workflow with the same trigger, then turns it on | Checkpoint |
+| Turn off the onboarding reminder workflow | Turns it off | Checkpoint |
+| Archive the 2024 renewal workflow | Archives it and cancels its pending runs | Always asks |
+
+In **Watch it work**, the Workflows editor shows each step being added while the run builds it.
+
+## Dashboards, views and exports
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Build me a dashboard of open findings by vendor | Forks the dashboard template that answers the question | Nothing: it makes the change |
+| Build a dashboard of assessments completed per month, open findings by severity, and vendors by inherent risk | Designs one chart per question, at most eight, checks and draws each, then creates the dashboard | Checkpoint: the card lists every chart |
+| Add a chart of overdue findings by owner to the Board pack dashboard | Adds a library chart, or designs a custom chart when the library has none | Library charts make the change. Custom charts are a checkpoint. |
+| Save a view of my assessments in review | Saves a filtered list view for you | Nothing: it makes the change |
+| Share a view of vendors with no owner with everyone | Saves a list view your whole organization sees | Checkpoint |
+| Export the vendors owned by the Security team | Exports the vendor list with that filter | Nothing: it makes the change |
+
+When no chart can count what you asked, Coverbase AI says so and gives the numbers from the records instead.
+
+## Work queue, notifications and collaboration
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| What is in my work queue? | Lists your open items, newest first | Nothing: read only |
+| Mark these two items in my work queue done | Marks your own items done. An item tied to a record resolves only when the record does, so it is refused and the run says where to do the work. | Nothing: it makes the change |
+| Hand the Acme review item to the Security group | Reassigns the item. You may move your own items, and an admin any item. | Nothing: it makes the change |
+| Clear my unread notifications | Marks your notifications read | Nothing: it makes the change |
+| Stop emailing me about Radar alerts | Turns that notification type off on email for you only | Checkpoint |
+| Cap contract alert emails at 3 a week for everyone | Sets your organization's contract mail cap, an admin change | Checkpoint |
+
+## Documents
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Add this SOC 2 report to Okta's 2026 assessment (file attached) | Puts the file on the vendor's documents and on the assessment | Nothing: it makes the change |
+| Correct the expiry date on Okta's ISO 27001 certificate to May 1, 2027 | Updates the document's expiry date | Nothing: it makes the change |
+| Which certificates expire in the next 60 days? | Lists them, soonest first. Asking a vendor for a renewed certificate stays with you. | Nothing: read only |
+| Bundle all of Okta's documents into a zip | Builds the download in the background and notifies you | Nothing: it makes the change |
+| Archive the superseded 2024 SOC 2 report on Okta | Archives the document | Always asks |
+
+Coverbase AI reads PDFs, Word documents, workbooks, CSV files, emails and text files you attach, and says so when a file has no text it can read. See [Files and records](/user-guides/coverbase-ai-files-and-records).
+
+## Screening and offboarding
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Is the screening match on Acme Ltd a true match? | Reads the match and its watchlists, and records true match or false positive only from the evidence. A true match opens a finding. | Checkpoint |
+| Allowlist the screening match on Acme Ltd | Says this is not available to Coverbase AI yet. Allowlisting stays with a person. | Not available |
+| Start offboarding the Zoom engagement. We moved to Microsoft Teams. | Files the offboarding request with your reason. The TPRM Office approves it. | Checkpoint |
+| Remind the owners of open exit steps on the Zoom offboarding | Reminds your own people in Coverbase. Nothing goes to the vendor. | Nothing: it makes the change |
+
+## Configuration (admins)
+
+Each change needs the permission its settings page needs. Coverbase AI reads the current value first and says the change as old against new.
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Change the subject of the vendor invitation email to "Action needed: your security review" | Rewrites the template's subject, keeping its variables | Checkpoint |
+| Create a portal template for annual reviews with 14 days to respond, asking for a SOC 2 report | Creates the template, and publishes it when it is a persistent one | Checkpoint for each change |
+| Add a tag group Region with the value EU | Creates the tag | Checkpoint |
+| Add a custom status called Awaiting legal in the started group | Adds the status | Checkpoint |
+| Set the assessment completion SLA to 30 business days | Changes the setting. An SLA that names no target is asked about with a menu of the four targets. | Checkpoint |
+| Rename "vendor" to "supplier" across Coverbase | Changes the terminology setting | Checkpoint |
+| Add a Very High level to our risk scale | Adds the level | Checkpoint |
+| Give Priya the admin role | Refuses. Roles, permissions, members, sign-in, SSO, API keys and billing are never changed by Coverbase AI. | Not available |
+
+## Many records at once
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Reassess every Critical vendor | Resolves the set and starts one background run per vendor, at most 25, then waits and writes one report linking each | Starting the runs is a checkpoint. Each run asks for its own checkpoints. |
+| Set the Contract owner field on every vendor tagged Finance | Resolves the vendors, then proposes one change per vendor as one batch | One batch |
+| Run Zero Touch on every vendor with no assessment | Resolves the vendors through the Vendors page's filters (at most 50), names them, then proposes one launch per vendor as one batch | One batch |
+
+A set of more than 25 records for child runs, or more than 50 for a batch, is narrowed with you first.
+
+## Getting started and standing work
+
+| You type | What Coverbase AI does | You approve |
+| --- | --- | --- |
+| Set up my vendor risk program with me | Asks at most three questions (what you buy and the regulation you answer to, your frameworks, your first vendor), keeps the answers as memory, checks your risk domains, inherent risk questionnaire, control sets and portals, onboards the first vendor and launches its first assessment | Submitting, launching, a new control set |
+
+To teach every later run a rule, type it to a live run starting with "always", "never" or "from now on", or add it under **Configuration > Coverbase AI Memory**. See [Memory](/user-guides/coverbase-ai-memory-and-agents#memory).
+
+A standing agent runs a job like these on a schedule or when something happens, such as a Radar alert or an overdue finding, and a workflow step **Ask Coverbase AI to…** can hand a record to one. See [Standing agents](/user-guides/coverbase-ai-memory-and-agents#standing-agents).
+
+## Where else you can start or answer a run
+
+- **Slack and Microsoft Teams.** A direct message that starts with `Coverbase AI:` starts a background run as you. When a run needs you, the approval can reach you there.
+- **Email.** A needs-you email has one button per option, and you can reply to it in your own words.
+- **Your AI assistant.** The [MCP server](/mcp/tool-reference#coverbase-ai-and-agents) starts, answers, steers and stops runs.
+
+## What Coverbase AI does not do yet
+
+These modules are not available to Coverbase AI in Beta: RFPs, Inspect, risk scenarios, sending a contract for signature, and allowlisting a screening match. A run that touches one says so in its report and does the rest of the job.
+
+## Troubleshooting
+
+| Problem | What to do |
+| --- | --- |
+| The run says it cannot do a step | You lack the permission the step's page needs, or an admin set that change to **Off**. The report says which. |
+| The run did a change without asking | It was a change you can undo, which runs without a checkpoint. Ask an admin to set it to **Always asks** under [What Coverbase AI May Do on Its Own](/user-guides/coverbase-ai-agent-controls#organization-policies-for-each-change). |
+| The run changed the wrong record | Undo the change on the record's page, then tell the run which record you meant, or start again from the record's page. |
+| The run asked about each change one by one | You were watching. In the background, a review pauses once on a batch. |
+| A set was cut short | Batches hold at most 50 changes, and child runs are at most 25. The run proposes the rest after you answer. |
+
+## Related
+
+<CardGroup cols={3}>
+  <Card title="Example walkthroughs" icon="route" href="/user-guides/coverbase-ai-agent-walkthroughs">
+    Six end-to-end runs, step by step.
+  </Card>
+  <Card title="Controls, approvals and governance" icon="shield-check" href="/user-guides/coverbase-ai-agent-controls">
+    What each approval value means and who sets it.
+  </Card>
+  <Card title="Working with Coverbase AI" icon="sparkles" href="/user-guides/coverbase-ai">
+    Start a run, answer what it asks, steer it and read the report.
+  </Card>
+</CardGroup>
