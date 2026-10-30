@@ -26,7 +26,7 @@ Every member holds exactly one role. These six ship with the product and cannot 
 | --- | --- | --- |
 | **Admin** | Program owners | Everything, including members, roles, integrations, API keys, and organization settings |
 | **Member** | Your core risk and procurement team | Create and edit vendors, assessments, findings, follow-ups, intake requests, RFPs, tags and comments across the organization. Read controls and monitoring, and triage Radar alerts. Cannot manage members, roles, integrations, custom fields, monitoring rules, or settings |
-| **Siloed Member** | Analysts who should only see their own book of work | The same as a Member, except vendors, services, contracts, assessments, findings, commitments and follow-ups are limited to records they own, watch, or analyze. Intake, portals, tags, questionnaires and comments stay organization-wide. Can read RFPs and score their submissions, but not change or award them |
+| **Siloed Member** | Analysts who should only see their own book of work | The same as a Member, except vendors, services, contracts, assessments, findings, commitments and follow-ups are limited to records assigned to them (see [What counts as assigned](#what-counts-as-assigned)). Intake, portals, tags, questionnaires and comments stay organization-wide. Can read RFPs and score their submissions, but not change or award them |
 | **Auxiliary Member** | Collaborators outside the core team | Answer inherent-risk questionnaires, complete tasks assigned to them, and comment on records they are assigned to |
 | **Guest** | External collaborators | Read-only access across the organization, plus what an Auxiliary Member can do: answer inherent-risk questionnaires, complete assigned tasks, and comment on assigned records |
 | **Service Account** | Integrations, not people | Read, create, update and run vendors, services, contracts, assessments, findings, commitments, follow-ups, intake, portals, questionnaires, notes, RFPs, obligations, control sets, controls, tags, risks, Radar, custom fields, users, integrations, webhooks, workflows and supplier records. Archives only vendors, assessments and integrations. Reads roles, email templates and rating change requests, and reads and exports dashboards, without changing any of them. Cannot approve anything, and cannot reach API keys, billing, organization settings, the audit trail, dark web exposures or screening matches |
@@ -38,7 +38,7 @@ Start with **Member** for anyone on the risk team and **Admin** for the one or t
 </Note>
 
 <Tip>
-  Understand **Siloed Member** before you assign it. It does not hide a smaller list of features. It shows the same features against a smaller set of records: the vendors and assessments that person owns, watches, or analyzes. If someone says a vendor "disappeared", check whether they are a Siloed Member who was removed as an owner.
+  Understand **Siloed Member** before you assign it. It does not hide a smaller list of features. It shows the same features against a smaller set of records: the ones assigned to that person. If someone says a vendor "disappeared", check whether they are a Siloed Member who was removed as its Relationship Owner or Risk Analyst.
 </Tip>
 
 ## How a permission is built
@@ -74,7 +74,7 @@ The matrix has one row per resource and one column per action, and the legend ab
 | Cell | Legend | Means |
 | --- | --- | --- |
 | **O** | **Org-wide** | Every record of that type in the organization |
-| **A** | **Assigned only** | Only the records that person is assigned to or watches |
+| **A** | **Assigned only** | Only the records assigned to that person. See [What counts as assigned](#what-counts-as-assigned) |
 | **·** | **Off** | No access for that action |
 | A dash | **Not applicable** | That resource does not support that action |
 
@@ -85,6 +85,37 @@ Resources sit in four collapsible groups, each showing how many of its permissio
 Click a cell to cycle it through off, assigned only, and org-wide. Right-click to pick **No access**, **Assigned only** or **All records** directly. Use **Filter by resource or action** to narrow a large matrix while you work, and **Show** to switch between **All** rows, only the **Granted** ones, and only your unsaved **Changes**.
 
 Assigned scope is not available everywhere. A resource with no assignment model only offers all records or no access, and the cell says so when you hover it.
+
+## What counts as assigned
+
+Each resource has one rule for what "assigned to me" means, and that rule is the same for every action. **Assigned only** on read and **Assigned only** on update cover the same records. The matrix then decides which actions the person can take on them.
+
+| Resource | Assigned to you when you are |
+| --- | --- |
+| Vendor | A Relationship Owner or Risk Analyst of the vendor |
+| Service | A Relationship Owner of the service, or a Relationship Owner or Risk Analyst of its vendor |
+| Contract | An owner of the contract |
+| Assessment | The assignee, a member of the assigned user group, a watcher through a user group, or a reviewer of the assessment or one of its risk domains |
+| Finding | A Relationship Owner or Risk Analyst of the finding's vendor |
+| Commitment | The person the commitment is assigned to |
+| Follow-up | Assigned to its assessment |
+| Questionnaire | A reviewer of the questionnaire |
+| Control set | A reviewer of the control set, or of the risk domain of the set or one of its sections |
+| Intake request and obligation | The assignee, or a member of the assigned user group |
+
+Holding a role through a user group counts the same as being named on the record. Watching a vendor, service or contract does not make it assigned to you: watchers get updates, not access.
+
+### Vendors and their services
+
+A vendor's Relationship Owners and Risk Analysts reach every service of that vendor. They see the services on the vendor's **Services** tab and, if their role has **Assigned only** update on services, they can edit them.
+
+It does not work the other way. A Relationship Owner of one service sees that service and its vendor, but not the vendor's other services.
+
+To move a service to a different vendor with assigned scope, that vendor must also be assigned to you. Creating, archiving and merging services always need org-wide permissions.
+
+<Tip>
+  To let vendor owners see a vendor's services but not change them, set update on services to **Off**. This also stops them from editing services they own directly, because both come from the same rule.
+</Tip>
 
 ## The rules the editor enforces
 
@@ -180,7 +211,8 @@ Building, editing and assigning roles stays in the dashboard. Neither MCP nor th
 
 | What you are seeing | What is happening |
 | --- | --- |
-| Someone cannot see a vendor they expect to | They are probably a Siloed Member and are not an owner, watcher, or analyst on it. Add them to the vendor, or move them to Member |
+| Someone cannot see a vendor they expect to | They are probably a Siloed Member and are not its Relationship Owner or Risk Analyst. Watching it is not enough. Add them to the vendor, or move them to Member |
+| Someone cannot see a service they expect to | With assigned scope they need to be a Relationship Owner of the service, or a Relationship Owner or Risk Analyst of its vendor |
 | A permission will not turn on | Check the banner. It is likely missing the read it depends on, or vendor read for a vendor-backed resource |
 | You cannot grant a permission you can see | Your own role does not hold it. An Admin can grant it |
 | A cell shows a dash (**Not applicable**) | That resource does not support that action. Nothing is wrong |
