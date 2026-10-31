@@ -50,6 +50,8 @@ Coverbase looks for the entity the way you would if you searched for it yourself
   </Step>
   <Step title="Search the registers by name">
     Coverbase searches GLEIF, Companies House, OpenCorporates and SEC EDGAR for the stated legal name, the vendor's name and its former names. A record that carries the exact legal name the vendor states wins over one that only shares its brand. A record in another country than the vendor's is offered for review, not bound.
+
+    SEC EDGAR is searched first through its list of listed companies and then, when that holds nothing, through EDGAR's own filer search, which still knows a company that has delisted or that files without a listed security. A filer whose name is the bound entity's plus "Holdings" or "Group" is shown as the vendor's listed parent when GLEIF records none.
   </Step>
   <Step title="Fall back to the vendor's word">
     When no register holds the entity, the page shows the entity the vendor names, marked **Identified from the vendor's own pages**, with the quotes. It stays unvalidated until you confirm it.
@@ -141,6 +143,18 @@ Before an MCP client sends a write, it shows you the change and waits for you to
 
 An API key cannot decide a parent proposal. A signed-in user does that.
 
+## Registers consulted
+
+The **Registers consulted** list says what asking each register came to:
+
+| Row | Meaning |
+| --- | --- |
+| Returned a record | The register holds the entity and it was bound as this vendor. |
+| Found ..., a related entity | The register holds a plausible record that was not bound: a subsidiary in another country, a holding company above the entity, or a namesake held for review. Open it to judge. |
+| Searched, no record for this name | Every name was searched and nothing plausible came back. |
+| Did not answer | The register could not be searched just now, because of a refused key, a rate limit or an outage. It says nothing about the company. Refresh to try again. |
+| Not searched: no access configured | The register needs a key your workspace has not set up. |
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -150,7 +164,8 @@ An API key cannot decide a parent proposal. A signed-in user does that.
 | A private US company stays **Identified from the vendor's own pages** | US state registers are not open to search, so the entity cannot be checked against one. Confirm it, or ask the vendor for its state file number. |
 | The vendor's pages name no entity | Some sites block automated reading or build their pages in the browser. Use **Correct with AI** with the entity on your contract. |
 | A match was bound but you disagree | Use **Correct with AI** and name the right entity. |
-| A US vendor has no CIK | Only public filers have one. Its absence says nothing about the company. |
+| A US vendor has no CIK | Only SEC filers have one. Its absence says nothing about the company. |
+| A register row says it did not answer | The register was unavailable, not empty. Refresh; if it persists, the register's key needs checking by an administrator. |
 
 ## Related
 
