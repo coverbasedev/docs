@@ -1,0 +1,114 @@
+---
+title: "Agent runtime authorization"
+description: "How Coverbase decides, at the moment an agent acts, whether the action may happen: the agent gateway behind outside effects, the guards around Inspect, the person each action is attributed to, and the controls that ask the same questions of your vendors and your own applications."
+icon: "shield-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+Gartner's October 2026 guidance on agent identity argues that verifying who an agent is, and handing it a credential, is not enough. An agent's reasoning can be changed by what it reads, so the decision has to be made again at the moment it acts, on the specific action and its parameters, under the person who delegated the task. Gartner calls this runtime authorization.
+
+This page says where Coverbase does that today, where it does not, and which controls let you ask the same questions of a vendor's agents and of the agents inside your own applications. It is written for the model risk, security and audit teams who review AI in your program. For how the models themselves are selected and constrained, see [AI governance](/security/ai-governance).
+
+## The six expectations, and where each is met
+
+| Gartner's expectation | Where Coverbase meets it | Where it does not yet |
+| --- | --- | --- |
+| Decide each action at runtime, on its parameters | The [agent gateway](#the-agent-gateway) decides every outside effect when the agent proposes it, from a snapshot of the page or the email it is about to send. [Inspect](#inspect-a-read-only-agent) refuses writes in code and adjudicates every non-GET request. | Actions inside Coverbase that a person can undo run under [policies and checkpoints](/user-guides/coverbase-ai-agent-controls) rather than a per-call judge. |
+| Carry the delegating person with the agent | Every gateway decision is a row on the [Agent Ledger](/products/agent-ledger) naming the person who started the run, when one did. Coverbase AI runs act as the person with their permissions. | A collection started by a schedule has no person behind it, and its row says so. |
+| Short-lived, task-bound credentials instead of standing secrets | MCP access tokens expire after 24 hours. Coverbase AI holds no credential of its own; it borrows the person's session. | Inspect signs in to your tenant with a credential you store for it. Its reach is bounded by the read-only role you give that identity, not by a per-task token. |
+| Govern what the agent executes, not only who it is | The gateway's rules read the form, the agreement text and the recipients, and a mode set per kind of effect decides whether the agent may act alone. | |
+| Stay independent of any one agent platform | One gateway serves the trust center agent, the collection agent and vendor outreach. One ledger records them all. | Agents inside the applications you run are outside Coverbase's enforcement. Inspect [reads their configuration](#asking-the-same-of-your-applications) instead. |
+| Audit lineage and a stop | Each decision records the rules that fired, the judge's answer, the mode and where it came from, and the fingerprint of what was judged. An admin can pause every agent for the organization. | |
+
+## The agent gateway
+
+An agent effect is something an agent does outside Coverbase: it sends a trust center access request, asks a trust center for a sign-in link, accepts an agreement gate, or emails a vendor. Each goes through the agent gateway before it happens.
+
+<Note>
+  Your Coverbase representative turns the gateway on for your organization. Until then, the trust center agent runs with its earlier, fixed stops.
+</Note>
+
+The gateway decides in a fixed order. A later step never lifts an earlier one.
+
+1. **Pause.** If agents are paused for your organization, the answer is no.
+2. **Floors.** The requester identity must resolve and match the form. A request already sent is never sent again. A relationship the vendor's form asks about must be attested. An authority-to-bind clause in an agreement, or commercial terms, is a deny that nothing lifts.
+3. **Your mode for the kind.** Each kind of effect has a mode: act on its own, ask a person, or never. Your organization sets it, and a Coverbase staff ceiling can only make it stricter.
+4. **A person's earlier answer.** A decline on the same request in the last 30 days stands. An approval a person gave on the same fingerprint lets an ask through, and nothing else.
+5. **The judge.** A model reads the agreement text or the document selection and answers one question. If it is unavailable or unsure, the agent asks a person rather than proceeding.
+6. **Verdict.** The strictest answer wins.
+
+An allowed effect is dispatched at most once. An outcome nobody can confirm counts as sent, and only a person's release frees it. An ask holds the collection for a number of business days you set, and the card on the assessment's Documents tab answers it.
+
+### What the ledger records
+
+Every verdict writes one Agent Ledger row, whether or not your organization has the ledger turned on for review. The row carries:
+
+- which agent proposed, on which run, for which assessment
+- the person who started that run, read from the run itself when the agent did not name one
+- the verdict, who decided it (a rule, the mode, a grant, a person, the judge), and the reason
+- each rule's result, the judge's question and answer, and the policy revisions the decision read
+- the fingerprint of what was judged, so a later approval matches only the same thing
+
+A dispatched effect writes a second row linked to the first. **Export for audit** on the Agent Ledger page includes both, with the person who triggered the run in its own column.
+
+## Inspect: a read-only agent
+
+[Inspect](/products/agentic-inspect) signs in to your application tenants and reads their admin consoles. It is built so that a model operating the browser cannot change your tenant, and the guarantee is in code rather than in a prompt.
+
+- **Read-only in code.** A guard refuses clicks on controls that save, delete, send or submit. The page's own guard cancels any form submission a click fires.
+- **Every write request stopped.** The network guard pauses every non-GET request and adjudicates it. A model cannot ask for a bypass at this layer, because it cannot see the requests a click triggers.
+- **Stays inside the application.** Navigation outside the target's allowed domains is refused before the page loads. Three refusals in a row halt the run.
+- **A click judge that fails closed.** When the guard refuses a click the agent still needs, a separate model sees the element, its form and the agent's reason, never a field's value, and grants only when the control changes nothing. A refusal, a timeout or an unknown answer all refuse the click. A session gets at most five bypasses, each recorded as its own row in the run's activity.
+- **The model never authors a request.** Plans choose among operations the adapter already declares. Code assembles each request. A model never writes a path, a query, a selector, a hostname or a credential, and credentials are never serialized into a plan or a log.
+- **Bounded by your role.** The inspection identity holds a read-only role inside the target application. Your identity provider authenticates it; the application's role bounds it.
+
+Inspect does not yet use per-task credentials. It signs in with a credential you store for its identity. If your identity provider can issue short-lived sessions to that identity, Inspect benefits from it; the bound on what it can do remains the read-only role.
+
+## Coverbase AI and the MCP server
+
+Agents that act inside Coverbase run as a person.
+
+- A [Coverbase AI](/user-guides/coverbase-ai-agent-controls) run acts with the permissions of the person who started it, checked again on every step. It stops at checkpoints, always asks before an archive or an action that cannot be undone, and follows the policy your admins set for each kind of change. The person can stop it at any step, and admins can pause one standing agent or all of them.
+- An assistant connected through [MCP](/mcp/security) acts as the connected user and cannot exceed them. Every tool that creates, updates or deletes data requires an explicit confirmation parameter, and every call is logged with the user, the tool, its parameters and the outcome.
+
+## Asking the same of your vendors and your applications
+
+Enforcement inside Coverbase covers Coverbase's agents. The agents that act on your data elsewhere are a vendor's, or live inside the applications you run. Two control sets ask them Gartner's questions.
+
+<CardGroup cols={2}>
+  <Card title="Your own applications" icon="laptop-code" href="/control-library#ai-usage">
+    The internal **AI Agents, Copilots & Autonomous Actions** template now carries a **Runtime Authorization** section. Inspect reads whether each agent action is checked against a policy on its parameters, whether agents hold standing or task-scoped credentials, whether actions carry the delegating person, and whether policy is set once for the tenant or inside each agent.
+  </Card>
+  <Card title="Your vendors' agents" icon="building-shield" href="/control-library#ai-governance">
+    The vendor **AI Agent Runtime Authorization** template asks a third party whose agents act on your data the same questions, plus what its audit trail gives you, which actions it can reverse, and how you stop its agents on your tenant. Use it in a reassessment after a vendor adds agentic features.
+  </Card>
+</CardGroup>
+
+Both templates are forked and edited like any other. An Inspect **Evaluate** run on the internal set produces a judgment per control; a **Drift** run reports when an agent's credentials, actions or policy changed since the last run.
+
+## What is not there yet
+
+- The gateway's judge answers in shadow until its agreement with human reviewers clears the bar set in its design. Until then the earlier fixed checks decide, and the judge's answer is only recorded.
+- A collection run started by a schedule or a reassessment trigger has no delegating person. Its ledger rows name the agent and the assessment and leave the person empty.
+- Inspect's sign-in credential is stored, not minted per task.
+- Agents inside the applications you run, and a vendor's agents, are assessed by the controls above. Coverbase does not broker their credentials or proxy their tool calls.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Agent Ledger and AI governance" icon="book-bookmark" href="/products/agent-ledger">
+    The record of every agent action, the policies that say what agents may do alone, and the audit export.
+  </Card>
+  <Card title="AI governance" icon="brain-circuit" href="/security/ai-governance">
+    Model selection, testing, human oversight and data handling.
+  </Card>
+  <Card title="Internal control monitoring" icon="building-shield" href="/products/internal-controls-monitoring">
+    Running Inspect against your own applications.
+  </Card>
+  <Card title="MCP security" icon="robot" href="/mcp/security">
+    How assistants connected through MCP are authorized and logged.
+  </Card>
+</CardGroup>
