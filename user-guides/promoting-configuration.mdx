@@ -1,0 +1,105 @@
+---
+title: "Promoting configuration from a sandbox"
+description: "Copy how your sandbox organization is set up into a production organization: choose the destination, review every new and changed item area by area, and promote only what you choose."
+icon: "arrow-up-right-from-square"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It is for admins who test configuration in a sandbox before it reaches production. What each setting does is covered in [Configuring your data model](/user-guides/data-model-configuration) and [Admin and setup](/user-guides/admin-setup).
+</Info>
+
+Promotion copies configuration, not records. The mistake people make most often is expecting vendors, assessments or findings from the sandbox to arrive in production. They never do.
+
+## Before you start
+
+- **Start from the sandbox.** Promotion is available only in an organization whose status is **Sandbox**. The left navigation shows a **Sandbox** badge when you are in one.
+- **Be an Admin in both organizations.** You need the Admin role in the sandbox and in the production organization you promote to. Members of the sandbox cannot promote, whatever their role in production.
+- **Production only.** You can promote to an active production organization. Proof of concept organizations and other sandboxes cannot receive a promotion.
+
+## Promote your configuration
+
+<Steps>
+  <Step title="Open Promote configuration">
+    In the sandbox, go to **Configuration → Organization → Promote configuration**.
+  </Step>
+  <Step title="Choose the destination">
+    Pick the production organization in **Promote to**. Organizations you cannot promote to are listed with the reason, such as **You need to be an admin there**.
+  </Step>
+  <Step title="Review the changes">
+    Coverbase compares the two organizations and lists every area that differs, with how many items are **new** and how many are **updated**. Expand an area to see each item. An updated item shows each changed value, with the current production value struck through and the sandbox value beside it.
+  </Step>
+  <Step title="Choose what to include">
+    Every area with changes is included by default. Clear the checkbox on an area to leave it out of this promotion. You can promote it later.
+  </Step>
+  <Step title="Promote">
+    Select **Promote**, check the summary in the confirmation, and select **Promote to** your production organization. Changes take effect in production straight away.
+  </Step>
+</Steps>
+
+After a promotion, the review refreshes. Areas you promoted move to **Already the same**. Each promotion is listed under **Past promotions** with who ran it, when, and how many items it changed in each area.
+
+## What a promotion carries
+
+Items are matched by name, not by internal ID, because the two organizations never share IDs. An item with the same name in both is compared field by field. An item only in the sandbox is added.
+
+| Area | Matched on | What is copied | Notes |
+| --- | --- | --- | --- |
+| Organization settings | The setting | Assessment and risk scoring settings, reassessment timing, reviewer and completion rules, onboarding and W-9 reminders, the central portal switch | |
+| Terminology | The default term | Your renamed terms, such as **Vendor** to **Supplier** | Terms production renamed and the sandbox did not are kept |
+| Statuses | Record type and name | Name, color, icon, description, group and whether it is on the standard path | The default status in production does not change |
+| Tags | Key and value | Color | |
+| Custom fields | Field name | Field settings, options, whether it is turned on, which records it appears on, and its section | Values on records are not copied. A field archived in production is restored. A missing section is created |
+| Risk domains | Name | Description and weight | |
+| Approval options | Name | Color and icon | |
+| Email layouts | Layout type | Template, brand logo and color, font and footer | |
+| Control sets | Name | The control set with its sections, controls, scales, conditions and significant-deficiency floors | An updated control set replaces the production version. If an assessment already uses the old version, it stays available to that assessment |
+| Radar detectors | Name | Instructions, type, settings, severity threshold, categories, outreach and risk impact, sources and vendor tag filters | New detectors arrive turned off. Turn them on in Radar when you're ready. A detector that filters on a tag production lacks needs **Tags** included in the same promotion |
+
+Promotion never deletes anything in production. Settings production has that the sandbox lacks are kept. An updated control set archives the version it replaces.
+
+### What is not copied
+
+- **Records.** Vendors, services, assessments, findings, contracts, engagements and every other record stay where they are.
+- **People and access.** Members, user groups, roles and single sign-on are managed in each organization. With [SCIM provisioning](/security/identity-and-access#lifecycle-management), your identity provider provisions each organization separately.
+- **Vendor-specific scoping on detectors.** A detector limited to named vendors arrives without that list, because those vendors exist only in the sandbox. The review marks these detectors.
+- **Radar sources.** A detector that reads from a source production does not have is marked **Some of its Radar sources aren't set up there**. Set the source up in production, then promote again.
+- **Integrations, API keys, webhooks and secrets.** Credentials never leave the organization they were created in.
+
+## If something changes while you review
+
+The review is a snapshot. If anyone changes either organization between your review and your promote, Coverbase refuses the promotion and shows **Something changed since you reviewed it**. The review reloads with the current differences. Check them and promote again. Nothing is written until the review you confirm matches both organizations.
+
+## Troubleshooting
+
+| What you are seeing | What is happening |
+| --- | --- |
+| **Promote configuration** is not in Configuration | You are not in a sandbox organization, or you are not an Admin. Switch to your sandbox |
+| The page says promotion starts from a sandbox | The organization you are in is not a sandbox. Switch organizations from the top of the left navigation |
+| Your production organization is listed but cannot be chosen | You are not an Admin there, or it is a proof of concept or sandbox organization. The reason is shown under its name |
+| Your production organization is not listed | You are not a member of it. Ask one of its Admins to add you |
+| A detector shows as updated again after promoting | It reads from a Radar source production does not have. Set the source up in production |
+| The promotion was refused | Something changed in either organization after you reviewed. Review the updated changes and promote again |
+| The promotion was refused and names a detector and a tag | The detector filters on a tag production does not have. Include **Tags**, or create the tag in production, and promote again |
+| The promotion was refused and names a custom field | The field cannot change that way, for example a serial ID field changing its type or starting number. Change it back in the sandbox, or leave **Custom fields** out |
+| A control set appears twice in production | One is archived, or kept for assessments that started on the earlier version. Later promotions update the newer one |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Configuring your data model" icon="table-columns" href="/user-guides/data-model-configuration">
+    What each setting a promotion carries does.
+  </Card>
+  <Card title="Admin and setup" icon="sliders" href="/user-guides/admin-setup">
+    The full setup sequence for a new organization.
+  </Card>
+  <Card title="Permissions and roles" icon="lock-keyhole" href="/user-guides/permissions-and-roles">
+    The Admin role you need in both organizations.
+  </Card>
+  <Card title="Identity and access" icon="id-badge" href="/security/identity-and-access">
+    How SSO and SCIM provision people into each organization.
+  </Card>
+</CardGroup>

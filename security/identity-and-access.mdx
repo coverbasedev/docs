@@ -1,6 +1,6 @@
 ---
 title: "Identity and access management"
-description: "How people sign in to Coverbase and how their access ends: SAML 2.0 single sign-on with your identity provider's MFA and conditional access, just-in-time provisioning, IGA-driven lifecycle management, role-based access control, and network restriction."
+description: "How people sign in to Coverbase and how their access ends: SAML 2.0 single sign-on with your identity provider's MFA and conditional access, SCIM 2.0 lifecycle provisioning, just-in-time provisioning, IGA-driven lifecycle management, role-based access control, and network restriction."
 icon: "id-badge"
 ---
 
@@ -43,7 +43,31 @@ Because authentication happens at your IdP, your authentication policy is enforc
 
 ## Lifecycle management
 
-Provisioning, role change and deprovisioning are exposed as an API designed for identity-governance tooling to drive.
+Coverbase supports two ways to manage the joiner, mover and leaver lifecycle. Use SCIM when your identity provider owns the lifecycle. Use the Users API when an identity governance platform or HR pipeline owns it. Just-in-time provisioning stays available alongside either one.
+
+### SCIM 2.0 provisioning
+
+Your identity provider pushes every lifecycle change to Coverbase over SCIM 2.0, through the same enterprise connection that handles single sign-on. A change takes effect when your IdP sends it, not at the person's next sign-in.
+
+| Lifecycle step | In your IdP | In Coverbase |
+| --- | --- | --- |
+| Join | Assign the Coverbase application to a person or a group. | An account and an active membership are created with the role your IdP sends. The person can sign in straight away. |
+| Profile change | Update the person's name or email. | The account is updated to match. |
+| Move | Change the person's group or role mapping. | The membership role changes. The change is recorded in the [audit trail](/security/audit-trails) as a role change. |
+| Leave | Unassign the application, or deactivate the person. | The membership is set to `inactive` and the person loses access to the organization's data. |
+| Delete | Delete the person. | The user is archived and every membership they hold is set to `inactive`. |
+| Return | Assign the application again. | The existing account is reactivated rather than duplicated. |
+
+Things to know before you switch it on:
+
+- **Your IdP is the source of truth for roles.** A membership that SCIM manages cannot have its role changed or be removed from the Coverbase dashboard. Coverbase refuses the change and tells you the directory manages the membership. Change it in your IdP instead.
+- **Records stay attributed.** Deprovisioning removes access. It does not delete the vendors, assessments, findings or comments the person created, so your audit history stays complete.
+- **Each organization is provisioned separately.** Memberships belong to one Coverbase organization. If you run a sandbox organization and a production organization, you can provision a different population into each.
+- **Set up with your Coverbase team.** SCIM is enabled on your enterprise connection by Coverbase. Your team gives you the SCIM base URL and bearer token to enter in your IdP. Okta and Microsoft Entra ID are the most common providers. Any SCIM 2.0 client that can push users and groups works.
+
+### Users API
+
+Provisioning, role change and deprovisioning are also exposed as an API designed for identity governance tooling to drive.
 
 | Operation | Endpoint | Behavior |
 | --- | --- | --- |
@@ -52,13 +76,9 @@ Provisioning, role change and deprovisioning are exposed as an API designed for 
 | Change role | `PATCH /v1/users/{id}` | Move a user between Admin, Member, Siloed member, Auxiliary member and Guest. |
 | Deprovision | `PATCH /v1/users/{id}` | Archives the user and sets org membership to `inactive`. Reversible by the same call, so a leaver who returns is reactivated rather than duplicated. |
 
-This is the integration point SailPoint, Okta Workflows, Microsoft Entra lifecycle workflows and HRIS-driven joiner/mover/leaver pipelines target: your IGA platform owns the approval, and Coverbase reflects the resulting entitlement.
+This is the integration point SailPoint, Okta Workflows, Microsoft Entra lifecycle workflows and HRIS-driven joiner, mover and leaver pipelines target: your IGA platform owns the approval, and Coverbase reflects the resulting entitlement.
 
-<Info>
-  **SCIM.** Coverbase does not publish a SCIM 2.0 service-provider endpoint today. Lifecycle is driven through the Users API above, which every major IGA platform can call from an outbound connector or workflow, and which is what our identity-governance customers use. If a native SCIM endpoint is a requirement for your program, raise it with your Coverbase team so it can be planned rather than assumed.
-</Info>
-
-Removing someone's IdP assignment blocks sign-in immediately. Deprovisioning through the API also removes their access to org data and takes them out of assignment and notification routing. Do both; they answer different questions in an access review.
+Removing someone's IdP assignment blocks sign-in immediately. With SCIM, the same unassignment also deprovisions them in Coverbase. Without SCIM, deprovision through the API as well, which removes their access to org data and takes them out of assignment and notification routing. The two answer different questions in an access review.
 
 ## Authorization inside Coverbase
 
