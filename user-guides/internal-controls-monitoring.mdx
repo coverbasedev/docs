@@ -1,6 +1,6 @@
 ---
 title: "Internal controls monitoring with Inspect"
-description: "How to connect your own applications to Inspect, run an inspection against an internal control set, read the result, watch for drift between runs, keep probes and schedules running, and turn what it finds into findings."
+description: "How to connect your own applications to Inspect, run an inspection against an internal control set, read the result, watch for drift between runs, keep probes and schedules running, see every AI agent across your applications and vendors, and turn what it finds into findings."
 icon: "building-shield"
 ---
 
@@ -257,6 +257,36 @@ Before each run Inspect checks sign-in and plan readiness. A run that cannot sta
 <Note>
   A monthly schedule that outlives its application keeps running until you pause or stop it. Archiving the application does not stop the schedule.
 </Note>
+
+## The AI Agents tab
+
+**Inspect › AI Agents** gathers every AI agent, copilot or bot that an inspection found inside your applications, what each may do, and how each application and each vendor authorises agent actions at runtime. It reads the inspections and assessments you have already run; nothing on it is entered by hand.
+
+Five tiles lead: agents discovered, applications covered, agents with unattended write authority, applications with no kill switch, and vendors assessed. Each tile opens the view that explains it.
+
+<Steps>
+  <Step title="Inspect an application for agents">
+    Click **Inspect for agents** (or **Inspect** on a row that reads *Never*). The inspection setup opens with the **AI Agents, Copilots & Autonomous Actions** control set selected; pick the application and launch an **Evaluate** run. When it finishes, the application's row fills in.
+  </Step>
+  <Step title="Read the Applications view">
+    One row per connected application. The four posture cells follow the control set's sections: **Inventory**, **Authority**, **Attribution** and **Runtime authorization**. Each reads **Met**, a count of issues, or **Not inspected**. A section whose every evaluated control failed reads red rather than amber. **Drift** reads **Changed** when the latest Drift run on the agents set found a difference. Clicking a row opens the application's drawer.
+  </Step>
+  <Step title="Read the Agents view">
+    One row per agent per application: its name and the application's own identifier, owner, status, the identity it runs as (an administrator identity is marked red), the actions the console lists for it, who can reach it, and when an inspection last saw it. Nothing is inferred from an agent's name: a chip says the agent can send email because the admin console said so.
+  </Step>
+  <Step title="Open an agent">
+    The drawer shows what the agent may do, who runs and owns it, then **Runtime authorization at &lt;application&gt;**: the five checks a reviewer asks about, each with the inspection's one-line judgment. **Per-action policy on parameters**, **Task-scoped credentials**, **Delegating person on each action** and **Central policy across agents** come from the template's Runtime Authorization section; **Kill switch** from its Attribution & Reversal section. **Create finding** on a failing check raises a finding on that control, the same flow as the inspection's own evaluation row. **Evidence** names the admin page the inventory was read from and the inspection it came from. The footer opens the inspection or the schedules page to watch the application for drift.
+  </Step>
+  <Step title="Read the Vendors view">
+    The vendors whose agents act on your data. A vendor assessed with the **AI Agent Runtime Authorization** template carries four posture cells, **Delegation**, **Runtime authorization**, **Credentials** and **Audit & stop**, read from the assessment's evaluations, and the date it completed. A vendor whose applications hold agents but that has no such assessment reads **Not assessed** with an **Assess** action that opens the vendor. Coverbase's own agents are recorded on the Agent Ledger, linked below the table.
+  </Step>
+</Steps>
+
+<Note>
+  Agents are read from the inventory control's records, so an application whose inspection plan lists agents under its own field names still appears: the tab reads the name, identifier, status, owner, actions, identity and audience fields under their common synonyms, and matches the authority controls' records to the inventory by identifier or name. A record that names neither is not shown.
+</Note>
+
+Who can see it: anyone who can read integrations. **Inspect for agents** needs the permission to run inspections; **Create finding** needs the permission to create findings; **Assess** needs the permission to create assessments.
 
 ## The Accounts directory
 
