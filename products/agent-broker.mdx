@@ -1,6 +1,6 @@
 ---
 title: "Broker"
-description: "Runtime authorization for every agent: the broker decides each action an agent takes, mints a credential scoped to that action, masks sensitive data in the response, records every decision in a tamper-evident trail, and can stop any agent at once. Beta."
+description: "Runtime authorization for every agent: the broker decides each action an agent takes, mints a credential scoped to that action, masks sensitive data in the response, records every decision in a tamper-evident trail, and can stop any agent at once."
 icon: "shield-halved"
 ---
 
@@ -10,18 +10,18 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 The [agent gateway](/products/agent-ledger) governs the agents Coverbase runs. The [AI Agents tab](/user-guides/internal-controls-monitoring#the-ai-agents-tab) reports how a vendor's agents and the agents inside your own applications are governed. The Broker is the third piece: it puts Coverbase in the request path of any agent, yours or a vendor's, and authorizes each action at the moment the agent takes it.
 
-It is in beta, behind a gate. Find it at **Inspect › Broker**.
+Find it at **Inspect › Broker**. It is available on plans that include the agent broker.
 
 ## What it does
 
 For every action an agent attempts, the broker runs one decision path and nothing fails open:
 
-1. **Authenticates the agent** by a broker key or a federated workload identity.
+1. **Authenticates the agent** by its broker key or a workload identity token from GitHub Actions, Kubernetes or another OIDC issuer.
 2. **Resolves the person** who delegated the task, and records both identities on the decision.
-3. **Normalizes the action** to one shape, whatever protocol it arrived on: a SQL statement, an HTTP request, a cloud API call, a shell line.
+3. **Normalizes the action** to one shape, whatever protocol it arrived on: a SQL statement, an HTTP request, a cloud API call, a Kubernetes request, an SSH command.
 4. **Classifies intent and risk.** Deterministic rules set a risk floor and name the intent (read, write, delete, schema change, privilege change, data export, credential access, configuration change). A model may only raise the risk above that floor, so text an attacker plants in a document can never argue an action into a safer band.
-5. **Evaluates policy.** Rules the target owner wrote decide permit, hold or deny. The strictest match wins, and anything unmatched is denied.
-6. **Holds or proceeds.** A held action waits for a person.
+5. **Evaluates policy.** Rules decide permit, hold or forbid. The strictest match wins, and anything no rule permits is denied.
+6. **Holds or proceeds.** A held action waits for a person, who is paged by email and Slack.
 7. **Mints and executes.** Only now does a credential exist, scoped to exactly this action and a short lease. The agent holds nothing standing.
 8. **Masks, records, releases.** The response is stripped of emails, government ids, payment cards, access keys and secrets before the agent sees it; the decision is written to a tamper-evident trail; the credential is revoked when the action is done.
 
@@ -31,19 +31,50 @@ No single mechanism governs every agent. An agent that calls a database through 
 
 | Tier | What it covers | What it can do |
 | --- | --- | --- |
-| **Inline** | The agent's calls go through the broker over MCP, HTTP, a wire protocol or an SDK hook | Allow, hold or deny before the action happens |
-| **Routed** | A vendor agent that lets an admin register external tools is pointed at the broker | Turns its calls into inline traffic |
-| **Identity bound** | A vendor agent the broker cannot sit in front of | Keeps its standing permissions minimal and revokes them through your identity provider |
-| **Observed** | A vendor agent acting entirely inside its own product | Detects a forbidden action in the vendor's audit trail and triggers a response |
+| **Inline** | The agent's calls go through the broker over MCP or HTTP | Allow, hold or deny before the action happens |
+| **Routed** | A vendor agent that lets an admin register external tools or MCP servers (Copilot Studio, Agentforce, Claude) is pointed at the broker | Turns its calls into inline traffic |
+| **Identity bound** | A vendor agent the broker cannot sit in front of | Suspends its identity in Entra, Okta or Salesforce and revokes its grants |
+| **Observed** | A vendor agent acting entirely inside its own product | Reads the platform's audit log, flags an action your rules forbid, and can suspend the agent |
 
-## The console
+## Targets
 
-- **Overview** shows the agents governed, targets, actions today and how many were allowed, actions held for a person, and any stops in force, with the most recent decisions beneath.
-- **Targets** and **Agents** list the systems agents reach and the agents themselves, with each agent's tier and whether it is first-party or vendor-run.
-- **Policies** shows the rules in priority order, and a simulator replays recent decisions against a draft rule set so you see what a change would do before you save it.
-- **Activity** is the audit trail. It verifies its own hash chain, and a row opens the exact command, the intent, the risk and its floor, and the rule that decided it.
+A target is a system agents reach through the broker: Postgres, MySQL, an AWS account, a Kubernetes cluster, an SSH host, an HTTP API, a SaaS app by OAuth or by key, or GitHub. Add one from **Targets › Add target**. Each kind gets its own credential per action: a database role, an STS session, a scoped service account token, a signed SSH certificate, or a header the broker injects so the agent never sees the key.
 
-A stop can name an organization, an agent, a person, a target or a vendor. While one is in force, a banner shows on every view and the agents in scope are blocked until a person lifts it.
+The secret you give is sealed on save and cannot be read back, only replaced. An SSH host shows the broker's CA public key to trust on the host.
+
+### Gateways
+
+A target that is not reachable from the internet, such as a database in your network, is reached through a **gateway**: a small service you run in your network that dials out to Coverbase, so you open no inbound port. Its secrets are sealed to a key that never leaves the gateway, every job it runs is signed by your organization's key, and results are masked before they leave your network. Add one from **Targets › Gateways**, which gives a one-time enrollment token and the Helm command to install it.
+
+## Agents
+
+Register an agent from **Agents › Register agent**. Its broker key is shown once, with the snippets to connect it over MCP, HTTP or Python. An agent can sign in with a workload identity instead, so there is no key to store.
+
+From an agent's drawer you can rotate or revoke its key, suspend it, stop it, and **delegate** your own access to it for a set of targets and a time. A delegated agent acts for you and never beyond what you can do yourself.
+
+### Vendor agents
+
+For an agent that runs on a vendor's platform, connect the platform under **Agents › Vendor connections** (Microsoft Entra, Okta, Salesforce or Microsoft Purview), then link the agent to the app, service principal or user it runs as. The broker reads the platform's audit log into its own trail, judges each event against your rules, and can suspend the agent there, by a person or automatically when you stop it.
+
+## Approvals
+
+A rule that holds an action sends it to **Approvals**, with the command, its intents and risk, and the rule that held it. Approve it once, approve equal actions (same agent, target and statement shape) for 15 minutes up to a day, or decline. The agent retries with the approval and only then does the action run.
+
+## Policies
+
+Rules are written per target or for every target. A rule has an effect (permit, hold or forbid), a priority, and conditions: intents, the highest risk it permits, the tables or paths it covers, and whether a person must have delegated. A baseline rule lets agents reach a target at all.
+
+While you edit a rule, **If you save this** replays the target's recent decisions against the edited rules and shows how many would now be denied, held or allowed, before anything changes.
+
+## Stops
+
+**Stop agents** is on every view. A stop can name every agent, one agent, one target, one person's delegations or one vendor's agents. It applies to the next decision, the live credentials in its scope are revoked at once, and linked vendor identities are suspended. While a stop is in force a banner shows on every view until a person lifts it.
+
+## Activity and audit
+
+**Activity** is the audit trail. Each page verifies its own hash chain, and **Verify the whole trail** walks it from the first decision. A decision opens with the exact command, the agent and the person it acted for, the intent and risk, the rule that decided it, the credential and whether it was revoked, and what was masked. The task an agent sent is sealed and shown to auditors only on request.
+
+The chain head is anchored hourly to write-once storage. To pull the trail into your SIEM, call `GET /v1/broker/audit/export` with an API key that has the `audit:read` scope. Events come oldest first, each with its own hash and the hash before it, so your collector can verify the chain on its own.
 
 ## How it relates to runtime authorization
 
