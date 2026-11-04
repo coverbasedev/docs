@@ -162,8 +162,8 @@ Intake runs pre-qualification again when the requester edits the request. A scre
 
 An administrator configures screening once, under **Configuration → Monitoring → Screening**, or from **Configuration** on the queue. It needs the `integration` permission, not the screening one.
 
-<Frame caption="The policy: which sources, who gets screened, which risk levels are monitored, and what a new match raises.">
-  <img src="/images/user-guides/screening-settings.png" alt="The screening settings page showing the connection status, source toggles, adverse media categories, subject selection, the automation setting, the monitoring table by risk level, and the settings for a new match." />
+<Frame caption="The policy: which sources, who gets screened, which vendors are monitored and how often, and what a new match raises.">
+  <img src="/images/user-guides/screening-settings.png" alt="The screening settings page showing the connection status, source toggles, subject selection, the automation setting, the monitoring table by risk level, monitoring rules, profile groups, the workspace default cadence, and the settings for a new match." />
 </Frame>
 
 The decisions that matter:
@@ -174,24 +174,65 @@ The decisions that matter:
 
 **Who gets screened.** The vendor's legal entity is screened by default. Directors, officers and beneficial owners are opt-in, because screening a person means storing watchlist assertions about a named individual. Turn them on only when you need them. Under **Automation**, **Screen a vendor when its intelligence refresh completes** screens as soon as a refresh has established the vendor's leadership instead of waiting for the nightly sweep. It is off by default, because every refresh then costs a screen per subject.
 
-**Which risk levels are monitored.** Monitoring is set per risk level: the vendor's residual risk level where your organization tracks residual risk, otherwise its inherent level. A monitored vendor is re-screened on a schedule and raises an alert when a source changes.
+**Which risk levels are monitored.** Monitoring is set per risk level: the vendor's residual risk level where your organization tracks residual risk, otherwise its inherent level. A monitored vendor is re-screened on a schedule and raises an alert when a source changes. Each level can also put its vendors in one profile group, which sets how often they are re-screened.
 
-<Frame caption="Monitoring is per risk level. The profile group is optional.">
-  <img src="/images/user-guides/screening-monitoring.png" alt="The monitoring table listing each risk level, plus Not scored, with a monitored switch and a provider profile group that defaults to the workspace default." />
+<Frame caption="Monitoring per risk level. A level's profile group shows the cadence it sets for each source.">
+  <img src="/images/user-guides/screening-monitoring.png" alt="The Who is monitored table listing each risk level, plus Not scored, with a monitored switch and a profile group. The Critical level uses the Enhanced diligence group, whose cadence shows below the picker." />
 </Frame>
 
-Nothing is monitored until you switch a level on, and vendors with no risk score sit in their own **Not scored** row, so switching screening on does not enroll your entire long tail. A monitored vendor is a standing subscription, not a one-off charge. The table lists your risk scale's levels, so set up the scale under Scoring first.
+Nothing is monitored until you switch a level on or add a rule, and vendors with no risk score sit in their own **Not scored** row, so switching screening on does not enroll your entire long tail. A monitored vendor is a standing subscription, not a one-off charge. The table lists your risk scale's levels, so set up the scale under Scoring first.
 
-<Note>
-  **How often** each source is re-screened is set by the provider profile group, not in Coverbase. Coverbase decides *who* is monitored; the group decides *how often*. If you need a tighter or looser schedule for a risk level, set up a profile group with your provider and pick it in the table. **Workspace default** uses the provider's default.
-</Note>
+**Monitoring rules.** A rule monitors vendors the risk-level table leaves out, or puts them in more profile groups. Under **Monitoring rules**, click **Add rule**, name it, and set the conditions it applies to:
+
+| Condition | Matches |
+| --- | --- |
+| **Subject** | **The vendor itself**, **Its directors and officers**, or both |
+| **Inherent risk level** | The vendor's inherent risk level, whether or not your organization tracks residual risk |
+| **Residual risk level** | The vendor's residual risk level |
+| **Supplier tier** | The vendor's tier, from Tier 1 (Critical) to Tier 4 (Low) |
+| **Vendor tags** | Any of the tags you pick |
+
+Every condition you set must match, and a condition you leave empty is ignored. A rule needs at least one condition. Under **Add to profile groups**, pick the groups its vendors join, or leave it empty to monitor them on the workspace default cadence.
+
+<Frame caption="A rule that monitors the directors and officers of Tier 1 vendors in their own profile group.">
+  <img src="/images/user-guides/screening-monitoring-rule-editor.png" alt="The New monitoring rule dialog with a name, Its directors and officers ticked under Subject, Tier 1 ticked under Supplier tier, and the Directors and officers profile group ticked." />
+</Frame>
+
+A vendor is monitored when its risk level is switched on or any rule that is on matches it. It joins the level's group and every matching rule's groups. When a vendor's risk score, tier or tags change, the next nightly sweep moves it into or out of the right groups. Use the switch beside a rule to pause it without deleting it.
+
+<Frame caption="Each rule lists its conditions and the groups its vendors join.">
+  <img src="/images/user-guides/screening-monitoring-rules.png" alt="The Monitoring rules list with two rules, each with an on switch, its conditions, the profile groups it adds, and Edit and Delete buttons." />
+</Frame>
+
+**Profile groups.** A profile group sets how often each source is re-screened for the vendors in it. Under **Profile groups**, click **New group**, or **Edit** on an existing one.
+
+<Frame caption="Each group's priority and the cadence it sets per source. A group a risk level or rule uses is marked In use.">
+  <img src="/images/user-guides/screening-profile-groups.png" alt="The Profile groups table listing three groups with their priority, the cadence each sets per source, an In use badge on two of them, and Edit and Archive buttons." />
+</Frame>
+
+For each source, pick a cadence: **Daily**, **Weekly**, **Monthly**, **Quarterly**, **Every 6 months**, **Yearly**, or **Not monitored**. Sanctions can also use **When the list changes**. Two more choices pass the decision on:
+
+- **Workspace default** uses the workspace default cadence for that source.
+- **Defer to lower priority** passes the source to the vendor's next group by priority. If no group sets it, that source is not monitored for the vendor.
+
+<Frame caption="A group's priority and its cadence for each source.">
+  <img src="/images/user-guides/screening-profile-group-editor.png" alt="The Edit profile group dialog with a name, description, priority 300, and a cadence picker for each source: Sanctions daily, PEP monthly, Adverse media deferred to lower priority, Legal not monitored, Criminal and Internal risk on the workspace default." />
+</Frame>
+
+**Priority** decides which group wins when a vendor is in several. For each source, the highest-priority group that sets it decides how often it runs. Each group needs its own priority number. A group that a risk level or a rule still uses can't be archived: move them to another group first.
+
+**Workspace default cadence.** Once Coverbase has connected your screening workspace, **Workspace default cadence** sets the cadence for every source a vendor's groups leave on **Workspace default**. Change a source and click **Save defaults**.
+
+<Frame caption="The cadence every source falls back to.">
+  <img src="/images/user-guides/screening-workspace-cadence.png" alt="The Workspace default cadence card with a cadence for each source: Sanctions when the list changes, PEP monthly, Adverse media and Legal quarterly, Criminal monthly, Internal risk not monitored, and a Save defaults button." />
+</Frame>
 
 **What a new match raises.** Under **On a new match**, **Open a finding** and **Notify the vendor's owners** are on by default. **Assign the review to** picks the vendor's **Relationship owner** or **Risk analyst**, or **Specific person** to send every match to one named reviewer, such as a central TPRM analyst. A vendor with nobody in the chosen role falls back to the other, so no match sits unowned. If the chosen person is later deactivated, matches go to the vendor's relationship owner, then its risk analyst, and the page shows a warning until you choose someone else.
 
 **The match threshold.** The identity match threshold is 0.80 by default and shows as **Match threshold** on each vendor's Screening tab. This page does not change it. An ad hoc screen can set its own **Match Threshold** for that one screen: lower it and you will see more true matches and many more false ones; raise it and you risk missing a real listing on thin data.
 
 <Note>
-  A source switched off at the top level never runs, whatever the monitoring table says. One switch turns a source off everywhere, rather than making you clear a row per risk level.
+  A source switched off at the top level is never raised as a match, whatever the monitoring table, rules or profile groups say. One switch turns a source off everywhere, rather than making you clear it in every group.
 </Note>
 
 ## Screen through your World-Check One license
@@ -211,7 +252,7 @@ The mistake to avoid is switching providers before you check what World-Check On
 
 1. Under **Configuration → Monitoring → Screening**, pick **World-Check One (your license)** under **Screening Provider**, and confirm the switch.
 2. Pick a **World-Check One Group**. Coverbase creates each vendor's case in this group. Changing the group later does not move cases already created.
-3. Set **Who is monitored** by risk level, as for Coverbase screening.
+3. Set **Who is monitored** by risk level, as for Coverbase screening. Monitoring rules, profile groups and the workspace default cadence are Coverbase screening only.
 4. Switch on **Screen vendors on a schedule**.
 
 <Warning>
@@ -249,7 +290,7 @@ Screening has its own permission, separate from the vendor record, so the person
 | `screening_match:read` | See the queue, the vendor tab, and match detail |
 | `screening_match:update` | Confirm, dismiss or allowlist a match; screen a vendor now; enroll a person; run an ad hoc screen |
 | `screening_match:export` | Download the screening evidence CSV |
-| `integration:read` / `integration:update` | See and change the screening configuration, and the World-Check One service account |
+| `integration:read` / `integration:update` | See and change the screening configuration, including monitoring rules, profile groups and the workspace default cadence, and the World-Check One service account |
 
 There is no create or delete. Matches come from the provider and are closed by decision, never removed.
 
@@ -268,12 +309,15 @@ These routes need `screening_match` permission, which API keys do not hold, so u
 | Symptom | Fix |
 | --- | --- |
 | The Screening tab says screening is not turned on | An administrator adds the API key and switches on **Screen vendors on a schedule** under **Configuration → Monitoring → Screening**. |
-| A vendor you expected to be monitored has no recent screens | Check the vendor's risk level, and that the level is switched on under **Who is monitored**. A vendor with no risk score is under **Not scored**. |
+| A vendor you expected to be monitored has no recent screens | Check the vendor's risk level, and that the level is switched on under **Who is monitored**, or that a monitoring rule that is on matches it. A vendor with no risk score is under **Not scored**. |
 | **Screen now** says nobody is enrolled | The settings screen nobody for this vendor. Check **Who we screen**. |
 | A director named on the People tab is not screened | Directors and officers are opt-in, and only people a registry filing names are enrolled automatically. Use **Confirm & screen** under **People not screened**. |
 | A dismissed match is back | An allowlist lasts 180 days, then the match is raised again for a fresh look. A match you marked **Not a match** stays closed. |
 | A screen says **Could not get this screen's result** | The provider did not return a result. Coverbase retries the screen, and it lands in the queue when it finishes. It never reads as clear. |
 | **World-Check One (your license)** cannot be picked | Switch off **Screen vendors on a schedule** first. If the page says to contact support, the current provider already holds cases for your vendors. |
+| **Archive** is greyed out on a profile group | A risk level or monitoring rule still uses the group. Move them to another group, then archive it. |
+| Saving a profile group says another group uses this priority | Each group needs its own priority. Pick a different number. |
+| There is no **Workspace default cadence** card | Coverbase has not connected your screening workspace yet. Contact your Coverbase account team. Profile groups and rules work without it. |
 | No **World-Check One Group** to pick | The service account is not in a group. Ask your World-Check One administrator to add it to one, then test the connection again. |
 | Scheduled World-Check One screens stopped | World-Check One rejected the service account. Save working credentials on the **LSEG World-Check One** tile and screening resumes. |
 | **People not screened** is missing from a vendor's tab | Your organization screens through World-Check One, which screens organizations only. |
