@@ -85,10 +85,10 @@ For an agent that runs on a vendor's platform, connect the platform under **Agen
 **MCP servers** lists the MCP servers your people's AI clients are configured with on their own machines, so you can see agents that never go through the broker. Run the scanner on a machine, or push it with your MDM:
 
 ```bash
-cbb-gateway discover --url https://api.coverbase.app --key "$COVERBASE_BROKER_KEY" --probe-tools
+cbb-gateway discover --url https://api.coverbase.app --probe-tools
 ```
 
-It reads the configs of Claude Desktop, Claude Code, Cursor, VS Code, Windsurf and Gemini CLI. Env values never leave the machine, only their names. Arguments that look like secrets are redacted, and URLs lose their query. Use the key of an agent you register for the scanner. `--probe-tools` starts each server briefly to read its tool list, as its client would; `--dry-run` prints what would be sent.
+It reads the configs of Claude Desktop, Claude Code, Cursor, VS Code, Windsurf and Gemini CLI. Env values never leave the machine, only their names. Arguments that look like secrets are redacted, and URLs lose their query. Set `COVERBASE_BROKER_KEY` to the key of an agent you register for the scanner. `--probe-tools` starts each server briefly to read its tool list, as its client would; `--dry-run` prints what would be sent.
 
 Each server is listed once however many machines it is on, with where it runs and the secrets it reads. A new server waits under **Needs review**. Its tools are checked for poisoning: hidden directives, instructions to ignore the model's rules or to hide something from the user, references to keys and credential files, requests to send data somewhere, hidden characters, and attempts to change how other tools are used. **Approve** pins the server's current tools. If they change later, the server goes back to review, marked **Tools changed**. **Block** marks it as not allowed, and the scanner exits with an error on a machine that has it. Link a server to the vendor behind it to bring it into your vendor review.
 
