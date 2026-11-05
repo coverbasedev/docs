@@ -92,6 +92,28 @@ It reads the configs of Claude Desktop, Claude Code, Cursor, VS Code, Windsurf a
 
 Each server is listed once however many machines it is on, with where it runs and the secrets it reads. A new server waits under **Needs review**. Its tools are checked for poisoning: hidden directives, instructions to ignore the model's rules or to hide something from the user, references to keys and credential files, requests to send data somewhere, hidden characters, and attempts to change how other tools are used. **Approve** pins the server's current tools. If they change later, the server goes back to review, marked **Tools changed**. **Block** marks it as not allowed, and the scanner exits with an error on a machine that has it. Link a server to the vendor behind it to bring it into your vendor review.
 
+### Audit a server
+
+An audit shows what a server's tools do, what they return and how the server signs people in, without changing anything. To audit the servers on a machine, run the scanner there with `COVERBASE_BROKER_KEY` set:
+
+```bash
+cbb-gateway audit --url https://api.coverbase.app
+```
+
+The scanner starts each server as its client would and lists its tools, resources and prompts. It sorts each tool by what it does: reads, changes data, deletes, or unclear. It calls only the tools it can show only read: those marked read-only, or whose names only read. It calls each with small inputs built from the tool's schema: a minimal call, a typical call, empty and long values, a quote and a template expression, a path outside the working folder for file tools, and a call without a required field. It stops at 80 calls per server.
+
+What reaches Coverbase is what the audit measured, never what a tool returned:
+
+- The kinds of data each read returned, counted: personal data such as emails, phone numbers and card numbers, credentials such as keys and tokens, and infrastructure details such as internal hostnames.
+- The field names in each response, which show the server's data model.
+- How the server handles bad input: database errors, evaluated templates, files read outside its folder, and stack traces in errors.
+- How it signs people in: OAuth (with its authorization server, the scopes it offers and whether any client can register), a fixed header, or secrets in its environment, and whether it answers anyone without sign-in.
+- What it documents: its instructions to clients, its resources and its prompts.
+
+Open a server under **MCP servers** and choose **Audit** to see the latest audit, its findings, what changed since the audit before, and the history. Use `--call-mode list_only` to list tools without calling any, `--skip-tool` for a tool never to call, and `--every 360` to audit again every 6 hours. You can also set these per server under **Audit settings**.
+
+For a public HTTPS server, Coverbase can audit it itself: choose **Audit now**, or set **Audit from Coverbase** to every 6 hours, daily or weekly. Coverbase sends no credential. It reads how the server signs people in, and audits the tools only when the server answers without sign-in.
+
 ## Approvals
 
 A rule, or an organization threshold, that holds an action sends it to **Approvals**, with the command, its intents and risk, the rule that held it, and how often an equal action was approved this week. **Approve once** lets that exact statement run once. **Approve equal actions for** a window (15 minutes up to a day) covers the same agent, target and statement shape. Or decline. The agent retries with the approval and only then does the action run. Use J and K to move through the queue, A to approve and D to decline.
