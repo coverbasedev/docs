@@ -24,11 +24,11 @@ Once agents are working, the broker opens on the command center: decisions in th
 
 For every action an agent attempts, the broker runs one decision path and nothing fails open:
 
-1. **Authenticates the agent** by its broker key or a workload identity token from GitHub Actions, Kubernetes or another OIDC issuer, then applies the agent's guardrails: the networks it may call from and how many actions it may take a minute.
+1. **Authenticates the agent** by its broker key, an OAuth sign-in from an MCP client, a workload identity token from GitHub Actions, Kubernetes or another OIDC issuer, or a SPIFFE JWT-SVID. It then applies the agent's guardrails: the networks it may call from and how many actions it may take a minute.
 2. **Resolves the person** who delegated the task, and records both identities on the decision.
 3. **Normalizes the action** to one shape, whatever protocol it arrived on: a SQL statement, an HTTP request, a cloud API call, a Kubernetes request, an SSH command.
 4. **Classifies intent and risk.** Deterministic rules set a risk floor and name the intent (read, write, delete, schema change, privilege change, data export, credential access, configuration change). A model may only raise the risk above that floor, so text an attacker plants in a document can never argue an action into a safer band.
-5. **Evaluates policy.** Rules decide permit, hold or forbid. The strictest match wins, and anything no rule permits is denied.
+5. **Evaluates policy.** Rules decide permit, hold or forbid. The strictest match wins, and anything no rule permits is denied. Your [organization settings](#organization-settings) then apply on top and can only make the result stricter.
 6. **Holds or proceeds.** A held action waits for a person, who is paged by email and Slack.
 7. **Mints and executes.** Only now does a credential exist, scoped to exactly this action and a short lease. The agent holds nothing standing.
 8. **Masks, records, releases.** The response is stripped of emails, government ids, payment cards, access keys and secrets before the agent sees it; the decision is written to a tamper-evident trail; the credential is revoked when the action is done.
@@ -56,7 +56,11 @@ A target that is not reachable from the internet, such as a database in your net
 
 ## Agents
 
-Register an agent from **Agents › Register agent**. Its broker key is shown once, with the snippets to connect it over MCP, HTTP or Python. An agent can sign in with a workload identity instead, so there is no key to store.
+Register an agent from **Agents › Register agent**. Its broker key is shown once, with the snippets to connect it over MCP, HTTP or Python. An agent can sign in with a workload identity instead, so there is no key to store: an OIDC token, or a SPIFFE JWT-SVID from your trust domain (give the trust domain, its JWKS bundle URL, and the SPIFFE IDs to accept, such as `spiffe://acme.example/ns/prod/*`).
+
+### Sign in from an MCP client
+
+Claude Desktop, Claude Code, Cursor and VS Code can sign in to the broker's MCP endpoint with your Coverbase account instead of a key. Add the endpoint URL from the **Connect an agent** panel as a remote MCP server. The client opens a Coverbase page that asks which agent it acts as, on which targets and for how long. Approving records a delegation from you, so every action the client takes is on your behalf, and it ends when the delegation does. The agent lists the clients signed in as it under **Signed-in apps**, with **Sign out** on each. The broker follows the MCP authorization spec: OAuth 2.1 with PKCE, dynamic client registration, and rotating refresh tokens. A reused code or refresh token signs the client out.
 
 Selecting an agent opens it beside the list, with its actions, denials and holds in the last 24 hours. From there you can rotate or revoke its key and choose how long a new key lasts (30, 90, 180 or 365 days), suspend it, stop it, and **delegate** your own access to it for a set of targets and a time. A delegated agent acts for you and never beyond what you can do yourself.
 
@@ -74,17 +78,60 @@ Each agent has three guardrails:
 
 ### Vendor agents
 
-For an agent that runs on a vendor's platform, connect the platform under **Agents › Vendor connections** (Microsoft Entra, Okta, Salesforce or Microsoft Purview), then link the agent to the app, service principal or user it runs as. The broker reads the platform's audit log into its own trail, judges each event against your rules, and can suspend the agent there, by a person or automatically when you stop it.
+For an agent that runs on a vendor's platform, connect the platform under **Agents › Vendor connections** (Microsoft Entra, Okta, Salesforce or Microsoft Purview), then link the agent to the app, service principal or user it runs as. The broker reads the platform's audit log into its own trail, judges each event against your rules, and can suspend the agent there, by a person or automatically when you stop it. Each connection reads its audit log every 2, 5, 15 or 60 minutes (15 by default), and **Sync now** reads it at once.
+
+## MCP servers
+
+**MCP servers** lists the MCP servers your people's AI clients are configured with on their own machines, so you can see agents that never go through the broker. Run the scanner on a machine, or push it with your MDM:
+
+```bash
+cbb-gateway discover --url https://api.coverbase.app --key "$COVERBASE_BROKER_KEY" --probe-tools
+```
+
+It reads the configs of Claude Desktop, Claude Code, Cursor, VS Code, Windsurf and Gemini CLI. Env values never leave the machine, only their names. Arguments that look like secrets are redacted, and URLs lose their query. Use the key of an agent you register for the scanner. `--probe-tools` starts each server briefly to read its tool list, as its client would; `--dry-run` prints what would be sent.
+
+Each server is listed once however many machines it is on, with where it runs and the secrets it reads. A new server waits under **Needs review**. Its tools are checked for poisoning: hidden directives, instructions to ignore the model's rules or to hide something from the user, references to keys and credential files, requests to send data somewhere, hidden characters, and attempts to change how other tools are used. **Approve** pins the server's current tools. If they change later, the server goes back to review, marked **Tools changed**. **Block** marks it as not allowed, and the scanner exits with an error on a machine that has it. Link a server to the vendor behind it to bring it into your vendor review.
 
 ## Approvals
 
-A rule that holds an action sends it to **Approvals**, with the command, its intents and risk, the rule that held it, and how often an equal action was approved this week. **Approve once** lets that exact statement run once. **Approve equal actions for** a window (15 minutes up to a day) covers the same agent, target and statement shape. Or decline. The agent retries with the approval and only then does the action run. Use J and K to move through the queue, A to approve and D to decline.
+A rule, or an organization threshold, that holds an action sends it to **Approvals**, with the command, its intents and risk, the rule that held it, and how often an equal action was approved this week. **Approve once** lets that exact statement run once. **Approve equal actions for** a window (15 minutes up to a day) covers the same agent, target and statement shape. Or decline. The agent retries with the approval and only then does the action run. Use J and K to move through the queue, A to approve and D to decline.
 
-The person who delegated to an agent cannot approve that agent's held actions. Another approver must.
+The person who delegated to an agent cannot approve that agent's held actions. Another approver must. If your organization settings name approvers, only they can decide. Above the two-person risk threshold, a held action needs two different people: the first approval shows as **1 of 2** and the action stays held until a second person approves.
+
+## Organization settings
+
+**Configuration › Agent Broker** holds settings that apply above every target and every rule. They can only make a decision stricter, so one permissive rule cannot undo them.
+
+- **Risk**: hold or deny anything at or above a risk score, raise the lowest risk an intent can score (for example, every data export scores at least 60), and have the model review every action.
+- **Session guard**: after an agent exports data, touches credentials or reads masked data, its writes and exports to any other target wait for a person for a set time. Name the targets it may still write to, such as your own warehouse.
+- **Approvals**: who may approve, when two people must, how long a held action waits before it expires, and the longest window **Approve equal actions** may cover.
+- **Agent defaults**: the action limit, the automatic stop and the key lifetime for agents that set none of their own.
+- **Masking and alerts**: fields to redact in every result on every target, and whether to page approvers when an action is held or an agent is stopped automatically.
+
+While you change a setting, **What this would change** replays your last 1,000 decisions under the new settings and shows how many would be newly held, denied or allowed, with examples, before you save.
 
 ## Policies
 
-Rules are written per target or for every target. A rule has an effect (permit, hold or forbid), a priority, and conditions: intents, the highest risk it permits, the tables or paths it covers, whether a person must have delegated, and the agents it applies to. A rule that names no agents applies to every agent. A baseline rule lets agents reach a target at all, and an agent connected over MCP sees a tool only for the targets a baseline lets it reach. Each rule shows how often it matched in the last 24 hours.
+Policies has three tabs: **Policy sets**, **Library** and **All rules**.
+
+### Policy sets
+
+A policy set is a named group of rules, the way a control set groups controls. A set applies to every target or to the targets you choose. There are two kinds:
+
+- A **foundation** decides what agents may do on a target. It carries the baseline that lets agents reach the target, and the permits. Give each target one foundation.
+- A **guardrail** only holds or forbids. It never permits anything, so adding it can only make decisions stricter, and it is safe to apply to every target.
+
+Selecting a set opens it with where it applies, its rules and the framework requirements it helps meet. **Add rule** adds a rule to the set. **Duplicate** makes a copy you own, and **Archive** stops the set applying while keeping its rules, so past decisions still show which rule decided them.
+
+### Library
+
+The library holds 27 ready-made sets in seven categories: foundations, essentials, data protection, financial controls, security, infrastructure, and third parties and oversight. Each rule says why it exists, and each set lists the requirements it helps meet in SOC 2, ISO/IEC 27001, ISO/IEC 42001, the EU AI Act, the NIST AI RMF, NIST SP 800-53, the OWASP Top 10 for LLM Applications, PCI DSS, HIPAA, GDPR, DORA and SOX. Sets marked with a star are a good place to start: **Essential agent guardrails**, **No destructive operations**, **Data loss prevention**, **Secrets and credentials**, **Personal data protection**, **Financial reporting controls (SOX)**, **Protect security tooling**, **Change management** and **Third-party and vendor agents** on every target, then **Read only** or **Least privilege starter** on each target.
+
+**Install** gives you your own copy, applied to every target or to the targets you choose. When the library publishes a new version of a set, the set shows **Update available**. **Update** shows what would be added, changed and removed, and keeps every rule you changed or added.
+
+### All rules
+
+Rules are written per target, for every target, or in a policy set. A rule has an effect (permit, hold or forbid), a priority, and conditions: intents, the highest risk it permits, the tables or paths it covers, whether a person must have delegated, and the agents it applies to. A rule that names no agents applies to every agent. A baseline rule lets agents reach a target at all, and an agent connected over MCP sees a tool only for the targets a baseline lets it reach. Each rule shows how often it matched in the last 24 hours.
 
 To start a target's policy, pick a template: **Starter**, **Read only**, **Production guardrails**, **Support and refunds** or **Change window**. The broker replays the target's recent decisions with the template added and shows how many would be denied, held or allowed before you apply it.
 
