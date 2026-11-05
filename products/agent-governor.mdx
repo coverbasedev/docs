@@ -1,0 +1,224 @@
+---
+title: "Governor"
+description: "Runtime authorization for every agent: the governor decides each action an agent takes, mints a credential scoped to that action, masks sensitive data in the response, records every decision in a tamper-evident trail, and can stop any agent at once."
+icon: "shield-halved"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The [agent gateway](/products/agent-ledger) governs the agents Coverbase runs. The [AI Agents tab](/user-guides/internal-controls-monitoring#the-ai-agents-tab) reports how a vendor's agents and the agents inside your own applications are governed. The Governor is the third piece: it puts Coverbase in the request path of any agent, yours or a vendor's, and authorizes each action at the moment the agent takes it.
+
+Find it at **Inspect › Governor**. It is available on plans that include the agent governor. **Inspect › Overview** shows the governor's numbers and alerts beside your inspection posture and AI agents.
+
+## Getting started
+
+Until the governor has seen a decision, it opens on a checklist with the next step marked. **Create sandbox** adds a built-in target over a fictional finance company (customers, invoices, orders, payroll and refunds), a `demo-agent` with a key valid for seven days, and the **Starter** policy. Every statement against the sandbox is rolled back, so nothing persists. The **Connect an agent** panel then shows the key once, a snippet for Claude Code, Claude Desktop, Cursor, VS Code, OpenAI, LangGraph or HTTP, prompts that produce each verdict, and a line that turns green when the agent's first call arrives.
+
+## Command center
+
+Once agents are working, the governor opens on the command center: decisions in the last 24 hours, the deny rate, actions waiting on a person, live credentials, agents by tier and decision time. Below them, decisions stream in live. **Pause** stops the stream while you read. The side rail holds the actions waiting on you, with **Approve** on each, and the coverage gaps to fix next: a target with no rules, an agent with no owner, a key about to expire, discovered agents not yet governed.
+
+## What it does
+
+For every action an agent attempts, the governor runs one decision path and nothing fails open:
+
+1. **Authenticates the agent** by its governor key, an OAuth sign-in from an MCP client, a workload identity token from GitHub Actions, Kubernetes or another OIDC issuer, or a SPIFFE JWT-SVID. It then applies the agent's guardrails: the networks it may call from and how many actions it may take a minute.
+2. **Resolves the person** who delegated the task, and records both identities on the decision.
+3. **Normalizes the action** to one shape, whatever protocol it arrived on: a SQL statement, an HTTP request, a cloud API call, a Kubernetes request, an SSH command.
+4. **Classifies intent and risk.** Deterministic rules set a risk floor and name the intent (read, write, delete, schema change, privilege change, data export, credential access, configuration change). A model may only raise the risk above that floor, so text an attacker plants in a document can never argue an action into a safer band.
+5. **Evaluates policy.** Rules decide permit, hold or forbid. The strictest match wins, and anything no rule permits is denied. Your [organization settings](#organization-settings) then apply on top and can only make the result stricter.
+6. **Holds or proceeds.** A held action waits for a person, who is paged by email and Slack.
+7. **Mints and executes.** Only now does a credential exist, scoped to exactly this action and a short lease. The agent holds nothing standing.
+8. **Masks, records, releases.** The response is stripped of emails, government ids, payment cards, access keys and secrets before the agent sees it; the decision is written to a tamper-evident trail; the credential is revoked when the action is done.
+
+## The four tiers of enforcement
+
+No single mechanism governs every agent. An agent that calls a database through the governor can be stopped before the query runs. A copilot acting inside a vendor's own cloud never sends the governor a packet. The governor covers both by stacking four tiers, and each agent sits in the strongest tier its deployment allows.
+
+| Tier | What it covers | What it can do |
+| --- | --- | --- |
+| **Inline** | The agent's calls go through the governor over MCP or HTTP | Allow, hold or deny before the action happens |
+| **Routed** | A vendor agent that lets an admin register external tools or MCP servers (Copilot Studio, Agentforce, Claude) is pointed at the governor | Turns its calls into inline traffic |
+| **Identity bound** | A vendor agent the governor cannot sit in front of | Suspends its identity in Entra, Okta or Salesforce and revokes its grants |
+| **Observed** | A vendor agent acting entirely inside its own product | Reads the platform's audit log, flags an action your rules forbid, and can suspend the agent |
+
+## Targets
+
+The **Targets** list shows each target's health, its actions and deny rate in the last 24 hours, how old its secret is (flagged after 90 days), how many rules apply to it and the template it came from. A target is a system agents reach through the governor: Postgres, MySQL, an AWS account, a Kubernetes cluster, an SSH host, an HTTP API, a SaaS app by OAuth or by key, GitHub, or a code sandbox. Add one from **Targets › Add target**. Each kind gets its own credential per action: a database role, an STS session, a scoped service account token, a signed SSH certificate, or a header the governor injects so the agent never sees the key.
+
+The secret you give is sealed on save and cannot be read back, only replaced. An SSH host shows the governor's CA public key to trust on the host.
+
+### Code sandboxes
+
+A **code sandbox** target runs an agent's program in an isolated [Blaxel](https://blaxel.ai/platform/sandboxes) sandbox, so running code goes through the same checks, approvals, masking and audit trail as every other action. Add one from **Targets › Add target › Code sandbox** with your Blaxel API key and, if your account has several, the workspace name. The key is sealed like any other target secret and never reaches the agent.
+
+An agent sends the language (Python, JavaScript or a bash script), the code, a timeout of up to 300 seconds and up to 20 files. For each run, the governor:
+
+1. Creates a fresh sandbox named after the action.
+2. Writes the program and its files.
+3. Runs it to completion.
+4. Deletes the sandbox, whether the run succeeded or not.
+
+The agent gets standard output, standard error and the exit code, up to 64 KB each, with sensitive values masked. If the governor stops before deleting a sandbox, it deletes it when the action's lease expires.
+
+Before a run, the governor reads the code for what it can reach: the network, secrets such as environment variables or key files, other processes, package installs and file deletes. Each one raises the run's risk, and code is never treated as a read. The **Code sandboxes** set in the library runs plain computation in Python or JavaScript on its own. It holds anything that reaches past computation, and any shell script, for a person. Code that carries or reads a secret is refused.
+
+Outbound network access is off by default. The governor creates each sandbox with firewall enforcement on (`firewall.rulesets: ["proxy"]`) and every domain forbidden. Turn on **Programs may reach the internet** to allow it, and add **Allowed domains** to limit it to those domains. Blaxel lists its domain filtering as a public preview.
+
+### Gateways
+
+A target that is not reachable from the internet, such as a database in your network, is reached through a **gateway**: a small service you run in your network that dials out to Coverbase, so you open no inbound port. Its secrets are sealed to a key that never leaves the gateway, every job it runs is signed by your organization's key, and results are masked before they leave your network. Add one from **Targets › Gateways**, which gives a one-time enrollment token and the Helm command to install it.
+
+### Regions
+
+To keep a target's actions, credentials and results in one region, pin the target to that region. Open the target and set **Region**, for example `eu-west-1`.
+
+- A pinned target behind a gateway runs only while the gateway's declared region matches the pin and the region the gateway reports agrees. The gateway also refuses a signed job pinned to another region.
+- A pinned target without a gateway runs only when Coverbase itself runs in that region. Otherwise, put a gateway in the region in front of it.
+- Anything else is denied before a credential is made, with the reason **Outside the target's region**. Each decision in **Activity** shows the region it ran in.
+
+Give a gateway its region when you add it, or with `--set region=eu-west-1` in the Helm command. A gateway without a declared region takes the first region it reports. **Region** on a gateway changes its declared region, and Coverbase refuses the change while a target behind the gateway is pinned to another region. A gateway that reports a different region than the one declared shows the reported region in red. Run one gateway in each region you need.
+
+## Agents
+
+Register an agent from **Agents › Register agent**. Its governor key is shown once, with the snippets to connect it over MCP, HTTP or Python. An agent can sign in with a workload identity instead, so there is no key to store: an OIDC token, or a SPIFFE JWT-SVID from your trust domain (give the trust domain, its JWKS bundle URL, and the SPIFFE IDs to accept, such as `spiffe://acme.example/ns/prod/*`).
+
+### Sign in from an MCP client
+
+Claude Desktop, Claude Code, Cursor and VS Code can sign in to the governor's MCP endpoint with your Coverbase account instead of a key. Add the endpoint URL from the **Connect an agent** panel as a remote MCP server. The client opens a Coverbase page that asks which agent it acts as, on which targets and for how long. Approving records a delegation from you, so every action the client takes is on your behalf, and it ends when the delegation does. The agent lists the clients signed in as it under **Signed-in apps**, with **Sign out** on each. The client sees tools only for the targets you approved, and an action on any other target is denied and recorded. The governor follows the MCP authorization spec: OAuth 2.1 with PKCE, dynamic client registration, and rotating refresh tokens. A redirect address with a backslash or a user name in it is refused. Reusing a code or refresh token that was really issued signs the client out; a made-up one is refused and changes nothing.
+
+Selecting an agent opens it beside the list, with its actions, denials and holds in the last 24 hours. From there you can rotate or revoke its key and choose how long a new key lasts (30, 90, 180 or 365 days), suspend it, stop it, and **delegate** your own access to it for a set of targets and a time. A delegated agent acts for you and never beyond what you can do yourself.
+
+### Agents as an identity provider
+
+The governor is an OpenID Connect issuer for your agents. A signed-in agent calls `POST /v1/governor/runtime/identity-token` with an `audience`, or the `governor_identity_token` tool over MCP, and gets a signed JWT that names it. Send that token to your own service as a bearer token, and the service verifies it against your organization's published keys instead of trusting a shared secret.
+
+- **Claims**: `sub` is the agent's id, `aud` is the audience you asked for, and `agent_name` and `tier` describe the agent. When the agent acts for a person through a delegation or an OAuth sign-in, `act.sub` names that person (RFC 8693).
+- **Lifetime**: 5 minutes by default and at most 15, and never longer than the delegation it carries. A disabled agent, an agent under a stop, or a delegation that has ended gets no token.
+- **Verification**: the issuer is `<API>/v1/governor/oidc/<organization id>`, with its discovery document at `/.well-known/openid-configuration` and its keys at `/jwks.json`. Tokens are signed with Ed25519 (`EdDSA`). The agent's panel shows both addresses with a copy button.
+- **Rotation**: rotating the signing key retires it but keeps it published until every token it signed has expired, so no token in flight stops verifying.
+
+Every token issued is recorded in **Activity** with its audience and expiry. The token itself is never stored.
+
+### Guardrails
+
+Each agent has three guardrails:
+
+- **Networks it may call from.** A call from any other address is denied. Leave it empty to allow any network.
+- **Actions per minute.** Above the limit, actions are denied until the minute rolls over. The default is 120.
+- **Stop after denied actions.** When an agent collects this many denials in five minutes (default 10), the governor stops it, revokes its credentials and emails its owner and the governor admins. Lifting the stop resets the count.
+
+### Govern discovered agents
+
+**Inspect › AI Agents** shows, for every agent an inspection found, how the governor governs it. **Govern** on an agent, or **Govern N agents** above the list, registers it with the governor as **Observed**, linked to the agent the inspection found.
+
+### Vendor agents
+
+For an agent that runs on a vendor's platform, connect the platform under **Agents › Vendor connections** (Microsoft Entra, Okta, Salesforce or Microsoft Purview), then link the agent to the app, service principal or user it runs as. The governor reads the platform's audit log into its own trail, judges each event against your rules, and can suspend the agent there, by a person or automatically when you stop it. Each connection reads its audit log every 2, 5, 15 or 60 minutes (15 by default), and **Sync now** reads it at once.
+
+## MCP servers
+
+**MCP servers** lists the MCP servers your people's AI clients are configured with on their own machines, so you can see agents that never go through the governor. Run the scanner on a machine, or push it with your MDM:
+
+```bash
+cbg-gateway discover --url https://api.coverbase.app --probe-tools
+```
+
+It reads the configs of Claude Desktop, Claude Code, Cursor, VS Code, Windsurf and Gemini CLI. Env values never leave the machine, only their names. Arguments that look like secrets are redacted, and URLs lose their query. Set `COVERBASE_GOVERNOR_KEY` to the key of an agent you register for the scanner. `--probe-tools` starts each server briefly to read its tool list, as its client would; `--dry-run` prints what would be sent.
+
+Each server is listed once however many machines it is on, with where it runs and the secrets it reads. A new server waits under **Needs review**. Its tools are checked for poisoning: hidden directives, instructions to ignore the model's rules or to hide something from the user, references to keys and credential files, requests to send data somewhere, hidden characters, and attempts to change how other tools are used. **Approve** pins the server's current tools. If they change later, the server goes back to review, marked **Tools changed**. **Block** marks it as not allowed, and the scanner exits with an error on a machine that has it. Link a server to the vendor behind it to bring it into your vendor review.
+
+### Audit a server
+
+An audit shows what a server's tools do, what they return and how the server signs people in, without changing anything. To audit the servers on a machine, run the scanner there with `COVERBASE_GOVERNOR_KEY` set:
+
+```bash
+cbg-gateway audit --url https://api.coverbase.app
+```
+
+The scanner starts each server as its client would and lists its tools, resources and prompts. It sorts each tool by what it does: reads, changes data, deletes, or unclear. It calls only the tools it can show only read: those marked read-only, or whose names only read. It calls each with small inputs built from the tool's schema: a minimal call, a typical call, empty and long values, a quote and a template expression, a path outside the working folder for file tools, and a call without a required field. It stops at 80 calls per server.
+
+What reaches Coverbase is what the audit measured, never what a tool returned:
+
+- The kinds of data each read returned, counted: personal data such as emails, phone numbers and card numbers, credentials such as keys and tokens, and infrastructure details such as internal hostnames.
+- The field names in each response, which show the server's data model.
+- How the server handles bad input: database errors, evaluated templates, files read outside its folder, and stack traces in errors.
+- How it signs people in: OAuth (with its authorization server, the scopes it offers and whether any client can register), a fixed header, or secrets in its environment, and whether it answers anyone without sign-in.
+- What it documents: its instructions to clients, its resources and its prompts.
+
+Open a server under **MCP servers** and choose **Audit** to see the latest audit, its findings, what changed since the audit before, and the history. Use `--call-mode list_only` to list tools without calling any, `--skip-tool` for a tool never to call, and `--every 360` to audit again every 6 hours. You can also set these per server under **Audit settings**.
+
+For a public HTTPS server, Coverbase can audit it itself: choose **Audit now**, or set **Audit from Coverbase** to every 6 hours, daily or weekly. Coverbase sends no credential. It reads how the server signs people in, and audits the tools only when the server answers without sign-in.
+
+## Approvals
+
+A rule, or an organization threshold, that holds an action sends it to **Approvals**, with the command, its intents and risk, the rule that held it, and how often an equal action was approved this week. **Approve once** lets that exact statement run once. **Approve equal actions for** a window (15 minutes up to a day) covers the same agent, target and statement shape. Or decline. The agent retries with the approval and only then does the action run. Use J and K to move through the queue, A to approve and D to decline.
+
+The person who delegated to an agent cannot approve that agent's held actions. Another approver must. If your organization settings name approvers, only they can decide. Above the two-person risk threshold, a held action needs two different people: the first approval shows as **1 of 2** and the action stays held until a second person approves. The action gets the narrower of the two approvals: if either person chose **Approve once**, it runs once, and if both chose a window, the shorter one applies.
+
+## Organization settings
+
+**Configuration › Agent Governor** holds settings that apply above every target and every rule. They can only make a decision stricter, so one permissive rule cannot undo them.
+
+- **Risk**: hold or deny anything at or above a risk score, raise the lowest risk an intent can score (for example, every data export scores at least 60), and have the model review every action.
+- **Session guard**: after an agent exports data, touches credentials or reads masked data, its writes and exports to any other target wait for a person for a set time. Name the targets it may still write to, such as your own warehouse.
+- **Approvals**: who may approve, when two people must, how long a held action waits before it expires, and the longest window **Approve equal actions** may cover. Each approver you name must be able to manage the governor, so a held action always has someone who can decide it.
+- **Agent defaults**: the action limit, the automatic stop and the key lifetime for agents that set none of their own.
+- **Masking and alerts**: whether to score requests and results for prompt injection, fields to redact in every result on every target, and whether to page approvers when an action is held or an agent is stopped automatically.
+
+While you change a setting, **What this would change** replays your last 1,000 decisions under the new settings and shows how many would be newly held, denied or allowed, with examples, before you save. It replays the verdict your rules gave each action, so loosening a threshold never shows a rule-held action as newly allowed.
+
+### Prompt injection classifier
+
+A machine learning classifier looks for text written to steer a model instead of informing it, such as "ignore your previous instructions" or a note addressed to "the assistant". It scores three things:
+
+- **Requests**: the task an agent states and the free text in its request body or tool arguments. A score at or above **Flag at** (80 percent by default) raises the action's risk to at least your hold threshold, or 80, so your rules and thresholds hold or deny it.
+- **Results**: everything a target returns, before the agent sees it. A flagged result has its suspicious sentences replaced with a marker, or, if you choose **Withhold the result**, comes back with no body.
+- **MCP tools**: each tool's description and argument descriptions, during discovery and every audit. A hit is a finding on the server.
+
+The classifier runs on Amazon Bedrock Guardrails with its prompt attack filter, and on a model that runs inside Coverbase whenever Bedrock does not answer, so it never stops scoring. The local model also runs on the gateway. A score can only raise risk. The audit trail records the score and which classifier produced it, never the text. Turn it off or change **Flag at** and **When a result is flagged** under **Masking and alerts**.
+
+## Policies
+
+Policies has three tabs: **Policy sets**, **Library** and **All rules**.
+
+### Policy sets
+
+A policy set is a named group of rules, the way a control set groups controls. A set applies to every target or to the targets you choose. There are two kinds:
+
+- A **foundation** decides what agents may do on a target. It carries the baseline that lets agents reach the target, and the permits. Give each target one foundation.
+- A **guardrail** only holds or forbids. It never permits anything, so adding it can only make decisions stricter, and it is safe to apply to every target.
+
+Selecting a set opens it with where it applies, its rules and the framework requirements it helps meet. **Add rule** adds a rule to the set. **Duplicate** makes a copy you own, and **Archive** stops the set applying while keeping its rules, so past decisions still show which rule decided them.
+
+### Library
+
+The library holds 28 ready-made sets in seven categories: foundations, essentials, data protection, financial controls, security, infrastructure, and third parties and oversight. Each rule says why it exists, and each set lists the requirements it helps meet in SOC 2, ISO/IEC 27001, ISO/IEC 42001, the EU AI Act, the NIST AI RMF, NIST SP 800-53, the OWASP Top 10 for LLM Applications, PCI DSS, HIPAA, GDPR, DORA and SOX. Sets marked with a star are a good place to start: **Essential agent guardrails**, **No destructive operations**, **Data loss prevention**, **Secrets and credentials**, **Personal data protection**, **Financial reporting controls (SOX)**, **Protect security tooling**, **Change management** and **Third-party and vendor agents** on every target, then **Read only** or **Least privilege starter** on each target.
+
+**Install** gives you your own copy, applied to every target or to the targets you choose. When the library publishes a new version of a set, the set shows **Update available**. **Update** shows what would be added, changed and removed, and keeps every rule you changed, added or deleted: a library rule you delete stays deleted.
+
+Two infrastructure sets are strict by design. **Server shell access** runs only read-only diagnostic commands on their own (`ls`, `df`, `ps`, `journalctl` and similar). Any other command, a wrapper such as `env` or `nohup`, a script, an interactive shell, or a command with a redirect or substitution waits for a person, and root and destructive commands are refused. **Kubernetes clusters** reads freely, but creating or changing pods, deployments, jobs and other workloads waits for a person, because a new pod can mount any secret in its namespace.
+
+### All rules
+
+Rules are written per target, for every target, or in a policy set. A rule has an effect (permit, hold or forbid), a priority, and conditions: intents, the highest risk it permits, the tables or paths it covers, whether a person must have delegated, and the agents it applies to. A rule that names no agents applies to every agent. A baseline rule lets agents reach a target at all, and an agent connected over MCP sees a tool only for the targets a baseline lets it reach. Each rule shows how often it matched in the last 24 hours.
+
+To start a target's policy, pick a template: **Starter**, **Read only**, **Production guardrails**, **Support and refunds** or **Change window**. The governor replays the target's recent decisions with the template added and shows how many would be denied, held or allowed before you apply it.
+
+While you edit a rule, **If you save this** replays the target's recent decisions against the edited rules and shows how many would now be denied, held or allowed, before anything changes.
+
+## Stops
+
+**Stop agents** is on every view. A stop can name every agent, one agent, one target, one person's delegations or one vendor's agents. It applies to the next decision, the live credentials in its scope are revoked at once, and linked vendor identities are suspended. While a stop is in force a banner shows on every view until a person lifts it.
+
+## Activity and audit
+
+**Activity** is the audit trail. Filter it by verdict, agent and target; selecting a decision opens it beside the list as the steps it went through. Each page verifies its own hash chain, and **Verify the whole trail** walks it from the first decision. A decision opens with the exact command, the agent and the person it acted for, the intent and risk, the rule that decided it, the credential and whether it was revoked, and what was masked. The task an agent sent is sealed and shown to auditors only on request.
+
+The chain head is anchored hourly to write-once storage. To pull the trail into your SIEM, call `GET /v1/governor/audit/export` with an API key that has the `audit:read` scope. Events come oldest first, each with its own hash and the hash before it, so your collector can verify the chain on its own.
+
+## How it relates to runtime authorization
+
+The Governor is where Coverbase enforces the runtime authorization that [the AI Agents tab](/user-guides/internal-controls-monitoring#the-ai-agents-tab) scores. A vendor that runs an independent runtime authorization layer earns a good score on that tab; the Governor is how you get the same control over the agents you run and the systems you own.
