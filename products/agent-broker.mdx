@@ -60,7 +60,7 @@ Register an agent from **Agents › Register agent**. Its broker key is shown on
 
 ### Sign in from an MCP client
 
-Claude Desktop, Claude Code, Cursor and VS Code can sign in to the broker's MCP endpoint with your Coverbase account instead of a key. Add the endpoint URL from the **Connect an agent** panel as a remote MCP server. The client opens a Coverbase page that asks which agent it acts as, on which targets and for how long. Approving records a delegation from you, so every action the client takes is on your behalf, and it ends when the delegation does. The agent lists the clients signed in as it under **Signed-in apps**, with **Sign out** on each. The broker follows the MCP authorization spec: OAuth 2.1 with PKCE, dynamic client registration, and rotating refresh tokens. A reused code or refresh token signs the client out.
+Claude Desktop, Claude Code, Cursor and VS Code can sign in to the broker's MCP endpoint with your Coverbase account instead of a key. Add the endpoint URL from the **Connect an agent** panel as a remote MCP server. The client opens a Coverbase page that asks which agent it acts as, on which targets and for how long. Approving records a delegation from you, so every action the client takes is on your behalf, and it ends when the delegation does. The agent lists the clients signed in as it under **Signed-in apps**, with **Sign out** on each. The client sees tools only for the targets you approved, and an action on any other target is denied and recorded. The broker follows the MCP authorization spec: OAuth 2.1 with PKCE, dynamic client registration, and rotating refresh tokens. A redirect address with a backslash or a user name in it is refused. Reusing a code or refresh token that was really issued signs the client out; a made-up one is refused and changes nothing.
 
 Selecting an agent opens it beside the list, with its actions, denials and holds in the last 24 hours. From there you can rotate or revoke its key and choose how long a new key lasts (30, 90, 180 or 365 days), suspend it, stop it, and **delegate** your own access to it for a set of targets and a time. A delegated agent acts for you and never beyond what you can do yourself.
 
@@ -118,7 +118,7 @@ For a public HTTPS server, Coverbase can audit it itself: choose **Audit now**, 
 
 A rule, or an organization threshold, that holds an action sends it to **Approvals**, with the command, its intents and risk, the rule that held it, and how often an equal action was approved this week. **Approve once** lets that exact statement run once. **Approve equal actions for** a window (15 minutes up to a day) covers the same agent, target and statement shape. Or decline. The agent retries with the approval and only then does the action run. Use J and K to move through the queue, A to approve and D to decline.
 
-The person who delegated to an agent cannot approve that agent's held actions. Another approver must. If your organization settings name approvers, only they can decide. Above the two-person risk threshold, a held action needs two different people: the first approval shows as **1 of 2** and the action stays held until a second person approves.
+The person who delegated to an agent cannot approve that agent's held actions. Another approver must. If your organization settings name approvers, only they can decide. Above the two-person risk threshold, a held action needs two different people: the first approval shows as **1 of 2** and the action stays held until a second person approves. The action gets the narrower of the two approvals: if either person chose **Approve once**, it runs once, and if both chose a window, the shorter one applies.
 
 ## Organization settings
 
@@ -126,11 +126,11 @@ The person who delegated to an agent cannot approve that agent's held actions. A
 
 - **Risk**: hold or deny anything at or above a risk score, raise the lowest risk an intent can score (for example, every data export scores at least 60), and have the model review every action.
 - **Session guard**: after an agent exports data, touches credentials or reads masked data, its writes and exports to any other target wait for a person for a set time. Name the targets it may still write to, such as your own warehouse.
-- **Approvals**: who may approve, when two people must, how long a held action waits before it expires, and the longest window **Approve equal actions** may cover.
+- **Approvals**: who may approve, when two people must, how long a held action waits before it expires, and the longest window **Approve equal actions** may cover. Each approver you name must be able to manage the broker, so a held action always has someone who can decide it.
 - **Agent defaults**: the action limit, the automatic stop and the key lifetime for agents that set none of their own.
 - **Masking and alerts**: fields to redact in every result on every target, and whether to page approvers when an action is held or an agent is stopped automatically.
 
-While you change a setting, **What this would change** replays your last 1,000 decisions under the new settings and shows how many would be newly held, denied or allowed, with examples, before you save.
+While you change a setting, **What this would change** replays your last 1,000 decisions under the new settings and shows how many would be newly held, denied or allowed, with examples, before you save. It replays the verdict your rules gave each action, so loosening a threshold never shows a rule-held action as newly allowed.
 
 ## Policies
 
@@ -149,7 +149,9 @@ Selecting a set opens it with where it applies, its rules and the framework requ
 
 The library holds 27 ready-made sets in seven categories: foundations, essentials, data protection, financial controls, security, infrastructure, and third parties and oversight. Each rule says why it exists, and each set lists the requirements it helps meet in SOC 2, ISO/IEC 27001, ISO/IEC 42001, the EU AI Act, the NIST AI RMF, NIST SP 800-53, the OWASP Top 10 for LLM Applications, PCI DSS, HIPAA, GDPR, DORA and SOX. Sets marked with a star are a good place to start: **Essential agent guardrails**, **No destructive operations**, **Data loss prevention**, **Secrets and credentials**, **Personal data protection**, **Financial reporting controls (SOX)**, **Protect security tooling**, **Change management** and **Third-party and vendor agents** on every target, then **Read only** or **Least privilege starter** on each target.
 
-**Install** gives you your own copy, applied to every target or to the targets you choose. When the library publishes a new version of a set, the set shows **Update available**. **Update** shows what would be added, changed and removed, and keeps every rule you changed or added.
+**Install** gives you your own copy, applied to every target or to the targets you choose. When the library publishes a new version of a set, the set shows **Update available**. **Update** shows what would be added, changed and removed, and keeps every rule you changed, added or deleted: a library rule you delete stays deleted.
+
+Two infrastructure sets are strict by design. **Server shell access** runs only read-only diagnostic commands on their own (`ls`, `df`, `ps`, `journalctl` and similar). Any other command, a wrapper such as `env` or `nohup`, a script, an interactive shell, or a command with a redirect or substitution waits for a person, and root and destructive commands are refused. **Kubernetes clusters** reads freely, but creating or changing pods, deployments, jobs and other workloads waits for a person, because a new pod can mount any secret in its namespace.
 
 ### All rules
 
