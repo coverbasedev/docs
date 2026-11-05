@@ -46,13 +46,40 @@ No single mechanism governs every agent. An agent that calls a database through 
 
 ## Targets
 
-The **Targets** list shows each target's health, its actions and deny rate in the last 24 hours, how old its secret is (flagged after 90 days), how many rules apply to it and the template it came from. A target is a system agents reach through the broker: Postgres, MySQL, an AWS account, a Kubernetes cluster, an SSH host, an HTTP API, a SaaS app by OAuth or by key, or GitHub. Add one from **Targets › Add target**. Each kind gets its own credential per action: a database role, an STS session, a scoped service account token, a signed SSH certificate, or a header the broker injects so the agent never sees the key.
+The **Targets** list shows each target's health, its actions and deny rate in the last 24 hours, how old its secret is (flagged after 90 days), how many rules apply to it and the template it came from. A target is a system agents reach through the broker: Postgres, MySQL, an AWS account, a Kubernetes cluster, an SSH host, an HTTP API, a SaaS app by OAuth or by key, GitHub, or a code sandbox. Add one from **Targets › Add target**. Each kind gets its own credential per action: a database role, an STS session, a scoped service account token, a signed SSH certificate, or a header the broker injects so the agent never sees the key.
 
 The secret you give is sealed on save and cannot be read back, only replaced. An SSH host shows the broker's CA public key to trust on the host.
+
+### Code sandboxes
+
+A **code sandbox** target runs an agent's program in an isolated [Blaxel](https://blaxel.ai/platform/sandboxes) sandbox, so running code goes through the same checks, approvals, masking and audit trail as every other action. Add one from **Targets › Add target › Code sandbox** with your Blaxel API key and, if your account has several, the workspace name. The key is sealed like any other target secret and never reaches the agent.
+
+An agent sends the language (Python, JavaScript or a bash script), the code, a timeout of up to 300 seconds and up to 20 files. For each run, the broker:
+
+1. Creates a fresh sandbox named after the action.
+2. Writes the program and its files.
+3. Runs it to completion.
+4. Deletes the sandbox, whether the run succeeded or not.
+
+The agent gets standard output, standard error and the exit code, up to 64 KB each, with sensitive values masked. If the broker stops before deleting a sandbox, it deletes it when the action's lease expires.
+
+Before a run, the broker reads the code for what it can reach: the network, secrets such as environment variables or key files, other processes, package installs and file deletes. Each one raises the run's risk, and code is never treated as a read. The **Code sandboxes** set in the library runs plain computation in Python or JavaScript on its own. It holds anything that reaches past computation, and any shell script, for a person. Code that carries or reads a secret is refused.
+
+Outbound network access is off by default. The broker creates each sandbox with firewall enforcement on (`firewall.rulesets: ["proxy"]`) and every domain forbidden. Turn on **Programs may reach the internet** to allow it, and add **Allowed domains** to limit it to those domains. Blaxel lists its domain filtering as a public preview.
 
 ### Gateways
 
 A target that is not reachable from the internet, such as a database in your network, is reached through a **gateway**: a small service you run in your network that dials out to Coverbase, so you open no inbound port. Its secrets are sealed to a key that never leaves the gateway, every job it runs is signed by your organization's key, and results are masked before they leave your network. Add one from **Targets › Gateways**, which gives a one-time enrollment token and the Helm command to install it.
+
+### Regions
+
+To keep a target's actions, credentials and results in one region, pin the target to that region. Open the target and set **Region**, for example `eu-west-1`.
+
+- A pinned target behind a gateway runs only while the gateway's declared region matches the pin and the region the gateway reports agrees. The gateway also refuses a signed job pinned to another region.
+- A pinned target without a gateway runs only when Coverbase itself runs in that region. Otherwise, put a gateway in the region in front of it.
+- Anything else is denied before a credential is made, with the reason **Outside the target's region**. Each decision in **Activity** shows the region it ran in.
+
+Give a gateway its region when you add it, or with `--set region=eu-west-1` in the Helm command. A gateway without a declared region takes the first region it reports. **Region** on a gateway changes its declared region, and Coverbase refuses the change while a target behind the gateway is pinned to another region. A gateway that reports a different region than the one declared shows the reported region in red. Run one gateway in each region you need.
 
 ## Agents
 
@@ -63,6 +90,17 @@ Register an agent from **Agents › Register agent**. Its broker key is shown on
 Claude Desktop, Claude Code, Cursor and VS Code can sign in to the broker's MCP endpoint with your Coverbase account instead of a key. Add the endpoint URL from the **Connect an agent** panel as a remote MCP server. The client opens a Coverbase page that asks which agent it acts as, on which targets and for how long. Approving records a delegation from you, so every action the client takes is on your behalf, and it ends when the delegation does. The agent lists the clients signed in as it under **Signed-in apps**, with **Sign out** on each. The client sees tools only for the targets you approved, and an action on any other target is denied and recorded. The broker follows the MCP authorization spec: OAuth 2.1 with PKCE, dynamic client registration, and rotating refresh tokens. A redirect address with a backslash or a user name in it is refused. Reusing a code or refresh token that was really issued signs the client out; a made-up one is refused and changes nothing.
 
 Selecting an agent opens it beside the list, with its actions, denials and holds in the last 24 hours. From there you can rotate or revoke its key and choose how long a new key lasts (30, 90, 180 or 365 days), suspend it, stop it, and **delegate** your own access to it for a set of targets and a time. A delegated agent acts for you and never beyond what you can do yourself.
+
+### Agents as an identity provider
+
+The broker is an OpenID Connect issuer for your agents. A signed-in agent calls `POST /v1/broker/runtime/identity-token` with an `audience`, or the `broker_identity_token` tool over MCP, and gets a signed JWT that names it. Send that token to your own service as a bearer token, and the service verifies it against your organization's published keys instead of trusting a shared secret.
+
+- **Claims**: `sub` is the agent's id, `aud` is the audience you asked for, and `agent_name` and `tier` describe the agent. When the agent acts for a person through a delegation or an OAuth sign-in, `act.sub` names that person (RFC 8693).
+- **Lifetime**: 5 minutes by default and at most 15, and never longer than the delegation it carries. A disabled agent, an agent under a stop, or a delegation that has ended gets no token.
+- **Verification**: the issuer is `<API>/v1/broker/oidc/<organization id>`, with its discovery document at `/.well-known/openid-configuration` and its keys at `/jwks.json`. Tokens are signed with Ed25519 (`EdDSA`). The agent's panel shows both addresses with a copy button.
+- **Rotation**: rotating the signing key retires it but keeps it published until every token it signed has expired, so no token in flight stops verifying.
+
+Every token issued is recorded in **Activity** with its audience and expiry. The token itself is never stored.
 
 ### Guardrails
 
@@ -128,9 +166,19 @@ The person who delegated to an agent cannot approve that agent's held actions. A
 - **Session guard**: after an agent exports data, touches credentials or reads masked data, its writes and exports to any other target wait for a person for a set time. Name the targets it may still write to, such as your own warehouse.
 - **Approvals**: who may approve, when two people must, how long a held action waits before it expires, and the longest window **Approve equal actions** may cover. Each approver you name must be able to manage the broker, so a held action always has someone who can decide it.
 - **Agent defaults**: the action limit, the automatic stop and the key lifetime for agents that set none of their own.
-- **Masking and alerts**: fields to redact in every result on every target, and whether to page approvers when an action is held or an agent is stopped automatically.
+- **Masking and alerts**: whether to score requests and results for prompt injection, fields to redact in every result on every target, and whether to page approvers when an action is held or an agent is stopped automatically.
 
 While you change a setting, **What this would change** replays your last 1,000 decisions under the new settings and shows how many would be newly held, denied or allowed, with examples, before you save. It replays the verdict your rules gave each action, so loosening a threshold never shows a rule-held action as newly allowed.
+
+### Prompt injection classifier
+
+A machine learning classifier looks for text written to steer a model instead of informing it, such as "ignore your previous instructions" or a note addressed to "the assistant". It scores three things:
+
+- **Requests**: the task an agent states and the free text in its request body or tool arguments. A score at or above **Flag at** (80 percent by default) raises the action's risk to at least your hold threshold, or 80, so your rules and thresholds hold or deny it.
+- **Results**: everything a target returns, before the agent sees it. A flagged result has its suspicious sentences replaced with a marker, or, if you choose **Withhold the result**, comes back with no body.
+- **MCP tools**: each tool's description and argument descriptions, during discovery and every audit. A hit is a finding on the server.
+
+The classifier runs on Amazon Bedrock Guardrails with its prompt attack filter, and on a model that runs inside Coverbase whenever Bedrock does not answer, so it never stops scoring. The local model also runs on the gateway. A score can only raise risk. The audit trail records the score and which classifier produced it, never the text. Turn it off or change **Flag at** and **When a result is flagged** under **Masking and alerts**.
 
 ## Policies
 
@@ -147,7 +195,7 @@ Selecting a set opens it with where it applies, its rules and the framework requ
 
 ### Library
 
-The library holds 27 ready-made sets in seven categories: foundations, essentials, data protection, financial controls, security, infrastructure, and third parties and oversight. Each rule says why it exists, and each set lists the requirements it helps meet in SOC 2, ISO/IEC 27001, ISO/IEC 42001, the EU AI Act, the NIST AI RMF, NIST SP 800-53, the OWASP Top 10 for LLM Applications, PCI DSS, HIPAA, GDPR, DORA and SOX. Sets marked with a star are a good place to start: **Essential agent guardrails**, **No destructive operations**, **Data loss prevention**, **Secrets and credentials**, **Personal data protection**, **Financial reporting controls (SOX)**, **Protect security tooling**, **Change management** and **Third-party and vendor agents** on every target, then **Read only** or **Least privilege starter** on each target.
+The library holds 28 ready-made sets in seven categories: foundations, essentials, data protection, financial controls, security, infrastructure, and third parties and oversight. Each rule says why it exists, and each set lists the requirements it helps meet in SOC 2, ISO/IEC 27001, ISO/IEC 42001, the EU AI Act, the NIST AI RMF, NIST SP 800-53, the OWASP Top 10 for LLM Applications, PCI DSS, HIPAA, GDPR, DORA and SOX. Sets marked with a star are a good place to start: **Essential agent guardrails**, **No destructive operations**, **Data loss prevention**, **Secrets and credentials**, **Personal data protection**, **Financial reporting controls (SOX)**, **Protect security tooling**, **Change management** and **Third-party and vendor agents** on every target, then **Read only** or **Least privilege starter** on each target.
 
 **Install** gives you your own copy, applied to every target or to the targets you choose. When the library publishes a new version of a set, the set shows **Update available**. **Update** shows what would be added, changed and removed, and keeps every rule you changed, added or deleted: a library rule you delete stays deleted.
 
