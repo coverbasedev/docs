@@ -34,7 +34,7 @@ On the **Authentication** tab, fill in what the provider needs. The method is sh
 | --- | --- |
 | Coupa | **Instance URL**, **Client ID**, **Client secret**. The scopes the OAuth client needs are listed. |
 | SAP Ariba | **Client ID**, **Client secret**, **Application key**, **Realm**, and optionally the **Sourcing reporting view** |
-| Ironclad | **Instance URL**, **API token** |
+| Ironclad | **Instance URL**, **Client ID**, **Client Secret** and **Acting User Email** (or a legacy **API Token**), the workflow templates that start due diligence, the workflow attribute IDs, and what Coverbase writes back. See [Ironclad](/integrations/guides/ironclad). |
 | Icertis | **Instance URL**, **Token URL**, **Client ID**, **Client secret**, and optionally the **Scope** |
 | Archer | **Instance URL**, **Instance Name**, **User Domain**, **Service Account Username** and **Password**, and the issue and risk level and status field IDs. See [Archer](/integrations/guides/archer). |
 | ServiceNow IRM | **Instance URL**, **Client ID**, **Client Secret**, and the **Issue Table** and **Risk Table**. See [ServiceNow IRM](/integrations/guides/servicenow-irm). |
@@ -54,6 +54,8 @@ Click **Save**, then **Test connection**. A stored secret is never shown again. 
 A provider that can call a webhook can ask for a sync as soon as a record changes, instead of waiting for the interval. Under **Webhooks** on the **Authentication** tab, click **Create signing secret** and copy it at once, because it is not shown again. Give your provider, or the middleware in front of it, the webhook URL and the secret.
 
 Each delivery must carry an `X-Coverbase-Signature` header of the form `t=<unix seconds>,v1=<hex digest>`, where the digest is HMAC-SHA256 of `<t>.` followed by the raw body, keyed by the signing secret. A delivery more than five minutes old, or with a wrong signature, is rejected. The body only identifies the record. Coverbase always re-reads the record from the provider's API. A webhook from Ironclad or Icertis that names a contract syncs only that contract, including a contract whose record ID is `0`. **Rotate signing secret** replaces the secret.
+
+Ironclad does not need middleware. Click **Register webhook in Ironclad** and Ironclad signs each delivery itself, which Coverbase checks against Ironclad's public key. A webhook added by hand in Ironclad can send the signing secret as its bearer token instead. See [Ironclad](/integrations/guides/ironclad#step-6-register-the-webhook).
 
 ## Step 4: Review field mappings
 
