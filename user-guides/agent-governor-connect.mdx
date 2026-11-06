@@ -1,0 +1,204 @@
+---
+title: "Connect an agent to the Governor"
+description: "Register an agent, pick how it connects (an MCP client, the Python or TypeScript SDK, plain HTTP, or Copilot Studio, Agentforce or ServiceNow), confirm its first call, approve a held action and read the trail."
+icon: "plug-circle-check"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Inspect › Governor › Agents** and the **Connect an agent** panel. For what the governor decides and why, see the [Governor](/products/agent-governor) product page.
+</Info>
+
+<Note>
+  Your Coverbase representative turns on Agent Governor for your organization.
+</Note>
+
+Every agent the governor decides for is one governor agent with its own key. You register the agent once, then connect it the way that fits how it is built.
+
+## Pick how the agent connects
+
+| The agent is | Connect it with | Guide |
+| --- | --- | --- |
+| Claude Code, Claude Desktop, Cursor or VS Code | The governor's MCP endpoint and a config snippet, or OAuth sign-in | [MCP clients](#mcp-clients) below |
+| Written in Python | The `coverbase-governor` package | [Python SDK](/user-guides/agent-governor-python) |
+| Written in TypeScript or JavaScript | The `@coverbase/governor` package | [TypeScript SDK](/user-guides/agent-governor-typescript) |
+| Written in any other language | The HTTP API | [HTTP](#plain-http) below |
+| A Copilot Studio agent or a Power Automate flow | The Coverbase Agent Governor connector | [Copilot Studio](/user-guides/agent-governor-copilot-studio) |
+| An Agentforce agent | The Coverbase Agent Governor package | [Agentforce](/user-guides/agent-governor-agentforce) |
+| A Now Assist AI agent, a flow or a script in ServiceNow | The Coverbase Agent Governor app | [ServiceNow](/user-guides/agent-governor-servicenow) |
+
+## Register the agent
+
+1. Open **Inspect › Governor › Agents** and select **Register agent**.
+2. Enter a **Name** that matches the agent, for example `reporting-bot` or `copilot-studio-hr`.
+3. Choose the **Tier** and what it **Signs in with**: a key, or a workload identity (OIDC or SPIFFE) for agents that run in CI or Kubernetes.
+4. Select **Register**.
+
+<Frame caption="Register agent.">
+  <img src="/images/user-guides/agent-governor-ui-register-agent.png" alt="Register agent drawer" />
+</Frame>
+
+The **Connect an agent** panel opens with the key. It is shown once: copy it before you close the panel. If you lose it, open the agent and select **Rotate key**.
+
+<Frame caption="Agents: every governor agent, its tier, how it signs in, its load and deny rate.">
+  <img src="/images/user-guides/agent-governor-ui-agents-list.png" alt="Agents list" />
+</Frame>
+
+## The Connect an agent panel
+
+Pick a group, then the client. The snippet already holds this agent's key and your Coverbase address.
+
+| Group | Clients |
+| --- | --- |
+| **MCP client** | Claude Code, Claude Desktop, Cursor, VS Code |
+| **Code** | Python SDK, TypeScript SDK, OpenAI, LangGraph, HTTP |
+| **Platform** | Copilot Studio, Agentforce, ServiceNow, each with a **Setup guide** link |
+
+<Tabs>
+  <Tab title="MCP client">
+    <Frame caption="MCP client, Claude Code: one command adds the governor as an MCP server.">
+      <img src="/images/user-guides/agent-governor-ui-connect-claude-code.png" alt="Connect panel with the Claude Code snippet" />
+    </Frame>
+    <Frame caption="MCP client, Cursor: paste into .cursor/mcp.json.">
+      <img src="/images/user-guides/agent-governor-ui-connect-cursor.png" alt="Connect panel with the Cursor snippet" />
+    </Frame>
+  </Tab>
+  <Tab title="Code">
+    <Frame caption="Code, Python SDK.">
+      <img src="/images/user-guides/agent-governor-ui-connect-python.png" alt="Connect panel with the Python SDK snippet" />
+    </Frame>
+    <Frame caption="Code, TypeScript SDK.">
+      <img src="/images/user-guides/agent-governor-ui-connect-typescript.png" alt="Connect panel with the TypeScript SDK snippet" />
+    </Frame>
+    <Frame caption="Code, OpenAI Agents SDK over MCP.">
+      <img src="/images/user-guides/agent-governor-ui-connect-openai.png" alt="Connect panel with the OpenAI snippet" />
+    </Frame>
+    <Frame caption="Code, LangGraph over MCP.">
+      <img src="/images/user-guides/agent-governor-ui-connect-langgraph.png" alt="Connect panel with the LangGraph snippet" />
+    </Frame>
+    <Frame caption="Code, HTTP: one call per action.">
+      <img src="/images/user-guides/agent-governor-ui-connect-http.png" alt="Connect panel with the HTTP snippet" />
+    </Frame>
+  </Tab>
+  <Tab title="Platform">
+    <Frame caption="Platform, Copilot Studio.">
+      <img src="/images/user-guides/agent-governor-ui-connect-copilot-studio.png" alt="Connect panel with Copilot Studio setup" />
+    </Frame>
+    <Frame caption="Platform, Agentforce.">
+      <img src="/images/user-guides/agent-governor-ui-connect-agentforce.png" alt="Connect panel with Agentforce setup" />
+    </Frame>
+    <Frame caption="Platform, ServiceNow.">
+      <img src="/images/user-guides/agent-governor-ui-connect-servicenow.png" alt="Connect panel with ServiceNow setup" />
+    </Frame>
+  </Tab>
+</Tabs>
+
+At the bottom, a line waits for the agent's first call and turns green when it arrives.
+
+## MCP clients
+
+<Tabs>
+  <Tab title="Claude Code">
+
+```bash
+claude mcp add --transport http coverbase https://api.coverbase.app/v1/governor/mcp --header "Authorization: Bearer $COVERBASE_GOVERNOR_KEY"
+```
+
+  </Tab>
+  <Tab title="Cursor">
+
+```json .cursor/mcp.json
+{
+  "mcpServers": {
+    "coverbase": {
+      "url": "https://api.coverbase.app/v1/governor/mcp",
+      "headers": { "Authorization": "Bearer cbbk.cbbagt_xxxxxx.your-secret" }
+    }
+  }
+}
+```
+
+  </Tab>
+  <Tab title="VS Code">
+
+```json .vscode/mcp.json
+{
+  "servers": {
+    "coverbase": {
+      "type": "http",
+      "url": "https://api.coverbase.app/v1/governor/mcp",
+      "headers": { "Authorization": "Bearer ${input:coverbase-key}" }
+    }
+  },
+  "inputs": [{ "type": "promptString", "id": "coverbase-key", "description": "Coverbase governor key", "password": true }]
+}
+```
+
+  </Tab>
+  <Tab title="Claude Desktop">
+
+```json claude_desktop_config.json
+{
+  "mcpServers": {
+    "coverbase": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://api.coverbase.app/v1/governor/mcp", "--header", "Authorization:${COVERBASE_AUTH}"],
+      "env": { "COVERBASE_AUTH": "Bearer cbbk.cbbagt_xxxxxx.your-secret" }
+    }
+  }
+}
+```
+
+  </Tab>
+</Tabs>
+
+Each target the agent can reach becomes a tool. Instead of a key, any of these clients can add `https://api.coverbase.app/v1/governor/mcp` as a remote MCP server and sign in with your Coverbase account. See [Sign in from an MCP client](/products/agent-governor#sign-in-from-an-mcp-client).
+
+## Plain HTTP
+
+Any language can call the runtime API directly:
+
+```bash
+curl -s https://api.coverbase.app/v1/governor/runtime/actions \
+  -H "Authorization: Bearer $COVERBASE_GOVERNOR_KEY" -H "Content-Type: application/json" \
+  -d '{"target_id": "cbbtgt_xxxxxx", "mode": "execute", "request": {"kind": "sql", "sql": "SELECT 1"}}'
+```
+
+The response has a `verdict` of `allow`, `hold` or `deny`. On `hold`, poll `GET /v1/governor/runtime/approvals/{approval_id}` until its `status` is no longer `pending`, then send the identical request again with `approval_id` set. `GET /v1/governor/runtime/whoami` lists the targets the agent can reach.
+
+## Approve a held action
+
+When a policy holds an action, the approvers are paged by email and Slack. Open **Inspect › Governor › Approvals**:
+
+- **Approve once** runs that exact statement or request one time, for the person the agent acted for. A different statement waits for its own approval.
+- **Approve equal actions for** a window runs any statement of the same shape until it closes.
+- **Decline** refuses only the statement you saw.
+
+Use J and K to move through the queue, A to approve once and D to decline.
+
+<Frame caption="Approvals: the held statement, its intent and risk, and the approve once and window legend.">
+  <img src="/images/user-guides/agent-governor-ui-approvals.png" alt="Approvals queue with a held action selected" />
+</Frame>
+
+## Read the trail
+
+**Inspect › Governor › Activity** shows every decision. Filter by verdict, agent or target, and open a decision to see each step: who signed in, the person it acted for, the intent and risk, the rule that matched, the approval and the masked fields.
+
+<Frame caption="Activity with a decision opened.">
+  <img src="/images/user-guides/agent-governor-ui-activity-decision.png" alt="Activity view with a decision opened" />
+</Frame>
+
+## Scope a rule to one agent
+
+A rule can name the agents it applies to. A rule that names agents does not apply to any other agent, so a baseline for one agent keeps every other agent off that target and out of their tool lists. Set it in the rule editor's **Agents** field under **Inspect › Governor › Policies**.
+
+<Frame caption="Policies: the rules on a target, including one scoped to a single agent.">
+  <img src="/images/user-guides/agent-governor-ui-rules-agent-scoped.png" alt="Rules on a target, including an agent-scoped rule" />
+</Frame>
+
+<Frame caption="The rule editor with Agents set to one agent, and the replay of recent decisions under the change.">
+  <img src="/images/user-guides/agent-governor-ui-rule-editor-agents.png" alt="Rule editor with the Agents field set" />
+</Frame>
