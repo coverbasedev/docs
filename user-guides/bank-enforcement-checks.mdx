@@ -1,6 +1,6 @@
 ---
 title: "Bank enforcement checks guide"
-description: "Which regulator and OFAC enforcement registers Coverbase reads for a bank or other financial vendor, which it lists for you to check by hand, and how a record is tied to the vendor."
+description: "Which regulator and OFAC enforcement registers Coverbase reads for a bank or other financial vendor, how Radar signals a register that names a vendor, and how to record the registers you search by hand."
 icon: "gavel"
 ---
 
@@ -46,33 +46,35 @@ Each OFAC row links to the enforcement release, which is the narrative of the pe
 
 Adverse media works differently. It searches news for the vendor's full name in quotes, and a model then discards results about other companies with a different website, registration or home. See the [Adverse media guide](/user-guides/adverse-media).
 
-## Get an email when a register names a vendor
+## Get a Radar signal when a register names a vendor
 
-Coverbase can re-read every vendor's registers on a schedule and email you when a register names a vendor it did not name before.
+Register monitoring runs through Radar. An **Enforcement register hits** detector re-reads each watched vendor's licence and enforcement registers on a schedule, and turns every enforcement record it finds into a Radar signal with an alert.
 
 <Steps>
-  <Step title="Turn it on">
-    Go to **Configuration**, then **Vendor Intelligence**, then **Register Monitoring**, and switch on **Monitor enforcement registers**. You need permission to edit your organization's settings.
+  <Step title="Add the detector">
+    Go to **Configuration**, then **Radar**, then **Detectors**, choose **Add detector**, then **From library**, and pick **Enforcement register hits** under **Compliance**. It needs no source.
   </Step>
   <Step title="Choose how often">
-    Pick how often the registers are re-read, from daily to quarterly. Weekly is the default.
+    Under **Re-read registers**, pick daily to quarterly. Weekly is the default. When several of these detectors are on, the most frequent one sets the pace.
   </Step>
-  <Step title="Choose who else hears">
-    The vendor's relationship owners and risk analysts get the email, unless they turned **Enforcement register hits** off in their own notification settings. Add anyone else under **Also email**. To send every hit to a shared mailbox, such as your BSA team's, add that address as a directory contact first, then pick it here.
+  <Step title="Choose what counts">
+    Every enforcement record alerts. Leave **Also alert on exclusion listings** on to include exclusion lists such as state Medicaid exclusions as well.
+  </Step>
+  <Step title="Choose who hears and which vendors">
+    Add your BSA reviewers under **Default Reviewers**, and use **Vendor targeting** to watch every vendor or only, say, vendors tagged as partner banks.
   </Step>
 </Steps>
 
-Each email names the register, the record as the register words it, and links to the record itself. The same alert lands in each recipient's Coverbase inbox. A record alerts once per vendor, however many times the register is re-read.
-
-<Note>
-  A record that was already on the vendor's ledger when you turned monitoring on does not send an email. Review the **Licenses** tab of your existing vendors once when you start.
-</Note>
+Each signal names the register, the record as the register words it, and the link to the record itself, and it shows on the vendor's **Radar** tab with your other signals. The alert email is Radar's own **Radar detector alert**. A record signals once per vendor, however many times the register is re-read. Records already on a vendor's ledger when you turn the detector on signal on its first pass, so expect a first batch for vendors already named.
 
 An alert is a lead, not a verdict. Read the record before you take it to your committee, and keep searching the registers marked **Check by hand** yourself, because a scheduled re-read cannot search them either.
 
-## What to do with a check by hand
+## Record a check by hand
 
-1. Open the register from the **Look up** link on its row.
-2. Search by the bank's legal name, and by its FDIC certificate number where the register takes one.
-3. Save a screenshot or export of the result, including a "no records found" result, with the date and the terms you used.
-4. Attach it to the vendor record.
+Every row marked **Check by hand**, and every register that did not answer, has a **Record search** button on the **Licenses** tab.
+
+1. Open the register from the **Look up** link on its row, and search by the bank's legal name and, where the register takes one, its FDIC certificate number.
+2. Choose **Record search**, then pick **No records found** or **Record found**, the day you searched, and the terms you used. Add a note if it helps the committee.
+3. Attach the screenshot or export of the result as PNG, JPG or PDF. Keep it even when the result says no records.
+
+The latest search then shows on the row: the result, who searched, when, and what for, with the evidence to download. It also prints in the **Licenses** PDF export. Earlier searches are kept, and **Remove** takes back a search entered by mistake. You need permission to update the vendor to record or remove a search.
