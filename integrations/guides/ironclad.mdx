@@ -16,7 +16,7 @@ The Ironclad connector is part of the [Integration Hub](/products/integration-hu
 | --- | --- | --- |
 | 1 | A business owner launches a workflow in Ironclad from a template you picked, such as a vendor agreement or an order form | Opens an intake request for the vendor named on the workflow. The business owner who launched it becomes the requester, and Coverbase emails them when the inherent risk questionnaire is drafted and ready to review and submit. |
 | 2 | The workflow is for a renewal or amendment of an existing vendor | Opens the same request against the existing vendor, labeled as a renewal or amendment review, so TPRM reviews the change alongside legal review. |
-| 3 | Your team reviews and approves the request, and the due diligence it launched completes | Writes the result onto the workflow: due diligence status, decision, risk tier and a link back to Coverbase. It comments on the workflow so the business owner and legal know they can move forward, and can record Coverbase's approval on an approver role. |
+| 3 | Your team reviews and approves the request, and the assessment that approval launched completes | Writes the result onto the workflow: due diligence status, decision, risk tier and a link back to Coverbase. It comments on the workflow so the business owner and legal know they can move forward, and can record Coverbase's approval on an approver role. |
 | 4 | The request is declined | Writes **Declined** onto the workflow and comments on it, so nobody signs with the vendor before the issue is resolved. |
 | 5 | The workflow completes and the contract is signed | Reads the executed record, creates or updates the Coverbase contract under the vendor, files the signed copy, and marks the contract executed. Its dates and value come in from the record. |
 | 6 | An executed record changes, expires or is terminated | Updates the contract's dates, value and status on the next sync. |
@@ -29,9 +29,9 @@ Ongoing monitoring that is not tied to a contract, such as quarterly SLA reviews
 
 1. **Launch in Ironclad.** The business owner fills in the launch form for a vendor agreement. Ironclad tells Coverbase straight away through a webhook.
 2. **Request opens in Coverbase.** Coverbase reads the workflow from Ironclad's API and opens an intake request. The vendor is matched to an existing vendor by website, then by name. If none matches, a new vendor record is created. Nothing is approved by this step.
-3. **Questionnaire drafted.** Coverbase drafts the inherent risk questionnaire from everything on the workflow: the vendor, service, business purpose, contract value and every other attribute on the launch form. The business owner gets an email to review the draft, correct it and submit it.
+3. **Questionnaire drafted.** Coverbase drafts the inherent risk questionnaire from the workflow: the vendor, service, business purpose and contract value, plus up to 60 other attributes on the launch form (those with a value, in alphabetical order, each up to 500 characters). The business owner gets an email to review the draft, correct it and submit it.
 4. **Review and due diligence.** Your TPRM team reviews the request as usual. Approving it can launch an assessment, depending on your [intake approval settings](/user-guides/front-door-triage).
-5. **Result back in Ironclad.** When due diligence completes, or the request is declined, Coverbase updates the workflow, comments on it and, if you set an approver role, approves that role.
+5. **Result back in Ironclad.** When due diligence completes, or the request is declined, Coverbase updates the workflow and comments on it. When due diligence completes, and you set an approver role, it also approves that role. A declined request never approves it.
 6. **Executed contract filed.** When the workflow completes, the executed record and its signed copy file under the vendor in Coverbase.
 
 ## Before you start
@@ -77,7 +77,7 @@ Coverbase writes its result into workflow attributes, so each template you pick 
 | `coverbaseResidualRisk` (optional) | The vendor's residual risk |
 
 <Note>
-  Ironclad accepts attribute and approval changes only while a workflow is in the **Review** step. If the workflow has moved past Review when due diligence finishes, Coverbase still comments on it and records in the sync log which writes it skipped.
+  Ironclad accepts attribute and approval changes only while a workflow is in the **Review** step. If the workflow is not in Review when due diligence finishes, Coverbase still comments on it, and writes the fields and approval on a later sync once the workflow is in Review.
 </Note>
 
 If you want Coverbase to be an approver, add an approver role such as **Third-Party Risk** to the template's approval flow and note its role ID.
@@ -164,7 +164,7 @@ Without a webhook, Coverbase still picks up launched workflows and executed reco
 | No request opens when a workflow is launched | The template is set to **Nothing**, the webhook is not registered, or the workflow was launched before you connected. Check the Sync Log for a **Skipped** row. |
 | The request went to the admin instead of the business owner | The business owner is not a Coverbase user. Invite them as a requester. |
 | The request matched several vendors | Coverbase opens a request without a vendor and the business owner picks the right one when they open it. Add **Vendor Website** to the attributes to match by domain. |
-| The workflow was not updated | The write-back fields are not on the template, the field IDs in **Field Mappings** do not match, or the workflow had left Review. The Sync Log names what was skipped. |
+| The workflow was not updated | The write-back fields are not on the template, the field IDs in **Field Mappings** do not match, or the workflow is not in Review. Coverbase retries skipped fields and approvals on each sync until the workflow is in Review, without posting the comment again. The Sync Log names what was skipped. |
 | The signed copy did not file | The record has no `signedCopy` attachment, or the scope `public.records.readAttachments` is missing. |
 
 ## Onboarding checklist
