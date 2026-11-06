@@ -1,0 +1,91 @@
+---
+title: "Governor platforms"
+description: "Connect agents built on Microsoft Copilot Studio, Salesforce Agentforce and ServiceNow to the Agent Governor, so their actions are decided by policy, approved by a person when held, and recorded in the audit trail."
+icon: "plug"
+---
+
+Agents built on an enterprise platform reach the [Governor](/products/agent-governor) through a connector for that platform. Each connector is a thin layer over the governor's runtime API: the platform's agent asks the governor before it touches a database or an API, the governor decides, runs the action with a credential scoped to it, masks the result and records it. The platform never holds the target's credential.
+
+| Platform | What you install | What the agent gets |
+| --- | --- | --- |
+| [Copilot Studio](#copilot-studio) | A Power Platform custom connector | Actions to run a governed SQL query, send a governed API request, check an approval and list targets |
+| [Agentforce](#agentforce) | A Salesforce package of Apex actions | Run governed action, Check governed approval and List governed targets |
+| [ServiceNow](#servicenow) | A scoped app | The Governed Data Agent in AI Agent Studio, and a script include for flows and scripts |
+
+## Before you start
+
+1. In **Inspect › Governor › Agents**, select **Register agent** and name it after the platform agent, for example `copilot-studio-hr`. One governor agent per platform agent keeps the audit trail readable.
+2. Copy the key. The **Connect an agent** panel shows it once. Under **Platform**, pick your platform to see its setup and a link back to this page.
+3. Give the agent a baseline on the targets it should reach. An agent sees, and can act on, only the targets a baseline lets it reach.
+
+## Copilot Studio
+
+The connector also works in Power Automate and in agent flows.
+
+1. Get the connector files, `apiDefinition.swagger.json` and `apiProperties.json`, from your Coverbase contact.
+2. Import them with the Power Platform CLI, or in the maker portal under **Custom connectors › New custom connector › Import an OpenAPI file**:
+
+```bash
+pac connector create --api-definition-file apiDefinition.swagger.json --api-properties-file apiProperties.json
+```
+
+3. Create a connection. Enter the key as `Bearer cbbk.<agent_id>.<secret>`, with the word `Bearer` and a space in front. Power Platform does not let a connector set its own authorization header, so the connection carries the whole value.
+4. In Copilot Studio, open the agent and select **Tools › Add a tool › Connector**, then add **Run a governed SQL query** (or **Send a governed API request**) and **Get approval status**.
+5. Under the tool's **Credentials to use**, pick **Maker-provided credentials** so every user acts as the one governor agent.
+6. Add this to the agent's instructions: "When a Coverbase action returns hold, tell the user that a person must approve it and give them the note. When they ask again, check Get approval status, and once it is approved run exactly the same action again with the approval ID. When it returns deny, do not retry."
+
+The **Target** field is a list filled from the targets the agent may reach, so a maker picks a target by name.
+
+For an unattended flow, call the action and, when the verdict is `hold`, loop with **Do until** the approval status is not `pending`: **Get approval status**, then a 30 second delay. On `approved`, call the same action with the approval ID. On `denied` or `expired`, stop and report the note.
+
+## Agentforce
+
+1. Get the Salesforce project from your Coverbase contact and deploy it:
+
+```bash
+sf project deploy start --target-org <your-org> --test-level RunSpecifiedTests --tests CoverbaseGovernorTest
+```
+
+2. In Salesforce Setup, open **Named Credentials › External Credentials › Coverbase Agent Governor**, open the `Agent_Key` principal, and add an authentication parameter named `AgentKey` with the key as its value, without `Bearer`.
+3. Assign the **Coverbase Agent Governor User** permission set to the agent's running user and to anyone who runs the actions in an employee agent.
+4. In **Agentforce Assets › Actions**, create an agent action of type Apex for **Run governed action**, **Check governed approval** and **List governed targets**. Mark the target, kind and the SQL or HTTP fields as inputs the agent collects, and the note and verdict as shown to the user.
+5. In Agent Builder, add the three actions to a topic and add this to the topic's instructions: "Always use List governed targets before acting on a system you have not used in this conversation. When Run governed action returns hold, tell the user a person must approve it and give them the note. When they ask again, run Check governed approval, and once it is approved run the same action again with the same inputs and the approval ID. When it returns deny, do not retry."
+
+An Apex action cannot wait, so a held action is conversational: the agent tells the user, and runs the same action with the approval ID once **Check governed approval** returns `approved`. A scheduled or record-triggered flow can do the same check for unattended work.
+
+To use a non-production Coverbase environment, change the named credential URL to `https://api.<env>.coverbase.app`.
+
+## ServiceNow
+
+1. Get the scoped app source from your Coverbase contact, then build and install it with the ServiceNow SDK:
+
+```bash
+npm install
+npm run build
+npx now-sdk auth --add https://yourinstance.service-now.com --type basic
+npm run deploy
+```
+
+2. Store the key. In **Connections & Credentials › Connection & Credential Aliases**, create a credential alias in the app's scope, create an API Key credential holding the key, and put the alias's sys_id in the `x_cbase_governor.credential_alias` system property. Or set the encrypted `x_cbase_governor.agent_key` property.
+3. Grant the `x_cbase_governor.user` role to the people who use the agent and to the agent's run-as user.
+4. Open **AI Agent Studio › Create and manage › AI agents › Governed Data Agent**. It comes with three tools and instructions for each verdict. **Run governed action** asks a person in the conversation to confirm each call; the two read tools run on their own.
+
+From a script or a flow, call the script include:
+
+```javascript
+var outcome = new x_cbase_governor.CoverbaseGovernor().runAction({
+    targetId: 'cbbtgt_...',
+    kind: 'sql',
+    sql: 'SELECT id, total FROM invoices WHERE paid = false'
+});
+```
+
+`outcome.verdict` is `allow`, `hold` or `deny`. On `hold`, keep `outcome.approvalId` and run the same action again with it once the approval reads `approved`.
+
+## Held actions on every platform
+
+The governor pages its approvers when a policy holds an action, and the platform agent tells its user. **Approve once** runs only the exact statement or request the approver saw, so the agent must run exactly the same action again with the approval ID. A different statement is held again with a new approval ID, and the note says why. **Approve equal actions for** a window covers any statement of the same shape until it closes.
+
+## Publishing status
+
+The connectors are built and tested outside a live tenant. Before customers can install them from a marketplace, Coverbase completes each platform's listing: Microsoft connector certification as a verified publisher, the AppExchange security review for a managed package, and ServiceNow Store certification. Until then, your Coverbase contact gives you the files to install directly.

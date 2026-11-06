@@ -1,0 +1,260 @@
+---
+title: "Governor SDKs"
+description: "Python and TypeScript packages that route an agent's actions through the Agent Governor: typed results, held actions that wait for approval and retry, governed tools for agent frameworks, and drop-in database and HTTP clients."
+icon: "code"
+---
+
+An agent written as code reaches the [Governor](/products/agent-governor) through two small packages: `coverbase-governor` for Python and `@coverbase/governor` for TypeScript. They are thin layers over the governor's runtime API. Use them when your agent is code you write. An MCP client (Claude Code, Claude Desktop, Cursor, VS Code) needs neither: it connects to the governor's MCP endpoint directly.
+
+The packages do three things you would otherwise build by hand:
+
+- **Held actions.** When a policy holds an action for a person, the package waits for the decision and sends the identical request again with the approval. An **Approve once** approval covers only that exact call, so the retry must not change it.
+- **Identity and delegation.** The package reads the agent key from the environment, or uses a workload identity token instead, carries a delegation so the agent acts on behalf of a person, and mints short-lived identity tokens for your own services.
+- **Typed results.** An allowed action returns its result. A denial, a decline, an expired approval and a target error each raise a typed error whose message a model can relay to its user.
+
+## Set up
+
+1. In **Inspect › Governor › Agents**, select **Register agent** and copy the key. The **Connect an agent** panel shows it once.
+2. Set the key where the agent runs:
+
+| Variable | Meaning |
+| --- | --- |
+| `COVERBASE_GOVERNOR_KEY` | The agent key, `cbbk.<agent_id>.<secret>`. A key created before the rename also works as `COVERBASE_BROKER_KEY`. |
+| `COVERBASE_GOVERNOR_URL` | The API address. Defaults to `https://api.coverbase.app`. |
+
+3. Install the package.
+
+<CodeGroup>
+
+```bash Python
+pip install coverbase-governor
+```
+
+```bash TypeScript
+npm install @coverbase/governor
+```
+
+</CodeGroup>
+
+The Python package needs Python 3.10 or later and depends only on `httpx`. The TypeScript package has no runtime dependencies and runs on Node 18 or later and on edge runtimes.
+
+## Run an action
+
+<CodeGroup>
+
+```python Python
+from coverbase_governor import ActionDenied, Governor
+
+gov = Governor()
+print([target.name for target in gov.targets()])
+
+decision = gov.sql("prod-db", "SELECT id, total FROM invoices LIMIT 10")
+for row in decision.rows:
+    print(row)
+
+try:
+    gov.sql("prod-db", "DELETE FROM invoices")
+except ActionDenied as exc:
+    print(exc)
+```
+
+```ts TypeScript
+import { ActionDenied, Governor } from '@coverbase/governor';
+
+const gov = new Governor();
+const me = await gov.whoami();
+
+const { rows } = await gov.sql('prod-db', 'SELECT id, total FROM invoices LIMIT 10');
+
+try {
+  await gov.sql('prod-db', 'DELETE FROM invoices');
+} catch (error) {
+  if (error instanceof ActionDenied) console.log(error.message);
+}
+```
+
+</CodeGroup>
+
+A target is named by its name or its id. The packages look names up once and cache them. `sql`, `http`, `aws` and `code` are shortcuts for the four request kinds. Sensitive values in a result arrive masked, as they do for every governed action.
+
+## Held actions
+
+When a policy holds an action, `run` and its shortcuts:
+
+1. Tell you, through `on_hold` (Python) or `onHold` (TypeScript), so you can tell the user a person must approve.
+2. Poll the approval until a person decides.
+3. On approval, send the same request again with the approval id and return the result.
+
+| Outcome | Python | TypeScript |
+| --- | --- | --- |
+| Policy denied it | `ActionDenied` | `ActionDenied` |
+| A person declined | `ApprovalDenied` | `ApprovalDenied` |
+| Nobody decided before the approval expired | `ApprovalExpired` | `ApprovalExpired` |
+| Your code stopped waiting | `ApprovalTimeout`, with the approval id | `ApprovalTimeout`, with the approval id |
+| Allowed, but the target returned an error | `ActionFailed` | `ActionFailed` |
+| Bad or missing key | `AuthError` | `AuthError` |
+| Unknown target, or Agent Governor is off | `NotFound` | `NotFound` |
+| The request does not fit the target | `RequestRejected` | `RequestRejected` |
+
+To return at once instead of waiting, pass `wait=False` (Python) or `wait: false` (TypeScript), keep the approval id, and pass it back later to resume. `act` returns the raw decision without waiting or raising.
+
+## Governed tools
+
+A governed tool turns an action into a tool a model can call. It never raises for a policy outcome: it returns the status (allowed, held, denied or failed) and a message, so the model sees why and can tell the user. With the **return** hold mode, a held tool returns at once, and calling it again with the same arguments resumes the same approval instead of opening a new one.
+
+`governor_tools` (Python) and `governorTools` (TypeScript) build one tool for every target the agent can reach, with the same names and arguments as the governor's MCP tools. A target no baseline lets the agent reach is left out.
+
+<CodeGroup>
+
+```python LangChain and LangGraph
+import os
+from langgraph.prebuilt import create_react_agent
+from coverbase_governor import Governor
+from coverbase_governor.adapters.langchain import governor_tools
+
+agent = create_react_agent(os.environ["AGENT_MODEL"], governor_tools(Governor()))
+```
+
+```python OpenAI Agents SDK
+import os
+from agents import Agent, Runner
+from coverbase_governor import AsyncGovernor
+from coverbase_governor.adapters.openai_agents import governor_tools
+
+agent = Agent(name="analyst", model=os.environ["AGENT_MODEL"], tools=await governor_tools(AsyncGovernor()))
+result = await Runner.run(agent, "Show the ten largest unpaid invoices")
+```
+
+```python CrewAI
+from crewai import Agent
+from coverbase_governor.adapters.crewai import governor_tools
+
+analyst = Agent(role="Analyst", goal="Answer billing questions", backstory="Finance analyst", tools=governor_tools())
+```
+
+```ts Vercel AI SDK
+import { generateText } from 'ai';
+import { Governor } from '@coverbase/governor';
+import { governorTools } from '@coverbase/governor/ai';
+
+const { text } = await generateText({
+  model: process.env.AGENT_MODEL!,
+  tools: await governorTools(new Governor()),
+  prompt: 'Show the ten largest unpaid invoices',
+});
+```
+
+```ts LangChain.js
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { Governor } from '@coverbase/governor';
+import { governorTools } from '@coverbase/governor/langchain';
+
+const agent = createReactAgent({ llm, tools: await governorTools(new Governor()) });
+```
+
+```ts OpenAI Agents SDK
+import { Agent, run } from '@openai/agents';
+import { Governor } from '@coverbase/governor';
+import { governorTools } from '@coverbase/governor/openai-agents';
+
+const agent = new Agent({ name: 'analyst', model: process.env.AGENT_MODEL, tools: await governorTools(new Governor()) });
+```
+
+</CodeGroup>
+
+To govern a tool you already have, wrap the function that builds its action:
+
+```python
+from coverbase_governor import HttpRequest, governed_tool
+
+
+@governed_tool(target="billing-api")
+def refund(order_id: str, amount_cents: int) -> HttpRequest:
+    """Refund part of an order."""
+    return HttpRequest.with_json("POST", "/v1/refunds", {"order": order_id, "amount": amount_cents})
+```
+
+In TypeScript, `governedTool({ governor, name, description, target, parameters, build })` does the same.
+
+## Drop-in clients
+
+To route existing code through the governor, change the line that opens the connection.
+
+<CodeGroup>
+
+```python Postgres
+from coverbase_governor.dropin import postgres
+
+conn = postgres.connect("prod-db")
+cur = conn.cursor()
+cur.execute("SELECT id, total FROM invoices WHERE customer = %s", ("acme",))
+rows = cur.fetchall()
+```
+
+```python httpx
+import httpx
+from coverbase_governor.dropin.http import GovernedTransport
+
+client = httpx.Client(base_url="https://billing.governed", transport=GovernedTransport("billing-api"))
+client.post("/v1/refunds", json={"order": "ord_42", "amount": 500})
+```
+
+```ts pg
+import { Governor, GovernedPool } from '@coverbase/governor';
+
+const pool = new GovernedPool({ governor: new Governor(), target: 'prod-db' });
+const { rows } = await pool.query('SELECT * FROM invoices WHERE customer_id = $1', [customerId]);
+```
+
+```ts fetch
+import { Governor, governedFetch } from '@coverbase/governor';
+
+const fetch = governedFetch({ governor: new Governor(), target: 'billing-api' });
+await fetch('/v1/refunds', { method: 'POST', body: JSON.stringify({ amount: 10 }) });
+```
+
+</CodeGroup>
+
+The governor approves and audits the exact statement, so the database clients put each parameter into the statement as a quoted literal instead of sending it separately. Each statement is its own action, so there are no transactions across calls. The HTTP clients send only the path, query and body: the governor calls the target's own address with its own credential, and your code's `Authorization` and `Cookie` headers are dropped.
+
+## Act on behalf of a person
+
+Pass a delegation id when the agent acts for a person who delegated to it. Rules that need a delegation then apply, and the person is recorded on every decision.
+
+```python
+gov = Governor(delegation_id="cbbdel_...")
+```
+
+A one-time approval is tied to the delegation it was asked under, so an approval given for one person's request does not run under another person's delegation.
+
+## Identity tokens
+
+An agent can get a short-lived signed token that names it, and the person it acts for, for a service that checks your organization's published keys. See [Agents as an identity provider](/products/agent-governor#agents-as-an-identity-provider).
+
+<CodeGroup>
+
+```python Python
+token = gov.identity_token("https://payments.internal")
+```
+
+```ts TypeScript
+const token = await gov.identityToken({ audience: 'https://payments.internal' });
+```
+
+</CodeGroup>
+
+## Workload identity instead of a key
+
+An agent in GitHub Actions, Kubernetes or another OIDC issuer can sign in with its workload token. Set up the agent's federation rule in **Inspect › Governor › Agents**, then pass a function that returns a fresh token and the agent's id.
+
+<CodeGroup>
+
+```python Python
+gov = Governor(token_provider=read_oidc_token, agent_id="cbbagt_...")
+```
+
+```ts TypeScript
+const gov = new Governor({ workloadToken: readOidcToken, agentId: 'cbbagt_...' });
+```
+
+</CodeGroup>
