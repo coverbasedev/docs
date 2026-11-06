@@ -36,6 +36,12 @@ pac connector create --api-definition-file apiDefinition.swagger.json --api-prop
 
 The **Target** field is a list filled from the targets the agent may reach, so a maker picks a target by name.
 
+### Acting for many people
+
+A connection holds one agent key. With **Maker-provided credentials**, every user acts as one governor agent. With **End user credentials**, each person signs in with their own key and acts as their own governor agent. To keep one agent and still record the person, pass their delegation in the **Delegation ID** input that every action takes, for example from a Dataverse table keyed by the user's `System.User.Id`. The governor records the person beside the agent and limits the agent to that person's delegated targets.
+
+### Unattended flows
+
 For an unattended flow, call the action and, when the verdict is `hold`, loop with **Do until** the approval status is not `pending`: **Get approval status**, then a 30 second delay. On `approved`, call the same action with the approval ID. On `denied` or `expired`, stop and report the note.
 
 ## Agentforce
@@ -48,10 +54,13 @@ sf project deploy start --target-org <your-org> --test-level RunSpecifiedTests -
 
 2. In Salesforce Setup, open **Named Credentials › External Credentials › Coverbase Agent Governor**, open the `Agent_Key` principal, and add an authentication parameter named `AgentKey` with the key as its value, without `Bearer`.
 3. Assign the **Coverbase Agent Governor User** permission set to the agent's running user and to anyone who runs the actions in an employee agent.
-4. In **Agentforce Assets › Actions**, create an agent action of type Apex for **Run governed action**, **Check governed approval** and **List governed targets**. Mark the target, kind and the SQL or HTTP fields as inputs the agent collects, and the note and verdict as shown to the user.
-5. In Agent Builder, add the three actions to a topic and add this to the topic's instructions: "Always use List governed targets before acting on a system you have not used in this conversation. When Run governed action returns hold, tell the user a person must approve it and give them the note. When they ask again, run Check governed approval, and once it is approved run the same action again with the same inputs and the approval ID. When it returns deny, do not retry."
+4. In Agent Builder, open your agent and select **Topics › Add from Asset Library**, then add **Governed Company Data**. The package ships the topic and its three actions (**Run governed action**, **Check governed approval** and **List governed targets**) with instructions for each verdict. To use an existing topic instead, add the three actions from **Asset Library › Actions**.
+
+The topic and actions deploy only to an org with Agentforce turned on.
 
 An Apex action cannot wait, so a held action is conversational: the agent tells the user, and runs the same action with the approval ID once **Check governed approval** returns `approved`. A scheduled or record-triggered flow can do the same check for unattended work.
+
+To give each person their own key, assign the **Coverbase Agent Governor Per User** permission set and have each person add their key to the external credential's `Per_User` principal under their personal settings. To keep one shared key and still record the person, pass a delegation ID to **Run governed action**.
 
 To use a non-production Coverbase environment, change the named credential URL to `https://api.<env>.coverbase.app`.
 
@@ -81,6 +90,10 @@ var outcome = new x_cbase_governor.CoverbaseGovernor().runAction({
 ```
 
 `outcome.verdict` is `allow`, `hold` or `deny`. On `hold`, keep `outcome.approvalId` and run the same action again with it once the approval reads `approved`.
+
+In Flow Designer, the app adds two actions, **Run Governed Action** and **Check Governed Approval**, and a subflow, **Run Governed Action and Wait for Approval**, in the **Coverbase Agent Governor** category. The subflow runs the action and, when it is held, checks the approval every minute until a person decides, then runs the identical action again with the approval ID.
+
+Two system properties let each person act as themselves, and both are off by default. With `x_cbase_governor.per_user_credentials` on, each caller's own credential alias holds their key, and a caller without one is refused. With `x_cbase_governor.use_user_delegation` on, a call that names no delegation uses the caller's own delegation ID.
 
 ## Held actions on every platform
 
