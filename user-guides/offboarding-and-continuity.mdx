@@ -1,6 +1,6 @@
 ---
 title: "Offboarding and continuity"
-description: "Set lifecycle routing, complete the executed contract handoff, write a continuity plan for a critical engagement, file and approve an offboarding request, work the exit plan with evidence and the vendor's destruction certificate, and read what stops automatically."
+description: "Set lifecycle routing and automatic offboarding, complete the executed contract handoff, write a continuity plan for a critical engagement, file and approve an offboarding request, work the exit plan with evidence, exceptions and the vendor's destruction and AI data deletion certificates, close the exit once its required steps are done, and read what stops automatically."
 icon: "right-from-bracket"
 ---
 
@@ -25,6 +25,23 @@ Open **Configuration**, choose **Communications**, and under **Lifecycle Routing
 - With no TPRM Office group, offboarding approval goes to the vendor's first risk analyst, then the requester.
 - Supply Chain approval is required only once its group is named. Left unset, the TPRM Office approves offboarding alone.
 - The approvals a request needs are fixed when it is filed. Changing routing later does not change requests already filed.
+
+### Start offboarding automatically
+
+Under **Automatic Offboarding** on the same page, Coverbase can file an offboarding request for you. A daily check files the request; the approvals in step 3 still apply.
+
+<Frame caption="Automatic Offboarding under Lifecycle Routing and Reminders.">
+  <img src="/images/user-guides/offboarding-automatic-offboarding.png" alt="Automatic Offboarding settings: Start when a contract ends on with a 30 day grace period, Start after inactivity on with 365 days without spend, Required step types with Data and Access ticked, and Exceptions to required steps need the TPRM Office turned on" />
+</Frame>
+
+| Setting | What it does |
+| --- | --- |
+| **Start when a contract ends**, with a **Grace period (days)** | Files a request once every contract linked to an engagement has ended, at least one by passing its end date more than the grace period ago. A contract that renews automatically, has a renewal, or has no end date keeps the engagement open. |
+| **Start after inactivity**, with **Days without spend** | Files a request for a started engagement when the vendor has spend on record but no invoice or purchase order in that many days, and nobody edited the engagement in that time. A vendor with no invoices or purchase orders at all is never treated as inactive. |
+| **Required step types** | Which kinds of exit plan step must be done or excepted before the exit can close: **Data**, **Access**, **Integrations**, **Contract** and **Continuity**. Data and Access are ticked by default. Other steps are optional. |
+| **Exceptions to required steps need the TPRM Office** | On by default. Only a TPRM Office member or an admin can record an exception for a required step. Turned off, anyone working the exit plan can. |
+
+An engagement with an open request is skipped. A canceled contract-end request is not filed again, and a canceled inactivity request waits a full window before Coverbase offers it again.
 
 ## Complete the contract handoff
 
@@ -56,7 +73,10 @@ On the **Exit** tab, under **Request Offboarding**, choose a **Reason** (**Conso
 An engagement has at most one open request. One also opens automatically when:
 
 - an owner answers **Start offboarding** on a monitoring plan attestation, or
-- someone marks the engagement not in use (a canceled status, or a status labeled Inactive or Not in use), or marks every service it uses not in use.
+- someone marks the engagement not in use (a canceled status, or a status labeled Inactive or Not in use), or marks every service it uses not in use, or
+- a contract end date or a period without spend triggers it (see [Start offboarding automatically](#start-offboarding-automatically)).
+
+The exit plan's first line says when it started and why, for example **requested by** a person, **contract ended** or **no recent spend**.
 
 ## Step 3: Approve it
 
@@ -94,6 +114,26 @@ To work several steps at once, select them:
 
 **Rebuild from current data** refreshes the plan from the record. It adds new steps and updates text without duplicating a step or losing what someone already did on it.
 
+### Required steps, exceptions and closing the exit
+
+A step is required when its kind is one of your **Required step types**, and the AI data deletion step is always required. Every other step shows **Optional**. While any required step is open, the plan says how many are open and **Close exit** is unavailable.
+
+<Frame caption="An exit plan with two required steps open. One required step closed with an exception; optional steps are labeled.">
+  <img src="/images/user-guides/offboarding-gated-exit-plan.png" alt="Exit plan reading 2 required steps open, the exit closes when each is done or has an exception, with Close exit unavailable. Steps include a done data return, a certificate of data destruction marked Exception with the reason, an AI data deletion step labeled AI with Request certificate and Record exception, an access step awaiting approval, and an optional integration step with Submit evidence and Skip" />
+</Frame>
+
+- **Record exception** closes a required step without its evidence. Write **Why this step will not be done** and click **Record exception**. The step shows **Exception** and **Exception by** the person, with the reason. With **Exceptions to required steps need the TPRM Office** on, only a TPRM Office member or an admin can do this.
+- **Skip** takes an optional step off the plan. The step shows **Skipped**. A required step cannot be skipped.
+- **Close exit** closes the exit once every required step is done or has an exception. Optional steps still open are skipped, and everything under **What Stops Automatically** takes effect. If a required step is still open, Coverbase names it and refuses.
+
+The exit also closes on its own when its last open step is approved.
+
+### AI data deletion
+
+When the engagement brings AI in, the plan adds a required data step: **Confirm deletion of our data from AI training, fine-tuning, embeddings, retrieval indexes and logs**, labeled **AI**. Coverbase adds it when a service on the engagement is marked as an AI system, the vendor's AI bill of materials lists a machine-learning model, or a fourth party is recorded as an AI model provider.
+
+Its evidence is a second certificate the vendor signs, requested the same way as the destruction certificate below. It asks what entered training, fine-tuning, embeddings, retrieval indexes and logs, whether any model still retains the data, and ends with an attestation that covers the vendor's AI model providers.
+
 ## Get the vendor's destruction certificate
 
 The data step closes on a certificate the vendor signs. Click **Request certificate** on the step. The vendor gets an informational request in the supplier portal with a data destruction certificate to sign; **Copy portal link** gives you the link to send. When they sign, the step shows **Signed by**, with their title and the date, and **Vendor Attestation** shows a digest of the certificate.
@@ -116,7 +156,7 @@ If the engagement held no data on record, the data step is instead an owner sign
 | When the plan closes | Radar monitoring | Stopped only when the vendor goes inactive |
 | When the plan closes | The open monitoring record | Closed only when the vendor goes inactive |
 
-Approving the last open step completes the request, and the requester, the Transaction Owner and the TPRM approver are notified. The card then reads **Offboarded**, and the tracker's **Exit** stage reads **Exited** with the date. An exited engagement leaves the figures in [Program Insights](/user-guides/program-insights).
+Closing the exit, or approving its last open step, completes the request, and the requester, the Transaction Owner and the TPRM approver are notified. The card then reads **Offboarded**, and the tracker's **Exit** stage reads **Exited** with the date. An exited engagement leaves the figures in [Program Insights](/user-guides/program-insights).
 
 ## Work offboarding from MCP or the API
 
@@ -139,6 +179,9 @@ The API has no route to approve offboarding or work exit steps. Those approvals 
 | Supply Chain approval is not asked for | No Supply Chain group was named when the request was filed. | Expected for that request. Name the group for future requests. |
 | **Submit plan** is refused | The exit strategy or recovery time objective is empty. | Fill both in. |
 | Approving the data step is refused | The vendor's signed certificate changed after the step was submitted. | **Return** the step so its owner submits it again with the current certificate. |
+| **Close exit** is unavailable | A required step is neither done nor excepted. | Finish the step, or record an exception with a reason. |
+| **Only the TPRM Office can record an exception for a required step.** | **Exceptions to required steps need the TPRM Office** is on. | Ask a TPRM Office member or an admin. |
+| An offboarding request opened by itself | A contract ended or the vendor had no spend for the set period. | Approve it, or cancel it with a reason. |
 | A service stayed active after offboarding | Another live engagement uses it. | Expected. It shows as **Kept**. |
 
 ## Related

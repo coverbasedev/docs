@@ -117,6 +117,30 @@ Results are paginated (25-250 rows per page, 50 by default), with summary cards 
 
 Access to the audit log is governed by your organization's roles. For organizations using custom roles, the **Audit trail** resource carries `read` and `export` permissions and is always organization-wide; it cannot be scoped to assigned records. Headless access uses an `ak_*` API key carrying the `audit:read` scope (see below).
 
+## Tamper evidence
+
+The activity log is sealed into a hash chain, so an entry edited, removed, reordered or replaced after sealing shows up as a broken link.
+
+- **Sealing.** Every minute, Coverbase appends your organization's new entries to the chain in order. Each entry gets a sequence number, shown as `#20` in the **Details** column, and a SHA-256 hash of its content and the hash of the entry before it.
+- **Guard.** The database refuses any change to a sealed entry's recorded content and any removal of it. Entries not yet sealed are written normally and sealed within a minute.
+- **Exempt entries.** Public API request records and dark web audit events are never sealed, because a retention purge removes them on its own schedule.
+
+Under the page title, the integrity line shows **Audit trail intact**, how many entries are chained, when it was verified, and the head hash (the hash of the latest sealed entry). **Sealing new entries** means every link verifies and some entries are waiting for the next seal. **Integrity check failed at entry #N** names the first entry that is missing, does not link to the one before it, or no longer matches its hash. Click **Verify now** to walk the whole chain again.
+
+<Frame caption="The Audit Logs page with the integrity line and the Initiated By filter.">
+  <img src="/images/user-guides/audit-trails-integrity.png" alt="Audit Logs page reading Audit trail intact, 21 entries chained, verified a few seconds ago, with the head hash and Verify now, above the summary cards and the Filters and export card with search, time range, Event groups, Event types and Initiated By filters" />
+</Frame>
+
+The chain lives in the same database it protects. Someone able to bypass the database guard could also rewrite every link after an edit. To catch that, keep a copy of the head hash outside Coverbase, for example in your scheduled export, and compare it later.
+
+`GET /v1/system_audit_log/integrity` runs the same check and returns `status` (`verified`, `broken` or `sealing_pending`), `sealed_count`, `unsealed_count`, `last_sealed_at`, `head_hash`, `first_broken_seq` and `verified_at`. It accepts the same credentials as the other audit read endpoints.
+
+## Who initiated a change
+
+Every entry says what set the change in motion, in the **Initiated By** column: **User** (a person, named below the badge), **Automation** (a workflow rule, with the rule's step and workflow), **Coverbase AI** (an AI tool call) or **System** (the platform itself). Filter the log with **Initiated By**, or pass `initiated_by` (`user`, `automation`, `agent`, `system`, repeatable) to `GET /v1/system_audit_log`.
+
+To be alerted when something other than a person changes a key field, build a workflow on the record's update trigger that watches those fields, and add the **Change made by** condition. Pick **An automation**, **Coverbase AI** and **Coverbase (system)**. The workflow then runs only when one of those made the change, and its action (an email, a work item) is the alert. A change whose maker is unknown is ignored. See [Building a workflow](/user-guides/building-a-workflow).
+
 ## Reading the audit log through the API
 
 For SIEM ingestion and scheduled exports, read the system audit log programmatically:
@@ -188,7 +212,7 @@ AI assistant activity is covered at two layers:
 
 ## Retention
 
-Audit records are retained in line with the retention periods described in our agreements and privacy policy. For long-term retention beyond that window, export the log on a recurring schedule into your own system of record.
+Audit records are retained in line with the retention periods described in our agreements and privacy policy. An **Audit log** rule on your [records retention schedule](/user-guides/records-retention) keeps entries longer, and an organization-wide legal hold on the audit log stops the purge. For long-term retention beyond that window, export the log on a recurring schedule into your own system of record.
 
 ## Build a defensible evidence trail
 

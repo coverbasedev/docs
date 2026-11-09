@@ -1,6 +1,6 @@
 ---
 title: "Risk methodology"
-description: "Configure the Risk Methodology page: domain weights and Risk Groups, how domain scores roll up, the reviewer matrix, SLA escalation rules, inherent risk questionnaire versions and review cadence, score overrides with a rationale and expiry, and how far residual risk can fall below inherent risk."
+description: "Configure the Risk Methodology page: domain weights and Risk Groups, how domain scores roll up, the reviewer matrix, SLA escalation rules, inherent risk questionnaire versions and review cadence, score overrides with a rationale and expiry, per-domain AI and visibility settings, rule-change simulation, and how far residual risk can fall below inherent risk."
 icon: "scale-balanced"
 ---
 
@@ -27,6 +27,25 @@ The **Risk Domains** tab lists each domain with its **Weight**, its share of the
 - Leave every weight empty to keep the questionnaire's flat score. Weighting turns on only when at least one active domain has a weight.
 - Weights are relative. They do not need to add up to 100, because the score is normalized by the weights of the domains that scored.
 - A questionnaire section must name a risk domain for its answers to count toward that domain. Answers in sections without a domain, or in a domain without a weight, are counted and shown on the review as unweighted answers.
+
+## Turn AI off or restrict a domain
+
+Each risk domain has two access settings on **Configuration → Risk Domains**: **AI features** and **Visible to**. Use them for a domain whose content AI must not read, or whose results only one team may see. Both save as soon as you change them, and both are also in the domain's create and edit dialog.
+
+<Frame caption="Configuration → Risk Domains, with AI features off for Intellectual Property and two domains visible only to their own user groups.">
+  <img src="/images/user-guides/risk-methodology-risk-domains-ai-visibility.png" alt="Risk Domains table with Name, Description, AI features, Visible to and Weight in IRQ score columns. AI features is on for five domains and off for Intellectual Property. Visible to reads Everyone for four domains, Compliance (ABAC) for Anti-Bribery and Corruption, and IP Legal for Intellectual Property." />
+</Frame>
+
+**AI features.** With the switch off, AI does not act on that domain's content. Analysts complete the domain by hand. In that domain:
+
+- Questionnaire answers are not autofilled.
+- Evidence is not reviewed by AI, in an assessment or a Zero Touch assessment.
+- Findings are not drafted.
+- The [IRQ answer check](/user-guides/front-door-triage#check-the-irq-answers) skips the domain's questions.
+
+Content with no domain keeps AI on.
+
+**Visible to.** Pick one or more user groups. A restricted domain is visible only to members of those groups and to admins, and its picker shows a lock. Everyone else does not see the domain's findings or its domain scores on assessments, engagements, services and vendors. Leave the picker empty so everyone can see the domain.
 
 ## Step 2: Choose how ratings roll up
 
@@ -134,6 +153,28 @@ A change applies the next time an assessment's residual risk is calculated. Comp
 - On a submitted inherent risk questionnaire, **Inherent Risk What-If** lets you change answers and shows where each domain and the overall rating would land, for example "With 2 changed answers, inherent risk moves from High 72 to Medium 48". **Reset** puts the answers back. Nothing is saved; the respondent's answers are unchanged.
 - On an assessment's summary, **Residual Risk What-If** lists the open issues. Turn on **Remediate** for the ones to fix and read the **Domain Change** and **Overall Change**, for example "Remediating ISS-311 drops Privacy residual risk from High 61 to Medium 44". A significant deficiency floor stays in force, so a floored score may not move until the deficiency itself is resolved.
 
+## Simulate a rule change
+
+To see what a scoring change would do before you make it, click **Simulate impact** on **How Ratings Roll Up** (the **Tiers, Scales & Cadence** tab). Nothing is saved.
+
+<Steps>
+  <Step title="Propose the change">
+    In **Simulate Impact**, pick an **Aggregation** method, change one or more **Domain Weights**, or both. Your current method is marked **(current)**.
+  </Step>
+  <Step title="Run it">
+    Click **Run simulation**. Coverbase scores every live inherent risk questionnaire twice, once with today's settings and once with your change, so an unchanged setting moves nobody.
+  </Step>
+  <Step title="Read the result">
+    The summary says how many of the scored records change tier, or **No record changes tier**. **Tier Transitions** counts moves from each **Current Tier** to each simulated tier. **Records That Change Tier** lists each vendor and engagement with its tier **Now** and **Simulated**. **Domain Changes** gives each domain's **Average Now**, **Average Simulated**, and how many records **Moved Up** and **Moved Down**.
+  </Step>
+</Steps>
+
+<Frame caption="Simulate Impact after raising the Cybersecurity weight from 25 to 40. No record changes tier.">
+  <img src="/images/user-guides/risk-methodology-simulate-impact.png" alt="Simulate Impact dialog with Aggregation set to Weighted average with a domain floor, six domain weights with Cybersecurity at 40, the summary No record changes tier, and a Tier Transitions table where 1 Low, 1 Medium and 5 High records keep their tier" />
+</Frame>
+
+To make the change, set it on the page as usual. The API route `POST /v1/risk_methodology/simulation` also simulates new scores for answer options and a new supplier tier rule. It needs organization settings permission.
+
 ## Reading an IRQ result
 
 <Frame caption="Why This Rating and the Inherent Risk What-If on a submitted IRQ.">
@@ -163,6 +204,9 @@ Risk domains need `risk` permission, which API keys hold. The other routes need 
 | An overdue item was not escalated a second time | Each rule escalates an item once. | Add a second rule with a larger **Days Overdue**. |
 | Editing a question fails with a message that the version is locked | The version is published or retired. | Click **Draft new version** and edit the draft. |
 | Saving a score override fails | The **Rationale** is empty. | Write a rationale. |
+| A user cannot see a domain's findings or scores | The domain's **Visible to** names user groups the user is not in. | Add them to one of the groups, or clear **Visible to**. |
+| Autofill or AI evidence review skipped a domain | The domain's **AI features** are off. | Expected. Complete the domain by hand, or turn the switch on. |
+| **Run simulation** is unavailable | Nothing is changed from today's settings. | Change the aggregation or a domain weight. |
 | A score went back to an older value on its own | An override with an expiry lapsed. | Expected. Override again with a rationale if the calculated score is still wrong. |
 
 ## Related

@@ -207,6 +207,34 @@ A cap or floor applied by a hard rule, such as a bankruptcy filing, is listed wi
 
 The documents your organization uploaded for the analysis are listed in the same row. Remove one there, or click **Regenerate** when the set has changed since the figures were computed.
 
+## Financial exposure
+
+**Financial Exposure**, on the same page, answers three questions from data your organization already holds: how the vendor's statements trend on one currency and accounting basis, how much the vendor depends on your spend, and whether its insurance meets each contract's minimums. The heading says how many thresholds are breached. Your Coverbase representative turns on the third-party lifecycle features for your organization.
+
+### Normalized trend
+
+**Normalized Trend** lists **Revenue**, **EBITDA**, **Net Income**, **Operating Margin**, **Free Cash Flow**, **Current Ratio**, **Debt To Equity** and **Net Worth** for each fiscal year, with the **Change**. It reads the vendor's uploaded financial statements, so upload and analyze them first.
+
+- **Currency.** Money figures convert at your organization's pinned contract exchange rates, and the section names the rate and the date. A currency with no pinned rate stays in its own currency. Nothing is converted at a guess.
+- **Accounting basis.** IFRS statements are put on a US GAAP footing: lease depreciation and interest come out of EBITDA, and lease interest out of operating margin. An IFRS year whose lease note was not read is left as reported, and the section says so.
+- **Revenue decline** is measured in the statements' own currency. A fall of 15% or more year over year is a breach.
+
+### Dependency on our spend
+
+**Dependency on Our Spend** divides **Annual Spend** by the vendor's latest reported **Vendor Revenue**, both in your base currency, as **Spend Over Revenue**. Annual spend is what the vendor invoiced over the last 12 months when there are invoices, otherwise the annual value of its live contracts. A ratio of 10% or more is a breach, shown as **Above threshold**.
+
+### Insurance against contract minimums
+
+**Insurance Against Contract Minimums** checks each minimum a contract sets against the highest current limit on the vendor's insurance certificates. Each line reads **Meets**, **Short by** an amount, **No coverage on file**, **Additional insured missing** or **No pinned rate**.
+
+To record a contract's minimums, click **Set contract minimums**. In **Contract Insurance Minimums**, pick the **Contract**, then for each line choose the **Coverage** (for example **General liability**, **Workers' compensation** or **Cyber liability**), the **Minimum Limit** and **Currency**, and tick **Require additional insured** when the contract does. **Add coverage line** adds another. Click **Save**.
+
+### Raise findings for breaches
+
+**Raise findings** opens one vendor finding per breach. A breach that already has a finding, open or closed, is not raised again, so closing the finding is how you accept the exposure. A new fiscal year, certificate or contract minimum is a new breach. Coverbase also raises them after each statement analysis completes.
+
+The two thresholds (15% revenue decline and 10% dependency ratio by default) are set through `PUT /v1/vendor_financials/settings`.
+
 ## Where it shows up elsewhere
 
 The score feeds the Financial health component of a [Zero Touch Score](/user-guides/zero-touch-assessments), carrying its tier through as the component's qualifier.
@@ -225,6 +253,9 @@ Before an MCP client sends a write, it shows you the change and waits for you to
 
 | Symptom | Fix |
 | --- | --- |
+| **Normalized Trend** is empty | Upload and analyze the vendor's financial statements. |
+| Figures stay in the vendor's currency, or a line reads **No pinned rate** | Your organization has no pinned rate for that currency. Pin one in the contract exchange rates. |
+| **No contract states insurance minimums yet.** | Click **Set contract minimums** and record them for the vendor's contracts. |
 | Not yet scored | The vendor has not been resolved to a filer or a registry record yet. Check the Registrations tab first, since identifiers are how a vendor is matched to filings. |
 | The score looks high for a company you know is struggling | Check the stability class and the runway. A funded early-stage vendor is capped, but "no bad news reported" still counts for something on a company nobody reports on. |
 | Two vendors you would rank differently have the same score | Check whether a comparability adjustment fired on either. A vendor sitting at its class floor did not earn that number on its own signals. |

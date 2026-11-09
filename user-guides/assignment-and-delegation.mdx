@@ -1,6 +1,6 @@
 ---
 title: "Assignment, delegation and out of office"
-description: "How work reaches a person in Coverbase: user groups, round-robin and assign-to-all routing, out-of-office windows that skip a member automatically, reassignment, and the assignment log that attributes every hand-off."
+description: "How work reaches a person in Coverbase: user groups, round-robin and assign-to-all routing, out-of-office windows that skip a member automatically, delegations while someone is away, reassignment of what departed owners own, and the assignment log that attributes every hand-off."
 icon: "user-clock"
 ---
 
@@ -71,6 +71,79 @@ Coverbase treats delegation as an explicit, attributed hand-off rather than an i
 - **Escalate to the lead.** The group lead is a named, queryable field, which gives a workflow somewhere to send an item that has aged past its target.
 - **Nobody inherits authority.** Delegation moves the item, never the permission. A delegate acts under their own role, and the decision is recorded under their own name. See [Permissions and roles](/user-guides/permissions-and-roles).
 
+## Delegate while you are away
+
+A delegation hands one person's approvals, reviews or both to a colleague for a date window. While it is active, new work for that person goes to the delegate, and the delegate can act on work still assigned to them. Out of office skips a group member; a delegation covers work assigned to the person by name.
+
+Open **Organization → Delegations**. The table lists each delegation with **From**, **To**, what it **Covers**, the **Window** and reason, and its **Status**: **Scheduled**, **Active**, **Ended** or **Revoked**. A member sees the delegations they gave or receive. An admin sees everyone's.
+
+<Frame caption="Organization → Delegations with a scheduled, an active and an ended delegation.">
+  <img src="/images/user-guides/assignment-and-delegation-delegations.png" alt="Delegations table: Priya Raman to Laura Haines for all work, scheduled from Nov 14, 2026 to Jan 8, 2027 for parental leave; Dana Mitchell to James Okafor for approvals, active from Nov 5 to Nov 11, 2026; Rahul Mehta to James Okafor for reviews, ended" />
+</Frame>
+
+<Steps>
+  <Step title="Open the dialog">
+    Click **Delegate**, or choose **Delegate my work** from your user menu.
+  </Step>
+  <Step title="Choose the people">
+    Pick **Delegate from** (an admin can pick anyone; a member delegates only their own work) and **Delegate to**. Both must be active members.
+  </Step>
+  <Step title="Set the window">
+    Set **From** and, optionally, **Until**. With **No end date** the delegation runs until someone ends it.
+  </Step>
+  <Step title="Choose what it covers">
+    **All work**, **Approvals** (contract approvals, change requests and finding acceptances) or **Reviews** (assessment, intake and contract reviews, and other non-approval tasks). Add an optional **Reason**, for example "Parental leave".
+  </Step>
+  <Step title="Move open items now (optional)">
+    For a delegation that starts today, tick **Move ... open items to ... now** to hand over the person's pending items at once. Otherwise only new work routes to the delegate. Click **Delegate**.
+  </Step>
+</Steps>
+
+<Frame caption="The New delegation dialog.">
+  <img src="/images/user-guides/assignment-and-delegation-new-delegation.png" alt="New delegation dialog with Delegate from, Delegate to, From and Until dates, Covers set to All work, Approvals or Reviews, an optional Reason, and Cancel and Delegate buttons" />
+</Frame>
+
+The delegate is notified in Coverbase and by email when the delegation is created.
+
+What a delegation does:
+
+- **New work goes to the delegate.** A work queue item for the person goes to the delegate instead, including assessment and domain reviews, contract approvals and Front Door sign-offs. The work queue labels it **On behalf of** the person. A user group item stays with its group, and a round-robin rotation is not changed.
+- **Both can act.** The person keeps their own access. The delegate can decide contract approval steps, change requests, Front Door sign-offs, finding acceptance steps and assessment domain reviews still assigned to the person. The decision is recorded under the delegate's name, on behalf of the person.
+- **The rules still hold.** The two Front Door sign-offs must still come from two different people, and nobody approves their own change request through a delegate.
+- **No chains.** A person has one live delegation per kind of work at a time. Coverbase refuses a delegation to someone who has delegated the same work for that window, or from someone who is standing in for another person.
+
+**End now** ends an active delegation, and new work goes back to the person. **Cancel** withdraws a scheduled one. Only the person who delegated, or an admin, can change a delegation. When a delegation ends, the delegate's open items for the person go back to the person on the next sync.
+
+## Reassign what a departed owner owns
+
+When Microsoft Entra ID says someone has left while they still own records, Coverbase lists them under **Departed owners** so you can hand everything to someone else in one step. This needs your organization's Microsoft Entra ID connection.
+
+Coverbase checks Entra ID once a day. It matches each member to a directory person by email address and treats them as departed when the account is disabled (**Account disabled**), deleted (**Account deleted**) or past its leave date (**Leave date passed**). A member Entra ID has never listed, such as a guest, is left alone. To check now, click **Check Entra ID now**.
+
+Each newly departed person who still owns something also raises one work queue item for the person who looks after the Entra ID connection. It completes itself once nothing is left, and is canceled if the person comes back.
+
+<Steps>
+  <Step title="Open the list">
+    Open **Organization → People** and choose **Departed owners**. Each person shows when they left and what they own, by type: relationship owner of a vendor, engagement or service, contract owner, assignee of an engagement, assessment or finding, risk owner, work queue items and approval steps.
+
+    <Frame caption="Departed owners on the People page.">
+      <img src="/images/user-guides/assignment-and-delegation-departed-owners.png" alt="People page on the Departed owners view with a Check Entra ID now button and Ethan Brooks, Account disabled, left Oct 27, 2026, owning 2 vendor and 2 engagement relationships, with a Reassign 4 records button" />
+    </Frame>
+  </Step>
+  <Step title="Pick the new owners">
+    Click **Reassign N records**. Choose a **New owner for everything**, or a different person per type in place of **Same as above**.
+  </Step>
+  <Step title="Review and apply">
+    Click **Review** to see what moves to whom, then **Reassign**.
+  </Step>
+</Steps>
+
+<Frame caption="Departed owners, with the reassignment dialog for a person whose account was disabled.">
+  <img src="/images/user-guides/assignment-and-delegation-reassign-departed.png" alt="Reassign what Ethan Brooks owns dialog with a New owner for everything picker and Same as above pickers for Vendor relationship owner and Engagement relationship owner, each owning 2 records" />
+</Frame>
+
+Reassigning needs permission to assign users. Three ownership rules are off until an admin turns them on through `PUT /v1/ownership-policy`: a newly named Business Owner must be an active member, a newly named Business Owner must be an employee according to Entra ID, and a Business Owner cannot edit the business unit or cost center.
+
 ## The assignment log
 
 Every group-driven routing decision writes its own log row, independent of the object it acted on. Each row records:
@@ -108,6 +181,16 @@ The API routes sit under `/v1/departments` and `/v1/work-queue-items`. See [Depa
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#platform-settings) lists every field.
 
 An API key cannot archive a user group or remove a member from one. The assignment log, `query_platform(kind="work_queue_routing_events")` or `GET /v1/work-queue-items/{work_queue_item_id}/routing-events`, needs `org_settings:read:org`, which API keys do not hold.
+
+## Troubleshooting
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| **This person already delegates this work for part of that window** | The person has a delegation of an overlapping scope whose window meets this one. | End or cancel the other delegation, or change the window or scope. |
+| The delegation is refused because the work would pass on again | The delegate delegated their own work for that window, or the person is standing in for someone else. | Pick another delegate or window. |
+| The move open items option is not offered | The delegation starts later. | Expected. New work routes to the delegate when it starts. |
+| A group item did not go to the delegate | User group items stay with their group. | Set the member out of office, or reassign the item. |
+| **Departed owners** is empty though someone left | Entra ID is not connected, it has not checked since they left, or Entra ID never listed their email address. | Click **Check Entra ID now**. Reassign a person Entra ID does not list by hand. |
 
 ## Related
 

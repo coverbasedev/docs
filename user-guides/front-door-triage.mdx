@@ -1,6 +1,6 @@
 ---
 title: "Front Door triage"
-description: "Set up and run the Front Door review of intake requests: the reuse window and sign-off groups, IRQ scoping rules, the Do Not Use list, checking identifiers, choosing a disposition, signing it off or declining it, sending questions back to the requester, and the budget and material change cards."
+description: "Set up and run the Front Door review of intake requests: the reuse window and sign-off groups, IRQ scoping rules, the Do Not Use list, checking identifiers, checking IRQ answers against the request, choosing a disposition, signing it off or declining it, sending questions back to the requester, and the budget and material change cards."
 icon: "door-open"
 ---
 
@@ -77,6 +77,35 @@ The **Is This New?** card compares the request with your vendors.
 If the requester did not give identifiers, enter the **Tax ID**, **D-U-N-S** (9 digits) or **LEI** (20 letters and digits) yourself and click **Check identifiers**. A stored tax ID is shown only as its last four characters.
 
 For an existing vendor, the card then finds the most similar engagement, ranked by shared services and tags, and tells you whether its due diligence is **inside** or **outside** the reuse window. **Choose the engagement to compare** picks a different one. The comparison lists the services the two share and the attributes they differ on.
+
+## Check the IRQ answers
+
+The **IRQ answer check** flags each inherent risk questionnaire answer that the request itself contradicts, so a wrong answer does not lower the tier. Coverbase runs it in the background when the request is submitted. The card sits on the request's **Summary** tab, above **Suggested Inherent Risk Profile**, and the Front Door review shows a count such as **2 to review** that opens it.
+
+The check reads the request's description, use case, products and services, intake context, answers to follow-up questions and the descriptions of the services in scope. It compares them with every answer picked from a list on the request's IRQs. It flags an answer only when a source states a fact that makes the answer wrong. A source that says nothing about a question is not evidence.
+
+<Frame caption="The IRQ answer check with two flagged answers. The first raises the Cybersecurity tier; the second leaves the tier unchanged.">
+  <img src="/images/user-guides/front-door-irq-answer-check.png" alt="IRQ answer check card reading 2 to review. A system access question answered No, where the description suggests Yes, quotes two sentences from the description and shows Cybersecurity High to Critical. An offshore question answered No quotes a sentence about a contact center in Manila and shows Tier unchanged. Each has Use Yes and Keep No buttons." />
+</Frame>
+
+Each flag shows:
+
+- The question, what was **Answered** and what the **Description suggests**.
+- One or more quotes, each with the source it came from. Coverbase discards a flag whose quote is not word for word in its source.
+- The effect on the tier, for example **Cybersecurity: High → Critical**, or **Tier unchanged**.
+
+A flag is high severity when the answer understates data access, data sensitivity, regulated data, criticality or system access, so the tier would likely be too low.
+
+To resolve a flag, choose one:
+
+- **Use "Yes"** (the suggested answer) changes the answer. The IRQ is scored again, and the tier impact of the other open flags on that questionnaire is worked out again.
+- **Keep "No"** (the given answer) asks **Why keep "No"?**. Write what the description gets wrong, or why the answer still holds, and click **Confirm**. The reason is required.
+
+The flag then reads **Changed to** or **Kept** with the answer. Each decision goes on the request's **Audit Trail**.
+
+While a high-severity flag is open, the card says the inherent risk stays provisional, and **Suggested Inherent Risk Profile** shows **Provisional**. Recording a disposition or approving the request then opens **Go ahead with open answer flags?**. Write the **Reason** and click **Go ahead**. The reason is kept on the audit trail.
+
+**Run check again** runs a fresh check, which replaces the earlier one. Only the latest check can be resolved. Each run is one entry in the [Agent Ledger](/user-guides/agent-ledger), which records your decisions once every flag is answered. Questions in a risk domain whose **AI features** are turned off are not checked. See [Turn AI off or restrict a domain](/user-guides/risk-methodology#turn-ai-off-or-restrict-a-domain).
 
 ## Step 5: Decide reuse and record the disposition
 
@@ -169,6 +198,9 @@ The public API has no Front Door routes, so an API key cannot do any of this.
 | Approving the request returns an error about the Do Not Use list | No override rationale was recorded. | Record an override rationale, then approve. |
 | The new assessment did not reuse anything | It was a Zero Touch assessment, or not launched from an assessment plan, or the reuse was already applied to an earlier one. | Launch from an assessment plan. Check the **Audit Trail** for **Disposition applied to the launched assessment**. |
 | The budget card says **Unknown** | The procurement system has no committed figure for that budget line. | Check the line in your procurement system, then sync again. |
+| **Go ahead with open answer flags?** opens when you record or approve | A high-severity IRQ answer flag is still open. | Resolve the flag on the **Summary** tab, or give a reason to go ahead. |
+| A flag cannot be resolved | A newer check replaced the one you opened. | Reload the request and resolve the latest check's flags. |
+| The IRQ answer check skipped some questions | Their section's risk domain has **AI features** turned off. | Expected. Review those answers by hand. |
 | **Refresh IRQ** says there is nothing to refresh | The vendor has no engagement under an active monitoring plan. | Generate a monitoring plan for the engagement first. |
 
 ## Related

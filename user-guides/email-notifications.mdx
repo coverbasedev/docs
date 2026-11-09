@@ -267,6 +267,17 @@ Contract reminders are configured per organization and can be turned off for a s
   <img src="/images/user-guides/email/contract-reminder.png" alt="Contract renewal reminder email" />
 </Frame>
 
+## Decide an approval from the email
+
+With approval links on, the email for an approval carries **Approve** and **Decline** buttons, so the approver can decide without opening Coverbase first. It covers Front Door sign-offs, finding acceptance steps, exit plan evidence, Risk Summary decisions and change requests.
+
+- **One person, one approval, once.** Each link is bound to the member it was sent to and to one approval. It works once, until the date the page shows (72 hours by default). A link that expired, was used, was replaced by a newer email, or belongs to someone who left opens **This link no longer works**, with **Open in Coverbase**.
+- **The approver decides as themselves.** The page shows the approval and asks for a **Reason** when one is needed (and **Accept until** for a finding acceptance). The decision runs with the approver's own permissions, the same as in Coverbase or from a Teams card.
+- **Sign-in for higher tiers.** For a vendor in a tier your organization keeps behind a sign-in, the email carries one **Sign in to decide** button instead, and the link only opens the approval in Coverbase after sign-in.
+- **Outlook tasks.** With Outlook tasks on, the approver also gets a Microsoft To Do task for the approval. Coverbase completes the task once the approval is decided anywhere: from the email, in Coverbase or in Teams. This needs the app behind your Microsoft Entra ID connection to hold the `Tasks.ReadWrite.All` permission.
+
+There is no settings screen for approval links yet. An admin sets them with `PUT /v1/approval-link-policy`: `email_links_enabled`, `sign_in_vendor_tiers`, `link_ttl_hours` (1 to 336) and `outlook_tasks_enabled`. Links and Outlook tasks are off by default.
+
 ## Manage email from MCP or the API
 
 You can change your own notification settings, the layouts and the templates from an MCP client. An MCP client reads with `query_platform(kind=...)` (`notification_settings`, `notification_types`, `email_layouts`, `email_layout_preview`, `email_templates`). It writes with `mutate(entity="notification_setting", action="set")`, `mutate(entity="notification_preference", action="update")`, `mutate(entity="email_layout", action=...)` (`save`, `dry_run`) and `mutate(entity="email_template", action=...)` (`create`, `update`). A dry run emails the preview to you and nobody else.

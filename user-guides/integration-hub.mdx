@@ -1,6 +1,6 @@
 ---
 title: "Integration Hub"
-description: "Connect Coupa, SAP Ariba, Ironclad, Icertis or Microsoft Teams, set up authentication and the signed webhook, review field mappings, read the sync log, work the steward queue, and use Spend Controls and Vendor Master Data."
+description: "Connect Coupa, SAP Ariba, Oracle Fusion Cloud, Ironclad, Icertis or Microsoft Teams, set up authentication and the signed webhook, review field mappings, read the sync log, work the steward queue, and use Spend Controls and Vendor Master Data."
 icon: "plug"
 ---
 
@@ -22,7 +22,7 @@ The mistake people make most often is expecting a supplier to link by name. A su
 
 ## Step 1: Open a provider
 
-Open **Configuration**, choose **External Integrations**, and click **Coupa**, **SAP Ariba**, **Ironclad**, **Icertis**, **Archer**, **ServiceNow IRM**, **ERM Risk Register** or **Microsoft Teams**. Each card opens that provider in the Integration Hub. **Spend Controls** and **Vendor Master Data** also have **Open Integration Hub**.
+Open **Configuration**, choose **External Integrations**, and click **Coupa**, **SAP Ariba**, **Oracle Fusion Cloud**, **Ironclad**, **Icertis**, **Archer**, **ServiceNow IRM**, **ERM Risk Register** or **Microsoft Teams**. Each card opens that provider in the Integration Hub. **Spend Controls** and **Vendor Master Data** also have **Open Integration Hub**.
 
 The hub lists providers by category (**Procure-to-pay**, **Contract lifecycle**, **GRC and ERM**, **Messaging**) with their direction (**Two-way** or **Inbound only**), health (**Available**, **Healthy**, **Needs attention**, **Paused** or **Error**) and when each **Last synced**. Changing a connection needs permission to manage integrations. Without it, the page is read-only.
 
@@ -39,12 +39,13 @@ On the **Authentication** tab, fill in what the provider needs. The method is sh
 | Archer | **Instance URL**, **Instance Name**, **User Domain**, **Service Account Username** and **Password**, and the issue and risk level and status field IDs. See [Archer](/integrations/guides/archer). |
 | ServiceNow IRM | **Instance URL**, **Client ID**, **Client Secret**, and the **Issue Table** and **Risk Table**. See [ServiceNow IRM](/integrations/guides/servicenow-irm). |
 | ERM risk register | **Instance URL**, **API Token**, and the register's paths, update method, ID field and token header. See [ERM risk register](/integrations/guides/erm-register). |
+| Oracle Fusion Cloud | **Instance URL**, then **Service Account Username** and **Service Account Password** for Basic auth, or **Client ID** and **Client Secret** with the **OAuth Token URL** and **Scope** for OAuth. Optionally the **REST Version**, the **Procurement Business Unit**, the **Supplier Site Hold Attribute** and **Hold Reason Attribute**, the **Supplier Number Custom Field**, and **Create a vendor for each supplier nothing else matches**. See [Oracle Fusion Cloud](#oracle-fusion-cloud). |
 | Microsoft Teams | **Webhook URL**, the **Notification Types** to post, and for approvals and intake chats the bot's app ID, client secret and tenant ID. See [Microsoft Teams](/integrations/guides/microsoft-teams). |
 
 Then choose:
 
 - **Open an intake request for each new requisition** (Coupa and SAP Ariba), and the **Requisition Statuses** that should open one. Leave the statuses empty for all. On by default.
-- **Write risk tier, approval status and contract values back to the provider** (Coupa, Ironclad and Icertis). On by default. Turn it off for a read-only connection.
+- **Write risk tier, approval status and contract values back to the provider** (Coupa, Oracle Fusion Cloud, Ironclad and Icertis). On by default. Turn it off for a read-only connection.
 - **Sync Interval (Minutes)**: 60 by default, 15 at the shortest.
 
 Click **Save**, then **Test connection**. A stored secret is never shown again. The field reads **Stored. Enter a new value to replace it.**
@@ -106,6 +107,20 @@ With your Coverbase bot registered, the Microsoft Teams connection posts Front D
 ## What a synced requisition looks like
 
 A requisition or sourcing event opens a draft intake request. The requester sees **Initiated from a Coupa purchase request** (or the provider's name), and the Front Door review shows **Started From Procurement** with the value and category. The supplier's identifiers go to the Front Door's **Is This New?** check. See [Front Door triage](/user-guides/front-door-triage).
+
+## Oracle Fusion Cloud
+
+The **Oracle Fusion Cloud** provider keeps Coverbase and your Oracle Fusion Cloud supplier master in step: supplier master in, invoice spend in, and supplier holds out. It is built from Oracle's published Procurement and Payables REST API and has not yet run against a customer tenant, so click **Test connection** after you save.
+
+<Frame caption="The Oracle Fusion Cloud provider's Authentication tab.">
+  <img src="/images/user-guides/integration-hub-oracle-fusion.png" alt="Oracle Fusion Cloud authentication form with Instance URL, Service Account Username and Password, Client ID and Client Secret, then OAuth Token URL, Scope, REST Version, Procurement Business Unit, Supplier Site Hold Attribute set to HoldAllNewPurchasingDocumentsFlag, Hold Reason Attribute set to PurchasingHoldReason, Supplier Number Custom Field, a Create a vendor for each supplier nothing else matches switch, and the sync settings" />
+</Frame>
+
+| Direction | What it does |
+| --- | --- |
+| Suppliers in | Reads suppliers changed since the last sync and matches each to a vendor. The supplier number, read from the vendor custom field you name in **Supplier Number Custom Field**, is tried first, then the usual identifiers. With **Create a vendor for each supplier nothing else matches** on, a supplier with no match and no name candidates becomes a new vendor. Anything ambiguous goes to the steward queue. |
+| Invoices in | Records each AP invoice on a linked supplier as spend with that vendor. A canceled invoice drops out of spend. An invoice whose supplier is not linked yet is picked up after the link. Spend is recorded on the vendor, not on an engagement. |
+| Decision out | Writes the TPRM decision back: do not engage when the vendor is blocked, denied or discontinued, and approved once it is active. Nothing is written while due diligence is open. By default Coverbase sets the hold on every supplier site (optionally only the **Procurement Business Unit**'s sites), using the **Supplier Site Hold Attribute** and **Hold Reason Attribute**. Confirm both attributes in your tenant before the first sync. To mark the supplier inactive instead, map **TPRM decision** to `supplier_inactive` on **Field Mappings**; `site_hold` is the site hold. |
 
 ## Spend Controls and Vendor Master Data
 
