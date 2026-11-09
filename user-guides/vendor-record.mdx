@@ -226,6 +226,33 @@ The **Actions** menu on a service page offers:
 | **Promote to Vendor** | Creates a standalone vendor from the service and archives the service. Risk scores, SLAs, performance scores and comments come across. Assessments, documents and contracts belong to the current vendor and stay with it, reachable from the archived service. |
 | **Archive** | Archives the service. |
 
+### AI systems and the AI tier
+
+A service's **Risk Attributes** card records whether the service is an **AI System** and how it is classified. Click **Edit risk attributes** to change them. Coverbase derives an **AI Tier** from these values. The tier is never stored, so it always matches the current values.
+
+| Attribute | Values |
+| --- | --- |
+| **EU AI Act Class** | **Prohibited**, **High risk**, **General-purpose AI**, **Limited risk**, **Minimal risk** |
+| **NIST AI RMF Tier** | **Tier 1, Partial** to **Tier 4, Adaptive** |
+| **ISO/IEC 42001** | **Certified**, **In progress**, **Not certified** |
+| **Autonomy** | **None**, **Assistive**, **Supervised agent**, **Autonomous agent** |
+| **Tool Access** | Any of **Read data**, **Write data**, **Execute code**, **Send communications**, **Financial transactions**, **Browse the web** |
+
+The first rule that matches sets the tier:
+
+1. **Tier 1**: EU AI Act class Prohibited or High risk, or an autonomous agent.
+2. **Tier 2**: General-purpose AI, a supervised agent, or tool access that acts (write data, execute code, send communications or financial transactions).
+3. **Tier 3**: Limited risk, or an assistive system.
+4. **Tier 4**: anything else that is classified.
+
+ISO/IEC 42001 and the NIST AI RMF tier describe the vendor's controls, so they show beside the tier and never lower it. A tag mapping or an IRQ answer can set these attributes, but never overwrites a value a person set.
+
+On the **Vendors** list, open **AI Inventory** and choose **Systems**: one row per AI system, with its **Models and Providers** from the vendor's AI bills of materials and AI model provider fourth parties, its **Classification** and its **AI Tier**. Filter it with **All tiers** and **All EU AI Act classes**.
+
+<Frame caption="The Systems view of the AI Inventory, with each system's classification and derived AI tier.">
+  <img src="/images/user-guides/vendor-record-ai-inventory-systems.png" alt="AI Inventory on the Vendors list with Systems chosen, tier and EU AI Act class filters, and a table of AI systems with their models and providers, a classification such as High risk, Supervised agent with ISO/IEC 42001 and NIST AI RMF tier, and an AI Tier badge from Tier 1 to Tier 2 or Not classified" />
+</Frame>
+
 ### Engagements
 
 Create one from **Create new engagement** in the **Quick actions** card's menu on the Overview tab, from **New Engagement** on the Engagements tab, or from the **Engagements** view of the list. The form asks for a name (the placeholder suggests *2026 Annual Review*), a status, a description, a **Start Date** and an **End Date**, and lets you link **Services** and **Contracts** and name **Relationship Owners** and **Third-Party Contacts** up front.
@@ -268,6 +295,7 @@ Whether suggestions wait for you at all is an organization setting, **When Cover
 | --- | --- |
 | **Add it automatically** | New dependencies land on the vendor without review. This is the default. |
 | **Queue it for review under Vendor changes** | Suggestions wait in the panel and in the **Vendor changes** queue until someone decides. |
+| **Queue it with an objection window, then accept it if nobody objects** | Suggestions wait with a deadline, set in **Objection Window in Days** (30 by default). See [The objection window](#the-objection-window). |
 | **Do not add anything** | The research is ignored. |
 
 When suggestions are queued, the vendor page header shows **Vendor changes** with a count. It opens the review queue for that vendor. The same rows are decided from the Properties tab. When nothing is waiting, for one vendor or for the whole organization, the page says **Nothing Waiting for Review** and names what would wait there.
@@ -276,6 +304,19 @@ When suggestions are queued, the vendor page header shows **Vendor changes** wit
   Suggestions come only from companies Coverbase has researched. A dependency your vendor disclosed that is not in the shared graph has to be added by hand. A vendor that was added manually, with no directory entry behind it, gets no suggestions at all.
 </Note>
 
+### The objection window
+
+With the objection window setting, a new subprocessor is accepted at its deadline unless someone objects. The vendor's relationship owners are told when the window opens.
+
+<Frame caption="A subprocessor suggestion on Vendor changes, with the objection deadline and one objection.">
+  <img src="/images/user-guides/vendor-record-subprocessor-objection-window.png" alt="Vendor changes page listing one suggested subprocessor for Novacrest Patient Recruitment: Bayview Contact Solutions, a call centre in Manila handling production customer data, suggested 8 days ago, with Objections close in 22 days, a 1 objection badge and an Object link" />
+</Frame>
+
+- The **Suggested** column shows when **Objections close**, and how many objections there are.
+- To object, click **Object**, write the **Reason**, and click **Object**. The subprocessor is then not accepted at the deadline.
+- At the deadline, a subprocessor nobody objected to is accepted. One with an objection is not applied and reads **Objected, needs a decision**. It waits in the queue until someone accepts or rejects it.
+- You can still accept or reject a suggestion before its deadline.
+
 ### The Nth Parties view
 
 Back on the list page, switch to **Nth Parties**. The table has **Nth Party Name**, **Website**, **Inherent Risk Level**, **Description**, **Tags** and **Vendors** columns; the row menu lists which of your vendors depend on it. The relationship graph sits beside the table. Clicking a row highlights it in the graph; clicking a vendor node filters the table to that vendor's nth parties, and clicking an nth-party node filters it to that one. **Reset view and filters** clears it. The graph opens full screen at `/vendors/nth-party-graph` (search the command palette for *Nth Party Graph*), where **Export as SVG** saves it.
@@ -283,6 +324,29 @@ Back on the list page, switch to **Nth Parties**. The table has **Nth Party Name
 <Frame caption="The Nth Parties view: the table on the left, the relationship graph on the right.">
   <img src="/images/user-guides/vendor-record-nth-parties.png" alt="Nth parties table beside the relationship graph" />
 </Frame>
+
+#### Tiers and country filters
+
+The table also shows each nth party's **Tier**, **HQ country** and **Data locations**. A fourth party is a dependency of one of your vendors. A fifth party is a dependency of a fourth party, and a sixth party a dependency of a fifth party.
+
+With no **Tier** filter, the view lists fourth parties only. To see deeper tiers, click **Filter**, choose **Tier**, and pick **Fourth party**, **Fifth party** or **Sixth party** with **is one of**.
+
+<Frame caption="The Tier filter on the Nth Parties view, with the Tier, HQ country and Data locations columns.">
+  <img src="/images/user-guides/vendor-record-nth-party-tier-filter.png" alt="Nth Parties table with Tier and HQ country columns, the Filter menu open on Tier, and the tier choices Fourth party, Fifth party and Sixth party under is one of" />
+</Frame>
+
+Two more filters narrow the view by country:
+
+- **HQ Country** reads the country from the nth party's headquarters location. **No HQ country** finds those whose location names no country.
+- **Data Location** matches nth parties that run a data center in any of the countries you pick, read from their operating locations. **is not one of** matches those with no data center in them.
+
+In the graph, a fifth or sixth party sits next to the fourth party it is reached through, and the legend adds **Fifth party** and **Sixth party** when the view shows them. Hovering a deeper node lists **Reached through** with its parent nth parties. When your filters leave out every parent of a deeper party, it is drawn from your vendors with a dashed edge, so the graph never shows it as a vendor's direct dependency.
+
+<Frame caption="The graph with a fifth and a sixth party. The hover card shows the fourth party the fifth party is reached through.">
+  <img src="/images/user-guides/vendor-record-nth-party-deeper-tiers.png" alt="Relationship graph with Amazon Web Services as a fourth party, Equinix as a fifth party reached through it, a sixth party below, a hover card for Equinix listing Reached through Amazon Web Services and two connected vendors, and a legend with Fifth party and Sixth party" />
+</Frame>
+
+Tags belong to the fourth parties your organization records. You can edit tags on a fourth party only. On fifth and sixth parties, tags are read-only.
 
 ## Merging and archiving
 

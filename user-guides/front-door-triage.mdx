@@ -1,6 +1,6 @@
 ---
 title: "Front Door triage"
-description: "Set up and run the Front Door review of intake requests: the reuse window and sign-off groups, IRQ scoping rules, the Do Not Use list, checking identifiers, choosing a disposition, signing it off or declining it, sending questions back to the requester, and the budget and material change cards."
+description: "Set up and run the Front Door review of intake requests: the reuse window and sign-off groups, IRQ scoping rules, the Do Not Use list, checking identifiers, checking IRQ answers against the request, choosing a disposition, signing it off or declining it, sending questions or specific fields back to the requester, closing requests that do not meet your criteria, screening for countries of concern and free email domains, and the budget and material change cards."
 icon: "door-open"
 ---
 
@@ -78,6 +78,35 @@ If the requester did not give identifiers, enter the **Tax ID**, **D-U-N-S** (9 
 
 For an existing vendor, the card then finds the most similar engagement, ranked by shared services and tags, and tells you whether its due diligence is **inside** or **outside** the reuse window. **Choose the engagement to compare** picks a different one. The comparison lists the services the two share and the attributes they differ on.
 
+## Check the IRQ answers
+
+The **IRQ answer check** flags each inherent risk questionnaire answer that the request itself contradicts, so a wrong answer does not lower the tier. Coverbase runs it in the background when the request is submitted. The card sits on the request's **Summary** tab, above **Suggested Inherent Risk Profile**, and the Front Door review shows a count such as **2 to review** that opens it.
+
+The check reads the request's description, use case, products and services, intake context, answers to follow-up questions and the descriptions of the services in scope. It compares them with every answer picked from a list on the request's IRQs. It flags an answer only when a source states a fact that makes the answer wrong. A source that says nothing about a question is not evidence.
+
+<Frame caption="The IRQ answer check with two flagged answers. The first raises the Cybersecurity tier; the second leaves the tier unchanged.">
+  <img src="/images/user-guides/front-door-irq-answer-check.png" alt="IRQ answer check card reading 2 to review. A system access question answered No, where the description suggests Yes, quotes two sentences from the description and shows Cybersecurity High to Critical. An offshore question answered No quotes a sentence about a contact center in Manila and shows Tier unchanged. Each has Use Yes and Keep No buttons." />
+</Frame>
+
+Each flag shows:
+
+- The question, what was **Answered** and what the **Description suggests**.
+- One or more quotes, each with the source it came from. Coverbase discards a flag whose quote is not word for word in its source.
+- The effect on the tier, for example **Cybersecurity: High → Critical**, or **Tier unchanged**.
+
+A flag is high severity when the answer understates data access, data sensitivity, regulated data, criticality or system access, so the tier would likely be too low.
+
+To resolve a flag, choose one:
+
+- **Use "Yes"** (the suggested answer) changes the answer. The IRQ is scored again, and the tier impact of the other open flags on that questionnaire is worked out again.
+- **Keep "No"** (the given answer) asks **Why keep "No"?**. Write what the description gets wrong, or why the answer still holds, and click **Confirm**. The reason is required.
+
+The flag then reads **Changed to** or **Kept** with the answer. Each decision goes on the request's **Audit Trail**.
+
+While a high-severity flag is open, the card says the inherent risk stays provisional, and **Suggested Inherent Risk Profile** shows **Provisional**. Recording a disposition or approving the request then opens **Go ahead with open answer flags?**. Write the **Reason** and click **Go ahead**. The reason is kept on the audit trail.
+
+**Run check again** runs a fresh check, which replaces the earlier one. Only the latest check can be resolved. Each run is one entry in the [Agent Ledger](/user-guides/agent-ledger), which records your decisions once every flag is answered. Questions in a risk domain whose **AI features** are turned off are not checked. See [Turn AI off or restrict a domain](/user-guides/risk-methodology#turn-ai-off-or-restrict-a-domain).
+
 ## Step 5: Decide reuse and record the disposition
 
 When a similar engagement has completed due diligence, **Proposed Reuse by Domain** lists each risk domain with its **Prior Result** and a **Proposal**: **Reuse prior due diligence**, **Abbreviated review** or **New due diligence**. Change any proposal you disagree with.
@@ -145,6 +174,105 @@ Two more cards appear when the requester filled in the matching intake steps.
 - **Budget.** Shows the request amount, its amortization and **First year's draw** against the synced budget line's remaining balance, with **Within budget** or **Exceeds budget**. Coverbase works this out from the synced line, not from figures the requester typed. A line the procurement system reports no committed figure for shows **Unknown**. If the requester asked for a budget exception, **Approve exception** or **Decline exception**, with an optional **Decision rationale**.
 - **Material Change.** For an existing vendor, lists what the requester flagged as changed, such as a new offshore location, a new AI use case or a new subprocessor, with **Needs IRQ refresh**. **Refresh IRQ** opens an IRQ refresh on the engagement's monitoring plan for its Transaction Owner to answer. See [IRQ refresh](/user-guides/monitoring-plans#step-5-refresh-an-irq).
 
+## Close requests that do not meet your criteria
+
+A Front Door rule can close a request as **Closed: Criteria Not Met** the moment it is submitted, before anyone reviews it. Use it for requests that belong in another process, for example small purchases that go through a purchasing card.
+
+To add one, open **Configuration → Front Door**, click **New rule**, and add the **Conditions** as for any IRQ scoping rule. Set the **Outcome** to **Close: Criteria Not Met** and write the **Reason the requester sees**. The reason is required, because the requester reads it. Click **Update rule**, then **Save**.
+
+<Frame caption="An IRQ scoping rule with the Close: Criteria Not Met outcome, listed with the rules that require the IRQ.">
+  <img src="/images/user-guides/front-door-closing-rule.png" alt="IRQ Scoping Rules table with four Require the IRQ rules, one No IRQ needed rule, and a rule named Under $100,000 with no Acme Pharma data whose outcome is Close: Criteria Not Met with the start of its reason" />
+</Frame>
+
+When a request is submitted, Coverbase checks the enabled closing rules in table order. The first rule whose conditions all hold closes the request. Then:
+
+- The request's status is **Closed: Criteria Not Met**. The **Front Door** tab shows the reason and **Closed by the rule** with the rule's name.
+- The requester is notified with the reason. A requester who filed through a public portal without signing in gets it by email.
+- The request is still screened (see [Screen for countries of concern and free email domains](#screen-for-countries-of-concern-and-free-email-domains)), but no review stage starts and no extra reviewer gets a task while it is closed.
+- The **Audit Trail** records the close with the rule and the reason.
+
+<Frame caption="A request a closing rule closed, with the reason the requester sees and the Reopen button.">
+  <img src="/images/user-guides/front-door-closed-criteria-not-met.png" alt="Intake request for Cedar Ridge Translation Services with a Closed: Criteria Not Met badge and a red callout giving the reason, Closed by the rule Under $100,000 with no Acme Pharma data, and a Reopen button" />
+</Frame>
+
+### Reopen a closed request
+
+To put a closed request back into review, click **Reopen** on the callout. Give a **Reason for reopening** if you want one (it is optional), then click **Reopen request**. You need permission to update intake requests across the organization. Admins have it.
+
+<Frame caption="The reopen confirmation. The reason is optional and goes into the audit trail.">
+  <img src="/images/user-guides/front-door-reopen-dialog.png" alt="Reopen this request dialog explaining that the request goes back into review where its answers place it, with an optional reason field and a Reopen request button" />
+</Frame>
+
+Reopening runs the steps the close held back:
+
+- The portal's configured review stages start, or resume where an earlier submission left them, so the request still needs every sign-off.
+- If the screening found a country of concern, the extra reviewer group gets its review task and notification.
+- When the Front Door is turned on for your organization, the IRQ answer check is queued.
+
+The close stays in the request's **Audit Trail**, next to who reopened it and why. If two people reopen the same request at once, the second reopen is refused, so nothing runs twice.
+
+## Screen for countries of concern and free email domains
+
+Coverbase screens every submitted request against your organization's reference lists. It flags a vendor, data location or entity in a country of concern, and a contact on a free email domain. The requester sees the same notice while filling in the form, and can still submit.
+
+To set it up, open **Configuration → Front Door** and go to **Screening**.
+
+<Frame caption="Screening settings: the country list and extra reviewer, the location questions, and the free email list.">
+  <img src="/images/user-guides/front-door-screening-settings.png" alt="Screening card with Flag vendors and data in countries of concern turned on, Country list High-risk countries, Extra reviewer Compliance (ABAC), a location question Country of registration, and Warn about contacts on free email domains turned on with Extra free email domains set to Free email domains" />
+</Frame>
+
+| Setting | What it does |
+| --- | --- |
+| **Flag vendors and data in countries of concern** | Turns country screening on. |
+| **Country list** | The reference list of country codes to screen against. You keep it in **Configuration → Reference data**. |
+| **Extra reviewer** | The user group that gets a review task when a request names a country on the list. **No extra reviewer** sends no task. |
+| **Location questions** | The vendor's headquarters is always checked. Choose a questionnaire and add the intake questions that ask where data is stored or where an entity sits. |
+| **Warn about contacts on free email domains** | Turns free email screening on. It checks the requester's vendor contact and every vendor contact on the request. |
+| **Extra free email domains** | Gmail, Outlook, Yahoo and other common providers are always included. Pick a reference list to add your own domains. **Built-in list only** adds none. |
+
+Click **Save** at the foot of the page.
+
+Reference lists are versioned. A screen uses the version of each list in effect when it runs, and records the list's name and version on the request. A later edit to a list does not change a screen already recorded.
+
+### What reviewers see
+
+On a flagged request, the **Front Door** tab opens with a notice that names each country and where it was found, the list it matched, and the group asked to review it. That group gets a work queue task, **Country of concern review**, once per request.
+
+<Frame caption="A country of concern notice, routed to the extra reviewer group.">
+  <img src="/images/user-guides/front-door-country-of-concern.png" alt="Warning callout: This request names a country of concern: China. Matched against High-risk countries. China, Vendor headquarters. China, Country of registration. Compliance (ABAC) was asked to review it." />
+</Frame>
+
+The **Screening** card lists **Country of concern** and **Free email domain** beside the **Do Not Use list**, with each flagged contact and whether it is the vendor contact on the request or another vendor contact. **Screen again** screens the request against today's lists. A new hit is added to the **Audit Trail** as **Screening flagged the request**.
+
+<Frame caption="The Screening card on a flagged request.">
+  <img src="/images/user-guides/front-door-screening-card.png" alt="Screening card with Screen again, Do Not Use list Clear, Country of concern CN, and Free email domain 2 contacts, listing two contacts on free email domains" />
+</Frame>
+
+## Return fields to the requester
+
+To ask the requester to correct specific answers, return those fields instead of sending a question. The requester edits only the fields you mark, and you see each value before and after.
+
+1. On the request, click **Return fields**.
+2. Under **Request details** and **Intake answers**, tick each field that needs to change. You can return up to 30 fields at once.
+3. For each field, write **What needs to change**. A comment is required on every field.
+4. Click **Return to requester**.
+
+<Frame caption="Return fields to the requester. Request details are listed above the intake answers, each with its current value.">
+  <img src="/images/user-guides/front-door-return-fields-dialog.png" alt="Return fields to the requester dialog listing Vendor name, Vendor website, What the vendor does, Vendor headquarters, Vendor contact name and Vendor contact email under Request details, and intake answers below, with No fields marked and a Return to requester button" />
+</Frame>
+
+The returnable request details are **Vendor name**, **Vendor website**, **What the vendor does**, **Vendor headquarters**, **Vendor contact name** and **Vendor contact email**, plus any answer to the intake questions.
+
+The requester is notified, including a requester who filed through a public portal without signing in, who gets an email. They correct the fields and click **Resubmit**. Under **Questions for the Requester**, each returned field shows your comment, **Waiting for the requester to resubmit** until they do, and then the old value struck through beside the new one. The **Audit Trail** records the return and the resubmission.
+
+<Frame caption="Two returned fields after the requester resubmitted, with each value before and after.">
+  <img src="/images/user-guides/front-door-returned-fields.png" alt="Questions for the Requester card with two returned fields, Vendor headquarters and Legal entity name, each with the reviewer comment, Resubmitted 15 hours ago, and the old value struck through followed by the new value" />
+</Frame>
+
+<Warning>
+  A request cannot be accepted while a returned field is waiting for the requester. Accept it after they resubmit, or deny it. Once the request is decided, its fields can no longer be returned or changed.
+</Warning>
+
 ## Run the Front Door from MCP
 
 You can work the Front Door from an MCP client, as well as in the dashboard. An MCP client reads with `query_questionnaires(kind="intake_triage")` and `query_questionnaires(kind="intake_triage_config")`. It writes with `mutate(entity="intake_triage", action=...)` (`set_identifiers`, `set_disposition`, `sign_off`, `decline_signoff`, `override_block`, `send_irqs` and the rest) and `mutate(entity="intake_triage_config", action="update")`.
@@ -159,6 +287,12 @@ The public API has no Front Door routes, so an API key cannot do any of this.
 | --- | --- | --- |
 | No **Front Door** tab on the request | The third-party lifecycle features are not turned on for your organization. | Ask your Coverbase representative. |
 | **Probabilistic match** on a vendor you know is the same | Only the name or website matched. | Enter a tax ID, D-U-N-S or LEI and click **Check identifiers**. |
+| A request was **Closed: Criteria Not Met** that should go ahead | A closing rule's conditions all held for its answers. | Click **Reopen**. If the rule closes requests it should not, change its conditions. |
+| **Reopen** is not shown | You lack permission to update intake requests across the organization, or the request is not closed. | Ask an Admin. |
+| A country of concern was flagged but nobody got a task | **Extra reviewer** is **No extra reviewer**, or the request was closed by a rule and not yet reopened. | Choose a group under **Screening**, or reopen the request. |
+| Screening missed a country the requester gave | The answer is in a question not listed under **Location questions**, or the country is not on the list version in effect. | Add the question, update the reference list, then click **Screen again**. |
+| Accepting the request returns an error about returned fields | The requester has not resubmitted the fields you returned. | Wait for the resubmission, or deny the request. |
+| **Return fields** is refused | The request is already decided, or it has no requester or contact email to send it back to. | Return fields before the decision, on a request with a requester. |
 | **Approve triage** is unavailable | No disposition is recorded, there are unsaved disposition changes, you already signed, or you are in neither sign-off group. | Follow the reason shown on the button. |
 | **Sign off** does nothing for the second signer | The same person tried to sign both roles, or is not in the role's group. | A different member of the other group signs. |
 | Both sign-offs disappeared | Someone clicked **Revise disposition**, or a sign-off group declined. | Both signers sign the revised disposition. After a decline, the TPRM Office clicks **Record again** first. |
@@ -169,6 +303,9 @@ The public API has no Front Door routes, so an API key cannot do any of this.
 | Approving the request returns an error about the Do Not Use list | No override rationale was recorded. | Record an override rationale, then approve. |
 | The new assessment did not reuse anything | It was a Zero Touch assessment, or not launched from an assessment plan, or the reuse was already applied to an earlier one. | Launch from an assessment plan. Check the **Audit Trail** for **Disposition applied to the launched assessment**. |
 | The budget card says **Unknown** | The procurement system has no committed figure for that budget line. | Check the line in your procurement system, then sync again. |
+| **Go ahead with open answer flags?** opens when you record or approve | A high-severity IRQ answer flag is still open. | Resolve the flag on the **Summary** tab, or give a reason to go ahead. |
+| A flag cannot be resolved | A newer check replaced the one you opened. | Reload the request and resolve the latest check's flags. |
+| The IRQ answer check skipped some questions | Their section's risk domain has **AI features** turned off. | Expected. Review those answers by hand. |
 | **Refresh IRQ** says there is nothing to refresh | The vendor has no engagement under an active monitoring plan. | Generate a monitoring plan for the engagement first. |
 
 ## Related

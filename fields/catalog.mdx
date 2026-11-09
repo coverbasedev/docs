@@ -533,6 +533,8 @@ The **Signals** tab in Supplier Radar. One row per event your organization is ex
 
 **14 fields**, queryable at `POST /v1/radar_signal/query`, available in saved views.
 
+An invalid rule is refused with `422` instead of being ignored: an unknown path, an operator the field does not allow, or a value of the wrong type. See [Invalid rules](/fields/overview#invalid-rules).
+
 Default sort: `last_alerted_at` desc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
@@ -649,13 +651,18 @@ Default sort: `created_at` desc.
 
 The nth-party graph and the subprocessor lists on a vendor.
 
-**14 fields**, queryable at `POST /v1/nth_party/query`, available in saved views.
+**17 fields**, queryable at `POST /v1/nth_party/query`, available in saved views.
+
+Without a `tier` rule, the query returns fourth parties only.
 
 Default sort: `name` asc.
 
 | Field | Group | Filter path | Type | Values | Operators | Sortable |
 | --- | --- | --- | --- | --- | --- | --- |
 | Nth Party Name | - | `name` | Text | - | is, is not, any of, none of, contains, does not contain | Yes |
+| Tier | - | `tier` | Choice | `fourth`, `fifth`, `sixth` | is, is not, any of, none of | No |
+| HQ Country | - | `hq_country` | Choice | ISO 3166-1 alpha-2 country codes | any of, none of, empty, not empty | No |
+| Data Location | - | `data_location_country` | Choice | ISO 3166-1 alpha-2 country codes | any of, none of | No |
 | Created Date | Dates | `created_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Updated Date | Dates | `updated_at` | Date | - | after, on or after, before, on or before, between, empty, not empty | No |
 | Website | - | `website` | Text | - | is, is not, any of, none of, contains, does not contain, empty, not empty | Yes |

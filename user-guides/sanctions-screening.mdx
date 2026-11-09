@@ -132,6 +132,8 @@ The page opens the result when the provider answers. Each subject under **What i
 
 When your organization has a screening provider connected, a Zero Touch assessment screens the vendor itself before it grades. It uses your organization's sources, and it runs whether or not **Screen vendors on a schedule** is on. The screen shows in the vendor's screening history with the trigger **Zero Touch assessment**, and an open match feeds the report's Reputation section.
 
+A Zero Touch assessment reuses a screen of the same subject from the last 24 hours instead of screening again, but only when that screen asked for the same thing. With World-Check One or Dow Jones, that means the same sources and the same match threshold. A screen under different sources or a different threshold is not reused, and the vendor is screened again.
+
 The report's **Screening** section lists who was screened, the sources, every screen on record, including the clear ones, and the decision and reason recorded on each match. A report run without a provider connected has no Screening section.
 
 ## Screen a name once
@@ -295,6 +297,30 @@ The pre-qualification sanctions check at intake screens through World-Check One 
 
 If World-Check One rejects the service account, scheduled screening for your organization pauses, and the settings page shows **The last screen failed** with World-Check One's reason. It resumes once you save working credentials on the tile. Removing the service account switches screening off.
 
+## Screen through your Dow Jones license
+
+If your organization licenses Dow Jones Risk & Compliance, Coverbase can screen your vendors through your own Dow Jones account. Screens run through the same run, match and review steps as Coverbase screening: matches come to the Coverbase queue and you decide them there.
+
+Unlike World-Check One, Dow Jones screens the people behind a vendor as well as the vendor, and screens adverse media when you switch that source on.
+
+### Connect and choose Dow Jones
+
+1. In Coverbase, go to **External Integrations** and open the **Dow Jones Risk & Compliance** tile. Save the Dow Jones service account (client ID, user name and password).
+2. Under **Configuration → Monitoring → Screening**, pick **Dow Jones Risk & Compliance (your license)** under **Screening Provider**. Confirm **Switch to Dow Jones Risk & Compliance?**. Dow Jones has no provider profile groups, so the switch clears monitoring rules.
+3. Set **Who is monitored** by risk level, and switch on **Screen vendors on a schedule**.
+
+<Frame caption="Dow Jones chosen as the screening provider, with its service account saved in External Integrations.">
+  <img src="/images/user-guides/sanctions-screening-dow-jones.png" alt="Screening Provider card marked Connected, with Coverbase screening, World-Check One (your license) and Dow Jones Risk & Compliance (your license), the last selected, and the note Your Dow Jones service account is saved in External Integrations with a Manage service account button" />
+</Frame>
+
+Until the service account is saved, the settings page says **Connect Dow Jones in External Integrations first.**, and **Add service account** opens the tile.
+
+### What changes with Dow Jones
+
+- **Adverse media categories are not offered.** Dow Jones screens every adverse media category, so you cannot narrow matches by category. The settings page shows a note in place of the category controls.
+- **Coverbase sets the schedule.** As with World-Check One, Coverbase screens each monitored vendor when it is enrolled, then again 350 days after its last completed screen. Monitoring rules, profile groups and the workspace default cadence are not used.
+- **The provider is fixed once vendors are screened.** You can change the provider only while screening is switched off, and once vendors have been screened through Dow Jones, only Coverbase support can change it.
+
 ## Who can do what
 
 Screening has its own permission, separate from the vendor record, so the person who reviews matches need not be the person who administers vendors.
@@ -326,6 +352,9 @@ These routes need `screening_match` permission, which API keys do not hold, so u
 | The Screening tab says scheduled screening is off | You can still use **Screen now**. To re-screen vendors automatically, an administrator switches on **Screen vendors on a schedule** under **Configuration → Monitoring → Screening**. |
 | A vendor you expected to be monitored has no recent screens | Check the vendor's risk level, and that the level is switched on under **Who is monitored**, or that a monitoring rule that is on matches it. A vendor with no risk score is under **Not scored**. |
 | **Screen now** says nobody is enrolled | The settings screen nobody for this vendor. Check **Who we screen**, or use **Add individual** to screen a person. |
+| **Adverse media categories** are missing from the settings | Dow Jones is the provider. It screens every adverse media category, so there is nothing to narrow. |
+| **Connect Dow Jones in External Integrations first.** | Dow Jones is chosen but no service account is saved. Click **Add service account** and save it on the tile. |
+| A Zero Touch assessment screened the vendor again although it was screened today | The earlier screen used different sources or a different match threshold, so it was not reused. |
 | A director named on the People tab is not screened | Directors and officers are opt-in, and only people a registry filing names are enrolled automatically. Use **Confirm & screen** under **People not screened**. |
 | A dismissed match is back | An allowlist lasts 180 days, then the match is raised again for a fresh look. A match you marked **Not a match** stays closed. |
 | A screen says **Could not get this screen's result** | The provider did not return a result. Coverbase retries the screen, and it lands in the queue when it finishes. It never reads as clear. |

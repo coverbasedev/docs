@@ -110,6 +110,19 @@ The same card appears on the Front Door review of an intake request. Issuing a p
 
 Under **Configuration → External Integrations**, the **Bitsight**, **SecurityScorecard**, **RapidRatings** and **Moody's** panels each take credentials. Saving them the first time adds a Radar source for the provider and a rating drop detector on it. Each pull matches the provider's portfolio to your vendors, records the rating, and raises a Radar signal only when a stored rating moved. The first pull is a baseline. A rating the provider reports as zero is recorded as zero. On the detector, **Rating fell by at least**, **New rating below** and **Grade worsened** are requirements in the provider's own units. A rating change alerts only when it clears every requirement that is switched on, and at least one must be on. **Rating fell by at least** and **New rating below** take zero or more. See each provider's guide for the fields and the default drop that alerts.
 
+### Read RiskRecon ratings through Splunk
+
+The **RiskRecon** panel works the same way, with one more choice: **Read ratings from**. Pick **The RiskRecon API** to pull with a RiskRecon API token, or **Splunk** to read the RiskRecon index that the RiskRecon app for Splunk writes on your Splunk connection. With **Splunk**, the panel asks for no RiskRecon token.
+
+<Frame caption="The RiskRecon panel set to read ratings from Splunk.">
+  <img src="/images/user-guides/certificate-vault-riskrecon-splunk.png" alt="RiskRecon panel with a note that the connector has not yet run against a customer tenant, and Read ratings from set to Splunk, which reads the RiskRecon index on your Splunk connection so no RiskRecon token is needed" />
+</Frame>
+
+1. Connect Splunk first: open **Splunk Enterprise Security** under **Configuration → External Integrations** and save its URL and API token.
+2. Open **RiskRecon**, choose **Splunk** under **Read ratings from**, and click **Save**.
+
+Each pull reads the last 7 days of the RiskRecon index and lands the ratings on your vendors like a pull from the RiskRecon API. If Splunk is not connected, the pull fails with a message to connect Splunk.
+
 ## Work the vault from MCP or the API
 
 You can read the vault, add and request certificates, sync networks and manage rule sets from an MCP client or with an API key, as well as in the dashboard. An MCP client reads with `query_vendors(kind="certificates")`, `query_vendors(kind="certificate_summary")`, `query_vendors(kind="certificate_networks")`, `query_vendors(kind="prequalification")` and `query_vendors(kind="prequalification_rule_sets")`. It writes with `mutate(entity="certificate", action=...)`, `mutate(entity="certificate_renewal_job", action="create")`, `mutate(entity="certificate_network", action="sync")`, `mutate(entity="prequalification", action=...)` and `mutate(entity="prequalification_rule_set", action=...)`.
@@ -132,6 +145,7 @@ An API key cannot mark a certificate verified, archive a certificate or archive 
 | An override vanished | The result changed. | Expected. Decide again. |
 | **The last sync failed** on a network | Wrong credentials, or the network's response did not have the expected shape. | Check credentials with **Test connection**. A shape error stops the pull without archiving certificates. Contact your Coverbase representative. |
 | No Radar signals after connecting a rating provider | The first pull is a baseline. | Expected. Signals come from later changes. |
+| A RiskRecon pull fails with a message to connect Splunk | RiskRecon is set to read ratings from **Splunk**, and Splunk is not connected. | Save the Splunk connection, or switch **Read ratings from** to **The RiskRecon API**. |
 
 ## Related
 

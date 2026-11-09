@@ -119,6 +119,22 @@ On the vendor's page, **Corporate Family** shows the vendor's parent and subsidi
 
 Vendors and engagements can also carry a **Business Unit**, which the reviewer matrix and dashboards use.
 
+## Link a ServiceNow configuration item
+
+When your organization has [ServiceNow](/integrations/guides/servicenow) connected, the engagement's **Overview** tab has a **ServiceNow CI** card. Use it to record which CMDB configuration item the engagement covers. Without a ServiceNow connection, the card does not appear unless the engagement already has a link.
+
+<Frame caption="An engagement linked to a ServiceNow configuration item.">
+  <img src="/images/user-guides/engagement-record-servicenow-ci.png" alt="ServiceNow CI card showing the linked configuration item Veeva Vault QMS with a link to its record, its class Application and criticality 1 - most critical, and Change and Unlink buttons" />
+</Frame>
+
+1. On the card, click **Link**.
+2. In **Link a ServiceNow configuration item**, type part of the configuration item's name to search the CMDB.
+3. Pick the item under **Configuration items**.
+
+The card then shows the item's name, linked to its record in ServiceNow, with its class and business criticality. **Change** picks a different item. **Unlink** removes the link after you confirm. The record stays in ServiceNow, and you can link it again later.
+
+You need permission to edit the engagement to link, change or unlink. Coverbase stores the item's details on the engagement, so viewing the card does not call ServiceNow. Searching and linking do.
+
 ## Work engagements from MCP or the API
 
 You can create, read and archive engagements, link due diligence, approve access scopes and read the Risk Summary from an MCP client or with an API key. An MCP client reads with `query_engagements_contracts(kind="engagements")`, `query_engagements_contracts(kind="engagement_detail")` and `query_engagements_contracts(kind="engagement_lifecycle")`. It also reads `other_engagements` and `engagement_access_scope`. It writes with `mutate(entity="engagement", action=...)` (`create`, `update`, `archive`, `bulk_archive`, `link_assessment`), `mutate(entity="engagement_access_scope", action="approve")`, `mutate(entity="risk_summary", action="update")` and `mutate(entity="tprm_lifecycle_settings", action="update")`.
@@ -135,6 +151,8 @@ Archiving an engagement cannot be undone.
 | --- | --- | --- |
 | **Opens when due diligence is complete.** instead of the decision buttons | A risk domain is still not complete or reused. | Check **Risk Groups** for the domain still open. |
 | **Link an assessment to start due diligence.** | No assessment is linked. | Click **Link assessment**. |
+| No **ServiceNow CI** card on the Overview tab | ServiceNow is not connected for your organization, and the engagement has no link yet. | Connect ServiceNow under **External Integrations**. |
+| **ServiceNow could not be searched. Try again.** | ServiceNow did not answer, or the stored ServiceNow credential no longer works. | Try again. If it keeps failing, check the ServiceNow connection. |
 | The tracker reads **Exit under way** | The engagement has an open offboarding request. | Work the exit plan on the **Exit** tab, or cancel the request. |
 | No expected decision date | An open review has no SLA target, or a decision is already recorded. | Set SLA targets on your risk domains. |
 | A domain shows **Not started** although a reused assessment covers it | The reuse decision marked the domain for an abbreviated review or new due diligence, not reuse. | Expected. Only domains marked for reuse are satisfied. |

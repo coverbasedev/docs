@@ -1,6 +1,6 @@
 ---
 title: "Promoting configuration from a sandbox"
-description: "Copy how your sandbox organization is set up into a production organization: choose the destination, review every new and changed item area by area, and promote only what you choose."
+description: "Copy how your sandbox organization is set up into another organization: choose the destination, review every new and changed item area by area, send a versioned package for a second person to approve, apply it, and roll it back."
 icon: "arrow-up-right-from-square"
 ---
 
@@ -17,8 +17,9 @@ Promotion copies configuration, not records. The mistake people make most often 
 ## Before you start
 
 - **Start from the sandbox.** Promotion is available only in an organization whose status is **Sandbox**. The left navigation shows a **Sandbox** badge when you are in one.
-- **Be an Admin in both organizations.** You need the Admin role in the sandbox and in the production organization you promote to. Members of the sandbox cannot promote, whatever their role in production.
-- **Production only.** You can promote to an active production organization. Proof of concept organizations and other sandboxes cannot receive a promotion.
+- **Be an Admin in both organizations.** You need the Admin role in the sandbox and in the organization you promote to. Members of the sandbox cannot promote, whatever their role in the destination.
+- **Production or another sandbox.** You can promote to an active production organization or to another sandbox, so a change can move from a development sandbox to a test sandbox and then to production. Proof of concept and inactive organizations cannot receive a promotion.
+- **A second person approves.** Someone in the destination other than you, with permission to change organization settings, approves the package before it is applied.
 
 ## Promote your configuration
 
@@ -27,7 +28,7 @@ Promotion copies configuration, not records. The mistake people make most often 
     In the sandbox, go to **Configuration → Organization → Promote configuration**.
   </Step>
   <Step title="Choose the destination">
-    Pick the production organization in **Promote to**. Organizations you cannot promote to are listed with the reason, such as **You need to be an admin there**.
+    Pick the destination organization in **Promote to**. Organizations you cannot promote to are listed with the reason, such as **You need to be an admin there**.
   </Step>
   <Step title="Review the changes">
     Coverbase compares the two organizations and lists every area that differs, with how many items are **new** and how many are **updated**. Expand an area to see each item. An updated item shows each changed value, with the current production value struck through and the sandbox value beside it.
@@ -35,12 +36,28 @@ Promotion copies configuration, not records. The mistake people make most often 
   <Step title="Choose what to include">
     Every area with changes is included by default. Clear the checkbox on an area to leave it out of this promotion. You can promote it later.
   </Step>
-  <Step title="Promote">
-    Select **Promote**, check the summary in the confirmation, and select **Promote to** your production organization. Changes take effect in production straight away.
+  <Step title="Send the package">
+    Select **Promote** and check the summary in the confirmation. Give the **Package Name** and select **Promote to** the destination. Coverbase saves the reviewed changes as the destination's next package version and shows **Package sent to** the destination **for approval**. Nothing changes in the destination yet.
   </Step>
 </Steps>
 
-After a promotion, the review refreshes. Areas you promoted move to **Already the same**. Each promotion is listed under **Past promotions** with who ran it, when, and how many items it changed in each area.
+## Approve, apply and roll back a package
+
+Packages are listed on **Configuration → Organization → Promote configuration** in both organizations: **Packages Sent From This Sandbox** in the sandbox, and **Packages for This Organization** in the destination. Each row shows the **Package** name and version (for example "Q4 methodology · v3"), its **Status**, **From**, **To**, **Requested By**, **Reviewed By** and when it was **Applied**. **View changes** opens the changes the requester reviewed.
+
+<Steps>
+  <Step title="Approve or reject">
+    In the destination, a person other than the requester clicks **Approve** or **Reject**, with an optional **Note**. The status moves from **Waiting for approval** to **Approved** or **Rejected**. The requester cannot review their own package.
+  </Step>
+  <Step title="Apply">
+    Click **Apply** on an approved package and confirm. Its changes take effect in the destination now, and the status is **Applied**. If either organization changed since the package was reviewed, Coverbase refuses the apply, so what lands is what both people saw.
+  </Step>
+  <Step title="Roll back if needed">
+    Click **Roll back** on an applied package and confirm. Settings it changed go back to what they were before it was applied, and anything it added is archived. The status is **Rolled back**. Coverbase refuses a rollback when anything the package changed was edited after it was applied.
+  </Step>
+</Steps>
+
+Neither applying nor rolling back deletes anything that existed before the package. Each apply and rollback is listed under **Past promotions** with who ran it, when, and how many items it changed in each area.
 
 ## What a promotion carries
 
@@ -71,7 +88,7 @@ Promotion never deletes anything in production. Settings production has that the
 
 ## If something changes while you review
 
-The review is a snapshot. If anyone changes either organization between your review and your promote, Coverbase refuses the promotion and shows **Something changed since you reviewed it**. The review reloads with the current differences. Check them and promote again. Nothing is written until the review you confirm matches both organizations.
+The review is a snapshot. If anyone changes either organization between your review and sending the package, Coverbase refuses it and shows **Something changed since you reviewed it**. The same check runs again when the package is applied. The review reloads with the current differences. Check them and promote again. Nothing is written until the review you confirm matches both organizations.
 
 ## Troubleshooting
 
@@ -79,9 +96,12 @@ The review is a snapshot. If anyone changes either organization between your rev
 | --- | --- |
 | **Promote configuration** is not in Configuration | You are not in a sandbox organization, or you are not an Admin. Switch to your sandbox |
 | The page says promotion starts from a sandbox | The organization you are in is not a sandbox. Switch organizations from the top of the left navigation |
-| Your production organization is listed but cannot be chosen | You are not an Admin there, or it is a proof of concept or sandbox organization. The reason is shown under its name |
+| Your destination is listed but cannot be chosen | You are not an Admin there, or it is a proof of concept or inactive organization. The reason is shown under its name |
 | Your production organization is not listed | You are not a member of it. Ask one of its Admins to add you |
 | A detector shows as updated again after promoting | It reads from a Radar source production does not have. Set the source up in production |
+| **Approve** is refused | You sent the package. Someone else in the destination approves it |
+| **Roll back** is refused | Something the package changed was edited after it was applied. Change it back by hand, or send a new package |
+| Nothing changed in the destination after you promoted | The package waits for someone in the destination to approve and apply it |
 | The promotion was refused | Something changed in either organization after you reviewed. Review the updated changes and promote again |
 | The promotion was refused and names a detector and a tag | The detector filters on a tag production does not have. Include **Tags**, or create the tag in production, and promote again |
 | The promotion was refused and names a custom field | The field cannot change that way, for example a serial ID field changing its type or starting number. Change it back in the sandbox, or leave **Custom fields** out |
