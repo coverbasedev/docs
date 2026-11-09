@@ -142,3 +142,9 @@ duration such as `-P30D`.
   `{ "data": [...], "total_count": <int> }`. `limit` defaults to `50` and can be
   up to `500`. See [Conventions](/conventions) for authentication.
 </Note>
+
+### Invalid rules
+
+`POST /v1/radar_signal/query` refuses a filter with an invalid rule with `422` instead of ignoring the rule. A rule is invalid when its path is not a field of the catalog section, its operator is not one the field allows, or its value does not fit the field's type. The same query backs Coverbase AI and the MCP `list_signals` tool, so they refuse invalid filters the same way.
+
+Two cases are accepted. A status key that no longer exists, kept in an old saved view, is ignored. A value list that includes `null`, such as `["high", null]`, means that value or empty.
