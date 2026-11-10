@@ -120,6 +120,7 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `GET` | `/v1/vendors/{vendor_id}/screening` | `screening_match:read:org` |
 | `PATCH` | `/v1/screening-subjects/{subject_id}` | `screening_match:update:org` |
 | `GET` | `/v1/screening-runs` | `screening_match:read:org` |
+| `GET` | `/v1/screening-batches` | `screening_match:read:org` |
 | `POST` | `/v1/screening-matches/query` | `screening_match:read:org` |
 | `GET` | `/v1/screening-matches/{match_id}` | `screening_match:read:org` |
 | `POST` | `/v1/screening-matches/{match_id}/disposition` | `screening_match:update:org` |
@@ -287,6 +288,8 @@ To protect decisions that need a person, an API key gets `403 api_key_not_allowe
 | `PUT` | `/v1/screening/settings` | `integration:update:org` |
 | `GET` | `/v1/screening-profile-groups` | `integration:update:org` |
 | `GET` | `/v1/screening/evidence-export` | `screening_match:export:org` |
+| `GET` | `/v1/screening/run-export` | `screening_match:export:org` |
+| `GET` | `/v1/screening/match-export` | `screening_match:export:org` |
 | `GET` | `/v1/vendors/{vendor_id}/status-page-components` | `vendor:read:org` |
 | `GET` | `/v1/vendors/{vendor_id}/financial-statements` | `vendor:read:org` |
 | `POST` | `/v1/vendors/{vendor_id}/financial-statements` | `vendor:update:org` |
@@ -560,9 +563,9 @@ Both are all or nothing and return `409` when a discovery was already reviewed. 
 
 These endpoints need sanctions screening, or they return `404 not_found`. They also need `screening_match` permissions, which API keys do not hold, so call them with a signed-in user's token.
 
-`GET /v1/screening/settings` returns your screening configuration. `GET /v1/vendors/{vendor_id}/screening` returns the vendor's screening subjects (the company and the people you enrolled), their latest runs and their open matches. `GET /v1/screening-runs` lists runs, newest first, and takes `vendor_id`, `subject_id`, `limit` and `offset`.
+`GET /v1/screening/settings` returns your screening configuration. `GET /v1/vendors/{vendor_id}/screening` returns the vendor's screening subjects (the company and the people you enrolled), their latest runs and their open matches. `GET /v1/screening-runs` lists runs, newest first, and takes `vendor_id`, `subject_id`, `limit` and `offset`. Each run carries `list_as_of`, the time the provider screened against its lists, `list_version` when the provider reports one, and `batch_id`. `GET /v1/screening-batches` returns recent batches, newest first, each with `trigger`, `started_at`, `completed_at` and its `screened`, `matched`, `clear`, `failed` and `running` counts. It takes `started_from` and `limit`.
 
-`POST /v1/screening-matches/query` filters matches, and `GET /v1/screening-matches/{match_id}` returns one match with its evidence and history. To record a decision on a match, a signed-in user sends `POST /v1/screening-matches/{match_id}/disposition`. API keys get `403 api_key_not_allowed`.
+`POST /v1/screening-matches/query` filters matches, and `GET /v1/screening-matches/{match_id}` returns one match with its evidence and history. Every match carries `vendor_external_id`, your own ID for the vendor. To record a decision on a match, a signed-in user sends `POST /v1/screening-matches/{match_id}/disposition`. API keys get `403 api_key_not_allowed`.
 
 `PATCH /v1/screening-subjects/{subject_id}` edits a subject, for example whether it is monitored.
 
@@ -714,7 +717,9 @@ To import vendors, services and locations, send the dashboard's vendor workbook 
 
 `PUT /v1/screening/settings` changes the screening policy. To screen through your own World-Check One license, send `provider` set to `world_check_one`, and `settings.provider_group_id` set to the World-Check One group. Save the service account on the **LSEG World-Check One** tile first, and ask your World-Check One administrator for the group ID. Switching returns `409 conflict` once the current provider holds profiles or cases for your vendors.
 
-`GET /v1/screening-profile-groups` lists the provider's profile groups. It is for Coverbase screening only, and returns `409 conflict` for a World-Check One organization. `GET /v1/screening/evidence-export` returns a CSV of every enrolled vendor's first and last screen.
+`GET /v1/screening-profile-groups` lists the provider's profile groups. It is for Coverbase screening only, and returns `409 conflict` for a World-Check One organization. `GET /v1/screening/evidence-export` returns a CSV of every enrolled vendor's first and last screen, with its external ID. `GET /v1/screening/run-export` returns a CSV with one row per screen, clear ones included, with the date of the lists it ran against. It takes `started_from` (inclusive) and `started_to` (exclusive) as Unix timestamps, `statuses` (`failed` gives the failed-records report) and `batch_id`. `GET /v1/screening/match-export` returns a CSV with one row per match, with the decision, reviewer, decision date and reason; pass `review_statuses` to narrow it. An export of more than 50,000 rows returns `400` and asks for a narrower range.
+
+`PUT /v1/screening/settings` also takes `settings.identity_match_threshold`, `settings.feed_thresholds` (a per-source threshold, keyed by `sanctions`, `pep`, `criminal`, `legal` or `adverse_media`; it replaces the whole map), `identity_match_threshold` on each entry of `settings.monitoring_by_risk_level`, `settings.require_review_note` and `settings.screen_on_vendor_rename`. Every change is written to the system audit log.
 
 ## Submitted financial statements
 

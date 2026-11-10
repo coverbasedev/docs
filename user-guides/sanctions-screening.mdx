@@ -55,7 +55,7 @@ Screening runs on thin identity data: a name, usually a country, sometimes a reg
 Open any match to get the full record.
 
 <Frame caption="The review drawer: what matched, field by field, with the sources behind it.">
-  <img src="/images/user-guides/screening-match-review.png" alt="The match review drawer showing the vendor, the screened subject, the flagged source, country, registration number, aliases, programmes, a field-level match breakdown, the source listing, the advisory automated read, an optional reason box, and the Confirm match, Not a match and Allowlist for 180 days buttons." />
+  <img src="/images/user-guides/screening-match-review.png" alt="The match review drawer showing the vendor, the screened subject, the flagged source, country, registration number, aliases, programmes, a field-level match breakdown, the source listing, the advisory automated read, a reason box, and the Confirm match, Not a match and Allowlist for 180 days buttons." />
 </Frame>
 
 Work down it in this order:
@@ -70,7 +70,7 @@ The **automated read** is advisory. It is there for context. Coverbase never clo
 
 ## Deciding
 
-Three outcomes. The **Reason for your decision** is optional, but anything you write becomes part of the audit trail, so write it for someone reading it in a year with none of your context.
+Three outcomes. Each one needs a **Reason for your decision**, recorded with your name and the date. Write it for someone reading it in a year with none of your context. An administrator can make the reason optional by turning off **Require a reason for every decision** under **On a new match** in the settings, but a decision without a reason is weak evidence that a review happened.
 
 | Decision | Use it when | What happens |
 | --- | --- | --- |
@@ -100,11 +100,14 @@ A vendor with nothing to review still shows its run history.
 
 An auditor usually asks two things: when did you start screening this vendor, and when did you last screen it. A vendor's **Screening** tab answers both in **First screened** and **Last screened**. A vendor that is enrolled but has not finished a screen yet reads **Never screened**.
 
+Each screen in the run history shows **Lists as of**: the date and time the provider screened against its sanctions and watchlists, which it refreshes from each source at least daily. Where the provider reports a list version, it shows beside the date.
+
 To answer for every enrolled vendor at once, click **Download evidence** on the queue. You get a CSV with one row per enrolled vendor:
 
 | Column | What it holds |
 | --- | --- |
 | **Vendor**, **Vendor ID** | The vendor, as named in Coverbase |
+| **External ID** | Your own identifier for the vendor, such as its ERP or vendor master ID, from the vendor record |
 | **First screened** | The date of the vendor's earliest completed screen |
 | **Last screened** | The date of its latest completed screen |
 | **Last outcome** | **Clear**, **Matches found** or **Failed** for its latest screen |
@@ -112,7 +115,33 @@ To answer for every enrolled vendor at once, click **Download evidence** on the 
 
 The dates count only screens that completed, but **Last outcome** reads the latest screen whatever happened to it. So a vendor can show a **Last screened** date from last month beside a **Last outcome** of **Failed**: its latest screen failed, and last month's is the last one that completed. A vendor that has not been screened yet has empty dates and outcome. Check for **Failed** and empty rows before you hand the file over.
 
-A vendor that is not enrolled, such as one in a risk level you do not monitor, is not in the file. The two dates show the first and the latest screen, not every screen in between. A vendor's run history pages through every screen it has had.
+A vendor that is not enrolled, such as one in a risk level you do not monitor, is not in the file. The two dates show the first and the latest screen, not every screen in between. For every screen, use the **Export** menu.
+
+### Every screen, every decision
+
+The **Export** menu, beside **Download evidence** on the queue, has three more exports for an examiner who wants the full record rather than a summary.
+
+**Every screen, last 12 months** downloads one row per screen, clear screens included. **Failed screens, last 12 months** downloads only the screens that failed, so you can check that each was retried. For any other date range, or one batch, use `GET /v1/screening/run-export`.
+
+| Column | What it holds |
+| --- | --- |
+| **Run ID**, **Batch ID** | The screen, and the batch it ran in |
+| **Vendor**, **Vendor ID**, **External ID** | The vendor, by name, Coverbase ID and your own ID |
+| **Subject**, **Subject type** | Who was screened: the organization or a person |
+| **Trigger** | Why it ran: scheduled, monitoring, manual, ad hoc, intake, vendor renamed, bulk re-screen and so on |
+| **Outcome** | **Clear**, **Matches found**, **Failed** or **In progress** |
+| **Started**, **Completed** | When the screen ran, in UTC |
+| **Lists as of**, **List version** | The date of the lists it screened against, and the provider's list version when it reports one |
+| **Sources screened** | Sanctions, PEP, criminal, legal or adverse media |
+| **Match threshold** | The threshold the screen used, per source where one was set |
+| **Matches**, **New matches**, **Cleared matches** | What it found, and how that changed from the screen before |
+| **Triggered by**, **Error** | Who asked for a manual screen, and why a failed one failed |
+
+**Matches and decisions** downloads one row per match: **Vendor**, **Vendor ID**, **External ID**, **Subject**, **Matched record**, **Sources flagged**, **Programs**, **Identity match score**, **First seen**, **Last seen**, **Decision**, **Reviewer**, **Decision date**, **Reason**, **Allowlisted until** and **Finding ID**. It is the disposition record for every match, open and decided.
+
+### Batches
+
+**Recent batches**, on the queue, groups screens by the run that sent them: each hourly sweep, each **Screen now**, each bulk re-screen and each rename. For each batch it shows when it started, what ran it, and how many subjects were screened, how many matched, how many were clear, how many failed and how many are still in progress. To get one batch's rows, call `GET /v1/screening/run-export` with its `batch_id`.
 
 In the run history, a screen that found something lists each match with the decision recorded on it: who decided, when, and the reason they gave. A match still waiting for a decision says so. That is the record of why you kept working with a vendor after a hit.
 
@@ -125,6 +154,8 @@ In the run history, a screen that found something lists each match with the deci
 - **Keep re-screening on a schedule**: on by default when your organization screens on a schedule, and off and locked when it does not. Turn it off to screen once without monitoring.
 
 The page opens the result when the provider answers. Each subject under **What is screened** also has its own **Re-screen on a schedule** switch.
+
+**A renamed vendor is screened straight away.** When a vendor's name changes, from the app, the API, an import or an automation, Coverbase screens it under its new name within minutes instead of waiting for the nightly sweep. The run shows the trigger **Vendor renamed**. An administrator can turn this off under **Automation** with **Screen a vendor again when its name changes**.
 
 **People not screened** lists people named in the vendor's leadership research that screening does not cover, either because their identity could not be confirmed automatically or because no registry filing names them. **Confirm & screen** enrolls one of them for continuous screening, and **Add individual** enrolls someone the research did not find. Either records that you vouched for the person's identity, so check who they are first.
 
@@ -174,6 +205,8 @@ What the requester sees:
 
 Intake runs pre-qualification again when the requester edits the request. A screen of the same vendor with the same settings in the last 24 hours is reused rather than run and billed again.
 
+Coverbase downloads the OFAC SDN and consolidated lists fresh every day and checks them every hour. If a download fails, the check keeps using the last copy rather than an empty one. If that copy is more than a day old, your organization's administrators get a notification, in the app and by email, saying when the copy was taken, and Coverbase's on-call team is alerted.
+
 ## Settings
 
 An administrator configures screening once, under **Configuration → Monitoring → Screening**, or from **Configuration** on the queue. It needs the `integration` permission, not the screening one.
@@ -189,6 +222,8 @@ The decisions that matter:
 **Which sources.** Sanctions, PEP, criminal and legal are on by default. Adverse media is off, and should stay off until the rest is running cleanly. It is the highest-volume and lowest-precision source, and it will dominate your queue. When you do turn it on, keep the category list narrow.
 
 **Who gets screened.** The vendor's legal entity is screened by default. Directors, officers and beneficial owners are opt-in, because screening a person means storing watchlist assertions about a named individual. Turn them on only when you need them. Under **Automation**, **Screen a vendor when its intelligence refresh completes** screens as soon as a refresh has established the vendor's leadership instead of waiting for the nightly sweep. It is off by default, because every refresh then costs a screen per subject.
+
+Under **Automation**, **Screen a vendor again when its name changes** is on by default. It screens a renamed vendor as soon as the change is saved. It costs one screen per renamed vendor.
 
 **Which risk levels are monitored.** Monitoring is set per risk level: the vendor's residual risk level where your organization tracks residual risk, otherwise its inherent level. A monitored vendor is re-screened on a schedule and raises an alert when a source changes. Each level can also put its vendors in one profile group, which sets how often they are re-screened.
 
@@ -245,7 +280,19 @@ For each source, pick a cadence: **Daily**, **Weekly**, **Monthly**, **Quarterly
 
 **What a new match raises.** Under **On a new match**, **Open a finding** and **Notify the vendor's owners** are on by default. **Assign the review to** picks the vendor's **Relationship owner** or **Risk analyst**, or **Specific person** to send every match to one named reviewer, such as a central TPRM analyst. A vendor with nobody in the chosen role falls back to the other, so no match sits unowned. If the chosen person is later deactivated, matches go to the vendor's relationship owner, then its risk analyst, and the page shows a warning until you choose someone else.
 
-**The match threshold.** The identity match threshold is 0.80 by default and shows as **Match threshold** on each vendor's Screening tab. This page does not change it. An ad hoc screen can set its own **Match Threshold** for that one screen: lower it and you will see more true matches and many more false ones; raise it and you risk missing a real listing on thin data.
+**The match threshold.** The identity match threshold decides how sure a listed record must be that it is your vendor before it is raised. It is 0.80 by default and shows as **Match threshold** on each vendor's Screening tab. Lower it and you will see more true matches and many more false ones; raise it and you risk missing a real listing on thin data. You can set it at three levels:
+
+| Level | Where | Applies to |
+| --- | --- | --- |
+| **Overall** | **Match threshold**, under **What we screen against** | Every screen, unless a narrower level sets its own |
+| **Per source** | **Threshold by source**, below it | That source only, for example a stricter bar for sanctions than for adverse media. **Same as overall** uses the overall threshold. |
+| **Per risk level** | The **Match threshold** column in **Who is monitored** | Screens of vendors at that risk level. **Same as overall** uses the overall threshold. |
+
+A per-source threshold wins over the risk level's for that source. The threshold applies to every screen Coverbase sends: **Screen now**, a bulk re-screen, a renamed vendor, and the search that pulls the details of a match monitoring raised. An intake template's **Identity Match Threshold** and an ad hoc screen's **Match Threshold** apply to that screen alone. Per-source thresholds are Coverbase screening only; World-Check One and Dow Jones use the overall and risk-level thresholds.
+
+**Re-screen every vendor.** **Re-screen every vendor**, on the settings page once a provider is connected, screens every enrolled vendor and person now, against your current sources and thresholds. Use it after you change your policy or when an examiner asks for a fresh screen of the whole book. It shows how many screens it will run, and how many vendors they cover, before you confirm. Each one is billed. The screens run as one batch, paced so a large book takes a while, and show under **Recent batches** on the queue.
+
+**Every change is logged.** Each change on this page is written to the system audit log, under **Configuration → Audit Logs** in the **Configuration** group, with who made it, when, and the old and new values: sources, thresholds, subjects, monitored risk levels, monitoring rules, profile groups and the workspace default cadence. Decisions on matches are recorded on the match and in its finding. See [Audit trails](/security/audit-trails).
 
 <Note>
   A source switched off at the top level is never raised as a match, whatever the monitoring table, rules or profile groups say. One switch turns a source off everywhere, rather than making you clear it in every group.
@@ -329,7 +376,8 @@ Screening has its own permission, separate from the vendor record, so the person
 | --- | --- |
 | `screening_match:read` | See the queue, the vendor tab, and match detail |
 | `screening_match:update` | Confirm, dismiss or allowlist a match; screen a vendor now; enroll a person; run an ad hoc screen |
-| `screening_match:export` | Download the screening evidence CSV |
+| `screening_match:export` | Download the evidence, run and match CSVs |
+| `integration:update` and `screening_match:update` | **Re-screen every vendor** |
 | `integration:read` / `integration:update` | See and change the screening configuration, including monitoring rules, profile groups and the workspace default cadence, and the World-Check One service account |
 
 There is no create or delete. Matches come from the provider and are closed by decision, never removed.
@@ -338,7 +386,7 @@ There is no create or delete. Matches come from the provider and are closed by d
 
 You can read the queue, screen vendors and record decisions from an MCP client, and read and screen with an API key. An MCP client reads with `query_vendors(kind="screening")`, `query_vendors(kind="screening_matches")` and `query_vendors(kind="screening_match")`. It screens with `mutate(entity="screening", action=...)` (`rescreen_vendor`, `enroll_person`, `ad_hoc`) and records a decision with `mutate(entity="screening_match", action="disposition")`.
 
-The API routes are `GET /v1/vendors/{vendor_id}/screening`, `POST /v1/screening-matches/query`, `POST /v1/vendors/{vendor_id}/screening/rescreen`, `POST /v1/vendors/{vendor_id}/screening/people` and `POST /v1/screening/ad-hoc`. See [Screening](/api-reference/vendor-administration#screening).
+The API routes are `GET /v1/vendors/{vendor_id}/screening`, `POST /v1/screening-matches/query`, `POST /v1/vendors/{vendor_id}/screening/rescreen`, `POST /v1/vendors/{vendor_id}/screening/people` and `POST /v1/screening/ad-hoc`. The exports are `GET /v1/screening/evidence-export`, `GET /v1/screening/run-export` and `GET /v1/screening/match-export`, and `GET /v1/screening-batches` returns the batch summary. See [Screening](/api-reference/vendor-administration#screening).
 
 Before an MCP client sends a write, it shows you the change and waits for you to confirm it. The [MCP tool reference](/mcp/tool-reference#vendors-services-and-documents) lists every field.
 
@@ -366,6 +414,10 @@ These routes need `screening_match` permission, which API keys do not hold, so u
 | Scheduled World-Check One screens stopped | World-Check One rejected the service account. Save working credentials on the **LSEG World-Check One** tile and screening resumes. |
 | **People not screened** is missing from a vendor's tab | Your organization screens through World-Check One, which screens organizations only. |
 | The evidence CSV shows **Failed** for a vendor | Its latest screen failed. Run **Screen now** on the vendor, and check the settings page for a provider error. |
+| **Give a reason for this decision** | Your organization requires a reason with every decision. Write one, or ask an administrator about **Require a reason for every decision**. |
+| **Re-screen every vendor** says the count has changed | Vendors were enrolled or removed since you opened the dialog. Review the new count and confirm again. |
+| An export says to narrow the date range | It has more than 50,000 rows. Use `GET /v1/screening/run-export` with a shorter range, or one batch at a time. |
+| A notification says the OFAC lists could not be refreshed | The daily download failed and the copy intake checks against is more than a day old. Coverbase is retrying hourly. Consider holding intake approvals that rely on the OFAC list check until it clears. |
 
 ## Related
 
