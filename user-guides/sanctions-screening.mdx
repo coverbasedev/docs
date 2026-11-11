@@ -209,7 +209,7 @@ Coverbase downloads the OFAC SDN and consolidated lists fresh every day and chec
 
 ## Settings
 
-An administrator configures screening once, under **Configuration → Monitoring → Screening**, or from **Configuration** on the queue. It needs the `integration` permission, not the screening one.
+An administrator configures screening once, under **Configuration → Monitoring → Screening**, or from **Configuration** on the queue. Changing the screening policy needs the **Configure** permission on **Screening**. Connecting the provider account (its API key, and switching provider) needs the `integration` permission. Admins hold both. See [Who can do what](#who-can-do-what).
 
 <Frame caption="The policy: which sources, who gets screened, which vendors are monitored and how often, and what a new match raises.">
   <img src="/images/user-guides/screening-settings.png" alt="The screening settings page showing the connection status, source toggles, subject selection, the automation setting, the monitoring table by risk level, monitoring rules, profile groups, the workspace default cadence, and the settings for a new match." />
@@ -370,17 +370,20 @@ Until the service account is saved, the settings page says **Connect Dow Jones i
 
 ## Who can do what
 
-Screening has its own permission, separate from the vendor record, so the person who reviews matches need not be the person who administers vendors.
+Screening has its own permission, separate from the vendor record, so the person who reviews matches need not be the person who administers vendors. In the role editor it is the **Screening** row under **Vendor risk**.
 
-| Permission | Allows |
-| --- | --- |
-| `screening_match:read` | See the queue, the vendor tab, and match detail |
-| `screening_match:update` | Confirm, dismiss or allowlist a match; screen a vendor now; enroll a person; run an ad hoc screen |
-| `screening_match:export` | Download the evidence, run and match CSVs |
-| `integration:update` and `screening_match:update` | **Re-screen every vendor** |
-| `integration:read` / `integration:update` | See and change the screening configuration, including monitoring rules, profile groups and the workspace default cadence, and the World-Check One service account |
+| Action in the role editor | Permission | Allows | Default roles |
+| --- | --- | --- | --- |
+| **Read** (view) | `screening_match:read` | See the queue, the vendor's **Screening** tab, match detail, and the screening settings | Admin, Member, Guest |
+| **Update** (edit) | `screening_match:update` | Confirm, dismiss or allowlist a match; **Screen now**; **Confirm & screen** and **Add individual**; run an ad hoc screen | Admin, Member |
+| **Export** | `screening_match:export` | Download the evidence, run and match CSVs | Admin, Member |
+| **Configure** (edit configuration) | `screening_match:configure` | Change the screening policy: switching screening on and off, sources, thresholds, who is screened, schedules, monitoring rules, profile groups, the workspace default cadence, the World-Check One group, and what a new match raises. With **Update**, **Re-screen every vendor** | Admin |
+
+Connecting the provider account is an integration setting, not a screening one. Adding or removing the API key, **Test connection**, the World-Check One and Dow Jones tiles in **External Integrations**, and switching provider need `integration:update`.
 
 There is no create or delete. Matches come from the provider and are closed by decision, never removed.
+
+To let someone review matches without making them an Admin, give them **Member**. To let a non-Admin change the policy too, clone **Member** and turn on **Configure** on the **Screening** row. See [Permissions and roles](/user-guides/permissions-and-roles#screening-permissions).
 
 ## Work screening from MCP or the API
 
