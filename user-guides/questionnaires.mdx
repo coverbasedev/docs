@@ -67,6 +67,7 @@ Click **Add** and choose a response type. When the template has sections, the me
 | **Contacts** | One or more people | Write-back can copy the people it names into a user custom field. |
 | **Country** | One country, or several | Choose **One country** or **Several countries** in the question's settings. Can trigger conditions, and write-back can add each country as a location. |
 | **Currency** | An amount | |
+| **Legal Entity** | One or more of your own legal entities, or a country | Lists the entities under **Configuration → Legal entities**. Requesters pick entities, or pick a country and get every active entity in it. See [Legal entity questions](#legal-entity-questions). |
 | **Document Upload** | A file | Know-Your-Vendor only. |
 | **Bank Account**, **Site / Address**, **Tax Registration**, **Diversity Record** | A supplier profile record | Know-Your-Vendor only, except that an inherent risk questionnaire can also ask **Site / Address** when the Know-Your-Vendor module is on. The answer is a reference to the vendor's profile, not a copy of the values. |
 
@@ -91,6 +92,26 @@ Open a question's settings to find these switches. Select several questions and 
 | **Require user input** | Intake only. The question is always put to the requester as a follow-up rather than answered from web search. Use it for facts only the business owner knows. |
 
 **Update AI Guidance** under the question's **Actions** adds instructions for how the AI should answer this question during intake. **Copy Question ID** is there for workflow automations that reference a question.
+
+### Legal entity questions
+
+A **Legal Entity** question asks which of your own legal entities the vendor should be set up with. Under **Requesters choose**, pick one of two ways to answer it:
+
+| Choice | The requester picks | Use it for |
+| --- | --- | --- |
+| **Legal entities** | Individual entities from your list. Turn on **Let requesters filter by country** to put a country picker in front of a long list. | Extending an existing supplier to one or two more entities, where the requester knows exactly which ones. |
+| **A country, which adds every active legal entity in it** | One or more countries. The answer holds every active entity in them, and the form shows how many, for example "3 legal entities in Germany". | A new supplier request, where the requester knows the country they will buy in but not your entity structure. |
+
+The selection setting below decides how many the requester may pick. With **A country** it reads **Country Selection**, with **One country** or **Several countries**.
+
+How a by-country answer behaves:
+
+- **It is worked out again on save and on submit.** An entity added in that country since the requester opened the form is included, and one deactivated since is dropped.
+- **An entity needs a country to be chosen this way.** Set it under **Configuration → Legal entities**. An entity with no country cannot be reached through a by-country answer.
+- **A country with no active entity is refused.** The requester is asked to choose another country or ask an administrator to add one.
+- **It is not held to the five-entity limit.** A legal entity request normally covers up to five entities. One that comes from a by-country intake answer covers every entity in the country.
+
+To have the answer request those entities for the vendor, set the question's write-back target to **Legal entity assignments**. See [Supplier information](/user-guides/supplier-information#legal-entities) for how assignments are approved and sent to your finance system.
 
 ### Internal-only questions
 
@@ -364,6 +385,8 @@ An API key also cannot approve, reject or archive a response, sign an attestatio
 | "An imported row says its ID could be any of two questions, such as 1.1 and 1.10." | Excel stored the ID as a number and dropped the trailing zero. Format the ID columns as text, type the IDs again, and upload the file again. The IDs on the template's **Questions** sheet are already text, so copying them avoids this. |
 | "Rows from Current rules say the rule was changed or deleted after the sheet was exported." | Someone edited or deleted that rule in the dialog after you downloaded the file. Download **Current rules** again and redo your edits, or clear the Rule cell to add the row as a new rule. |
 | "An imported row says the rule would make a loop." | The question the row shows already decides, directly or through other rules, whether its trigger question appears, so neither could be answered. The message names both questions. Change which question triggers one of the rules, or remove the rule that closes the loop. |
+| "A requester picked a country but some entities there are missing." | Those entities have no country set, or are inactive. | Set the country on each entity under **Configuration → Legal entities**, and reactivate any that should be offered. |
+| "A requester is told there are no active legal entities in a country." | Every entity in that country is inactive or has no country set. | Add or reactivate an entity there, or have the requester choose another country. |
 | "Send Questionnaire is disabled." | Unsaved changes, or a select question with no options. The tooltip lists the questions to fix. |
 | "This questionnaire is no longer available." | The link points at a template that was deleted. Its submissions are still on each vendor's **Questionnaires** tab. |
 | "Questionnaire changed" dialog while editing. | Someone else saved the template. Reload to get their version; your unsaved edits are lost. |
