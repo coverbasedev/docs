@@ -223,8 +223,34 @@ An address carries the details your finance system needs to pay against it, not 
 - **Purpose.** An address is a **Primary** or a **Remittance** address. An address is a registration address by carrying a tax registration rather than by being marked as one, so a single address can be both where the supplier is registered and where remittance advice goes.
 - **Email lists.** Two lists per address: where purchase orders go, and where remittance advice goes. A primary address question asks for the purchase order list only, and a remit-to address question for the remittance list only. A malformed address is refused. A missing one is a warning, on the primary address and on any remittance address, and is never asked for in China.
 - **PO language.** The language your finance system sends purchase orders in, chosen under the purchase order emails on the primary address. It is optional unless the question makes it required.
-- **Tax registrations.** A tax registration can attach to one address rather than to the supplier as a whole, which is how a supplier registered in more than one region records each registration against the site it belongs to.
+- **Tax registrations.** A tax registration can attach to one address rather than to the supplier as a whole, which is how a supplier registered in more than one region records each registration against the site it belongs to. See [Tax registrations and addresses](#tax-registrations-and-addresses).
 - **Inactive addresses.** An address the supplier no longer uses can be kept on file as inactive rather than deleted, the way your finance system keeps a superseded address. It shows an **Inactive** label on the **Vendor Onboarding Information** tab. The primary address cannot be made inactive until another address takes its place.
+
+## Tax registrations and addresses
+
+A tax registration covers the whole supplier unless it names one address. Your finance system copies a supplier-wide number onto every one of the supplier's addresses, so a number entered once reaches all of them, and a correction is made in one place.
+
+On the form, once the supplier picks a tax ID type, the tax question shows an **Address** pick. It starts on **All addresses**, with the help text **Choose an address only if it is registered under a different number from the others.**
+
+<AccordionGroup>
+  <Accordion title="One tax registration for the whole supplier" icon="building" defaultOpen>
+    Most suppliers. The supplier answers the tax question once and leaves **Address** on **All addresses**. The registration applies to every address, including ones added later.
+  </Accordion>
+  <Accordion title="Several registrations, each tied to an address" icon="map-location-dot">
+    For a supplier registered under a different number at each address, for example where a country issues one number per establishment. The supplier adds one registration per address with **Add another tax registration**, and picks that address under **Address** for each one.
+
+    The tax question takes several registrations unless the form builder turned **Multiple Entries** off for it. With it off, the supplier can give only one registration.
+  </Accordion>
+</AccordionGroup>
+
+What the **Address** pick offers:
+
+- **Addresses from the same questionnaire.** It lists the main address and the remit-to address the supplier saved earlier in the same form, each named by its purpose, such as **Main address** or **Remit-to address**. A form whose address questions set no purpose offers every address saved on it.
+- **No address, no pick.** If no address has been saved on the form yet, the pick does not appear and the registration covers the whole supplier.
+
+The two levels are kept apart. Answering the same country and registration type again at the same level corrects that registration. Answering it at the other level adds a second registration and leaves the first on file. Where both exist, the address's own number is the one your finance system uses for that address.
+
+Your team can tie a registration to an address too. On the vendor's **Vendor Onboarding Information** tab, click **Add registration** on **Tax information**. The **Add Tax Registration** dialog has the same **Address** pick, starting on **All addresses** and listing the supplier's active addresses. Each registration on the card shows the address it belongs to.
 
 ## Registrations a supplier is exempt from
 
@@ -267,7 +293,7 @@ Use an update request when a supplier you already hold needs to change something
 The supplier receives an email that opens the **Profile** page of their supplier portal. Your note appears on the section it belongs to. Only the sections you ticked can be edited; the company name and everything else stay read only.
 
 <Note>
-  The **Profile** section of the supplier portal must be switched on in **Configuration → Portal → Centralized Portal**. Coverbase refuses to send a request while it is off, because the email's link would have nowhere to land.
+  Suppliers make these updates on the **Profile** page of your supplier portal, so the portal and its **Profile** section must both be on. While either is off, **Request Supplier Update** shows **Turn on the supplier portal's Profile page first** and will not send. The message says where to turn it on: **Configuration > Portal Templates > Centralized Portal**, under **Sections**. Admins get a link there. Anyone else is asked to have an admin turn it on. Turning it on lets each supplier see the details you hold about them, and they can change only the sections you ask about.
 </Note>
 
 What the supplier can do on each section:
@@ -356,7 +382,9 @@ The **Know Your Vendor** section of **Configuration → Know Your Vendor Setting
 
 Deactivating an entity blocks new assignments and leaves existing ones alone.
 
-One assignment request covers up to five entities. A request that quotes a purchase requisition raised more than thirty days ago needs a justification before it is accepted; a request quoting no requisition cannot be stale and is not asked for one.
+Give each entity its country. An intake question can let requesters pick a country instead of individual entities, and then requests every active entity in that country. Use it on new supplier requests, and keep entity-by-entity picking for extending an existing supplier to a few more entities. See [Legal entity questions](/user-guides/questionnaires#legal-entity-questions).
+
+One assignment request covers up to five entities, except one that comes from an intake answer given by country, which covers every entity in the country. A request that quotes a purchase requisition raised more than thirty days ago needs a justification before it is accepted; a request quoting no requisition cannot be stale and is not asked for one.
 
 ### Country rules
 
@@ -375,6 +403,10 @@ Two ways, and most integrations use both.
   </Card>
 </CardGroup>
 
+Legal entities chosen on an intake request are not tied to one of the supplier's addresses. Your finance system files every legal entity against an address, so Coverbase sends these under the supplier's main site: the address flagged primary, otherwise its main address, otherwise its headquarters, otherwise its first address. An address still in use is chosen over an inactive one.
+
+Each tax registration is sent with the address it belongs to. A registration tied to one address carries that address's external ID, your finance system's own id for it, so the system files the number against the right site. A registration for all addresses carries none.
+
 Your finance system's own ids for a supplier's addresses and contacts can be stored on them through the API, so a sync updates the record it already holds instead of creating a second one. They are never shown in Coverbase. See the [supplier profile API](/api-reference/supplier-profile).
 
 A bank change's webhook fires on approval, not on submission. If you are testing the integration and a submitted change is not showing up, that is almost always why: check the review queue.
@@ -391,6 +423,8 @@ A bank change's webhook fires on approval, not on submission. If you are testing
 | "This supplier already has N bank accounts" | The organization's bank account limit. Raise it in configuration, or retire an account that is no longer used. |
 | **Registry check pending** or **Registry unavailable** on a tax registration | The background check runs every 15 minutes. **Registry unavailable** means the register could not be reached; it retries on its own, and **Retry verification** runs it again by hand. It never blocks anything. |
 | A warning asking for a SWIFT/BIC on a domestic-looking account | The account's country is not one your assigned legal entities pay from, so the payment is treated as a wire. Check the legal entities assigned to that supplier. |
+| The tax question shows no **Address** pick | No address has been saved on the form yet, or no tax ID type is chosen. The registration covers the whole supplier, which is right for most suppliers. To tie it to one address, have the supplier save the address first. |
+| **Request Supplier Update** says to turn on the Profile page first | The supplier portal, or its **Profile** section, is off. Turn it on in **Configuration > Portal Templates > Centralized Portal**, under **Sections**. |
 | A Colombian supplier is asked for a bank statement | They typed a bank name the list does not hold. Have them check the spelling against their statement; a bank on the list fills its own details in and asks for nothing. |
 | "BRL is held for suppliers in BR only" | BRL is held for suppliers in Brazil. The test is the supplier's own country, not the bank's. |
 | An error that the bank or branch code does not match the IBAN | The two were taken from different documents. Have the supplier confirm which is current, usually the IBAN, and correct the other. |

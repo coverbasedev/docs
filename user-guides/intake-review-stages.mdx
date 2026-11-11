@@ -1,0 +1,166 @@
+---
+title: "Intake review stages and request rules"
+description: "Set up the reviewers an intake request passes through in order, decide a request at your stage, require a vendor contact, and stop requests for vendors you already have."
+icon: "list-ol"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the intake template settings under **Configuration → Portal Templates** and the **Review Stages** section of an intake request. It sits beside [Requesting a new vendor](/user-guides/requesting-a-vendor), which covers the requester's side, the [Analyst and reviewer guide](/user-guides/analyst-reviewer), which covers working the queue, and [Reviews, approvals and gates](/user-guides/reviews-and-approvals), which covers review gates after intake.
+</Info>
+
+By default one reviewer decides each intake request. Review stages let several teams review it in turn. For example, a category manager approves the business need first, and the third-party risk team reviews the vendor after that. Each stage can approve, and you choose whether it can also send the request back or deny it.
+
+The mistake people make most often is editing the stages and expecting requests already in review to follow. A request keeps the stages it started with. Only requests submitted after you save use the new ones.
+
+## Before you start
+
+You need permission to edit portal templates. Admins have it.
+
+Decide these with the teams involved:
+
+- The stages, in order, and a name for each that the requester will understand. The requester sees stage names and team names.
+- Who reviews each stage: named people or groups, a role on the vendor, or reviewers routed by the requester's answers.
+- Which stages may send a request back for changes, and which may deny it.
+
+## Add review stages
+
+1. Open **Configuration → Portal Templates** and open your intake template.
+2. Find **Review Stages**. With no stages, it reads **One reviewer decides each request. Add a stage to have more people review it in turn.**
+3. Click **New stage** for each stage. A template can have up to 10 stages.
+4. For each stage, fill in:
+   - **Name**, for example "Category manager approval" or "TPRM review". Each stage needs its own name.
+   - **Reviewed By**: who reviews it. See [Who reviews a stage](#who-reviews-a-stage).
+   - **Reviewers Can**: **Approve** is always on. On the last stage it reads **Accept**, because approving there accepts the request. Tick **Send back for changes** and **Deny** for the stages that may do those.
+5. Put the stages in order. Drag a stage, or use **Move up** and **Move down** in its actions menu. **Remove stage** deletes one.
+6. Save the template.
+
+With two or more stages the section reads **Requests go through these in order. Approval at the last stage accepts the request.**
+
+<Note>
+  A stage that is missing a name or a reviewer is flagged, and the template says how many stages to fix before it saves. If a saved template's stages stop being valid, for example because the questionnaire a stage routes on was taken off the template, requesters cannot submit the form until you fix them.
+</Note>
+
+### A two-stage example
+
+| Stage | Reviewed By | Reviewers Can |
+| --- | --- | --- |
+| Category manager approval | **Specific people or groups**: your category management group | **Approve**, **Send back for changes**, **Deny** |
+| TPRM review | **Specific people or groups**: your third-party risk group | **Accept**, **Send back for changes**, **Deny** |
+
+The request goes to category management first. When they approve it, it moves to the third-party risk team, who accept it, send it back or deny it. If category management sends it back, the requester's resubmission goes straight back to them.
+
+### Who reviews a stage
+
+| Reviewed By | Who gets the stage |
+| --- | --- |
+| **Specific people or groups** | The people and groups you add with **Add people or groups**. |
+| **Routed by the requester's answers** | Reviewers chosen by the requester's answers to one of the template's questionnaires, using that questionnaire's reviewer matrix. Pick the **Questionnaire**, then click **Set up matrix** or **Edit matrix**. The matrix belongs to the questionnaire, so an import there applies right away. |
+| A role on the vendor or service | The vendor's risk analyst or relationship owner, the service's relationship owner, or the person in a user custom field on the vendor or service. |
+| **The questionnaire's reviewer** | The reviewer the questionnaire names. |
+
+The reviewer is worked out when the request reaches the stage, not when it is submitted. The person who submitted the request is never a reviewer of their own request.
+
+If nobody can be found, for example because the matrix has no entry for those answers or the group is empty, the stage goes to the template's default intake reviewers, and otherwise to your organization's admins. The stage shows them as the fallback reviewers.
+
+## Decide a request at your stage
+
+Open the request. **Review Stages** shows every stage with its status (**Not started**, **In review**, **Sent back**, **Approved** or **Denied**) and a line naming who it is waiting on and at which stage.
+
+When the current stage is yours, the buttons are:
+
+| Button | What happens |
+| --- | --- |
+| **Approve** | On any stage but the last. You can leave a **Note for Later Stages**. The request moves to the next stage and its reviewers are notified. The vendor is not accepted until the last stage approves. |
+| **Accept** | On the last stage. Accepts the request, the same as accepting a request without stages. |
+| **Send back for changes** | When the stage allows it. The requester sees your note, makes the changes and resubmits. The request comes back to your stage, and earlier stages stay approved. |
+| **Deny** | When the stage allows it. Give a **Reason**, which reviewers see and the requester does not, and an optional note to the requester, which they do see. You can also tick **Also update the vendor's status**. The request ends at your stage and later stages never start. |
+
+**Reassign** moves the stage to another reviewer. They get it in their work queue and by email.
+
+Only the current stage's reviewers, or an admin, can decide a stage. An admin's decision on a stage they do not review is recorded as made as an admin. If two people act on the same stage at once, the first decision counts and the second person is told **Someone already acted on this stage. Here is where the request is now.**
+
+A stage that is waiting on the requester can still deny the request, if the stage allows denying.
+
+### What a resubmission does
+
+When the requester resubmits a request that was sent back, it goes straight back to the stage that sent it, with the same reviewer if one had taken it. The history says how many answers changed.
+
+There is one exception. If the requester changed an answer that decides who reviews an earlier stage (an answer the reviewer matrix reads), the request restarts at that earlier stage.
+
+### The intake list
+
+The intake list has **Review Stage**, **Waiting On** and **In Stage For** columns, and a **Waiting on me** filter for the requests at a stage you review.
+
+<Note>
+  A request with review stages has to go through them. Bulk deny skips it and asks you to deny it from its page so you can give a reason. A **Finalize intake** workflow action skips it, and deciding its questionnaire submission directly is refused.
+</Note>
+
+## What the requester sees
+
+The requester follows the request under **Your request**. It shows each stage by name and **With** the team reviewing it now, and says **We'll email you when it moves on or if they need something.**
+
+- When a stage sends it back, the request shows **Waiting on you since** the date and **Make changes**. **Nothing moves until you resubmit.**
+- When a stage denies it, the requester sees **Your request was denied at** that stage, with the note written for them.
+- When the last stage accepts it, the vendor **is approved for use**.
+
+The requester sees stage names, team names and notes written to them. They never see a reviewer's internal reason or a **Note for Later Stages**.
+
+## Change the stages later
+
+You can edit stages at any time. Requests already in review finish on the stages they started with, and the editor tells you how many there are. New submissions use the new stages.
+
+## Require a vendor contact
+
+To make requesters name someone at the vendor:
+
+1. In the intake template, under **Step 2: Additional information**, turn on **Ask for the relationship owner and vendor contacts**.
+2. Turn on **Require a vendor contact** beneath it.
+
+The requester cannot continue past **Additional Information** until they add at least one vendor contact with an email. The form says **Add at least one vendor contact with an email before continuing.**
+
+## Block requests for existing vendors
+
+To stop requesters starting a second request for a vendor you already have, turn on **Block requests for existing vendors** under **Step 1: Select vendor** in the intake template.
+
+With it on, a requester cannot start a request for a vendor that is:
+
+- **Already approved**: its last assessment outcome approved it. A vendor whose last outcome did not approve it can be requested again.
+- **Already being onboarded**: another request for it is open past pre-qualification or waiting for review, or one of its assessments is still running.
+
+The requester sees the vendor's status in the search results with a lock line saying why it cannot be chosen, and, where the vendor has owners, who to ask. See [What the labels on a vendor mean](/user-guides/requesting-a-vendor#what-the-labels-on-a-vendor-mean).
+
+Coverbase also refuses to link or submit a request for that vendor, so the block holds even when the vendor is named some other way.
+
+## Troubleshooting
+
+| What you see | Cause | Fix |
+| --- | --- | --- |
+| **Requesters can't submit this form until these review stages are fixed.** | A saved stage is no longer valid, for example its questionnaire is no longer on the template. | Fix the stages the editor flags and save. |
+| **No reviewer matrix on** a questionnaire | The stage routes on answers, but that questionnaire has no reviewer matrix. | Click **Set up matrix**, or choose another way to review the stage. |
+| A stage went to admins instead of the team | Nobody could be found when the request reached it: no matrix entry, or an empty or archived group. | Fix the matrix or the group, then **Reassign** the stage. |
+| A request still uses the old stages | It was submitted before you changed them. | Expected. Only new submissions use the new stages. |
+| **Send back for changes** or **Deny** is not shown | The stage does not allow it, or the current stage is not yours. | Change **Reviewers Can** on the template for future requests, or ask the current stage's reviewer. |
+| Bulk deny skipped some requests | Those requests have review stages. | Deny each from its page and give a reason. |
+| The requester cannot get past **Additional Information** | **Require a vendor contact** is on and no contact with an email was added. | Add a vendor contact with an email. |
+| A requester says they cannot pick a vendor | **Block requests for existing vendors** is on and the vendor is approved or being onboarded. | Point them to the vendor's owner, or to the open request. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Requesting a new vendor" icon="cart-shopping" href="/user-guides/requesting-a-vendor">
+    The requester's side, including the vendor labels and what happens after submitting.
+  </Card>
+  <Card title="Analyst and reviewer guide" icon="user-check" href="/user-guides/analyst-reviewer">
+    Working the intake queue day to day.
+  </Card>
+  <Card title="Reviews, approvals and gates" icon="gavel" href="/user-guides/reviews-and-approvals">
+    Review gates after intake, with outcomes, quorums and rework.
+  </Card>
+  <Card title="Permissions and roles" icon="user-shield" href="/user-guides/permissions-and-roles">
+    Who can edit templates and decide requests.
+  </Card>
+</CardGroup>
