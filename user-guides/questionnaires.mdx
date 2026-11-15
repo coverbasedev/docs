@@ -86,10 +86,19 @@ Open a question's settings to find these switches. Select several questions and 
 | **Required question** | The respondent cannot submit until it is answered. On an internal-only question the label changes to **Required before accepting or denying**, because it gates the reviewer instead. |
 | **Internal only** | Hidden from whoever fills in the questionnaire. Autofill still answers it, and your team sees it when reviewing the submission. |
 | **Allow comments** / **Require comment** | Adds a comment box. Required means the vendor must explain their answer before the question counts as answered. |
-| **Allow respondents to add their own** | Select questions, when your organization uses the [centralized supplier portal](/user-guides/centralized-supplier-portal). The respondent can answer with a value you did not list. A custom answer scores nothing and satisfies no conditional logic. |
+| **Offer an "Other" option** | Select questions. Adds **Other** as the last choice, with a field for the respondent's own wording. You can also click **Add "Other"** beside **Add option**, and rename the choice in its row. See [An Other option](#an-other-option). |
+| **Require text for Other** | On by default. On: choosing **Other** counts as an answer once the respondent types one. Off: choosing **Other** is an answer on its own, and the text is optional detail. |
 | **Allow document attachments** / **Require document attachments** | Lets or makes the respondent attach supporting documents to this question. |
 | **Require user review** | Intake only. The requester must confirm the AI answer to this question. |
 | **Require user input** | Intake only. The question is always put to the requester as a follow-up rather than answered from web search. Use it for facts only the business owner knows. |
+
+#### An Other option
+
+**Offer an "Other" option** lets a respondent give an answer you did not list. They see **Other** (or the label you gave it) as the last choice. Choosing it opens a field that reads **Please specify**, or **Please specify (optional)** when **Require text for Other** is off. With the text required, choosing **Other** and leaving the field empty is not an answer, so a required question still needs one.
+
+The choice works the same in portals and in intake. A requester filling in an intake request sees **Other** and its field on the questions that offer it, and their wording is saved with the request when they submit, like any other answer. Reviewers see it on the submission.
+
+An **Other** answer scores nothing and satisfies no conditional logic, because there is no option behind it. On a questionnaire drawn from a control set, the option is set on each control in the control editor rather than in the template.
 
 **Update AI Guidance** under the question's **Actions** adds instructions for how the AI should answer this question during intake. **Copy Question ID** is there for workflow automations that reference a question.
 
@@ -313,6 +322,10 @@ The actions menu on a submission:
 | **Configure Portal**, **Go to Portal**, **Copy Portal URL** | Portal actions for the send that carried the submission. |
 | **Archive Submission** | Removes the submission from the list and cancels its work queue items. |
 
+<Note>
+  An intake request's questionnaire is decided on the request, not here. When you open one from **Questionnaires**, the header shows **Decide on request** in place of **Accept** and **Deny**, or **Open request** once it is decided. The request page is where its review stages and your **Intake Approval** settings apply. See [Decide on the request, not its questionnaire](/user-guides/intake-review-stages#decide-on-the-request-not-its-questionnaire).
+</Note>
+
 Returning a questionnaire to the vendor with a revision message is an assessment feature, not a submission action here. See [Reviews and approvals](/user-guides/reviews-and-approvals).
 
 ## Questionnaire history on the vendor page
@@ -377,6 +390,7 @@ An API key also cannot approve, reject or archive a response, sign an attestatio
 | "I added someone under Configure Reviewers and it never appeared in their work queue." | Template reviewers are a notification list. Assign them on the submission with **Assign reviewer**, or make them the template's only reviewer before sending so the send picks them up. |
 | "The submission is Ready for review but nobody has a work queue item." | It has no submission reviewer. Assign one; the item is created immediately because the vendor has already submitted. |
 | "The same template landed with different reviewers on two sends." | A send from a portal template always assigns the sender. A direct send honors a template with exactly one reviewer. |
+| "There is no Accept or Deny, only **Decide on request**." | The questionnaire belongs to an intake request. Click **Decide on request** and decide the request there. |
 | "Accept and Deny are grayed out." | A required internal-only question is unanswered. The tooltip gives the count. Answer it on the **Review Questionnaire** tab. |
 | "Every vendor scores low." | Option values are still `0`. Weight every option on the template, then send a fresh IRQ; accepted submissions keep the old weights. |
 | "A write-back I configured never changed the vendor." | Either the submission has not been accepted, the suggestion was rejected on the **Suggested updates** panel, or the target already held a value someone typed. Built-in columns are only filled when empty. |

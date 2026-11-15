@@ -1193,6 +1193,7 @@ While a request is open, Coverbase reminds the vendor's relationship owners (or,
 <ResponseField name="expires_at" type="integer | null">Unix timestamp (seconds) the request expires.</ResponseField>
 <ResponseField name="reminders_sent" type="integer[]">The reminders already sent, by day: `3`, `7`.</ResponseField>
 <ResponseField name="portal_id" type="string | null">`null` for a request sent through the API.</ResponseField>
+<ResponseField name="is_internal" type="boolean">`true` for a request your team created inside Coverbase, such as adding legal entities to a supplier. An internal request is never sent to the supplier and completes once your team has decided what it covers. `false` for every request sent to a supplier, including all requests created through the API.</ResponseField>
 <ResponseField name="created_at" type="integer">Unix timestamp (seconds).</ResponseField>
 <ResponseField name="updated_at" type="integer">Unix timestamp (seconds).</ResponseField>
 
@@ -1202,7 +1203,7 @@ While a request is open, Coverbase reminds the vendor's relationship owners (or,
   `GET /v1/vendors/{vendor_id}/update_requests`
 </ParamField>
 
-Returns the vendor's update requests as a plain array, newest first. The list is not paginated.
+Returns the vendor's update requests as a plain array, newest first, including internal requests (flagged with `is_internal`). The list is not paginated.
 
 **Auth:** any `ak_` key.
 
