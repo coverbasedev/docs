@@ -275,7 +275,7 @@ A diversity record takes the same shape as a business classification in Oracle F
 
 ## Asking an existing supplier to update their details
 
-Use an update request when a supplier you already hold needs to change something specific: a new bank account, an account in a new currency, a moved address, a new PO email address, or their contacts. It works the same for a supplier you onboarded in Coverbase and one whose details were loaded from your finance system.
+Use an update request when a supplier you already hold needs to change something specific: a new bank account, an account in a new currency, a moved address, a new PO email address, or their contacts. It works the same for a supplier you onboarded in Coverbase and one whose details were loaded from your finance system. To add legal entities you do not need the supplier at all; see [Adding legal entities to an existing supplier](#adding-legal-entities-to-an-existing-supplier).
 
 1. Open the vendor and go to the **Vendor Onboarding Information** tab.
 2. In **Update Requests**, click **Request update**.
@@ -284,7 +284,6 @@ Use an update request when a supplier you already hold needs to change something
    - **Bank accounts**: **Change an account**, **Add an account** (for example a new currency), or **Confirm details**.
    - **Addresses**: **Moved location**, **Add an address**, or **Confirm details**.
    - **PO email address**, **Contacts**, **Tax registrations** and **Diversity**.
-   - **Legal entities**: pick up to five of your own entities to add. These are requested in your name when you send. If **Legal entity assignments need approval** is on, approve them on the **Legal entities** card.
 5. Click **Send request**.
 
 <Frame caption="Each section you tick gets its own choice and its own note. Sections you leave unticked stay read only for the supplier.">
@@ -305,6 +304,22 @@ What the supplier can do on each section:
 - **Contacts.** They mark people to remove and add new ones. Nothing changes on the vendor until you click **Apply to contacts**.
 
 When they finish, they click **Send update**. The sections close for editing and you get a notification. The request then shows **Returned** on the **Update Requests** card, with what they confirmed, any contact changes waiting for you, and how many bank changes from it are in the review queue. Click **Mark reviewed** when you are done, or **Withdraw request** to close one the supplier has not sent back.
+
+## Adding legal entities to an existing supplier
+
+Which of your legal entities a supplier works with is your decision, so you add them yourself and the supplier is not contacted.
+
+1. Open the vendor and go to the **Vendor Onboarding Information** tab.
+2. On the **Legal entities** panel, click **Add legal entities**.
+3. In **Legal Entities to Add (up to 5)**, choose the entities. Only active entities the supplier does not already hold or wait on are offered.
+4. Optionally, give a **Reason**, for example a new contract with one of your offices.
+5. Click **Add**.
+
+You need **Supplier profile: update** to see **Add legal entities**.
+
+If **Legal entity assignments need approval** is off, the entities are assigned at once. If it is on, each one waits on the **Legal entities** panel with **Approve** and **Reject** for someone with **Supplier profile: approve**. The confirmation says how many are waiting.
+
+Once no legal entity on the supplier is waiting for a decision, the addition is recorded as a completed update, so it reaches your finance system the same way other supplier updates do. A workflow that sends a supplier to your finance system when an update request comes back runs for it too. The addition does not appear on the **Update Requests** card, because nothing was sent to the supplier.
 
 ## Review: the part that stops fraud
 
@@ -336,7 +351,7 @@ Two permission resources, each split three ways, so a reviewer does not have to 
 | Supplier banking: update | Enter or edit bank details on a supplier's behalf. Does not approve anything. |
 | Supplier banking: approve | Decide a queued bank change. |
 | Supplier profile: read | Reveal a full tax identifier. |
-| Supplier profile: update | Edit sites, tax registrations, diversity records and legal entity assignments. Send, withdraw and close update requests. |
+| Supplier profile: update | Edit sites, tax registrations, diversity records and legal entity assignments, including **Add legal entities**. Send, withdraw and close update requests. |
 | Supplier profile: approve | Decide a queued legal entity assignment. Apply contact changes a supplier proposed. |
 
 <Frame caption="Staff entry on the vendor tab. The same country rules the supplier would have seen, and entering a change here still does not approve it.">
@@ -383,7 +398,7 @@ The **Know Your Vendor** section of **Configuration → Know Your Vendor Setting
 
 Deactivating an entity blocks new assignments and leaves existing ones alone.
 
-Give each entity its country. An intake question can let requesters pick a country instead of individual entities, and then requests every active entity in that country. Use it on new supplier requests, and keep entity-by-entity picking for extending an existing supplier to a few more entities. See [Legal entity questions](/user-guides/questionnaires#legal-entity-questions).
+Give each entity its country. An intake question can let requesters pick a country instead of individual entities, and then requests every active entity in that country. Use it on new supplier requests. To extend an existing supplier to a few more entities, use [Add legal entities](#adding-legal-entities-to-an-existing-supplier) on the supplier. See [Legal entity questions](/user-guides/questionnaires#legal-entity-questions).
 
 One assignment request covers up to five entities, except one that comes from an intake answer given by country, which covers every entity in the country. A request that quotes a purchase requisition raised more than thirty days ago needs a justification before it is accepted; a request quoting no requisition cannot be stale and is not asked for one.
 
@@ -425,6 +440,8 @@ A bank change's webhook fires on approval, not on submission. If you are testing
 | **Registry check pending** or **Registry unavailable** on a tax registration | The background check runs every 15 minutes. **Registry unavailable** means the register could not be reached; it retries on its own, and **Retry verification** runs it again by hand. It never blocks anything. |
 | A warning asking for a SWIFT/BIC on a domestic-looking account | The account's country is not one your assigned legal entities pay from, so the payment is treated as a wire. Check the legal entities assigned to that supplier. |
 | The tax question shows no **Address** pick | No address has been saved on the form yet, or no tax ID type is chosen. The registration covers the whole supplier, which is right for most suppliers. To tie it to one address, have the supplier save the address first. |
+| **Legal entities** is not a section in **Request update** | Legal entities are added without the supplier. Use **Add legal entities** on the supplier's **Legal entities** panel. |
+| Added legal entities have not reached the finance system | At least one legal entity on the supplier is still waiting for approval. Approve or reject it on the **Legal entities** panel. |
 | **Request Supplier Update** says to turn on the Profile page first | The supplier portal, or its **Profile** section, is off. Turn it on in **Configuration > Portal Templates > Centralized Portal**, under **Sections**. |
 | A Colombian supplier is asked for a bank statement | They typed a bank name the list does not hold. Have them check the spelling against their statement; a bank on the list fills its own details in and asks for nothing. |
 | "BRL is held for suppliers in BR only" | BRL is held for suppliers in Brazil. The test is the supplier's own country, not the bank's. |

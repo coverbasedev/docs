@@ -9,7 +9,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 <AgentDirective />
 
 <Info>
-  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the intake template settings under **Configuration → Portal Templates** and the **Review Stages** section of an intake request. It sits beside [Requesting a new vendor](/user-guides/requesting-a-vendor), which covers the requester's side, the [Analyst and reviewer guide](/user-guides/analyst-reviewer), which covers working the queue, and [Reviews, approvals and gates](/user-guides/reviews-and-approvals), which covers review gates after intake.
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the intake template settings under **Configuration → Portal Templates**, the vendor status settings on its **Intake Approval** tab, and the **Review Stages** section of an intake request. It sits beside [Requesting a new vendor](/user-guides/requesting-a-vendor), which covers the requester's side, the [Analyst and reviewer guide](/user-guides/analyst-reviewer), which covers working the queue, and [Reviews, approvals and gates](/user-guides/reviews-and-approvals), which covers review gates after intake.
 </Info>
 
 By default one reviewer decides each intake request. Review stages let several teams review it in turn. For example, a category manager approves the business need first, and the third-party risk team reviews the vendor after that. Each stage can approve, and you choose whether it can also send the request back or deny it.
@@ -77,13 +77,17 @@ When the current stage is yours, the buttons are:
 | **Approve** | On any stage but the last. You can leave a **Note for Later Stages**. The request moves to the next stage and its reviewers are notified. The vendor is not accepted until the last stage approves. |
 | **Accept** | On the last stage. Accepts the request, the same as accepting a request without stages. |
 | **Send back for changes** | When the stage allows it. The requester sees your note, makes the changes and resubmits. The request comes back to your stage, and earlier stages stay approved. |
-| **Deny** | When the stage allows it. Give a **Reason**, which reviewers see and the requester does not, and an optional note to the requester, which they do see. You can also tick **Also update the vendor's status**. The request ends at your stage and later stages never start. |
+| **Deny** | When the stage allows it. Give a **Reason**, which reviewers see and the requester does not, and an optional note to the requester, which they do see. You can also tick **Also update the vendor's status**. The request ends at your stage and later stages never start. See [Set the vendor's status as a request moves](#set-the-vendors-status-as-a-request-moves) for what a denial does to the vendor on its own. |
 
 **Reassign** moves the stage to another reviewer. They get it in their work queue and by email.
 
 Only the current stage's reviewers, or an admin, can decide a stage. An admin's decision on a stage they do not review is recorded as made as an admin. If two people act on the same stage at once, the first decision counts and the second person is told **Someone already acted on this stage. Here is where the request is now.**
 
 A stage that is waiting on the requester can still deny the request, if the stage allows denying.
+
+### Decide on the request, not its questionnaire
+
+An intake request is decided on the request page, whether or not it has review stages. Only there do its stages, the **Intake Approval** settings and its checks run. If you open one of its questionnaires from **Questionnaires** instead, the submission shows **Decide on request** in place of **Accept** and **Deny**, or **Open request** once there is nothing left to decide. Both take you to the request.
 
 ### What a resubmission does
 
@@ -108,6 +112,35 @@ The requester follows the request under **Your request**. It shows each stage by
 - When the last stage accepts it, the vendor **is approved for use**.
 
 The requester sees stage names, team names and notes written to them. They never see a reviewer's internal reason or a **Note for Later Stages**.
+
+## Set the vendor's status as a request moves
+
+An intake request can move its vendor's lifecycle status when it is submitted, approved and denied. Set this once for your organization:
+
+1. Open **Configuration → Portal Templates** and go to the **Intake Approval** tab.
+2. On the **Vendor Status** card, choose a status for each of these:
+
+| Setting | Choices | What happens |
+| --- | --- | --- |
+| **When submitted** | **Leave unchanged**, or a vendor status | When the requester submits the request, the vendor moves to this status. |
+| **When approved** | **Reviewer chooses**, or a vendor status | When the request is accepted, the vendor moves to this status. With **Reviewer chooses**, the reviewer picks one in the accept dialog. |
+| **When denied** | **Leave unchanged**, or a vendor status | When the request is denied, the vendor moves to this status. |
+
+Submitting and denying leave alone a vendor that was already in review or active before the request. In practice:
+
+- **When submitted** moves a vendor only while its status is in the **Unstarted** or **Canceled** group, such as **Created** or **Denied**. A request for a vendor you already use, or a second request while one is in review, leaves the vendor where it is.
+- **When denied** moves a vendor only while it is still at the **When submitted** status or in the **Unstarted** group. A vendor in the **Completed** group, such as **Active**, always keeps its status, so a denied request to add a service to an active vendor does not demote it.
+- **When approved** never moves an active vendor, or one already past the approved status in your organization's status order. A vendor at **Created**, at the submitted status, or in a canceled status such as **Denied** moves to the approved status.
+
+Status groups are explained under [Statuses and lifecycle](/user-guides/vendor-record#statuses-and-lifecycle).
+
+Every move is recorded on the vendor's **Activity** tab as a change made by the person who submitted, approved or denied the request.
+
+If you tick **Also update the vendor's status** while denying, the status you pick there is applied after the denial, so it is where the vendor ends up.
+
+<Note>
+  If a status chosen here is later archived or deleted, choose another. Until you do, approving or denying a request is refused with a message saying so. Submitting is never blocked: the vendor just stays where it is.
+</Note>
 
 ## Change the stages later
 
@@ -162,6 +195,9 @@ For what the requester sees, see [The answer check before you submit](/user-guid
 | Bulk deny skipped some requests | Those requests have review stages. | Deny each from its page and give a reason. |
 | The requester cannot get past **Additional Information** | **Require a vendor contact** is on and no contact with an email was added. | Add a vendor contact with an email. |
 | A requester says they cannot pick a vendor | **Block requests for existing vendors** is on and the vendor is approved or being onboarded. | Point them to the vendor's owner, or to the open request. |
+| A submitted or denied request did not change the vendor's status | The vendor was already in review or active, so **When submitted** and **When denied** leave it alone. | Expected. Change the status from the vendor's **Lifecycle** card if you need to. |
+| Approving or denying is refused because the vendor status no longer exists | The status chosen on the **Intake Approval** tab was archived or deleted. | Choose another status on the **Vendor Status** card. |
+| A questionnaire shows **Decide on request** instead of **Accept** and **Deny** | It belongs to an intake request, which is decided on the request page. | Click **Decide on request** and decide it there. |
 
 ## Related
 
