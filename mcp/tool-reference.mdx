@@ -316,6 +316,7 @@ Accepted parameters: `kind`, `questionnaire_id`, `questionnaire_type`, `vendor_i
 | `responses` | Responses to a questionnaire. |
 | `intake_sessions` | Intake requests, filterable by status. |
 | `intake_review` | One intake session as a reviewer sees it. |
+| `intake_answer_check` | The latest answer check on an intake: each answer the request's own words contradict, the quoted words, the suggested answer, a question for the requester, and how each was settled. Read-only. |
 | `intake_questions` | The questions on an intake, with AI drafts and reasoning. `pending_only` is the review queue: unanswered questions plus unconfirmed drafts. |
 | `intake_prequalification` | The per-criterion screening verdict and its reasoning. |
 | `intake_vendor_matches` | Ranked existing vendors and web alternatives for an intake. |
@@ -1182,7 +1183,9 @@ Each write checks the same permission as the matching dashboard action. A write 
 | `intake_session` | `update` | Records the requester's use case, services, and background. |
 | `intake_session` | `upload_document` | Attaches a supporting document to an intake request. |
 | `intake_session` | `answer` | Records answers to an intake session's questionnaire questions. |
-| `intake_session` | `submit` | Submits a completed intake request for human review. |
+| `intake_session` | `check_answers` | Checks an open intake's answers against what the requester wrote and returns the flags. Run it after `answer` and before `submit`. |
+| `intake_session` | `resolve_answer_flag` | Records the requester's decision on one flag. `resolution` is `accepted` (take the suggested answer), `dismissed` (keep the answer, with `keep_reason`) or `open` (undo). |
+| `intake_session` | `submit` | Submits a completed intake request for human review. Refused while an answer check flag is open. |
 | `intake_session` | `approve` | Approves a pending vendor intake request. |
 | `intake_session` | `reject` | Rejects a pending vendor intake request. |
 | `intake_session` | `request_follow_up` | Requests more information from the intake requester. |
