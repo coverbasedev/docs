@@ -23,7 +23,7 @@ flowchart LR
 - **An Adaptive Card.** Each post carries the notification's title, its text (shortened past 2,000 characters) and, when the notification links somewhere, a button that opens the record in Coverbase.
 - **Never in the way.** If Teams is unreachable or rejects a post, the notification still reaches its recipients in Coverbase and by email.
 
-With a Coverbase bot registered in your Azure tenant, three kinds of card also carry **Approve** and **Decline** buttons: a Front Door disposition waiting on a sign-off group, a finding's acceptance chain waiting on a recommendation, decision or approval, and exit plan evidence waiting on its approver. The same bot lets people request a vendor by chatting with it (see the [Intake Agent](/user-guides/intake-agent)).
+With a Coverbase bot registered in your Azure tenant, three kinds of card also carry **Approve** and **Decline** buttons: a Front Door disposition waiting on a sign-off group, a finding's acceptance chain waiting on a recommendation, decision or approval, and exit plan evidence waiting on its approver. The same bot lets people request a vendor and ask Coverbase AI by chatting with it (see [Chats with the bot](#chats-with-the-bot)).
 
 ## Authentication
 
@@ -34,8 +34,8 @@ The connector posts to a webhook URL that you create in Teams. The URL is itself
 
 ## Set up in Coverbase
 
-1. Open **Configuration → External Integrations** and click **Microsoft Teams**.
-2. On **Authentication**, paste the **Webhook URL**.
+1. Open **Configuration → External Integrations**, click **Microsoft Teams**, and click **Channel notifications** at the bottom of the dialog.
+2. On the connection's **Channel** tab, paste the **Webhook URL**.
 3. Under **Notification Types**, choose which notifications post. Each one posts once to the channel, whoever it was for.
 4. Click **Save**, then **Send test message** and check the channel.
 
@@ -43,16 +43,29 @@ To post to a different channel, replace the webhook URL. To stop posting, **Paus
 
 ## Register the bot
 
-Approvals and Teams intake need a bot registered in your own Azure tenant. The incoming webhook above keeps working without it.
+Chats, Coverbase AI and approval cards need a bot registered in your own Azure tenant. A bot alone is enough: the channel webhook above is only for notifications.
 
-1. In the Azure portal, create an **Azure Bot** resource. For the type of app choose **Single Tenant**, and let Azure create a new Microsoft App ID.
-2. Open the bot's **Configuration** and copy the **Microsoft App ID** and the **App Tenant ID**. Under **Manage Password**, create a client secret and copy its value.
-3. In Coverbase, open the Microsoft Teams connection's **Authentication** tab. Enter the **Bot app ID**, **Bot client secret** and **Directory (tenant) ID**, turn on **Approve and decline from Teams cards**, and save. Copy the **Messaging Endpoint** it shows.
-4. Back in Azure, paste it into the bot's **Messaging endpoint** and save.
-5. Under **Channels**, add **Microsoft Teams** and accept the terms.
-6. Build a Teams app package for the bot in the Developer Portal for Teams: a new app with a **Bot** feature using the app ID, in the **Team** and **Personal** scopes. Have a Teams admin upload it to your organization's app catalog.
-7. Add the app to the team, then to the channel that should receive approval cards. The connection's **Approval Cards** status reads **Posting to** that team and channel once Teams tells the bot it was added.
-8. In the Microsoft Teams connection's **Notification Types**, choose the approval notifications to post.
+Open **Configuration → External Integrations** and click **Microsoft Teams**. The dialog is a checklist that checks each step for you:
+
+1. **Register a bot in Azure.** In the Azure portal, create an **Azure Bot**. For the type of app choose **Single Tenant**, and let Azure create a new Microsoft App ID. In the bot's **Configuration**, copy the **Microsoft App ID** and the **App Tenant ID**. Under **Manage Password**, create a client secret and copy its value. Enter all three in the dialog and click **Save and verify**. Coverbase checks them with Microsoft and stores nothing if Microsoft refuses them, so a typo never replaces a working bot.
+2. **Point the bot at Coverbase.** Copy the **Messaging endpoint** the dialog shows. In Azure, paste it into the bot's **Configuration** and save. Under **Channels**, add **Microsoft Teams** and accept the terms.
+3. **Add the app to Teams.** Click **Download app package** to get `coverbase-teams-app.zip`. It is built for your bot's app ID, so it only works for your organization. A Teams admin uploads it in the Teams admin center under **Teams apps → Manage apps → Upload new app**, and allows it in your app permission policies if they block custom apps. Steps 2 and 3 check off when Microsoft first calls Coverbase, which happens when someone adds the app.
+4. **Choose what people can use.** Turn on **Vendor requests**, **Coverbase AI** and **Approval cards**.
+5. **Try it in Teams.** Click **Open in Teams** and send the bot a message. The dialog shows **Teams is live** within a few seconds.
+
+For approval cards, add the app to the team, then to the channel that should receive them, and choose the approval notifications in the connection's **Notification Types** (**Channel notifications** at the bottom of the dialog opens the connection). The connection's **Approval Cards** status reads **Posting to** that team and channel once Teams tells the bot it was added.
+
+## Chats with the bot
+
+Someone who adds Coverbase from **Apps** in Teams gets a welcome message listing what it can do.
+
+| Typed in a chat with the bot | What happens |
+|---|---|
+| A request, for example "We need Figma for the design team" | Opens a vendor request. The intake agent asks for anything missing, in the chat. |
+| `Coverbase AI:` and an instruction | Starts a Coverbase AI run as you. The chat gets a link when it starts, any question it needs answered, and the result when it finishes. |
+| `help` | Lists what your organization turned on. |
+
+The bot answers only people whose Microsoft address belongs to an active member of your organization, and they act with their own Coverbase permissions. Once Teams is live, **Copy announcement** in the dialog gives you a ready-to-post message for your team.
 
 The **Approval Cards** status is **Live**, **Needs the bot** (approvals on but no app ID and secret, so cards post without buttons), **Needs a channel**, or **Off**.
 
