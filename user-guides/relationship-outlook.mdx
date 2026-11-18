@@ -18,6 +18,8 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 Each vendor with a completed assessment has a monitoring record: everything monitoring observed between that assessment and the next. Coverbase reads the whole record and resolves it to a **relationship outlook**, a tiered view of the relationship that changes as the evidence does. It does not turn a security rating into an incident probability. Every outlook names the factors behind it, so you can see why it reads the way it does and what to test next.
 
+The mistake people make most often is reading Stable as clean. Check the confidence beside it first: a Stable outlook at Low confidence rests on thin evidence and earns no scope credit.
+
 ## The five outlooks
 
 | Outlook | When |
@@ -90,3 +92,32 @@ Under **Configuration → Assessment Settings → Reassessments → Monitoring**
 5. Keep **Hold automatic creation unless the outlook is Stable** on to make the scheduled job wait for someone to scope every other outlook.
 
 To be told when an outlook changes, keep the **Relationship outlook changed** notification on. It goes to the vendor's risk analysts. The **Relationship outlook turned Elevated or Critical** workflow template raises a review task the day it happens.
+
+## Troubleshooting
+
+| What you see | What is happening |
+| --- | --- |
+| The outlook reads **Pending**. | The record has not synced since monitoring records were turned on. The nightly sweep computes it for every open record, or a new signal, finding or vendor change does it sooner. |
+| The outlook reads **Insufficient data** for a vendor you know well. | Monitoring covered less of the window than the policy minimum under **Coverage**, and nothing on the record is adverse. Check which sources watch the vendor. |
+| The outlook is Stable but the next assessment is a standard one. | Scope credit needs the outlook to hold Stable for the credit period, confidence above Low, coverage at the minimum, and no material or overdue open findings. The factors and confidence reasons on the record show which one is not met. |
+| A rating fell and the outlook did not move. | The fall is smaller than the rating's Watch threshold, the rating is turned off under **External Security Posture**, or **External posture applies** is off on the vendor's record. |
+| A large fall in Coverbase Security Posture reads only Watch. | The scan's own coverage is thin or mostly indirect, so it cannot raise the outlook past Watch. |
+| The button on the record reads **Start out-of-cycle assessment**. | The outlook is Critical. Coverbase has also raised a scoping task for the vendor, due in two days. |
+| A vendor has no **Relationship outlook** card. | The vendor has no completed assessment yet, so there is no window to monitor, or monitoring records are not turned on for your organization. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    Triaging the signals that become entries on a monitoring record.
+  </Card>
+  <Card title="Security intelligence guide" icon="shield-halved" href="/user-guides/security-intelligence">
+    The outside-in Coverbase Security Posture rating, factor by factor.
+  </Card>
+  <Card title="Confirm inherent risk before a reassessment" icon="user-check" href="/user-guides/reassessment-irq-review">
+    What happens when the reassessment the outlook scoped comes due.
+  </Card>
+  <Card title="Workflow templates" icon="wand-magic-sparkles" href="/user-guides/workflow-templates">
+    Raising a review task when an outlook turns Elevated or Critical.
+  </Card>
+</CardGroup>
