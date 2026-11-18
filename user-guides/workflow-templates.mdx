@@ -50,7 +50,7 @@ Shelves follow the third-party lifecycle rather than the records the templates w
 | **Contract renewal runway and expiry** | Contracts | A renewal or notice date moves, or a term runs out | 2 | Contracts |
 | **Contract obligation ownership** | Contracts | An obligation is raised | 2 | Contracts, Obligations |
 | **Monitoring signal triage** | Monitoring | Monitoring raises a signal | 2 | Radar |
-| **Monitoring record turned not clean** | Monitoring | A vendor's monitoring record turns Not clean | 2 | Monitoring records |
+| **Relationship outlook turned Elevated or Critical** | Monitoring | A vendor's relationship outlook turns Elevated or Critical | 2 | Monitoring records |
 | **Vendor offboarding with sign-off** | Offboarding | A vendor record is archived | 4 | none |
 | **Route work to the vendor's owner** | Routing | Any task is raised, or a vendor is created | 2 | none |
 
@@ -71,7 +71,7 @@ A module counts as available only when both halves are true. The feature gate sa
 | Obligations | `obligations-page` | Read obligations | Contract obligation ownership |
 | Intake | none | Read intake sessions | Risk-tiered intake routing, Intake to onboarding assessment, Purchase request approval chain |
 | Purchase requests | `procurement-demo` | none | Purchase request approval chain |
-| Monitoring records | `monitoring-between-assessments` | Read vendors | Reassessment scoping from the monitoring record, Monitoring record turned not clean |
+| Monitoring records | `monitoring-between-assessments` | Read vendors | Reassessment scoping from the monitoring record, Relationship outlook turned Elevated or Critical |
 
 Intake is the one module with no gate of its own, so the read permission is the whole test. That matches the left-hand navigation, which shows the **Intake** item on the same rule. Purchase requests are the reverse: there is no separate read permission for them, so the gate is the whole test.
 
@@ -235,7 +235,7 @@ Automatic evidence collection gives up quietly. This catches the handoff and put
 
 When a vendor's next assessment comes due, the monitoring record already says what happened since the last one. This hands that record to an analyst while there is still time to scope the reassessment on it.
 
-**What it does.** Fires once per record, when the reassessment reminder goes out. A record that is **Not clean** or **Unmonitored** raises a scoping task; a **Clean** one raises a short task to confirm the lighter approach still fits. A record still pending its first verdict raises neither.
+**What it does.** Fires once per record, when the reassessment reminder goes out. A record whose outlook is **Watch**, **Elevated**, **Critical** or **Insufficient data** raises a scoping task; a **Stable** one raises a short task to confirm the lighter approach still fits. A record still pending its first outlook raises neither.
 
 **What lands in the queue.** **"Scope the reassessment for `{vendor}`"** or **"Confirm the reassessment approach for `{vendor}`"**, filed as an assessment review, **due in 5 days**, linking the record.
 
@@ -313,17 +313,17 @@ A monitoring program is only worth the alerts somebody reads. This turns each ne
 
 **Before you turn it on.** Re-point both steps to whoever works the alert queue. Set the review's status so signals start in your adjudication pipeline. Every signal raising a task is a lot of tasks, so gate the trigger on severity once you know your own volume.
 
-### Monitoring record turned not clean
+### Relationship outlook turned Elevated or Critical
 
 **Shelf:** Monitoring · **Needs:** Monitoring records · **Steps:** 2 · **For:** monitoring analysts and relationship owners
 
-A vendor that was clean at its last assessment has something on its record now. This puts the record in front of an analyst the day the verdict turns, and then has the business owner hear about it from you.
+A vendor's relationship outlook has moved to Elevated or Critical since its last assessment. This puts the record in front of an analyst the day the outlook turns, and then has the business owner hear about it from you.
 
-**What it does.** When a record's verdict turns **Not clean**, it raises a review task. When that task is completed, the second step raises the briefing task.
+**What it does.** When a record's outlook turns **Elevated** or **Critical**, it raises a review task. When that task is completed, the second step raises the briefing task.
 
 **What lands in the queue.** **"Review the monitoring record for `{vendor}`"**, then **"Brief the business on `{vendor}`"**, each filed as an assessment review and **due in 3 days**.
 
-**Before you turn it on.** Re-point the review task at whoever works the monitoring queue, and the briefing at the vendor's relationship owner. If it fires too often, tighten what counts toward the verdict in the monitoring records policy rather than here.
+**Before you turn it on.** Re-point the review task at whoever works the monitoring queue, and the briefing at the vendor's relationship owner. If it fires too often, tighten what counts toward the outlook in the monitoring records policy rather than here.
 
 ### Vendor offboarding with sign-off
 

@@ -438,7 +438,7 @@ Every scale write needs a key created by a person whose role holds `org_settings
 
 ## Monitoring records
 
-A **monitoring record** collects what monitoring observed about a vendor between two assessments. These endpoints return the record's `id`, `vendor_id`, `status`, `verdict` and `qualifying_count`.
+A **monitoring record** collects what monitoring observed about a vendor between two assessments and resolves it to a **relationship outlook**: `stable`, `watch`, `elevated`, `critical` or `insufficient_data` (`pending` until first computed). These endpoints return the record's `id`, `vendor_id`, `status`, `outlook`, `outlook_confidence` (`high`, `moderate` or `low`), `outlook_trend` (`improving`, `unchanged` or `worsening`), `outlook_since`, `scope_credit`, `external_posture_applies`, `outlook_detail` (the factors behind the outlook, the confidence reasons, the outside-in ratings it read, and the next assessment's `scope`), the older `verdict` and `qualifying_count`. One record also returns `outlook_history`, each change with when it happened and the factor that moved it.
 
 To add an event you observed, send `POST /v1/monitoring-records/{record_id}/entries`.
 
@@ -460,9 +460,9 @@ To change how an entry counts, send `POST /v1/monitoring-records/{record_id}/ent
 
 To re-sync a vendor's record now, send `POST /v1/vendors/{vendor_id}/monitoring-record/refresh`. It returns `null` when the vendor has no completed assessment to monitor from.
 
-To read records in full, send `POST /v1/monitoring-records/query`. It filters by `status` (default `open`), `verdicts`, `vendor_ids`, `closes_before`, `closes_after` and `search`, sorts with `sort` and `descending`, and pages with `limit` and `offset`. It returns `items`, `total` and `verdict_counts`. `GET /v1/monitoring-records/{record_id}` returns one record with its entries, and `GET /v1/vendors/{vendor_id}/monitoring-records` returns the vendor's chain of records and the open one in `current`.
+To read records in full, send `POST /v1/monitoring-records/query`. It filters by `status` (default `open`), `outlooks`, `verdicts`, `vendor_ids`, `closes_before`, `closes_after` and `search`, sorts with `sort` (`outlook` with `descending` puts Critical first) and `descending`, and pages with `limit` and `offset`. It returns `items`, `total`, `outlook_counts` and `verdict_counts`. `GET /v1/monitoring-records/outlook-portfolio` returns the open records by outlook now (`counts`) and 30 days ago (`counts_30_days_ago`), the next assessments by `scope_counts`, and the outlook `changes` of the last 30 days with `change_total` and `worsened_total`. `GET /v1/monitoring-records/{record_id}` returns one record with its entries, and `GET /v1/vendors/{vendor_id}/monitoring-records` returns the vendor's chain of records and the open one in `current`.
 
-`GET /v1/monitoring-policy` returns the policy records are scored under. `PUT /v1/monitoring-policy` replaces it, and open records use it from their next sync. Replacing it needs a key created by a person whose role holds `org_settings:update:org`; a policy that breaks a rule returns `422 invalid_monitoring_policy`. When monitoring records are not enabled for your organization, these routes return `404 not_enabled`.
+`GET /v1/monitoring-policy` returns the policy records are scored under, including `approach_by_outlook` (the plan and Zero Touch launch for each outlook), `stable_credit_days` and `posture_signals` (per rating, `enabled`, `watch_drop` and `elevated_drop`). `PUT /v1/monitoring-policy` replaces it, and open records use it from their next sync. Replacing it needs a key created by a person whose role holds `org_settings:update:org`; a policy that breaks a rule returns `422 invalid_monitoring_policy`. When monitoring records are not enabled for your organization, these routes return `404 not_enabled`.
 
 ## Background AI jobs
 
