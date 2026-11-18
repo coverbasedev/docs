@@ -1,0 +1,124 @@
+---
+title: "Adding to a vendor you already have"
+description: "Request a new service or more licenses from a vendor your organization already uses, without onboarding it from scratch."
+icon: "layer-plus"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide covers intake requests for a vendor your organization already has. For a vendor you have never used, see [Requesting a new vendor](/user-guides/requesting-a-vendor).
+</Info>
+
+When you ask for something from a vendor your organization already uses, the intake portal shows what you already have from it and asks what you need. There are three answers, and each one asks for a different amount of work.
+
+| Request type | What you are asking for | Risk questionnaire | What approval changes |
+| --- | --- | --- | --- |
+| **New service** | Something the vendor sells that your organization does not use yet | Only the questions about the new service. Answers about the company carry over. | The new service gets its own inherent risk level, and the vendor's overall level is recalculated. |
+| **More licenses** | More of a service you already use, used the same way | None, when your admin set the portal to skip it | The licenses are added to the service's count. |
+| **New vendor** | A separate vendor record | The full questionnaire | A new vendor record, as for any new vendor. |
+
+## Before you start
+
+Your admin turns this on per intake template. If you are never asked what you need from a vendor you already use, the portal you are on does not offer it. Ask the existing vendor's owner instead, or file a request for a new vendor.
+
+## What you'll see
+
+<Steps>
+  <Step title="What you already have">
+    When the vendor you typed is one your organization already uses, or a product of one, the portal shows that vendor's services, how many licenses each has when that is recorded, each service's inherent risk level, the vendor's overall level and who owns it. If someone outside your organization opened the portal link, the risk levels and owners are hidden.
+
+    Read this list before you go on. If the service you need is already there, you may not need to request anything.
+  </Step>
+
+  <Step title="What you need">
+    Pick **A new service**, **More licenses for a service you already use**, or **A separate vendor**. **More licenses** appears only when the vendor has at least one service and your admin allows license requests. If you are not sure, **Ask** sends an email to the vendor's owner from the same screen.
+  </Step>
+
+  <Step title="The details for that request">
+    For a new service, pick every service the request adds. Services you already use are listed for reference and cannot be picked again.
+
+    For more licenses, pick the service, enter how many more you need, the added annual cost, when you need them and why.
+  </Step>
+</Steps>
+
+## More licenses and a change in scope
+
+A license request is only for more of the same use. Under **Does anything else change?** the form asks whether:
+
+- New kinds of data go to the vendor
+- New teams, business units or countries use it
+- The vendor's AI features or a new integration are turned on
+- Data is stored or processed in a new country
+
+If you tick any of these, you cannot submit the request as more licenses. The form explains that the change can raise the service's risk level, and **Review as a change in scope** turns the request into a new service request for that service. What you entered so far stays on the request, including the licenses, and the risk questionnaire asks only about the change.
+
+When nothing changes and your admin skips the questionnaire for license requests, **Submit for approval** sends the request straight to review. Steps 2 and 3 of the portal show as skipped.
+
+## Answers carried over
+
+For a new service, Coverbase takes the vendor's answers from its last submitted inherent risk questionnaire for every question about the company (any question not marked as a service-level question). On **Review Questionnaires** a banner says how many answers were carried over and how many questions are about what this request adds. **Only new questions** is on by default and hides the carried answers. Turn it off to see them, each marked **Carried over**. You can still change any of them.
+
+Answers about your use of the new service are drafted fresh. An answer that chose **Other** on the earlier questionnaire is not carried over.
+
+## After you submit
+
+Submitting is not approval, for any request type. Your request goes to your risk or procurement team.
+
+For a license request, the portal shows what you asked for and that nothing has been bought yet. Once a reviewer decides, the same page shows whether the licenses were approved or denied. Contracting happens outside Coverbase.
+
+## For reviewers
+
+The intake list has a **Request type** column and a **Request type** filter, so you can work new vendors, new services and license requests as separate queues. The request's heading shows its type next to its status.
+
+<AccordionGroup>
+  <Accordion title="A new service request" icon="layer-plus">
+    **Summary** opens with **Change in scope**: the services the request adds, each with the request's inherent risk score and level, the services the vendor already has, and the vendor's overall inherent risk now and after approval. The vendor's overall level is the higher of its own level and its active services' levels, so a new service at a higher level raises the vendor. The card says which new service does that and how many answers were carried over.
+
+    Accept the request as you would any other. Approval writes the inherent risk level onto each new service and recalculates the vendor.
+  </Accordion>
+
+  <Accordion title="A license request" icon="layer-group">
+    When the portal skipped the questionnaire, the request shows **License request** in place of a questionnaire: the service and its level, the licenses before and after, the added cost, the date, the reason and whether the requester reported a change in scope. **Approve** adds the licenses to the service. **Deny** takes an optional note. Either decision is recorded on the service's license history with a link to the request.
+
+    When the portal asks the questionnaire for license requests, the request is reviewed like a new service, and accepting it also adds the licenses.
+  </Accordion>
+
+  <Accordion title="Every request on the vendor" icon="clock-rotate-left">
+    The vendor's overview has an **Intake requests** card listing every request filed against the vendor, newest first, with its type, requester, date and status. Use it to spot a run of license requests or a scope that has grown over time.
+  </Accordion>
+</AccordionGroup>
+
+## For admins
+
+Open **Configuration**, then **Portal templates**, and edit the intake template. Under **Select vendor**:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| **Offer to expand an existing vendor** | Off on existing templates, on for new **Intake request** templates | When the vendor is already in use, ask whether the request is a new service, more licenses or a separate vendor. Off: the portal asks nothing and treats every request as a new vendor. |
+| **Allow license requests** | On | Offer **More licenses for a service you already use**. Shown only while the setting above is on. |
+| **Skip the risk questionnaire for license requests** | On | License requests go straight to review. Off: they answer the questionnaire like a new service, with company answers carried over. Shown only while license requests are allowed. |
+
+Supplier portals never offer this, because the supplier introduces itself.
+
+Coverbase enforces these settings on the server too. A license request sent through the API, MCP or the Coverbase AI agent to a portal that does not allow it is refused or answers the questionnaire, the same as in the browser.
+
+## Coverbase AI and MCP
+
+When you ask Coverbase AI to onboard a vendor your organization already has, it lists the services you already use and asks the same question: a new service, more licenses or a separate vendor. It files the request with the matching type, and for more licenses it asks whether anything else changes before treating the request as a license request.
+
+Over MCP, `create_intake_session_tool` takes `request_kind` (`new_vendor`, `new_service` or `additional_licenses`) with `vendor_id`, plus `new_service_names` for a new service or `license_service_id` and `additional_licenses` for licenses. See [Vendor intake in chat](/mcp/vendor-intake).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Requesting a new vendor" icon="cart-shopping" href="/user-guides/requesting-a-vendor">
+    The full intake flow for a vendor your organization does not use yet.
+  </Card>
+
+  <Card title="Intake review stages" icon="list-check" href="/user-guides/intake-review-stages">
+    How a submitted request moves through review.
+  </Card>
+</CardGroup>
