@@ -1,0 +1,142 @@
+---
+title: "Google Drive"
+description: "Choose the Google Drive folders that hold your contracts. Coverbase files the contracts in them into the Contracts Repository and keeps them in sync as files are added, edited, moved or deleted. Nothing outside those folders is opened."
+icon: "google-drive"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+The Google Drive connector is part of the [Integration Hub](/products/integration-hub). A legal admin signs in with Google, picks the folders that hold executed contracts, and Coverbase files each contract in those folders into the [Contracts Repository](/user-guides/contracts-repository). After the first import it keeps checking for changes, so a new or revised contract shows up without anyone forwarding it.
+
+Coverbase reads only the folders you choose. It never scans the whole Drive, never opens a file outside the chosen folders, and never edits, moves, shares or deletes anything in Google Drive.
+
+## What it does
+
+| When this happens in Google Drive | Coverbase does this |
+| --- | --- |
+| You choose a folder | Imports every PDF, Word and Google Docs file in it (and in its subfolders, if you include them) |
+| A file is added to a chosen folder | Imports it on the next sync |
+| A file is edited | Files the new revision as the next version of the same repository document |
+| A file moves between chosen folders | Updates where Coverbase says it lives. The document stays the same |
+| A file moves out of the chosen folders | Archives the document and logs **Moved out of the synced folders** |
+| A file is moved to trash or deleted | Archives the document and logs why |
+| A file is no longer shared with the connected account | Archives the document and logs **No longer shared** |
+| A file comes back (restored, moved back, shared again) | Restores the archived document, and files a new version if the file changed |
+| The connected account loses access to a whole chosen folder | Stops reading that folder, marks it **No access**, and keeps its documents. You decide what happens next |
+
+Archiving in the repository is not deletion. An archived document leaves every list but keeps all its versions and history, and you can restore it from the document page.
+
+## What it imports, and what it skips
+
+Coverbase opens these file types:
+
+- PDF
+- Word (`.docx` and `.doc`)
+- Google Docs, exported as PDF
+
+Everything else in a chosen folder is listed on the **Files** tab with the reason it was not opened, and its contents are never downloaded:
+
+| Shown as | Why |
+| --- | --- |
+| This file type is not imported | Spreadsheets, slides, images, video and other formats |
+| Larger than 50 MB | The file is over the size limit |
+| The owner turned off downloading | The file's owner switched on **Disable options to download, print and copy**. Coverbase respects that |
+| Encrypted with client-side encryption | Google Workspace client-side encrypted files cannot be read by an app |
+| Shortcuts are not followed | A shortcut can point anywhere in Drive, including outside your chosen folders |
+
+A file Coverbase downloads goes through the same reading as forwarded mail: it is classified, and anything that is not an agreement (a board deck, a memo) is listed as **Not a contract**. Coverbase does not keep the bytes of a file it decided is not a contract.
+
+## Before you start
+
+You need:
+
+- A Coverbase admin with permission to manage integrations. The Integration Hub and the Contracts Repository are both optional modules your Coverbase representative turns on.
+- A Google account that can open the folders you want to import. A shared service mailbox, such as `legal@yourcompany.com`, is a good choice, because the connection keeps working when people change roles.
+- If your organization uses Google Workspace and restricts third-party apps, a Workspace admin may need to allow Coverbase under **Admin console → Security → Access and data control → API controls → App access control**.
+
+## Step 1: Connect Google Drive
+
+1. In Coverbase, open **Configuration → External Integrations → Integration Hub**.
+2. Choose **Document storage**, then **Google Drive**.
+3. Click **Connect Google Drive** and sign in with the Google account from the previous section.
+4. Google asks you to allow Coverbase to see and download your Drive files. Allow it.
+
+<Note>
+  Google's consent screen describes the permission in full: see and download all your Google Drive files. That is the narrowest permission Google offers that can keep a folder in sync. A narrower one only covers files you pick one at a time, which would miss every contract added to a folder later. Coverbase enforces the folder limit itself, as described in [Security](#security).
+</Note>
+
+When Google sends you back, the folder picker opens.
+
+## Step 2: Choose folders
+
+The picker shows three places to browse: **My Drive**, **Shared drives** and **Shared with me**. You can also search for a folder by name.
+
+1. Click a folder's name to open it. Tick the box beside a folder to choose it. You can choose a whole shared drive.
+2. Each chosen folder appears on the right with an **Include subfolders** switch:
+   - **On** (the default): every folder inside it is imported, including folders someone adds later.
+   - **Off**: only files directly in that folder are imported.
+3. A folder inside one you already chose (with subfolders on) shows **Included with** and the parent's name. You do not need to choose it again.
+4. Click **Import from N folders**.
+
+The import starts straight away. The **Folders** tab shows each folder as **Importing** until its files are filed, then **Up to date**.
+
+To change the scope later:
+
+- **Add folders** opens the picker again.
+- In a folder's menu, **Include subfolders** or **Exclude subfolders** changes the subfolder rule. Excluding stops syncing files in subfolders immediately, and keeps the documents already imported from them.
+- **Stop syncing** removes the folder from the scope. See [Stopping a folder](#stopping-a-folder).
+
+## Step 3: Check what came in
+
+The **Files** tab lists every file Coverbase saw in your folders and what happened to it: **Imported**, **Importing**, **Skipped**, **Failed** or **Removed**. For an imported file, **Filed as** links to the repository document, and shows the vendor when the counterparty clearly matches one of your vendors. Click a file name to open it in Google Drive.
+
+Imported documents are filed under your repository's folder scheme like any other, and appear in **Contracts → Repository**. Where the counterparty matches an existing vendor confidently, the document is linked to that vendor. Coverbase never creates a vendor from a file.
+
+## When it syncs
+
+- Coverbase checks Google Drive for changes every 15 minutes.
+- Once a day, and whenever you change the folder scope, it walks the chosen folders in full, which catches anything the change feed missed.
+- **Sync now** checks immediately.
+- The **Sync Log** tab lists every run and what it did to each file.
+
+Running the same change twice does nothing: a file is downloaded again only when its contents change.
+
+## Stopping a folder
+
+**Stop syncing** in a folder's menu ends access to that folder at once. New and changed files in it are no longer read.
+
+The documents already imported from it stay in the repository unless you tick **Archive the documents imported from it**, in which case they are archived (not deleted) and can be restored.
+
+## Disconnecting
+
+**Disconnect** in the page's **⋮** menu revokes Coverbase's access at Google, deletes the stored credential and removes the folder list and file log. Imported documents stay in the Contracts Repository. To remove them, archive them there.
+
+## Reconnecting
+
+If Google stops accepting Coverbase's access (the account's password changed, an admin revoked the app, or the account was suspended), the page shows **Google Drive access was revoked** and syncing stops. Click **Reconnect** and sign in again. Your folders are kept and a sync starts immediately.
+
+You can also use **Authentication → Reconnect** to switch to a different Google account. Folders the new account cannot open are marked **No access**.
+
+## Security
+
+- **Folder scope is enforced on every file.** Before Coverbase opens a file, it checks that one of the file's parent folders is a chosen folder (or, with subfolders on, an ancestor is). Files elsewhere in the Drive are not listed, downloaded or recorded.
+- **Read-only.** Coverbase requests read-only access and never writes to Google Drive.
+- **The credential stays server-side.** Google's refresh token is stored encrypted in AWS Secrets Manager, scoped to your organization. It is never shown in the product or returned by the API.
+- **Owner restrictions are respected.** Files whose owner turned off downloading are not downloaded.
+- **Not every file is a contract.** Downloaded files are classified before filing. A file that is not an agreement is not filed, and its stored copy is deleted.
+- **Everything is logged.** Connecting, reconnecting, choosing or removing a folder, changing a subfolder rule, retrying files and disconnecting are recorded in your organization's audit trail with who did it.
+
+## Troubleshooting
+
+| What you see | What to do |
+| --- | --- |
+| **Connect Google Drive** is greyed out and the page says Google sign-in isn't set up | Contact your Coverbase representative. The Google sign-in is not configured for your environment |
+| Google shows "This app is blocked" or "Access blocked" | Your Workspace admin restricts third-party apps. Ask them to allow Coverbase in **App access control** |
+| **Google Drive access wasn't granted** after signing in | You unticked the Drive permission on Google's consent screen. Connect again and leave it ticked |
+| A folder shows **No access** | The connected account can no longer open it. Ask the folder's owner to share it again, or stop syncing it |
+| A file is **Failed** with "Google Drive didn't send the file" | Usually a temporary Google error. Click **Retry**, or **Retry N failed** for all of them |
+| A file is **Failed** with "Coverbase couldn't read the file" | The file may be damaged or password protected. Open it in Google Drive to check, then retry |
+| A contract you expected is missing | Check the **Files** tab with the search box. If it is not listed, it is outside your chosen folders, or in a subfolder of a folder with subfolders off |
+| A file is listed as **Not a contract** but is one | Upload it to the repository directly. The classifier sometimes misreads scanned files with no text |
