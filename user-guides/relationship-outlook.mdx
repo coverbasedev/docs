@@ -1,0 +1,123 @@
+---
+title: "Relationship outlook"
+description: "Read a vendor's relationship outlook (Stable, Watch, Elevated, Critical or Insufficient data), the confidence and trend beside it, the factors behind it, and what it means for the next assessment. Set how outside-in ratings move it and which plan each outlook maps to."
+icon: "gauge"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers **Radar → Outlook**, the **Relationship outlook** card on a vendor's overview, the **Monitoring record** view on a vendor's **Radar** tab, and **Configuration → Assessment Settings → Reassessments → Monitoring**. It sits beside [Working Radar signals](/user-guides/radar-signals).
+</Info>
+
+<Note>
+  Your Coverbase representative turns on monitoring records for your organization.
+</Note>
+
+Each vendor with a completed assessment has a monitoring record: everything monitoring observed between that assessment and the next. Coverbase reads the whole record and resolves it to a **relationship outlook**, a tiered view of the relationship that changes as the evidence does. It does not turn a security rating into an incident probability. Every outlook names the factors behind it, so you can see why it reads the way it does and what to test next.
+
+The mistake people make most often is reading Stable as clean. Check the confidence beside it first: a Stable outlook at Low confidence rests on thin evidence and earns no scope credit.
+
+## The five outlooks
+
+| Outlook | When |
+| --- | --- |
+| **Stable** | Monitoring covered enough of the window, nothing material is adverse, and the evidence matches the vendor's baseline. |
+| **Watch** | One or more developing, isolated or uncertain conditions warrant closer attention but do not show material deterioration. |
+| **Elevated** | Persistent deterioration, two or more corroborating signals, or a material unresolved condition. |
+| **Critical** | A confirmed threat, a critical event or incident, or a severe unresolved condition such as a critical finding past due. |
+| **Insufficient data** | Monitoring covered too little of the window to rate the relationship, and nothing on the record is adverse. |
+
+Adverse evidence outranks thin coverage: a disclosed incident on a vendor you barely monitored still reads Critical, not Insufficient data.
+
+The outlook is computed by rule from the record, never by a model, each time the record syncs: when a signal, finding or vendor change arrives, and every night.
+
+## Confidence and trend
+
+Two qualifiers sit beside the outlook and never change it.
+
+- **Confidence** (High, Moderate or Low) says how much weight the outlook can bear. It starts from how much of the window monitoring covered, then drops a step when no outside-in rating is reporting, when the external scan's own coverage is thin, or when the window has been open less than 30 days.
+- **Trend** (Improving, Unchanged or Worsening) compares the outlook with 30 days ago. When the tier has not moved, a rating that fell or rose past its Watch threshold in the last 30 days, or a new adverse event, sets the direction.
+
+A vendor's card might read **Stable · High confidence · Unchanged**, with the sentence "97% monitoring coverage, no material adverse events, no high-severity open findings, and a stable external security posture."
+
+## What moves the outlook
+
+| Evidence | How it counts |
+| --- | --- |
+| Radar alerts, cases and manual events | A critical event or a confirmed threat reads Critical. A Radar case or a disclosed high-severity incident reads Elevated. A high-severity alert reads Watch, and Elevated once it has stayed unresolved for 30 days. Anything smaller reads Watch. A waived entry never counts. |
+| Findings | Weighed by severity, age, recurrence, remediation and relevance, not counted. A critical finding past due reads Critical. A high finding past due, or a medium one past due in privileged access or vulnerability management, reads Elevated. An open high finding not yet due reads Watch, as do findings that recur in the same risk domain. Low findings remediated on schedule do not move it. |
+| Outside-in ratings | Coverbase Security Posture and licensed ratings such as Bitsight. A fall past the Watch threshold reads Watch; a fall past the Elevated threshold that holds for 30 days reads Elevated. A thin or mostly indirect scan never raises the outlook past Watch. A ransomware-exploited vulnerability on the vendor's estate reads Elevated. |
+| Corroboration | Two independent signal families (Radar, findings, external posture) adverse at once read Elevated. |
+| Persistence | A Watch that holds for 60 days reads Elevated. |
+| Screening, financial health, Zero Touch and relationship changes | A confirmed screening match reads Elevated; the others read Watch. |
+
+The vendor also gets credit. **In the vendor's favor** lists sufficient coverage, a stable or improving rating, no material incidents, few open findings and none material, findings closed on time, no change to the service or data access, and how long the outlook has held Stable.
+
+## When outside-in ratings do not apply
+
+An outside-in rating describes the vendor's observable estate. When your organization runs the infrastructure behind the service, or the rated estate is not what your relationship depends on, turn off **External posture applies** on the vendor's monitoring record. The ratings stay on the record but stop moving the outlook, and the choice carries to the vendor's next record.
+
+## What it means for the next assessment
+
+| Outlook | Next assessment |
+| --- | --- |
+| Stable, held for the credit period | Targeted reassessment |
+| Stable, not yet held long enough | Standard assessment |
+| Watch | Standard assessment with limited testing around the developing condition |
+| Elevated | Expanded testing in the areas driving the outlook |
+| Critical | Immediate review and an out-of-cycle assessment |
+| Insufficient data | No monitoring credit: the standard assessment runs |
+
+A Stable outlook earns scope credit only after it has held for the credit period (90 days by default), with confidence above Low, coverage at the policy minimum, and no material or overdue open findings.
+
+When an outlook turns **Critical**, Coverbase raises a scoping task for the vendor that day, due in two days, and the button on the record reads **Start out-of-cycle assessment**. Creating the assessment from the record cites it: the outlook, its confidence and trend, the scope and the factors are stored on the assessment, so the reasoning survives after the record moves on.
+
+## The portfolio view
+
+**Radar → Outlook** shows every open relationship by outlook: how many sit in each tier now and how that changed over 30 days, which relationships changed outlook and why, how the next assessments will be scoped, and a list you can filter by tier, sorted most concerning first. Select a tier to filter the list.
+
+To chart outlooks on a dashboard, slice a monitoring record chart by **Outlook**, **Outlook Confidence** or **Outlook Trend**.
+
+## Set it up
+
+Under **Configuration → Assessment Settings → Reassessments → Monitoring**:
+
+1. Under **What Counts Toward the Outlook**, choose which sources count and their severity floors.
+2. Under **Coverage**, set the minimum monitored share for a reliable outlook (80% by default).
+3. Under **External Security Posture**, set for each rating the fall that reads Watch and the fall that reads Elevated, in the rating's own units, or turn a rating off.
+4. Under **Assessment Scope by Outlook**, choose the plan, and whether to launch a Zero Touch run, for each outlook, and set **Days Stable before scope credit**.
+5. Keep **Hold automatic creation unless the outlook is Stable** on to make the scheduled job wait for someone to scope every other outlook.
+
+To be told when an outlook changes, keep the **Relationship outlook changed** notification on. It goes to the vendor's risk analysts. The **Relationship outlook turned Elevated or Critical** workflow template raises a review task the day it happens.
+
+## Troubleshooting
+
+| What you see | What is happening |
+| --- | --- |
+| The outlook reads **Pending**. | The record has not synced since monitoring records were turned on. The nightly sweep computes it for every open record, or a new signal, finding or vendor change does it sooner. |
+| The outlook reads **Insufficient data** for a vendor you know well. | Monitoring covered less of the window than the policy minimum under **Coverage**, and nothing on the record is adverse. Check which sources watch the vendor. |
+| The outlook is Stable but the next assessment is a standard one. | Scope credit needs the outlook to hold Stable for the credit period, confidence above Low, coverage at the minimum, and no material or overdue open findings. The factors and confidence reasons on the record show which one is not met. |
+| A rating fell and the outlook did not move. | The fall is smaller than the rating's Watch threshold, the rating is turned off under **External Security Posture**, or **External posture applies** is off on the vendor's record. |
+| A large fall in Coverbase Security Posture reads only Watch. | The scan's own coverage is thin or mostly indirect, so it cannot raise the outlook past Watch. |
+| The button on the record reads **Start out-of-cycle assessment**. | The outlook is Critical. Coverbase has also raised a scoping task for the vendor, due in two days. |
+| A vendor has no **Relationship outlook** card. | The vendor has no completed assessment yet, so there is no window to monitor, or monitoring records are not turned on for your organization. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Working Radar signals" icon="satellite-dish" href="/user-guides/radar-signals">
+    Triaging the signals that become entries on a monitoring record.
+  </Card>
+  <Card title="Security intelligence guide" icon="shield-halved" href="/user-guides/security-intelligence">
+    The outside-in Coverbase Security Posture rating, factor by factor.
+  </Card>
+  <Card title="Confirm inherent risk before a reassessment" icon="user-check" href="/user-guides/reassessment-irq-review">
+    What happens when the reassessment the outlook scoped comes due.
+  </Card>
+  <Card title="Workflow templates" icon="wand-magic-sparkles" href="/user-guides/workflow-templates">
+    Raising a review task when an outlook turns Elevated or Critical.
+  </Card>
+</CardGroup>

@@ -24,7 +24,8 @@ Coverbase reads only the folders you choose. It never scans the whole Drive, nev
 | A file is moved to trash or deleted | Archives the document and logs why |
 | A file is no longer shared with the connected account | Archives the document and logs **No longer shared** |
 | A file comes back (restored, moved back, shared again) | Restores the archived document, and files a new version if the file changed |
-| The connected account loses access to a whole chosen folder | Stops reading that folder, marks it **No access**, and keeps its documents. You decide what happens next |
+| The connected account loses access to a whole chosen folder | Stops reading that folder, marks it **No access**, and keeps its documents and file log as they were. You decide what happens next |
+| A file in a chosen folder has the same contents as a contract you emailed or uploaded | Files it as its own document. Removing the Drive copy later never archives the one you sent in |
 
 Archiving in the repository is not deletion. An archived document leaves every list but keeps all its versions and history, and you can restore it from the document page.
 
@@ -92,7 +93,7 @@ To change the scope later:
 
 The **Files** tab lists every file Coverbase saw in your folders and what happened to it: **Imported**, **Importing**, **Skipped**, **Failed** or **Removed**. For an imported file, **Filed as** links to the repository document, and shows the vendor when the counterparty clearly matches one of your vendors. Click a file name to open it in Google Drive.
 
-Imported documents are filed under your repository's folder scheme like any other, and appear in **Contracts → Repository**. Where the counterparty matches an existing vendor confidently, the document is linked to that vendor. Coverbase never creates a vendor from a file.
+Imported documents are filed under your repository's folder scheme like any other, and appear in **Contracts → Repository**. Where the counterparty matches an existing vendor confidently, the document is linked to that vendor, and to the vendor's engagement when it has exactly one. With several, Coverbase leaves the engagement unset rather than guess. Coverbase never creates a vendor from a file. The document page shows the vendor, the engagement and the Google Drive file it came from, with **Open in Google Drive**.
 
 ## When it syncs
 
@@ -101,17 +102,19 @@ Imported documents are filed under your repository's folder scheme like any othe
 - **Sync now** checks immediately.
 - The **Sync Log** tab lists every run and what it did to each file.
 
-Running the same change twice does nothing: a file is downloaded again only when its contents change.
+Running the same change twice does nothing: a file is downloaded again only when its contents change. A file skipped because its owner turned off downloading comes back on its own once downloading is allowed again.
 
 ## Stopping a folder
 
 **Stop syncing** in a folder's menu ends access to that folder at once. New and changed files in it are no longer read.
 
-The documents already imported from it stay in the repository unless you tick **Archive the documents imported from it**, in which case they are archived (not deleted) and can be restored.
+The documents already imported from it stay in the repository unless you tick **Archive the documents imported from it**, in which case they are archived (not deleted) and can be restored. That includes a file whose latest edit was still importing when you stopped the folder.
 
 ## Disconnecting
 
 **Disconnect** in the page's **⋮** menu revokes Coverbase's access at Google, deletes the stored credential and removes the folder list and file log. Imported documents stay in the Contracts Repository. To remove them, archive them there.
+
+If Google doesn't confirm that it revoked the access, nothing is disconnected and the page asks you to try again, so Coverbase never drops the credential while Google still honors it.
 
 ## Reconnecting
 
@@ -136,7 +139,7 @@ You can also use **Authentication → Reconnect** to switch to a different Googl
 | Google shows "This app is blocked" or "Access blocked" | Your Workspace admin restricts third-party apps. Ask them to allow Coverbase in **App access control** |
 | **Google Drive access wasn't granted** after signing in | You unticked the Drive permission on Google's consent screen. Connect again and leave it ticked |
 | A folder shows **No access** | The connected account can no longer open it. Ask the folder's owner to share it again, or stop syncing it |
-| A file is **Failed** with "Google Drive didn't send the file" | Usually a temporary Google error. Click **Retry**, or **Retry N failed** for all of them |
+| A file is **Failed** with "Google Drive didn't send the file" | Usually a temporary Google error. Click **Retry**, or **Retry N failed** for all of them. Retry is hidden while syncing is paused: resume first |
 | A file is **Failed** with "Coverbase couldn't read the file" | The file may be damaged or password protected. Open it in Google Drive to check, then retry |
 | A contract you expected is missing | Check the **Files** tab with the search box. If it is not listed, it is outside your chosen folders, or in a subfolder of a folder with subfolders off |
 | A file is listed as **Not a contract** but is one | Upload it to the repository directly. The classifier sometimes misreads scanned files with no text |
