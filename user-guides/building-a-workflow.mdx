@@ -146,6 +146,8 @@ Conditions are optional. Click the **+** next to **If** to add one. Each conditi
 
 **Filter** is the one you will use most. It opens the same **Add filter** menu as the list pages, so any field you can filter a list by, including custom fields, is a field a workflow can branch on. The field names and operators are documented in the [field reference](/fields/overview).
 
+On an assessment, a condition on a risk domain's review status also matches a review nobody has started yet, as long as the domain is in scope and someone would review it, including a reviewer the Reviewer Matrix assigns. **Risk Domains in Scope** matches every domain the assessment's control sets cover, scored or not. See [Domain reviews in workflow conditions](/user-guides/reviews-and-approvals#domain-reviews-in-workflow-conditions).
+
 **Opened by this workflow** makes an automation act only on a review or task that an earlier step of the same workflow created. One opened by hand, or by another workflow, with the same name is ignored. The chained [workflow templates](/user-guides/workflow-templates#how-a-chain-moves) rely on it.
 
 **Changed by** makes an automation act only when the change that fired its trigger was made by one of the sources you pick: **A person**, **An automation**, **Coverbase AI** or **Coverbase (system)**. A change whose maker is unknown is ignored. A new **Changed by** condition starts with every source except **A person**, and you must keep at least one. Use it, for example, to send a notice only when Coverbase AI changed a record, or to stop an automation reacting to another automation's changes. The **Change** target reads the event, not a record, so it works with any trigger.
@@ -168,6 +170,7 @@ Click **Select action...**. Actions are grouped by the record they touch, and th
 | Service | Update, Update service status |
 | Engagement, Contract, Finding, Procurement, Review, Risk, Case, Intake session | Create, Update |
 | Assessment | Create, Update, Begin, Complete |
+| Attestation | Request relationship owner attestation (on an assessment; see [Requesting relationship owner attestation](#requesting-relationship-owner-attestation)) |
 | Documents | Link (attach documents already on the vendor, such as those a questionnaire respondent uploaded, to the triggering assessment or service) |
 | Intake | Begin, Finalize |
 | Radar signal | Update |
@@ -223,6 +226,29 @@ The most common action is **Create work queue item**: a task on a named person's
 | **Due date** or **Due in days** | Set one, not both. **Due in days** counts from when the automation runs. |
 
 Creating the item sends the assignee a **Work queue item assigned** email, which is on by default and can be turned off per person under [email notifications](/user-guides/email-notifications). Resolving the item raises a **Work Queue Item Completed** event, which is how a later automation waits for a human.
+
+## Requesting relationship owner attestation
+
+**Request relationship owner attestation** asks named approvers to acknowledge or dispute an assessment's results, one answer for each service the assessment covers. Use it for an approval your process names, such as a business approval from each relationship's General Partner. It runs only once the assessment is complete, so pair it with a trigger on an assessment completing. On an assessment that is not complete yet, the step is skipped.
+
+| Field | What it does |
+| --- | --- |
+| **Approval Name** | Required. Names the request, for example "Business approval". The approver's work queue item and their review page carry it. |
+| **Approvers** | One or more sources, added with **Add approver**: **Service relationship owners**, **Vendor relationship owners**, a person field on the service or on the vendor, or **Specific person or group**. |
+| **Statement** | What the approvers confirm. Leave it empty to use the statement in **Assessment Settings**. |
+| **Due In (Days)** | Optional, 1 to 365. Sets the due date on each approver's work queue item. |
+| **Reminders** | **None**, **Every day**, **Every 2 days** or **Every week**. |
+
+Each source is read for each service the assessment covers, so a General Partner field on the service names a different person for each relationship. For each service:
+
+- Everyone a source names is asked for that service, and answers separately. Their role is shown beside their answer: the field's name, such as General Partner, or **Relationship owner**.
+- A source that names nobody for that service is skipped for that service only.
+- If no source names anybody for a service, its relationship owners are asked instead, as completing an assessment would ask them.
+- Someone already waiting to answer for that service is not asked again.
+
+Each person gets one work queue item covering all their services, titled with the approval name. The assessment's activity records who was asked for each service, which sources were skipped, and where the relationship owners were asked instead. The form will not save without an approval name ("Name the approval.") or with an approver left blank ("Pick a person, group or field for each approver.").
+
+To ask only through workflows, and not every time an assessment completes, turn off **Ask When an Assessment Completes** under **Assessment Settings**. See [Relationship owner attestations](/user-guides/running-an-assessment#relationship-owner-attestations).
 
 ## Testing and enabling
 
@@ -293,26 +319,15 @@ There is no retry button on a run. To run the automation again, cause its trigge
 
 ## Working the work queue
 
-A work queue item lands in two places. The assignee sees it in the **Work queue** button in the top bar, which shows a count and lists **My Work Queue**. Selecting an item opens a panel with the title, description, instructions and a **Mark as resolved** button, with **Back** and **Next** to move through the queue, and **Go to item** when you are on another page. Resolving it stamps the time and the person, and fires the **Work Queue Item Completed** event that a waiting automation listens for.
+A work queue item lands on its assignee's queue: the **Work queue** button in the top bar, the **Overview** page, and the **Work Queue Items** page that **See All** opens. Resolving it stamps the time and the person, and fires the **Work Queue Item Completed** event that a waiting automation listens for.
 
-Administrators also get **See All**, which opens the **Work Queue Items** page for the whole workspace. Its **Items** tab is a table with a **Filter** menu, search, and four views: **All**, **Open**, **Waiting on vendor** and **Resolved**. **Waiting on vendor** holds pending items whose assessment has a follow-up round out with the vendor; they return to **Open** when the vendor answers. On **Open** and **Waiting on vendor**, **Resolve all** resolves every item in the view, with an undo. The **Activity** tab is the change log across every item.
+Expand an item's row on the **Work Queue Items** page to read its instructions and, for an item a workflow raised, the conditions that created it. Cancel an item that is no longer needed rather than resolving it, so nobody is credited with work they did not do; a canceled item cannot be reopened.
 
 <Frame caption="Work Queue Items. Expanding a row shows the instructions and the conditions that created it.">
   <img src="/images/user-guides/building-a-workflow-work-queue.png" alt="The Coverbase Work Queue Items page with one row expanded to show its instructions and the conditions that raised it" />
 </Frame>
 
-| Column | What it shows |
-| --- | --- |
-| **Vendor** | The vendor the item is tied to. |
-| **Title**, **Description** | What the automation wrote, with placeholders filled in. |
-| **Status** | **Pending**, **Resolved** or **Canceled**. |
-| **Assignee** | The person whose queue it sits on. |
-| **Due Date** | The due date the automation set, as a badge. |
-| **Completed At**, **Created** | When it was closed and when it was raised. |
-
-Click a row to expand it. The panel shows the **Instructions** and, for an item a workflow raised, "Work queue item created as a result of the following conditions being met" with the conditions listed. The row's menu offers **Mark as resolved**, **Reopen** (on a resolved item), **Mark as canceled** and **Archive**. Cancel an item that is no longer needed rather than resolving it, so nobody is credited with work they did not do; a canceled item cannot be reopened.
-
-Reassignment and routing to a group instead of a person are covered in [Assignment, delegation and out of office](/user-guides/assignment-and-delegation).
+The page's scopes and sections, what each row shows, the row menu, exporting to Excel or CSV, and the **Requests** tab are in [Work queue](/user-guides/work-queue). Reassignment and routing to a group instead of a person are covered in [Assignment, delegation and out of office](/user-guides/assignment-and-delegation).
 
 ## Who can do what
 
@@ -321,8 +336,8 @@ Reassignment and routing to a group instead of a person are covered in [Assignme
 | See the workflows list, the editor and the runs pages | Anyone with read access to workflows |
 | Create a workflow, apply a template, edit automations, switch **Enabled** on or off | A role with the workflow create and update permissions |
 | Delete (archive) a workflow | A role with the workflow archive permission |
-| Resolve or reopen a work queue item | Its assignee, or an administrator |
-| Cancel or archive a work queue item, open the **Work Queue Items** page | Administrators |
+| Resolve, reopen or cancel a work queue item | Its assignee, or an administrator |
+| Archive a work queue item, see everyone's items | Administrators |
 
 How roles are assigned is in [Permissions and roles](/user-guides/permissions-and-roles). A template only appears in the library when your role can read the records its trigger uses; the rule is spelled out in [Workflow templates](/user-guides/workflow-templates#which-modules-a-template-needs).
 
@@ -363,6 +378,9 @@ An API key cannot archive a workflow. A signed-in user does that in the dashboar
   </Card>
   <Card title="Reviews, approvals and gates" icon="gavel" href="/user-guides/reviews-and-approvals">
     Using the Items complete condition to build all-of, any-of and sequential approvals.
+  </Card>
+  <Card title="Work queue" icon="list-check" href="/user-guides/work-queue">
+    Working your items, exporting the queue, and following up requests from the Requests tab.
   </Card>
   <Card title="Assignment and delegation" icon="user-clock" href="/user-guides/assignment-and-delegation">
     Routing work to a group instead of a person, and reassigning what is already queued.
