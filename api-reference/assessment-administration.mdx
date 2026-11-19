@@ -62,6 +62,8 @@ All endpoints are org-scoped to the API key. See [API conventions](/conventions)
 | `GET` | `/v1/slas/{sla_id}` | `vendor:read:org` |
 | `PATCH` | `/v1/slas/{sla_id}` | `vendor:update:org` |
 | `GET` | `/v1/slas/{sla_id}/measurements` | `vendor:read:org` |
+| `GET` | `/v1/slas/{sla_id}/readings` | `vendor:read:org` |
+| `POST` | `/v1/slas/{sla_id}/readings` | `vendor:update:org` |
 | `GET` | `/v1/scales` | `assessment:read:org` |
 | `GET` | `/v1/scales/{scale_id}` | `assessment:read:org` |
 | `POST` | `/v1/scales` | `org_settings:update:org` |
@@ -424,6 +426,10 @@ To track an SLA on a vendor, send `POST /v1/slas` with `vendor_id` and `name`. T
 `PATCH /v1/slas/{sla_id}` changes the same fields. An omitted field keeps its value, and an explicit `null` clears a clearable field. An API key cannot set `is_archived`.
 
 `GET /v1/slas` lists service level agreements tracked on vendors. Filter with `vendor_id`, `service_id` or `status` (`on_track`, `at_risk`, `breached`, `met`), and set `include_archived=true` to include archived ones. `GET /v1/slas/{sla_id}` returns one SLA, and `GET /v1/slas/{sla_id}/measurements` returns the measurement periods of a status-page SLA, newest first.
+
+To record a value on a manually measured SLA, send `POST /v1/slas/{sla_id}/readings` with `value` and `measured_at` (the date the value covers, as a Unix timestamp). The body also accepts `status` and `note`. The newest value by `measured_at` becomes the SLA's `current_value`, and the SLA takes the `status` you send. When the SLA has a `due_date` and a `frequency` Coverbase understands (`frequency_recognized` is `true` on the SLA), the due date moves forward one period. An older value is added to the history without changing the SLA. Returns `201 Created`. An empty value returns `422`, and a status-page SLA returns `400` with `invalid_sla_reading`.
+
+`GET /v1/slas/{sla_id}/readings` returns every recorded value, newest first. Each one keeps the `target`, `unit` and `status` the SLA had when it was recorded, and `recorded_by` is null for a value entered before history was kept. Changing `current_value` with `PATCH /v1/slas/{sla_id}` also adds a value to the history.
 
 ## Scales
 
