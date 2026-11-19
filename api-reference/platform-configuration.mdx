@@ -811,7 +811,7 @@ These routes act for the signed-in person. You only ever read or change your own
 
 `GET /v1/notifications` lists your in-app notifications, with optional `statuses`, `offset` and `limit`. `POST /v1/notifications/mark-seen` marks the `notification_ids` you send as seen. An ID that is not yours returns `404` with the code `notification_not_found`.
 
-`GET /v1/saved-views` lists your saved views of one list, named by `object_type`, and the views shared with your organization. `POST /v1/saved-views` saves a filter, sort and search as a view you own and returns `201 Created`. `PATCH /v1/saved-views/{saved_view_id}` changes one. Only an admin changes a shared view or your organization's default view; anyone else gets `403` with the code `saved_view_not_editable`.
+`GET /v1/saved-views` lists your saved views of one list, named by `object_type`, the views shared with your organization, and the views shared with a user group you belong to. `POST /v1/saved-views` saves a filter, sort and search as a view you own and returns `201 Created`. A view's `scope` is `personal`, `shared` (your organization) or `groups`, which needs `group_ids` naming one to 20 user groups; any other scope takes none. `PATCH /v1/saved-views/{saved_view_id}` changes one, and moving a view off `groups` drops its groups. You can change a view you created. An admin can also change anyone's shared or group view, and only an admin changes your organization's default view, which must stay `shared`. Anyone else gets `403` with the code `saved_view_not_editable`.
 
 ## Email layouts
 
