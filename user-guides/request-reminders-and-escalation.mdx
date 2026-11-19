@@ -1,0 +1,126 @@
+---
+title: "Request reminders and escalation"
+description: "Set the reminders a request sends to the people answering it, escalate a request that is still not submitted to someone who can chase it, write the Escalation version of the reminder email, and send a reminder by hand."
+icon: "bell"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It covers the **Reminders** card in the portal template editor under **Configuration → Portal Templates**, the **Schedule** tab of one request, the **Escalation** version of a reminder email template under **Configuration → Communications**, and **Send reminder now** on the work queue's **Requests** tab. Pausing and closing a request, which stop its reminders, are in [Centralized supplier portal](/user-guides/centralized-supplier-portal#pausing-rescheduling-or-closing-one-request). The emails themselves are listed in [Email and notifications](/user-guides/email-notifications).
+</Info>
+
+A request reminds the people it was sent to on a schedule you set. Escalation adds one more email, to someone else, when the request is still not submitted after a set number of days: a General Partner, the relationship owner, a risk analyst, or a team.
+
+The mistake people make most often is turning escalation on for requests that are already late. Escalation goes out on its exact day and is never sent afterwards, so a request already past that day is not escalated. Use **Send reminder now** for those.
+
+## Where the schedule lives
+
+- **On a portal template.** Open **Configuration → Portal Templates**, open a template, and find the **Reminders** card. Its schedule applies to requests created from the template.
+- **On one request.** Open the request's configuration drawer and go to the **Schedule** tab.
+
+A request copies its template's schedule when it is created. Changing the template never changes requests already sent, so change those on their own **Schedule** tab.
+
+## What a schedule sends
+
+Click **Add reminder** and pick a kind:
+
+| Kind | Sends |
+| --- | --- |
+| **Relative to due date** | One reminder a number of days before the due date, on it, or after it. |
+| **After invitation date** | One reminder a number of days after the invitation was sent. |
+| **Recurring** | A reminder every few days, counted from the invitation date. |
+| **Recurring after due date** | A reminder every few days once the request is past due. **Stop after** caps how many it sends; leave it empty for no limit. |
+
+**Reminder email template** picks the email the schedule sends. On inherent risk, assessment and Know-Your-Vendor schedules, each reminder can also have its own **Email for this reminder**. A schedule with no reminders says "No reminders configured. This portal will not send reminders."
+
+Reminders go only to requests that are sent, still open and not on hold. A submitted, paused or closed request gets none.
+
+<Note>
+  An inherent risk or Know-Your-Vendor request that was sent before November 19, 2026 and has no assessment behind it sends no scheduled reminders. **Send reminder now** and escalation still work for it.
+</Note>
+
+## Escalate a request nobody has submitted
+
+Escalation is on the schedules of inherent risk, assessment and Know-Your-Vendor requests. It is off until you turn it on.
+
+<Steps>
+  <Step title="Turn it on">
+    At the foot of the **Reminders** card, or of a request's **Schedule** tab, switch on **Escalation**: "Email someone else, once, when a request is still not submitted."
+  </Step>
+  <Step title="Pick the day">
+    Next to **If not submitted**, enter the number of days, then pick **days after it's sent** or **days after the due date**. A new escalation starts at 14 days after the request is sent.
+  </Step>
+  <Step title="Pick who gets it">
+    Next to **Email**, click **Add** and search people, groups or fields:
+
+    - **Service fields**: any person field on the service, such as a General Partner field, and the service's **Relationship owner**, which is usually the person answering the request.
+    - **Vendor fields**: any person field on the vendor, the vendor's **Relationship owner**, and its **Risk analyst**.
+    - **People** and **Groups**: named people, or every member of a user group.
+
+    A field is read on each request, so a General Partner field on the service reaches the partner for that relationship.
+  </Step>
+  <Step title="Decide on copies and the email">
+    **Also copy the person who sent the request** is on by default. **Email for the escalation** picks the reminder template whose **Escalation** version is sent. Leave it empty to use the schedule's own template, or the standard wording.
+  </Step>
+  <Step title="Save">
+    Save the template, or the request's schedule. With escalation on and nobody picked, saving stops with "Choose who gets the escalation."
+  </Step>
+</Steps>
+
+How it behaves:
+
+- **Once, on that day only.** The escalation goes out on the day you set and never later. A request already past that day when you turn escalation on is not escalated, and a missed day is not made up.
+- **Once per request.** A request escalates at most once.
+- **Someone always gets it.** If a field is empty on a request, or a group has nobody in it, the person who sent the request gets the escalation instead.
+- **Only for requests still waiting.** A request that is submitted, closed or on hold is not escalated.
+- **Recorded on the request.** The request's activity records the escalation, and the **Due** column on the work queue's [Requests tab](/user-guides/work-queue#the-requests-tab) shows **Escalated** with the date.
+
+## Write the Escalation version of the reminder email
+
+Reminder email templates (**Inherent risk questionnaire reminders**, **Assessment reminders** and **Onboarding reminders**) have one version per situation, chosen under **Version to Edit**. **Escalation** is the last one, with the hint "Only sent when escalation is on in the reminder schedule." It has its own subject and message.
+
+Open the template from the **Templates** list on **Configuration → Communications**, pick **Escalation** under **Version to Edit**, and write to the person you are escalating to rather than to the respondent. Three variables are filled only in this version:
+
+| Variable | Fills in |
+| --- | --- |
+| **Days Since Sent** (`{{reminder::days_since_sent}}`) | Whole days since the request was sent, in Eastern time. |
+| **Sent Date** (`{{reminder::sent_date}}`) | The day the request was sent, in Eastern time. |
+| **Respondent Names** (`{{reminder::respondent_names}}`) | The people the request was sent to. |
+
+A template saved before the **Escalation** version existed opens with the standard wording in it, and sends the standard wording until you save your own. The preview fills the variables with sample values.
+
+## Send a reminder now
+
+On the work queue's **Requests** tab, the row menu of a request offers **Send reminder now**. It sends the email the schedule would send, to the same people, straight away, and the request's activity records who sent it. You can send one per request per day. See [Send reminder now](/user-guides/work-queue#send-reminder-now).
+
+## Troubleshooting
+
+| What you see | What is happening |
+| --- | --- |
+| I changed the template's reminders and a request already sent did not change | A request keeps the schedule it was created with. Change it on the request's **Schedule** tab. |
+| There is no **Escalation** switch | The request type has none. Escalation is on inherent risk, assessment and Know-Your-Vendor schedules. |
+| An escalation never went out | The request was already past its escalation day when escalation was turned on, it was submitted, closed or on hold on that day, or it already escalated once. |
+| The escalation went to the sender, not the General Partner | The General Partner field was empty on that request. Fill in the field on the service or vendor. |
+| The escalation used the standard wording | The template has no **Escalation** version saved, or **Email for the escalation** is empty and the schedule has no template. |
+| An inherent risk request gets no reminders | It was sent before November 19, 2026. Use **Send reminder now**, or rely on escalation. |
+| Reminders stopped | The request was submitted, paused or closed. See [Pausing, rescheduling or closing one request](/user-guides/centralized-supplier-portal#pausing-rescheduling-or-closing-one-request). |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Work queue" icon="list-check" href="/user-guides/work-queue">
+    The Requests tab, where you see every request you sent and when it escalated.
+  </Card>
+  <Card title="Centralized supplier portal" icon="door-open" href="/user-guides/centralized-supplier-portal">
+    Pausing, rescheduling and closing a request, which stop its reminders.
+  </Card>
+  <Card title="Email and notifications" icon="envelope" href="/user-guides/email-notifications">
+    Every email Coverbase sends, and conditional sections in your email templates.
+  </Card>
+  <Card title="Data model configuration" icon="sliders" href="/user-guides/data-model-configuration">
+    Adding the person fields, such as a General Partner field, that an escalation can read.
+  </Card>
+</CardGroup>
