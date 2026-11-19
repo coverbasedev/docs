@@ -233,6 +233,19 @@ When a questionnaire is sent, the submission reviewer is seeded automatically. I
 
 A derived questionnaire inherits its reviewers from the control set. The dialog reads **View Reviewers** and shows them read-only with **Go to Control Set**.
 
+### Review due date and reminders
+
+The same dialog sets when a submission's review is due and how often its reviewer is reminded. Both apply to the reviewer's work queue item, and both start empty.
+
+| Setting | What it does |
+| --- | --- |
+| **Review due** | The number of days after submission the review is due, from 1 to 365. Empty means the review has no due date. |
+| **Reminders** | **Don't send reminders**, **Every day**, **Every 2 days** or **Every week**. Reminders go to the reviewer while the review is their turn, and pause while it waits on the vendor. |
+
+Click **Save Changes**. A derived questionnaire takes its own review due date and reminders here, even though its reviewers come from the control set. Reviews already waiting pick up a new setting within the hour. Clearing a setting stops new reviews getting a due date or reminders, but a review already open keeps the ones it has.
+
+A portal template set to **One review for the whole portal** gives its reviewer one task for every questionnaire in the request. That task takes its reviewer, due date and reminders from the inherent risk questionnaire, or from the first questionnaire created when the request has no inherent risk questionnaire. If that questionnaire sets no **Review due** or **Reminders**, the task uses the longest that any questionnaire in the request sets.
+
 ## Sending a questionnaire
 
 A questionnaire reaches a vendor through a portal: a branded page with a due date, your message, and the questionnaire as a required item. Which button you use depends on the type.
@@ -256,6 +269,12 @@ Sending needs the `portal:create` permission. The vendor receives the portal inv
 The portal shows your message, the due date, and a list of required items on the left. Each question shows its title and instructions, a red marker with the tooltip **Required** where you set it, a comment box labeled **Comments (Optional)** or **Comments (Required)**, and a **Supporting Documents** picker where attachments are allowed. Sections and questions hidden by conditional logic do not appear. Internal-only questions do not appear. Answers are **Auto-saved** as the vendor types.
 
 The **Submit** button stays disabled until every required question is answered. Below it, **Complete all required questions to submit** scrolls to the first unanswered required question and marks each unanswered one **This question is required.** Hover the progress ring beside a questionnaire to see how many required questions are answered. Optional questions left blank do not block submission. After submitting, the vendor sees **Thank you** and the portal is closed to them; a vendor who returns later sees **This portal is closed**.
+
+### When your own team answers
+
+Some requests are answered by your own people about the vendor: a request from an inherent risk template with **Answered by your own team** turned on, or an inherent risk questionnaire sent to the relationship owners. A colleague who opens one while signed in to Coverbase sees **Coverbase** as the first crumb at the top of the page, which takes them back to the dashboard.
+
+Once they submit, a **Submitted for review** card at the top of the page says who will review their answers and that they will get an email if anything needs a change. It shows how many questionnaires they sent and when, and **Back to Coverbase** takes them home. When every questionnaire is approved, the card reads **Approved**. A supplier answering a request never sees the card.
 
 ## Reading the submissions list
 
@@ -289,7 +308,7 @@ Open a template and its **Submissions** tab lists every send. The tab is the def
 
 ## Reviewing a submission
 
-Click a row to open it. The header carries the **Assign reviewer** picker, the **Accept** and **Deny** buttons while the status is **Ready for review**, and an actions menu. On an intake request, **Request Clarification** sits beside them and emails the requester with a subject of **Clarification for Intake Request**. The tabs are **Summary**, **Review Questionnaire**, **Documents**, **Vendor Intelligence** and **Activity**, and the first two do the work.
+Click a row to open it. The header carries the **Assign reviewer** picker, the **Accept** and **Deny** buttons while the status is **Ready for review**, and an actions menu. Under the vendor's name it lists the services the submission covers, up to two with a count for the rest. Hover a service to see its description, relationship owners and inherent risk, which reads **Not rated yet. This review sets it.** on a service with no score yet. On an intake request, **Request Clarification** sits beside them and emails the requester with a subject of **Clarification for Intake Request**. The tabs are **Summary**, **Review Questionnaire**, **Documents**, **Vendor Intelligence** and **Activity**, and the first two do the work.
 
 <Frame caption="A submission on its Summary tab: the Suggested Inherent Risk Profile, the tags panel, and the decision buttons.">
   <img src="/images/user-guides/questionnaires-submission-review.png" alt="A questionnaire submission open on the Summary tab with the reviewer picker, Accept and Deny buttons, and the suggested risk profile card" />
@@ -300,7 +319,7 @@ Click a row to open it. The header carries the **Assign reviewer** picker, the *
     On an IRQ, the **Suggested Inherent Risk Profile** card shows the overall score and the per-domain scores the answers produce, and lets you adjust them before accepting. A **How this score was weighted** table appears when your risk domains carry weights, and names any answered questions that were not weighted. A notice explains when an option's minimum score override raised the score. The **Suggested updates** panel lists every write-back the answers propose, one row each with **Apply** and **Don't apply**, plus **Accept all** and **Reject all**; expand a row for **Why this was suggested**. A row marked **Applied on approval without review** has review turned off on its rule. The tags panel sits beneath it, and an AI summary of the answers at the bottom.
   </Step>
   <Step title="Check the answers on the Review Questionnaire tab">
-    Every question with its answer, comment, and attachments, grouped by section. Internal-only questions carry an **Internal only** badge and are yours to answer here. As a template reviewer or an administrator you can change answers; a callout says so and **All revisions will be tracked**. When someone on your own team filled in the questionnaire for the vendor, a callout says it was answered on the vendor's behalf. A changed answer shows **Response modified from the original by** and a **Version History** dialog keeps every version.
+    Every question with its answer, comment, and attachments, grouped by section. Internal-only questions carry an **Internal only** badge and are yours to answer here. Under an answer with a write-back, a chip names each value it suggests and where it applies, for example a tag set on both the vendor and the service. Its cross rejects that value everywhere it applies; to keep it on one record and not the other, decide each row on the **Suggested updates** panel. A decision in either place shows in the other. As a template reviewer or an administrator you can change answers; a callout says so and **All revisions will be tracked**. When the portal template lets reviewers correct answers or send them back, that callout describes **Edit answer** and **Send back** instead (see [Turn on answer corrections and send-back](#turn-on-answer-corrections-and-send-back)). When someone on your own team filled in the questionnaire for the vendor, a callout says it was answered on the vendor's behalf. A changed answer shows **Response modified from the original by** and a **Version History** dialog keeps every version.
   </Step>
   <Step title="Decide">
     **Accept** opens a dialog that can also set the vendor's status and launch an assessment against a plan. Both start off, so accepting applies the answers and nothing else until you turn one on. On an IRQ, the vendor's inherent risk score changes only when you accept, never when the vendor submits. **Deny** opens **Deny intake request?**, which can set a canceled status on the vendor. Either button is disabled, with the count shown, while a required internal-only question is unanswered. Suggestions you did not decide are applied on accept; rejecting by default would lose data every time someone approves quickly.
@@ -326,7 +345,53 @@ The actions menu on a submission:
   An intake request's questionnaire is decided on the request, not here. When you open one from **Questionnaires**, the header shows **Decide on request** in place of **Accept** and **Deny**, or **Open request** once it is decided. The request page is where its review stages and your **Intake Approval** settings apply. See [Decide on the request, not its questionnaire](/user-guides/intake-review-stages#decide-on-the-request-not-its-questionnaire).
 </Note>
 
-Returning a questionnaire to the vendor with a revision message is an assessment feature, not a submission action here. See [Reviews and approvals](/user-guides/reviews-and-approvals).
+Returning an assessment questionnaire to the vendor with a revision message is an assessment feature. See [Reviews and approvals](/user-guides/reviews-and-approvals). For inherent risk, informational and Know-Your-Vendor requests, the portal template can let reviewers correct answers and send questions back, as below.
+
+### Turn on answer corrections and send-back
+
+Both are off until a portal template turns them on. Open **Configuration → Portal Templates**, open an inherent risk, informational or Know-Your-Vendor template, and in its **Review** box switch on either or both:
+
+| Setting | What it lets a reviewer do |
+| --- | --- |
+| **Reviewers can change submitted answers** | Correct an answer after it is submitted. They must give a reason, and the original answer stays in the answer history. |
+| **Reviewers can send questions back** | Return chosen questions to the respondent with a comment. Only those questions reopen, and the review waits until they are answered. |
+
+The settings follow the template, so turning one on or off also applies to requests already sent from it. On a submission that is **Ready for review**, the **Review Questionnaire** tab then says what you can do, and each of the respondent's questions has **Edit answer**, **Send back**, or both. Internal-only questions have neither: you answer those directly.
+
+### Correct a submitted answer
+
+<Steps>
+  <Step title="Edit the answer">
+    Click **Edit answer** on the question. The question is marked **Editing**, and the respondent's answer is shown under it. Pick or type the new answer. On a scored question, the points for your pick show beside the old points.
+  </Step>
+  <Step title="Give a reason">
+    Under **Reason for the Change**, say why the answer changes, such as what the contract says. The reason is required and shown with the answer.
+  </Step>
+  <Step title="Save">
+    Click **Save change**. The answer reads "Changed by" you, from the original answer, with the date, and is marked **Reviewer edit**. The original stays in **Version History** with your reason. Suggested updates and the risk profile are worked out again from the new answer, and a note under the risk profile counts the answers reviewers changed.
+  </Step>
+</Steps>
+
+The respondent is not emailed about a correction. You cannot correct an unanswered question, keep an answer unchanged, or correct anything while questions are out with the respondent.
+
+### Send questions back
+
+<Steps>
+  <Step title="Pick the questions">
+    Click **Send back** on a question and say what the respondent should change. The question is marked **Sending back**. Repeat for each question. A tray at the foot of the page counts them; **Don't send back** takes one off.
+  </Step>
+  <Step title="Send">
+    Click **Send back to** the respondent in the tray. The dialog lists each question with its answer and your comment, and who the email goes to. Add an optional note under **Note to** the respondent, and click **Send back**.
+  </Step>
+  <Step title="Wait for the answers">
+    The respondent gets an email and can change only those answers. Everything else stays locked. In place of **Accept** and **Deny**, the header shows **Waiting on** the respondent, and a callout says when the questions went, with **Show sent-back questions** to jump to them. Your work queue item moves to **Waiting** until they submit again.
+  </Step>
+  <Step title="Read what changed">
+    When they submit, a callout says how many answers changed and the review is back with you. Each returned question is marked **Updated** or **Kept**, with any reply they wrote.
+  </Step>
+</Steps>
+
+One request has one set of returned questions at a time. To take them back before the respondent answers, click **Withdraw** on the callout: the respondent can no longer change those answers, and the submission comes back to you as it was. What the respondent sees is in [The supplier portal, for suppliers](/user-guides/supplier-portal-for-suppliers#when-questions-are-sent-back-to-you).
 
 ## Questionnaire history on the vendor page
 
@@ -366,6 +431,8 @@ What this means in practice:
 | A questionnaire is submitted through a portal | Every template reviewer | In-app and email, **Questionnaire submitted through portal**. Several submissions within five minutes are grouped into one email. The link goes to the assessment when there is one, otherwise to the Questionnaires page. |
 | A submission reaches **Ready for review** with a reviewer assigned | The submission reviewer | A work queue item on their Overview page, and the **Work queue item assigned** notification. |
 | A questionnaire is sent | The vendor | The portal invitation email. |
+| A reviewer sends questions back | Whoever submitted the returned questionnaires, or else the people the invitation went to | An email that lists the returned questions and your note, with a link to the request. The comment on each question shows on the request page. |
+| A review is past its **Review due** date, on the template's **Reminders** cadence | The submission reviewer | A work queue reminder about the review. |
 
 Each person controls these under their notification settings; see [Email notifications](/user-guides/email-notifications). A submission with no reviewer, or no vendor, creates no work queue item for anyone.
 
@@ -401,6 +468,9 @@ An API key also cannot approve, reject or archive a response, sign an attestatio
 | "An imported row says the rule would make a loop." | The question the row shows already decides, directly or through other rules, whether its trigger question appears, so neither could be answered. The message names both questions. Change which question triggers one of the rules, or remove the rule that closes the loop. |
 | "A requester picked a country but some entities there are missing." | Those entities have no country set, or are inactive. | Set the country on each entity under **Configuration → Legal entities**, and reactivate any that should be offered. |
 | "A requester is told there are no active legal entities in a country." | Every entity in that country is inactive or has no country set. | Add or reactivate an entity there, or have the requester choose another country. |
+| "There is no **Edit answer** or **Send back** on a submission." | The portal template has **Reviewers can change submitted answers** or **Reviewers can send questions back** off, the submission is not **Ready for review**, questions are already out with the respondent, or the question is internal-only. |
+| "**Accept** and **Deny** are gone and the header says **Waiting on**." | Questions were sent back. Wait for the respondent to submit, or click **Withdraw** on the callout. |
+| "The review has no due date." | The template's **Configure Reviewers** sets no **Review due**. A review opened before you set it picks the date up within the hour. |
 | "Send Questionnaire is disabled." | Unsaved changes, or a select question with no options. The tooltip lists the questions to fix. |
 | "This questionnaire is no longer available." | The link points at a template that was deleted. Its submissions are still on each vendor's **Questionnaires** tab. |
 | "Questionnaire changed" dialog while editing. | Someone else saved the template. Reload to get their version; your unsaved edits are lost. |

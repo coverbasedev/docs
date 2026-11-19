@@ -227,6 +227,8 @@ Use this when you only need the record: a vendor being logged for administrative
   <Step title="Open the Assessments page and click New Assessment">
     Go to **Assessments** and click **+ New Assessment** at the top right. The list shows when each assessment was last updated, its outcome, score, status, auto-review progress, and both risk figures. It is sorted by **Last updated**, newest first.
 
+    To see when each vendor's request is due, turn on the **Portal due** column in the table's display options. It shows the due date of the assessment's open request while it waits on the vendor, and sorts soonest first. Once the request is submitted, closed or paused, the column reads **Submitted**, **Closed** or **Paused** instead, and those sort last. The **Portal Due Date** filter finds the same dates, with **Overdue** for requests past due and **No open portal** for assessments with no request waiting.
+
     If your organization has Zero Touch Assessments turned on, **Launch zero-touch assessment** sits beside **New Assessment**. It starts a lighter review that never contacts the vendor, and those runs are listed under **Zero Touch**, not here. See the [Zero Touch Assessment guide](/user-guides/zero-touch-assessments).
 
     <Frame caption="If the list looks empty, clear the filters or switch back to All assessments. Filters you add persist between visits.">
@@ -343,6 +345,8 @@ Then the risk domain table: a row per domain in scope, each with the assessment 
 
 Rows reading "Not started" or "Unassigned" have not been reviewed yet. Those are your gaps.
 
+**Domains left out of scope.** A residual-risk assessment normally sets residual risk only for the domains it assessed. With **Out-of-Scope Domains Carry Inherent Risk Forward** on, under **Configuration → Assessment Settings** in the **Workflow** section, completing a residual-risk assessment also sets residual risk equal to inherent risk for each domain the assessment left out of scope. A domain reused from an earlier assessment keeps that result. The setting applies to assessments completed after you turn it on, and never changes a completed one. With it on, the Summary's domain table lists every domain: the ones in scope, then an **Out of Scope** group marked **Not assessed**. When the assessment sets risk on the vendor alone, the table also shows each domain's inherent and residual risk, and a carried domain's residual risk reads **From inherent**. When it covers services, each service's own entry shows its risk.
+
 The switch above the table changes whose profile it shows. **Assessment** is this assessment's results. **Vendor** is the vendor's current inherent and residual risk by domain, and each service the assessment covers has its own entry, so a relationship owner can see how the vendor-level assessment compares with their service. The vendor and service views are read-only here; edit those scores on the vendor or service page.
 
 <Frame caption="1 Recommendation. 2 Score, review progress, and completion. 3 Risk by domain. 'Not set' means not yet reviewed.">
@@ -356,6 +360,39 @@ When relationship owner attestations are turned on for your organization, comple
 The owner reads the statement, selects the services the attestation covers, and chooses **Acknowledge** or **Dispute**. A dispute needs a reason, and it raises a work queue item for the assessment's assignee. The card lists every owner's standing per service: awaiting, acknowledged with the date, or disputed with the reason. On a disputed row the assignee chooses **Request again**, which asks that owner once more for that service, or **Close dispute**.
 
 The statement owners confirm is set under **Assessment Settings**, in the **Relationship Owner Attestation** section. Leave it empty to use the default.
+
+The same section holds the settings that decide when owners are asked and what they see:
+
+| Setting | What it does |
+| --- | --- |
+| **Ask When an Assessment Completes** | On by default: every relationship owner of a covered service is asked as soon as the assessment completes. Turn it off when a workflow asks instead, with the [Request relationship owner attestation](/user-guides/building-a-workflow#requesting-relationship-owner-attestation) action, so owners are not asked twice. |
+| **Owner Review Page** | The owner's work queue item opens one page with the outcome, the open findings on their services and the analyst's summary, and they answer there. Off, it opens the assessment's **Summary** tab. Applies to attestations requested after the change. |
+| **Service Profiles** | Shown while **Owner Review Page** is on. Turns the page into one profile per service, each with its own answer. |
+
+#### Service profiles on the owner review page
+
+With **Service Profiles** on, choose what each profile shows and click **Save profile**:
+
+- **Details** at the top of each profile: tick up to 12 and drag them into order. They are the built-in **Description**, **Relationship Owners**, **Tags** and **Next Assessment Date**, and your service custom fields. The ones you leave out are listed under **Not Shown**.
+- **Sections** below them: **Overall Risk**, which is always shown, and **Risk by Domain**, **Offshore Locations**, **Fourth Parties** and **Open Findings**, each with its own box.
+
+**Reset to default** puts the original profile back.
+
+The owner then sees a banner named after the request (**Attestation Requested** when it has no name), with its due date and how many of their services are answered. It reads **Answers Recorded** once they have answered for all of them. **Your Services** lists a profile for each service they answer for. **Other Services**, which others answer for, are folded below, each with how many of its approvers acknowledged. A **Whole Vendor** card holds what applies to every service: the vendor's fourth parties and its vendor-wide open findings.
+
+Each profile lists its **Approvers**, with each person's role (**Relationship owner**, or the name of the field that named them, such as General Partner) and their answer. To answer:
+
+<Steps>
+  <Step title="Open the answer dialog">
+    Click **Acknowledge** or **Dispute** on one profile to answer for that service, or **Acknowledge results** on the banner to answer for several. From a profile, the dialog starts with that service ticked. From the banner, it starts with nothing ticked, unless you answer for only one service.
+  </Step>
+  <Step title="Tick the services and choose a response">
+    Tick each service the answer covers, with its inherent and residual risk beside it. Choose **Acknowledge** or **Dispute**. A dispute needs a reason, which the analyst sees and can answer by asking again or closing the dispute.
+  </Step>
+  <Step title="Send it">
+    Click the button, which counts the services. One answer covers every ticked service, and each service is recorded separately.
+  </Step>
+</Steps>
 
 ---
 
