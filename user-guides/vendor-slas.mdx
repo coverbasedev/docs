@@ -14,7 +14,7 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 An SLA is a measurable service level a vendor has committed to, such as "99.9% monthly uptime" or "P1 first response within 30 minutes". Each SLA has a target, an owner on your side, a measurement due date and a status. Each time someone measures it, they record the value, and Coverbase keeps every value with the target and status it had at that point.
 
-The mistake people make most often is editing the SLA and overwriting the current value each month. That still works and the old value is kept, but it dates the new value today and leaves **Measurement due** where it was. Use **Record value** instead: it asks which date the value covers and moves the due date forward for you.
+The mistake people make most often is editing the SLA and overwriting the current value each month. That still works and the old value is kept, but the new value is dated today, so last month's figure reads as this month's. Use **Record value** instead: it asks which date the value covers.
 
 ## Where SLAs live
 
@@ -68,11 +68,11 @@ If the value is the newest one by **Measured on** date, it becomes the SLA's **C
 
 **Record value** is not offered on an SLA measured from a vendor status page. Those values are recorded automatically.
 
-Typing a new value into **Current value** in **Edit SLA** also adds it to the history, dated today, with the SLA's status at that moment. It does not move **Measurement due**.
+Typing a new value into **Current value** in **Edit SLA** also adds it to the history, dated today, with the SLA's status at that moment. It moves **Measurement due** the same way, unless you change the due date in the same edit.
 
 ## Reading the history
 
-Once an SLA has a value, its card shows **History**. Click it to see every value, newest first. Each entry shows:
+Click **History** on an SLA's card to see every value, newest first. Each entry shows:
 
 - the value and the status recorded with it
 - the **Measured on** date, the target the SLA had when the value was recorded, and who recorded it
@@ -80,7 +80,7 @@ Once an SLA has a value, its card shows **History**. Click it to see every value
 
 The target is the one in force at the time, so changing the target later does not rewrite how earlier months compared. A value that was on the SLA before history was kept shows **Earlier entry** instead of a name.
 
-To remove a value entered by mistake, hover it and click the delete icon. If it was the newest value, the value before it becomes **Current** again. Deleting a value does not change the SLA's status or due date.
+To remove a value entered by mistake, hover it and click the delete icon. If it was the newest value, the value before it becomes **Current** again, and if it was the only value, **Current** is cleared. Deleting a value does not change the SLA's status or due date.
 
 ## How Measurement due moves forward
 
@@ -100,7 +100,7 @@ When you record the newest value and the SLA has both a **Measurement due** date
 
 Capitalization does not matter. When the wording is understood, the **Record value** dialog says that Measurement due will move forward.
 
-A value only counts toward the due date when its **Measured on** date is no more than one period before that due date. For example, with a monthly SLA due on November 5, a value measured on October 31 moves the due date to December 5. A value measured on August 31 goes into the history and leaves the due date on November 5.
+A value only counts toward the due date when its **Measured on** date is less than one period before that due date. For example, with a monthly SLA due on November 5, a value measured on October 31 moves the due date to December 5. A value measured on August 31 goes into the history and leaves the due date on November 5.
 
 If the next due date is still in the past, for example because nothing was recorded for three months, it keeps moving forward one period at a time until it is after today. If the frequency is something like "Per incident", or the SLA has no due date, set **Measurement due** by hand in **Edit SLA**.
 
@@ -134,9 +134,8 @@ Hover the card and click the delete icon. The SLA leaves the list along with its
 | Problem | What to do |
 | --- | --- |
 | "I recorded a value and **Current** did not change." | The value's **Measured on** date is earlier than the newest value in the history, so it was filed as an earlier month. Check the date, or delete it and record it again with the right one. |
-| "**Measurement due** did not move." | The SLA has no due date, its frequency is not one Coverbase understands, the value was entered through **Edit SLA**, or the value is dated more than one period before the due date. Set the frequency to one of the words in [How Measurement due moves forward](#how-measurement-due-moves-forward), or set the due date by hand. |
-| "There is no **History** link on the card." | Nothing has been recorded on the SLA yet. It appears after the first value. |
-| "There is no **Record value** button." | The SLA is measured from a vendor status page, and its values are recorded automatically. |
+| "**Measurement due** did not move." | The SLA has no due date, its frequency is not one Coverbase understands, the due date was changed in the same edit, or the value is dated one period or more before the due date. Set the frequency to one of the words in [How Measurement due moves forward](#how-measurement-due-moves-forward), or set the due date by hand. |
+| "There is no **Record value** or **History** button." | The SLA is measured from a vendor status page, and its values are recorded automatically. |
 | "The owner never got a reminder." | The SLA needs both an owner and a **Measurement due** date. Email reminders are off by default; check **Account → Notifications**. |
 | "Contract analysis did not create SLAs for a service." | That service already had at least one SLA. Coverbase only fills a service or vendor that has none. Add the missing SLAs by hand. |
 | "The SLA is breached but no finding appeared." | The finding opens when the status changes to **Breached**. If the SLA was already **Breached** when created, change it to another status and back, or open a finding by hand. |

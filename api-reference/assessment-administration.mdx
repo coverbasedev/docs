@@ -429,7 +429,7 @@ To track an SLA on a vendor, send `POST /v1/slas` with `vendor_id` and `name`. T
 
 To record a value on a manually measured SLA, send `POST /v1/slas/{sla_id}/readings` with `value` and `measured_at` (the date the value covers, as a Unix timestamp). The body also accepts `status` and `note`. The newest value by `measured_at` becomes the SLA's `current_value`, and the SLA takes the `status` you send. When the SLA has a `due_date` and a `frequency` Coverbase understands (`frequency_recognized` is `true` on the SLA), the due date moves forward one period. An older value is added to the history without changing the SLA. Returns `201 Created`. An empty value returns `422`, and a status-page SLA returns `400` with `invalid_sla_reading`.
 
-`GET /v1/slas/{sla_id}/readings` returns every recorded value, newest first. Each one keeps the `target`, `unit` and `status` the SLA had when it was recorded, and `recorded_by` is null for a value entered before history was kept. Changing `current_value` with `PATCH /v1/slas/{sla_id}` also adds a value to the history.
+`GET /v1/slas/{sla_id}/readings` returns every recorded value, newest first. Each one keeps the `target`, `unit` and `status` the SLA had when it was recorded, and `recorded_by` is null for a value entered before history was kept. Changing `current_value` with `PATCH /v1/slas/{sla_id}` also records a value, dated `last_measured_at` when you send it and now otherwise. It follows the same rules: an older value only joins the history, and the due date moves unless the same request sets `due_date`.
 
 ## Scales
 
