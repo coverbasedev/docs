@@ -18,6 +18,36 @@ Your Coverbase representative turns on SCIM provisioning for your organization. 
 
 The mistake people make most often is mapping a role to one group as a test. The first role mapping hands every provisioned person's role to the directory at once, not only that group's members. Plan the role mappings for all your groups before you save the first one.
 
+## Plan your groups
+
+Your identity provider sends Coverbase only groups and who is in them. It never sends a role or a user group for a person. You decide what each group means in Coverbase by mapping it to a role, a user group, both, or neither.
+
+Roles and user groups rarely line up, so most organizations push two kinds of groups, and a person sits in more than one of them:
+
+| Group in your identity provider | Role | User group |
+| --- | --- | --- |
+| Coverbase Admins | Admin | None |
+| Coverbase Members | Member | None |
+| Coverbase Guests | Guest | None |
+| Coverbase CAO Approvers | Leave roles alone | CAO Approvers |
+| Coverbase Vendor Risk | Leave roles alone | Vendor Risk |
+
+In this example, a vendor risk analyst who also approves CAO requests is in three groups: **Coverbase Members** for their role, and **Coverbase Vendor Risk** and **Coverbase CAO Approvers** for their user groups. When everyone on a team has the same role and belongs in the same user group, one group can map to both.
+
+Two rules shape the plan:
+
+- **A person has one role.** Being in two role groups gives the stronger role, not both. If someone needs a mix of permissions, create a [custom role](/user-guides/permissions-and-roles) and map a group to it.
+- **User groups add up, but they grant no access.** A person joins every user group their groups map to. User groups route assignments, reviews and notifications. What someone can see and change comes from their role.
+
+## More than one organization
+
+If your company has several Coverbase organizations, such as production and a sandbox, sign-in and provisioning work differently:
+
+- **Sign-in is shared.** One single sign-on connection covers your email domain, and a person switches between the organizations they belong to without signing in again.
+- **Provisioning is per organization.** Each organization has its own **Provisioning** page, Tenant URL and token. In your identity provider, create one provisioning application per organization and assign it only that organization's groups. A provisioning-only application does not need single sign-on settings.
+
+Deactivating someone in your identity provider removes them only from the organizations it provisions. If you add people to an organization by invitation instead, remove them there by hand when they leave, or they keep access to that organization until their session ends.
+
 ## The Provisioning page
 
 Open **Organization** and choose **Provisioning**, or search the command palette for *Provisioning*.
@@ -181,6 +211,8 @@ Every change the directory makes is in the organization's audit log as a system 
 | **Failed (503)** under **Recent activity** | Coverbase could not give the person access in its sign-in service. | Nothing. Your identity provider retries the request. |
 | Everyone's role changed after you mapped one group | The first role mapping hands every provisioned person's role to the directory. | Map roles for the other groups, or set the **Default role**. To undo it, remove every role mapping. |
 | A returning person lost their user groups | Deactivation removes the user groups directory groups gave. | Add them back to the directory groups. The mappings apply again. |
+| A person you deactivated can still open another of your organizations | Your identity provider provisions only this organization. The other one added them by invitation. | Set up provisioning for the other organization, or remove the person there by hand. |
+| Someone's role changed when you added them to a group meant only for a user group | That group also maps a role. | Set the group's **Role** to **Leave roles alone** and give roles through role groups. |
 
 ## Related
 
