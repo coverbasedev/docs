@@ -42,7 +42,7 @@ Your admin turns this on per intake template. If you are never asked what you ne
   <Step title="The details for that request">
     For a new service, pick every service the request adds. Services you already use are listed for reference and cannot be picked again.
 
-    For more licenses, pick the service, enter how many more you need, the added annual cost, when you need them and why.
+    For more licenses, pick the service, enter how many more you need, the added annual cost, when you need them and why. A service that already has a license count keeps its unit: if it counts seats, you ask for seats.
   </Step>
 </Steps>
 
@@ -57,7 +57,7 @@ A license request is only for more of the same use. Under **Does anything else c
 
 If you tick any of these, you cannot submit the request as more licenses. The form explains that the change can raise the service's risk level, and **Review as a change in scope** turns the request into a new service request for that service. What you entered so far stays on the request, including the licenses, and the risk questionnaire asks only about the change.
 
-When nothing changes and your admin skips the questionnaire for license requests, **Submit for approval** sends the request straight to review. Steps 2 and 3 of the portal show as skipped.
+When nothing changes and your admin skips the questionnaire for license requests, **Submit for approval** sends the request straight to review. Steps 2 and 3 of the portal show as skipped. Anything the portal requires from every request still appears on the license form, such as required custom fields, the relationship owner or a vendor contact, and the request cannot be submitted without it.
 
 ## Answers carried over
 
@@ -77,15 +77,15 @@ The intake list has a **Request type** column and a **Request type** filter, so 
 
 <AccordionGroup>
   <Accordion title="A new service request" icon="layer-plus">
-    **Summary** opens with **Change in scope**: the services the request adds, each with the request's inherent risk score and level, the services the vendor already has, and the vendor's overall inherent risk now and after approval. The vendor's overall level is the higher of its own level and its active services' levels, so a new service at a higher level raises the vendor. The card says which new service does that and how many answers were carried over.
+    **Summary** opens with **Change in scope**: the services the request adds, each with the request's inherent risk score and level, the services the vendor already has, and the vendor's overall inherent risk now and after approval. The vendor's overall level is the higher of its own level and its active services' levels, so a new service at a higher level raises the vendor. When a license request became a change in scope, the service it changes is listed under **Scope changes** with the level the request's score points to. The score shown is your saved edit if you changed it on the review. The card says which service raises the vendor and how many answers were carried over.
 
     Accept the request as you would any other. Approval writes the inherent risk level onto each new service and recalculates the vendor.
   </Accordion>
 
   <Accordion title="A license request" icon="layer-group">
-    When the portal skipped the questionnaire, the request shows **License request** in place of a questionnaire: the service and its level, the licenses before and after, the added cost, the date, the reason and whether the requester reported a change in scope. **Approve** adds the licenses to the service. **Deny** takes an optional note. Either decision is recorded on the service's license history with a link to the request.
+    When the portal skipped the questionnaire, the request shows **License request** in place of a questionnaire: the service and its level, the licenses before and after, the added cost, the date, the reason and whether the requester reported a change in scope. Reviewers assigned to the request can decide it, as well as anyone who can update every intake request. **Approve** adds the licenses to the service. **Deny** takes an optional note. Either decision is recorded on the service's license history with a link to the request.
 
-    When the portal asks the questionnaire for license requests, the request is reviewed like a new service, and accepting it also adds the licenses.
+    When the portal asks the questionnaire for license requests, the request is reviewed like a new service, and accepting it also adds the licenses, whether you accept the request, approve its questionnaire or a workflow accepts it.
   </Accordion>
 
   <Accordion title="Every request on the vendor" icon="clock-rotate-left">
@@ -100,8 +100,8 @@ Open **Configuration**, then **Portal templates**, and edit the intake template.
 | Setting | Default | What it does |
 | --- | --- | --- |
 | **Offer to expand an existing vendor** | Off on existing templates, on for new **Intake request** templates | When the vendor is already in use, ask whether the request is a new service, more licenses or a separate vendor. Off: the portal asks nothing and treats every request as a new vendor. |
-| **Allow license requests** | On | Offer **More licenses for a service you already use**. Shown only while the setting above is on. |
-| **Skip the risk questionnaire for license requests** | On | License requests go straight to review. Off: they answer the questionnaire like a new service, with company answers carried over. Shown only while license requests are allowed. A template with review stages always asks the questionnaire, so the request walks its stages. |
+| **Allow license requests** | Off on existing templates, on for new **Intake request** templates | Offer **More licenses for a service you already use**. Shown only while the setting above is on. |
+| **Skip the risk questionnaire for license requests** | Off on existing templates, on for new **Intake request** templates | License requests go straight to review. Off: they answer the questionnaire like a new service, with company answers carried over. Shown only while license requests are allowed. A template with review stages always asks the questionnaire, so the request walks its stages. |
 
 Supplier portals never offer this, because the supplier introduces itself.
 
@@ -109,9 +109,9 @@ Coverbase enforces these settings on the server too. A license request sent thro
 
 ## Coverbase AI and MCP
 
-When you ask Coverbase AI to onboard a vendor your organization already has, it lists the services you already use and asks the same question: a new service, more licenses or a separate vendor. It files the request with the matching type, and for more licenses it asks whether anything else changes before treating the request as a license request.
+When you ask Coverbase AI to onboard a vendor your organization already has, it lists the services you already use and asks the same question: a new service, more licenses or a separate vendor. It files the request with the matching type, and for more licenses it asks whether anything else changes before treating the request as a license request. It asks you before submitting, as it does for any intake request.
 
-Over MCP, `create_intake_session_tool` takes `request_kind` (`new_vendor`, `new_service` or `additional_licenses`) with `vendor_id`, plus `new_service_names` for a new service or `license_service_id` and `additional_licenses` for licenses. See [Vendor intake in chat](/mcp/vendor-intake).
+Over MCP, `create_intake_session_tool` takes `request_kind` (`new_vendor`, `new_service` or `additional_licenses`) with `vendor_id`, plus `new_service_names` for a new service or `license_service_id` and `additional_licenses` for licenses. A new service request can carry the license fields too, when more licenses turned into a change in scope, and approval then adds them. See [Vendor intake in chat](/mcp/vendor-intake).
 
 ## Troubleshooting
 
