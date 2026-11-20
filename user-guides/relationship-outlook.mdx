@@ -60,6 +60,8 @@ The vendor also gets credit. **In the vendor's favor** lists sufficient coverage
 
 An outside-in rating describes the vendor's observable estate. When your organization runs the infrastructure behind the service, or the rated estate is not what your relationship depends on, turn off **External posture applies** on the vendor's monitoring record. The ratings stay on the record but stop moving the outlook, and the choice carries to the vendor's next record.
 
+If you already keep these vendors in a Bitsight tier, such as **Alternative Approach**, name the tier under **Alternative Approach tiers in Bitsight** instead of switching each record. Every vendor Bitsight files under that tier has its ratings set aside, and the record's **Confidence** card names the tier. Moving a vendor out of the tier in Bitsight brings its ratings back on the next sync. Coverbase reads the tier on every Bitsight pull. When a Bitsight company's **Custom ID** matches a vendor's **External ID**, that match comes first, before the company's domain or name.
+
 ## Rating floors by inherent risk
 
 A rating can also be judged against a floor for the vendor's inherent risk tier, in the rating's own units: for example a Bitsight floor of 740 for Critical vendors, 700 for High and 640 for Medium. A rating below its tier's floor adds a Watch condition to the outlook, and a Watch held for 60 days reads Elevated. A rating never acts on its own: the outlook does. A tier can also stop monitoring ratings altogether, in which case they stay on the record but do not move the outlook.
@@ -68,10 +70,12 @@ A rating can also be judged against a floor for the vendor's inherent risk tier,
 
 When an outlook worsens into Watch, Elevated or Critical, the response rules decide what happens, by the vendor's inherent risk tier:
 
-- **Notify POCs**: tell the vendor's relationship owners and risk analysts.
+- **Notify POCs**: tell the vendor's points of contact, chosen under **Points of contact** (below).
 - **Create finding**: open one finding on the vendor, which moves into your finding remediation process.
 - **Targeted inquiry**: raise a task for the risk analyst to send the vendor a specific questionnaire or request for information about the condition, not a full assessment.
 - **Escalate internally**: raise a task for an internal review of what the condition warrants, which can lead to an out-of-cycle assessment.
+
+**Points of contact** sets who **Notify POCs** reaches: risk analysts, relationship owners, the owners of the vendor's services, engagements or contracts, and any person field on the vendor or its services, such as a PVM or Risk Office POC. A user group reaches its members, and each person is told once. The response on the record counts them by role, for example "1 risk analyst, 2 relationship owners and 2 people in PVM POC".
 
 A Low inherent risk vendor turning Elevated need not get the same response as a Critical one. Each rule acts only at or above the confidence you set (Moderate by default). Improvements and a record's first reading never act.
 
@@ -85,11 +89,11 @@ At reassessment, the record's history and confidence choose the type of assessme
 | --- | --- |
 | Zero Touch | Stable for the credit period, High confidence |
 | Lighter Touch | Stable for the credit period, Moderate confidence: focus on your key controls |
-| Risk-Focused | Watch or Elevated in one or two areas, Moderate confidence or above: test those areas |
+| Risk-Focused | Watch or Elevated in one or two areas, Moderate confidence or above, and nothing outside them: test those areas |
 | Full assessment | Insufficient data, Low confidence, a broad concern, or Stable not yet held long enough |
 | Out of cycle | Critical |
 
-The credit period is 90 days by default. A Stable outlook earns it only with coverage at the policy minimum and no material or overdue open findings. The areas a Risk-Focused assessment tests are the risk domains of the findings driving the outlook, plus external security posture when a rating drives it.
+The credit period is 90 days by default. A Stable outlook earns it only with coverage at the policy minimum and no material or overdue open findings. The areas a Risk-Focused assessment tests are the risk domains of the findings driving the outlook, the risk domains of the Radar detectors behind its alerts, and external security posture when a rating drives it. Map a detector to the risk domains it speaks to (your SIG domains, for example) under the detector's **Risk domains**, and its alerts count toward those areas. An alert from a detector mapped to no domain, a disclosed incident or a screening match calls for a full assessment. The scoping task and the assessment's **Scoping Basis** list the focus areas.
 
 When an outlook turns **Critical**, Coverbase raises a scoping task for the vendor that day, due in two days, and the button on the record reads **Start out-of-cycle assessment**. Creating the assessment from the record cites it: the outlook, its confidence and trend, the assessment type and the factors are stored on the assessment, so the reasoning survives after the record moves on.
 
@@ -106,8 +110,8 @@ Under **Configuration → Assessment Settings → Reassessments → Monitoring**
 1. Under **What Counts Toward the Outlook**, choose which sources count and their severity floors.
 2. Under **Coverage**, set the minimum monitored share for a reliable outlook (80% by default).
 3. Under **External Security Posture**, set for each rating the fall that reads Watch and the fall that reads Elevated, in the rating's own units, or turn a rating off.
-4. Under **Response by Inherent Risk**, choose the actions for each tier and outlook, the mode (Preview, Live or Off), the confidence the rules need, and who escalations go to.
-5. Under **Rating Floors by Inherent Risk**, set each rating's floor per tier, or turn rating monitoring off for a tier.
+4. Under **Response by Inherent Risk**, choose the actions for each tier and outlook, the mode (Preview, Live or Off), the confidence the rules need, the **Points of contact** Notify reaches, and who escalations go to.
+5. Under **Rating Floors by Inherent Risk**, set each rating's floor per tier, or turn rating monitoring off for a tier, and name your **Alternative Approach tiers in Bitsight**.
 6. Under **Assessment Type by Monitoring History**, choose the plan, and whether to launch a Zero Touch run, for each type, and set **Days Stable before scope credit**.
 7. Keep **Hold automatic creation unless the outlook is Stable** on to make the scheduled job wait for someone to scope every other outlook.
 
@@ -120,11 +124,12 @@ To be told when an outlook changes, keep the **Relationship outlook changed** no
 | The outlook reads **Pending**. | The record has not synced since monitoring records were turned on. The nightly sweep computes it for every open record, or a new signal, finding or vendor change does it sooner. |
 | The outlook reads **Insufficient data** for a vendor you know well. | Monitoring covered less of the window than the policy minimum under **Coverage**, and nothing on the record is adverse. Check which sources watch the vendor. |
 | The outlook is Stable but the next assessment is a full one. | Scope credit needs the outlook to hold Stable for the credit period, confidence above Low, coverage at the minimum, and no material or overdue open findings. The factors and confidence reasons on the record show which one is not met. |
-| A rating fell and the outlook did not move. | The fall is smaller than the rating's Watch threshold, the rating is turned off under **External Security Posture**, or **External posture applies** is off on the vendor's record. |
+| A rating fell and the outlook did not move. | The fall is smaller than the rating's Watch threshold, the rating is turned off under **External Security Posture**, **External posture applies** is off on the vendor's record, or Bitsight files the vendor under one of your **Alternative Approach tiers**. |
 | A large fall in Coverbase Security Posture reads only Watch. | The scan's own coverage is thin or mostly indirect, so it cannot raise the outlook past Watch. |
 | The button on the record reads **Start out-of-cycle assessment**. | The outlook is Critical. Coverbase has also raised a scoping task for the vendor, due in two days. |
 | An outlook worsened and nothing was created. | The rules are in Preview or Off, the tier has no action for that outlook, or the outlook was read with less confidence than the rules need. The record's Response panel says which. |
-| A response shows **Not taken**. | Nobody could receive it: the vendor has no relationship owner or risk analyst, or no escalation assignee is set. |
+| A response shows **Not taken**. | Nobody could receive it: no one holds the roles under **Points of contact** for the vendor, or no escalation assignee is set. |
+| A vendor with a finding in one domain gets a full assessment. | Something else drives the outlook too, such as an alert from a detector mapped to no risk domain. Map the detector to its domains, or test the vendor in full. |
 | A vendor has no **Relationship outlook** card. | The vendor has no completed assessment yet, so there is no window to monitor, or monitoring records are not turned on for your organization. |
 
 ## Related
