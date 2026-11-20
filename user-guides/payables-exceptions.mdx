@@ -57,9 +57,9 @@ From top to bottom:
 
 ## Actions
 
-The buttons at the top depend on the recommendation. **Ask the supplier for a corrected invoice** puts **Request corrected invoice** first. **Likely a match** puts **Accept invoice** first. Otherwise **Route to someone else** is first and **Accept invoice** sits beside it. Everything else is under **Actions**.
+The buttons at the top depend on the recommendation. **Ask the supplier for a corrected invoice** puts **Request corrected invoice** first. **Likely a match** puts **Accept invoice** first. Otherwise **Route to someone else** is first and **Accept invoice** sits beside it. Everything else is under **More actions**, including **Request corrected invoice** on every open case that has an invoice, and **Run the checks again**.
 
-<Frame caption="The Actions menu on an open case.">
+<Frame caption="The More actions menu on an open case.">
   <img src="/images/user-guides/payables/dialogs/08-case-actions-menu.png" alt="Case page with the Actions menu open, listing Ask for a document, Escalate, Mark as duplicate, Resolve and Run the checks again" />
 </Frame>
 
@@ -68,6 +68,8 @@ Each action opens a dialog that names its effect and says who will read your not
 ### Accept invoice
 
 Records that you accepted the invoice despite the differences. Write a reason, then click **Accept invoice**.
+
+Under **Line mapping**, the dialog lists each invoice line with the PO line it was matched to. If a suggestion is wrong, pick the right PO line from the list. The checks run again with your mapping before the invoice is accepted, so a line you move is checked for price and quantity against the PO line you chose. The activity records each change, such as "Invoice line ... moved from PO line ... to PO line ...", and the line then shows **mapped by reviewer**.
 
 <Frame caption="Accepting an invoice as invoiced. A reason is required.">
   <img src="/images/user-guides/payables/dialogs/09-accept-dialog.png" alt="Accept as invoiced dialog explaining that it records the acceptance despite the differences and does not change the invoice in the ledger, with a required reason field" />
@@ -86,7 +88,7 @@ When your rules require a second person above an amount, the case shows "Accepte
 
 ### Request corrected invoice
 
-Asks the supplier to reissue the invoice. The button is offered when the recommendation is **Ask the supplier for a corrected invoice**. On other cases, write to the supplier with **Message supplier** or use **Ask for a document**. The message starts with the sentence the supplier already sees. Edit it to say exactly what to fix, then **Send request**.
+Asks the supplier to reissue the invoice. It is the main button when the recommendation is **Ask the supplier for a corrected invoice**, and it is under **More actions** on every other open case that has an invoice. A price difference can be the supplier's error even when the checks suggest otherwise. The message starts with the sentence the supplier already sees. Edit it to say exactly what to fix, then **Send request**.
 
 <Frame caption="A price difference where procurement asked for a corrected invoice. The clock is paused while the supplier owes the next step.">
   <img src="/images/user-guides/payables/internal/03-case-30-price-mismatch-correction.png" alt="Price difference case with the clock paused, time split between procurement and the supplier, activity showing the request for a corrected invoice shared with the supplier and the clock pausing, and the supplier view showing the message asking them to reissue at the PO price" />
@@ -104,11 +106,13 @@ Under **Activity**, **Internal note** is for your team only. Type `@` to mention
 
 ### Send a note to the procurement system
 
-On a **No goods receipt** case, when your rules turn on case notes to the procurement system, this adds your note to the PO there for operations to see. It does not record a receipt or change the PO. Operations records the receipt in the procurement system, and when it arrives, the case resolves itself.
+The action reads **Send a note to** followed by your procurement system's name, as set under **Source names**. On a **No goods receipt** case, when your rules turn on case notes to the procurement system, this adds your note to the PO there for operations to see. It does not record a receipt or change the PO. Operations records the receipt in the procurement system, and when it arrives, the case resolves itself.
 
 ### Route to someone else
 
-Hands the case to another owner role: AP, Operations, Procurement, Supplier or Manager. The new owner gets a new clock. Time with the previous owner stays in the history. If the role has one person, the case is assigned to them.
+Hands the case to another owner role: AP, Operations, Procurement, Supplier or Manager. The new owner gets a new clock. Time with the previous owner stays in the history.
+
+For an internal role, **Person** picks someone in it, or **Anyone in** the role. Only people set up for that role under **Team roles** are listed, and the person you pick is notified. With **Anyone in** the role and one person in it, the case is assigned to them. When nobody is set up for the role, the dialog says so and the case goes to the role.
 
 ### Escalate
 
@@ -116,7 +120,7 @@ Sends the case to the escalation role of its clock (a manager by default) and ke
 
 ### Mark as duplicate
 
-The invoice stays on record and is left out of matching. Open cases on it resolve as **Duplicate voided**. The supplier sees that it duplicates an invoice already received. Void it in your ledger too.
+The invoice stays on record and is left out of matching. Open cases on it resolve as **Duplicate voided**. The supplier sees its status as **Duplicate**. Void it in your ledger too.
 
 ### Resolve and Reopen
 
@@ -136,13 +140,15 @@ A **Line needs review** case means every check passed but at least one line was 
   <img src="/images/user-guides/payables/internal/05-case-32-line-review-ai-assist.png" alt="Line needs review case with Accept invoice as the main action, warnings on two lines matched by description, and a lines table showing each PO line with the supplier's abbreviated description beneath it" />
 </Frame>
 
-Compare part numbers, units and quantities. When Coverbase AI explained the case, read its panel: it names the lines and the words or numbers it relied on. If the lines are right, click **Accept invoice**. Coverbase remembers the mapping for the next invoice from this supplier. If a line is wrong, ask the supplier for a corrected invoice that quotes the PO line or part number.
+Compare part numbers, units and quantities. When Coverbase AI explained the case, read its panel: it names the lines and the words or numbers it relied on. If the lines are right, click **Accept invoice**. Coverbase remembers the mapping for the next invoice from this supplier. If a line is wrong, pick the right PO line under **Line mapping** in the same dialog. If no PO line fits, ask the supplier for a corrected invoice that quotes the PO line or part number.
+
+An **Invoice reading to check** case means AI read an emailed or uploaded invoice and was unsure of a field that matching uses. The **Invoice read with confidence** check lists the fields. Open the invoice drawer, compare those fields under **Source record** with **Open PDF**, then accept the invoice if the reading is right. If it is wrong, ask the supplier for a corrected invoice or a clearer copy. See [Reading emails and PDFs with AI](/user-guides/payables-matching#reading-emails-and-pdfs-with-ai).
 
 ## Clocks, pauses and escalation
 
 <Steps>
   <Step title="The clock starts">
-    When a case opens or is routed to a new owner, it gets that owner's clock from your rules, counted in business hours on your calendar or in calendar hours.
+    When a case opens or is routed to a new owner, it gets that owner's clock from your rules, counted in business hours on your calendar or in calendar hours. The **Clock** column's tooltip says which, such as "Counted in business hours.", and **Ownership** shows the time used against the target in business time or calendar time.
   </Step>
   <Step title="It pauses while the supplier owes the next step">
     When you request a correction or a document, an internal owner's clock pauses if its rule says **Pause while waiting on the supplier**. The activity shows "paused the clock". It resumes, with the time it had left, when the supplier replies.
@@ -167,12 +173,13 @@ Each running stretch is stored, so **Time with each owner** is measured, not est
 
 | Problem | What to check |
 | --- | --- |
+| The person I want is not in the **Person** list | Only people set up for that role under **Team roles** are listed. Add them there first. |
 | There is no **Accept invoice** button | The invoice was replaced by a newer version, so decide on the current one, or your role may not accept matches. |
 | "Your role may not accept matches" | Your organization named who may accept under **Who may accept a match**. Route the case to AP or a manager. |
 | "A newer version of this invoice replaced it" | The supplier sent a corrected invoice. The case moved to it. Reload the case. |
 | "A decision is already recorded on this match" | Someone decided already. **Run the checks again** to decide afresh. |
 | The supplier says they never got the request | Their portal members are emailed only when the **Invoices and statements** portal section is on. Check their team in the portal. |
-| A case went to the supplier but nobody emailed them | A case routed straight to the supplier by a rule shows in their portal, and they are emailed at the reminder point. Use **Request corrected invoice** to email them now. |
+| A case went to the supplier but nobody emailed them | A case that opens routed to the supplier emails their portal members once, when it opens. Nothing is sent when the **Invoices and statements** portal section is off. Use **Request corrected invoice** to email them again with your own message. |
 | A case closed by itself | A rerun no longer found the difference: a receipt arrived or a corrected invoice fixed it. The activity says so. |
 | The clock still shows overdue after escalating | Escalation keeps the deadline. Act on the case, or route it. |
 

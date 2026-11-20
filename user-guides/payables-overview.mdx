@@ -38,6 +38,7 @@ flowchart TD
   INV["Invoice arrives: ledger, email, PDF, EDI, API or portal"] --> ID{"Supplier and PO found?"}
   ID -- "PO not received yet" --> WAITPO["Waiting for PO"]
   WAITPO -- "PO arrives" --> CHECK
+  WAITPO -- "no PO after 72 hours" --> CASE
   ID -- yes --> CHECK["Checks against PO and receipts"]
   GR --> CHECK
   CHECK -- "every check passes" --> MATCHED["Matched"]
@@ -80,7 +81,7 @@ Those are the default owners. Your routing rules decide them, and the overdue pa
     Sees their invoices and why one is on hold in the supplier portal. Sends corrected invoices, replies on a mismatch, checks the monthly statement and can dispute a scorecard figure. Never sees internal notes, owner names or match details.
   </Card>
   <Card title="Admin" icon="sliders">
-    Connects sources, maps fields, and sets tolerances, routing, clocks, what suppliers see and onboarding requirements on the **Payables rules** page.
+    Connects sources, maps fields, names your procurement system and AP ledger under **Source names**, and sets tolerances, routing, clocks, what suppliers see and onboarding requirements on the **Payables rules** page.
   </Card>
 </CardGroup>
 
@@ -110,7 +111,7 @@ Notifications go to the person who owes the next step, never to a whole team, an
 | A case escalated | The new assignee, the clock's escalation people, and everyone in the escalation role | The clock runs out, or someone escalates by hand |
 | A supplier responded | The assignee | The supplier replies, disputes or sends a corrected invoice |
 
-Suppliers receive an email, addressed to their portal's members, when you ask for a corrected invoice or a document, when their own clock reaches its reminder point and again when it runs out, and when a statement or an amended statement is issued. Each email carries only what the portal already shows them and a link to it. Nothing is emailed to suppliers unless the **Invoices and statements** section of your supplier portal is on.
+Suppliers receive an email, addressed to their portal's members, once when a case opens with them as its owner, when you ask for a corrected invoice or a document, when their own clock reaches its reminder point and again when it runs out, and when a statement or an amended statement is issued. Each email carries only what the portal already shows them and a link to it. Nothing is emailed to suppliers unless the **Invoices and statements** section of your supplier portal is on.
 
 ## Troubleshooting
 
@@ -118,7 +119,7 @@ Suppliers receive an email, addressed to their portal's members, when you ask fo
 | --- | --- |
 | An invoice shows **Matched** but the supplier says it is not paid | Matching is Coverbase's check. Payment is your ledger's. Look at **Finance status** on the invoice. |
 | An emailed invoice shows **Duplicate** | Expected once your ledger books the same invoice. The booked copy becomes the invoice and the emailed copy is linked to it. See [Duplicates](/user-guides/payables-matching#duplicates-credit-notes-and-corrected-invoices). |
-| An invoice sits on **Waiting for PO** | The PO it names has not arrived from your procurement system. It is checked as soon as it does. |
+| An invoice sits on **Waiting for PO** | The PO it names has not arrived from your procurement system. It is checked as soon as it does. After 72 hours by default, a **PO not found** case opens for AP. |
 | A case went to the wrong team | Your routing rules decide owners, first match wins. See [Who owns each exception](/user-guides/payables-setup#who-owns-each-exception). |
 | Nobody was notified about a new case | The owner role has several people or none, so nobody is assigned. Set one person under **Team roles**, or pick the case up from the queue. |
 

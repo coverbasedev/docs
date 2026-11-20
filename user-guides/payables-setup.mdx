@@ -18,7 +18,7 @@ The mistake people make most often is going live on the shipped defaults. Every 
 
 ## Sources
 
-Open **Payables › Sources**. Each source has a card with its health, when it last synced, how it updates, how many events it has applied and how far behind it is.
+Open **Payables › Sources**. Each source has a card with its health, when it last synced, how it updates, how many events it has applied and how far behind it is. **How it updates** reads **Polls every** followed by that source's own interval in minutes, or **Sends events** for a source that pushes. Cards and events use the names your teams set under [Source names](#source-names).
 
 <Frame caption="The Sources tab: one card per source, push delivery settings, and every event received.">
   <img src="/images/user-guides/payables/internal/19-sources.png" alt="Sources tab with cards for the email intake, the AP ledger and the procurement system, each showing health, last sync, polling interval, events applied and lag, a push delivery panel with signing secret buttons, and an events table showing one event that stopped retrying and one waiting for a reference" />
@@ -42,7 +42,7 @@ A card marked **Simulated** runs on sample records from a test adapter. It is no
 
 A card reads **Healthy**, **Behind**, **Failing**, **Off**, **Not started** or **Needs attention**. Under it, a line counts the events waiting for a reference and the events that failed. **Sync now** pulls from the source straight away. Polled sources are also pulled on their own schedule.
 
-The **Events** table lists every event, inbound or outbound. **Needs attention** shows only the ones that did not apply. Each row says why in plain words, with the raw error under **Technical detail**:
+The **Events** table lists every event, inbound or outbound, 50 to a page. **Needs attention** shows only the ones that did not apply. Each row says why in plain words, with the raw error under **Technical detail**:
 
 | Status | What it means | What to do |
 | --- | --- | --- |
@@ -148,19 +148,30 @@ Click **Rules** at the top right of **Payables**, or go to **Configuration › P
 
 ### The setup checklist
 
-The panel at the top of the page lists the decisions Payables needs from you, such as how invoices reach your ledger, which statuses suppliers may see, and your matching tolerances. Each shows the default Coverbase is running on and the section that holds it. It reads **Assumption** until someone confirms that section, then **Confirmed by your team**. The count at the top says how many are still assumed.
+**Setup questions** at the top of the page lists twelve questions your AP and procurement teams answer during setup, such as how invoices reach your AP ledger, which statuses suppliers may see, and your matching tolerances. The questions name your own systems, using the names under [Source names](#source-names). Each shows the default Coverbase runs on and **Set in** the section that holds it. It carries a **Proposed default** badge until someone confirms that section, then **Confirmed by your team**. The count at the top reads "... of 12 not confirmed" until every section holding an answer is confirmed.
 
 <Frame caption="The setup checklist: each open decision, the default in use and where to set it.">
   <img src="/images/user-guides/payables/dialogs/07-open-questions-panel.png" alt="Payables rules page with the checklist of open decisions, each marked Assumption, showing its default and the section that sets it" />
 </Frame>
 
-Work down the list with your AP lead. A decision marked **Not a setting** is answered by connecting the source on the **Sources** tab.
+Work down the list with your AP lead. A question marked "Not a setting. Answered by connecting each source on the Sources page." is answered on the **Sources** tab.
+
+### Source names
+
+**Source names** sets what your teams call each system of record, so cases, invoices and the **Sources** tab use your words:
+
+| Field | Default name | What it names |
+| --- | --- | --- |
+| **Procurement system** | Procurement system | The system that sends POs, goods receipts, quotes and delivery figures, such as Coupa or SAP Ariba. |
+| **AP ledger** | AP ledger | The system that books invoices and records payments, such as NetSuite or Oracle. |
+
+Use 60 characters or fewer. Leave a name empty to use the generic one. Suppliers in the portal always see the generic name.
 
 ### Matching
 
 | Setting | Default | What it does |
 | --- | --- | --- |
-| **Unit price tolerance (%)** and **Unit price tolerance (amount)** | 1% and 0.50 | A unit price passes when it is within either one of the PO price. |
+| **Unit price tolerance (%)** and **Unit price tolerance (amount)** | 1% and 0.50 | A unit price passes when it is within the percentage of the PO price, or when the difference across the whole line (difference times quantity billed) is within the amount. |
 | **Quantity tolerance (units)** | 0 | Units an invoice may bill beyond what was ordered or received. |
 | **Invoice total tolerance (amount)** | 1.00 | How far the invoice total may be from its lines plus tax and freight. |
 | **Tax tolerance (amount)** | 0.50 | How far tax may be from the tax rate on the PO. |
@@ -169,7 +180,9 @@ Work down the list with your AP lead. A decision marked **Not a setting** is ans
 | **Allow partial invoicing** | On | Several invoices may bill one PO line, up to the quantity ordered. Off means each invoice bills the full quantity. |
 | **Allow several invoice lines for one PO line** | On | Off sends a second invoice line on the same PO line to a reviewer. |
 
-No exchange-rate source is approved, so an invoice in a different currency from its PO always opens a case.
+No exchange-rate source is approved, so an invoice in a different currency from its PO always opens a case, and prices in different currencies are never compared.
+
+Two values are not on this page. An invoice that cites a PO waits 72 hours for it before a **PO not found** case opens. A field read by AI with a confidence below 0.8 holds the invoice for AP. See [How matching works](/user-guides/payables-matching#the-po-is-found).
 
 ### Who owns each exception
 
@@ -177,13 +190,15 @@ Routing rules run top to bottom, and the first rule that matches decides the own
 
 | Default rule | Reasons | Owner |
 | --- | --- | --- |
-| Missing goods receipt goes to operations | **No goods receipt** | Operations |
+| Missing goods receipt goes to operations | **No goods receipt**, **Billed more than received** | Operations |
 | Price difference goes to procurement | **Price differs from PO** | Procurement |
-| Supplier billing errors go to the supplier | **Billed against the wrong PO**, **Quantity differs from receipt**, **Part differs from PO**, **Currency differs from PO**, **Tax or freight differs** | Supplier |
+| Supplier billing errors go to the supplier | **Billed against the wrong PO**, **Billed more than ordered**, **Part differs from PO**, **Currency differs from PO**, **Tax or freight differs** | Supplier |
 | Statement differences go to AP | **Invoice missing from our records**, **Supplier disputes an amount**, **Supplier disputes a status**, **Scorecard dispute** | AP |
 | Everything else goes to AP triage | Any reason | AP |
 
-Keep a rule with no reasons at the bottom. Without one, a reason no rule names goes to AP anyway.
+The last rule catches **PO not found**, **No PO number on the invoice**, **PO is closed**, **Invoice data incomplete**, **Invoice reading to check**, **Line needs review** and **Possible duplicate**. Keep a rule with no reasons at the bottom. Without one, a reason no rule names goes to AP anyway.
+
+A case that opens routed to the supplier emails the supplier's portal members once, when it opens, with the sentence they see on the invoice.
 
 ### Team roles
 
@@ -243,9 +258,11 @@ Internal notes, owner names and match details never reach a supplier, whatever y
 | **Explain mismatches with Coverbase AI** | On | A suggestion for the reviewer. It never approves an invoice. |
 | **Accept clean matches without review** | Off | Only when every check passes within tolerance and every line was matched by line number, part number or a reviewer. Each is logged as a policy decision. |
 | **Require a second person to sign off** and **Only above amount** | Off | An accepted match waits for a second person before it is sent to your ledger. The person who accepted cannot sign off. |
-| Forward portal invoices to the ledger | Off | Hands portal invoices and corrections to your ledger to book. |
-| Send match decisions to the ledger | Off | Sends each acceptance as a note for your ledger to act on. Coverbase never changes a payment. |
-| Send case notes to the procurement system | Off | Lets a case owner add a note to the PO in your procurement system. |
+| **Forward portal invoices to** your AP ledger | Off | Hands portal invoices and corrections to your ledger to book. Leave it off until the connection is approved and tested. |
+| **Send match decisions to** your AP ledger | Off | Sends each acceptance as a note for your ledger to act on. Coverbase never changes a payment. |
+| **Send case notes to** your procurement system | Off | Lets a case owner add a note to the PO in your procurement system. |
+
+The last three labels end with the names set under [Source names](#source-names).
 
 ### Monthly statements
 
@@ -269,6 +286,7 @@ How many days to keep the invoice as the source sent it, integration event paylo
 | **The rules could not be saved** | Someone else saved since you opened the page. Reload and make your change again. |
 | Nobody can accept a match after you set team roles | The roles under **Who may accept a match** have nobody in them. Add people under **Team roles**, or add a role. |
 | A supplier cannot see their invoices | **Invoices and statements** is off in the centralized portal sections. |
+| Cases say "your procurement system" or "the AP ledger" instead of your system's name | Nobody set **Source names**. Enter the names your teams use and save the rules. |
 
 ## Related
 
