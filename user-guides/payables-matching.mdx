@@ -1,0 +1,265 @@
+---
+title: "How matching works"
+description: "Exactly how Payables checks a supplier invoice against its PO and goods receipts: how the supplier and PO are found, how invoice lines are mapped to PO lines, every check and tolerance, what each exception reason means and who it goes to, how AI reads emailed and PDF invoices and how that reading is checked, duplicates, credit notes, corrected invoices, and when matching runs again."
+icon: "scale-balanced"
+---
+
+import AgentDirective from "/snippets/agent-directive.mdx";
+
+<AgentDirective />
+
+<Info>
+  This guide is part of the [User Guides](/user-guides/overview) collection. It explains what happens to an invoice before anyone looks at it. For what to do with the result, see [Working exceptions](/user-guides/payables-exceptions). For the tolerances themselves, see [Setting up Payables](/user-guides/payables-setup#matching).
+</Info>
+
+Matching is deterministic. A fixed set of checks compares the invoice with its PO and, for 3-way matching, with the goods receipts on that PO. Only those checks can call an invoice **Matched**. A suggestion from the line description or from Coverbase AI can make an invoice **Likely a match**, and a person confirms it.
+
+The mistake people make most often is reading a high similarity percentage as a verified line. **Matched by description, 100% similar** means the words on the two lines overlap completely. It says nothing about whether the part is the same, so Coverbase still asks a person to confirm it.
+
+## Before the checks
+
+### The invoice is stored once
+
+Every invoice, from any channel, is stored in an inbox first, keyed by its source and the source's event ID. A source that sends the same invoice twice changes nothing the second time. An update older than the copy Coverbase holds is stored and skipped.
+
+An invoice with no invoice number is refused and shows **Stopped retrying** on the **Sources** tab.
+
+### The supplier is found
+
+Coverbase looks for the vendor by the supplier ID the source sends first. Without a match, it compares the legal name, ignoring case, punctuation and suffixes such as Inc, Ltd, LLC, GmbH and SA. It never picks between two vendors:
+
+- **One match.** The invoice goes on.
+- **Two or more matches.** The invoice waits. The **Sources** tab says "More than one vendor matches supplier ...". Set the supplier ID on the right vendor, then replay the event.
+- **No match.** The invoice waits until a vendor carries that supplier ID.
+
+### The PO is found
+
+The PO number on the invoice is compared as letters and digits only, after removing a leading label such as `PO`, `P.O.`, `PO#`, `Purchase order` or `No.`. `PO# 4500-12` and `po450012` are the same PO.
+
+- **The PO is on record.** The checks run.
+- **The invoice names a PO that has not arrived.** The invoice shows **Waiting for PO**. No case opens. The checks run as soon as the PO arrives from your procurement system.
+- **The invoice has no PO number at all.** It fails the **PO number** check and opens a **PO not found** case.
+
+### Duplicates are caught
+
+An invoice is a duplicate of another when it has the same supplier, the same invoice number (ignoring punctuation, case and leading zeros), the same total and the same currency. The invoice date is ignored, because email and EDI copies of one invoice often disagree on it by a day. See [Duplicates](#duplicates-credit-notes-and-corrected-invoices) for what happens next.
+
+## Mapping invoice lines to PO lines
+
+Each invoice line is mapped to the PO line it bills before any line is checked. Coverbase tries these in order and stops at the first that works:
+
+| Order | Method | Shown as | Verified |
+| --- | --- | --- | --- |
+| 1 | A reviewer mapped this line on this invoice | **mapped by reviewer** | Yes |
+| 2 | The supplier quoted the PO line number, and the part numbers do not contradict it | **matched by line** | Yes |
+| 3 | The manufacturer part number matches exactly one PO line, ignoring punctuation and case | **matched by part** | Yes |
+| 4 | A reviewer accepted the same description from this supplier on an earlier invoice | **mapped by reviewer** | Yes |
+| 5 | A PO line's part number (4 characters or more) appears inside the invoice line's description, on exactly one PO line | **Matched by description, 100% similar** | No |
+| 6 | The supplier quoted a PO line number but the part numbers differ | **matched by line** | No. The **Part number** check names the difference. |
+| 7 | The descriptions share enough words | **Matched by description, N% similar** | No |
+| 8 | Only one PO line is left, its price is within tolerance and its quantity is not exceeded | **Matched by description** | No |
+| | Nothing fits | **No PO line found** | Fails |
+
+Description similarity counts the words the two descriptions share, ignoring filler such as "the", "each" and "pcs". It is a word overlap, not a judgment about the part. The **Lines** table says which words matched: "Suggested from the description. Shared words: ... Confirm it before you accept."
+
+An unverified line shows a warning on **Lines mapped**: "Matched by description only, so a person should confirm it." A line placed by elimination (method 8) can show a low similarity percentage, because the percentage is from the words, and the price and quantity placed it.
+
+<Frame caption="A case where every check passed but both lines were matched by description, so a person confirms them.">
+  <img src="/images/user-guides/payables/internal/05-case-32-line-review-ai-assist.png" alt="Line needs review case recommending Likely a match, with warnings that two lines were matched by description only, a lines table showing each PO line, the invoice's own description under it and the similarity percentage, and the case owned by AP" />
+</Frame>
+
+### Description mappings
+
+When you accept an invoice whose lines were matched by description, Coverbase remembers it for that supplier. The next invoice from them with the same line description maps to the PO line carrying the same part number, shown as **mapped by reviewer**, and counts as verified. This needs a part number on the PO line both times. Coverbase learns only from your organization's own accepted invoices.
+
+If a suggested line is wrong, do not accept the invoice. Ask the supplier for a corrected invoice that quotes the PO line or the part number.
+
+## The checks
+
+Every check appears on the case, under **Recommended next step**: failures and warnings first with what was expected and what was invoiced, then the checks that passed.
+
+| Check | Passes when | On failure |
+| --- | --- | --- |
+| **PO number** | The invoice's PO is on record. | **PO not found** |
+| **Supplier** | The PO was issued to the supplier who sent the invoice. | **Billed against the wrong PO** |
+| **Currency** | The invoice and PO are in the same currency. There is no conversion. | **Currency differs from PO** |
+| **Invoice data complete** | The invoice has a number, at least one line, and a quantity and unit price on every line. | **Invoice data incomplete** |
+| **Lines mapped** | Every invoice line maps to a PO line. A line matched by description only is a warning. | **Part differs from PO** |
+| **Part number** | Where both carry one, the invoice line's part number equals the PO line's. | **Part differs from PO** |
+| **Unit price** | The invoice unit price is within the tolerance of the PO price: the larger of the percentage and the amount. | **Price differs from PO** |
+| **Quote price** | Where the PO line carries a quoted price, the invoice price is within the same tolerance of it. A difference is a warning only. | Never opens a case |
+| **Line total** | Where the line states a total, it equals quantity times unit price, to the cent. | **Invoice data incomplete** |
+| **Quantity ordered** | Everything billed on the PO line so far, this invoice included, is no more than the quantity ordered plus the quantity tolerance. With partial invoicing off, the invoice bills the full quantity. | **Quantity differs from receipt** |
+| **Quantity received** | 3-way only. Everything billed on the PO line so far is no more than the quantity received plus the quantity tolerance. | **No goods receipt** |
+| **Goods receipt** | 3-way only. The PO has at least one goods receipt. | **No goods receipt** |
+| **Freight** | Invoice freight exceeds the PO's freight allowance (zero when the PO has none) by no more than the freight tolerance. | **Tax or freight differs** |
+| **Tax** | Where the PO carries a tax rate, invoice tax is within the tax tolerance of the line total times that rate. Without a rate, the check does not apply. | **Tax or freight differs** |
+| **Invoice total** | The invoice total is within the total tolerance of its lines plus tax plus freight. | **Invoice data incomplete** |
+
+**2-way and 3-way.** With **Require a goods receipt** off, the receipt checks are skipped and the invoice is matched against the PO alone. With it on, the two receipt checks run as well.
+
+**Quantities are cumulative.** "So far" means every live invoice on the PO that arrived before this one. A credit note subtracts its quantities. A replaced version and a duplicate are left out. So a supplier who bills a 100-unit line in three parts passes until the third invoice takes the total past 100.
+
+**Two reasons override the rest.** An invoice billed against another supplier's PO opens **Billed against the wrong PO** and nothing else, because that explains every other failure. An invoice in the wrong currency opens **Currency differs from PO** and nothing else.
+
+## What happens next
+
+Each failing reason opens one case. The recommendation, shown as **Recommended next step**, follows from the reasons:
+
+| Result | When | Invoice shows |
+| --- | --- | --- |
+| **Matches the PO** | Every check passed and every line is verified. No case opens. With **Accept clean matches without review** on, the invoice is accepted and logged as a policy decision. | **Matched** |
+| **Likely a match. Confirm the suggested lines.** | Every check passed, but a line was matched by description or by Coverbase AI. Opens a **Line needs review** case. | **In review** |
+| **Ask the supplier for a corrected invoice** | Any reason the supplier fixes by reissuing: wrong PO, PO not found, quantity, part, currency, tax or freight, incomplete data. | **Exception** |
+| **Ask operations to record the receipt** | The only problem is a missing or short goods receipt. | **Waiting for receipt** |
+| **Needs a reviewer** | Anything else, such as a price difference, or a second invoice line on one PO line when your rules allow one. | **Exception** |
+| **Wait for the PO** | The PO named on the invoice has not arrived. No case. | **Waiting for PO** |
+
+**At stake** on a case is the money behind its reason: the price difference times the quantity, the quantity billed beyond the order or the receipt at the PO price, the value of lines with no PO line, or the tax and freight difference. For a wrong PO or a wrong currency, it is the whole invoice.
+
+## Exception reasons
+
+| Reason | What it means | Default owner | What the supplier sees |
+| --- | --- | --- | --- |
+| **No goods receipt** | The goods billed have not been recorded as received, or only part of them. | Operations | "We have not yet recorded delivery of these goods. No action is needed from you." |
+| **Price differs from PO** | A unit price is outside your tolerance. | Procurement | "The unit price on this invoice differs from the price on the purchase order." |
+| **Quantity differs from receipt** | The invoice bills more than was ordered on a line, counting earlier invoices. | Supplier | "This invoice bills more than the purchase order allows for at least one line." |
+| **Billed against the wrong PO** | The PO belongs to another supplier. | Supplier | "This invoice references a purchase order issued to a different supplier." |
+| **PO not found** | The invoice carries no PO number. | AP | "We could not find the purchase order this invoice references." |
+| **Part differs from PO** | A part number differs, or an invoice line matches no PO line. | Supplier | "At least one invoice line does not match a part on the purchase order." |
+| **Currency differs from PO** | The invoice is in another currency. | Supplier | "This invoice is in a different currency from the purchase order." |
+| **Tax or freight differs** | Tax is off the PO's rate, or freight exceeds the allowance. | Supplier | "Tax or freight on this invoice does not match what the purchase order allows." |
+| **Invoice data incomplete** | A required field is missing, or a line or the invoice does not add up. | AP | "This invoice is missing details or its totals do not add up." |
+| **Line needs review** | A line was matched by description or by Coverbase AI, or a PO line is billed on two invoice lines. | AP | "We are confirming which purchase order lines this invoice bills. No action is needed from you." |
+| **Possible duplicate** | Your ledger booked the same invoice twice. | AP | "Invoice ... was received twice. Only one copy will be processed." |
+
+Owners are the defaults from your [routing rules](/user-guides/payables-setup#who-owns-each-exception). Statement differences and scorecard disputes are cases too, and are covered in [Statements](/user-guides/payables-invoices-and-statements#statements) and [Disputes of a metric](/user-guides/payables-performance#disputes-of-a-metric).
+
+<Frame caption="A missing goods receipt: the invoice is right, so the supplier is told no action is needed and operations owns the case.">
+  <img src="/images/user-guides/payables/internal/04-case-31-missing-receipt-operations.png" alt="No goods receipt case recommending asking operations to record the receipt, with failed checks for quantity received on two PO lines and for the goods receipt, the lines table showing nothing received, and the case owned by operations with its clock" />
+</Frame>
+
+## Reading emails and PDFs with AI
+
+An invoice forwarded to your intake address, or uploaded as a PDF through the intake API, has no structured fields. AI reads them, and the checks above decide whether to trust what it read.
+
+<Steps>
+  <Step title="The message is stored">
+    The email and the text of its attachments are stored first, keyed by the message, before anything is read. A message delivered twice is read once.
+  </Step>
+  <Step title="AI reads the invoice">
+    It reads the invoice number, supplier name, PO number, invoice date, currency, subtotal, tax, freight, total and payment terms, and each line's PO line number, part number, description, quantity, unit price and amount. It is told to copy numbers exactly as printed, to leave a field empty when the document does not show it, and never to guess a PO number. It reports a confidence only for the fields it was unsure of.
+  </Step>
+  <Step title="What it read is checked for shape">
+    An invoice with no invoice number is refused. A supplier is found the same way as for any invoice, and never guessed between two vendors. When no supplier name was read, Coverbase uses the supplier named by whoever uploaded the PDF, else the sender's email address. When the document shows no currency, US dollars are assumed, and a line with no readable quantity is read as 1. Both then face the **Currency** and **Quantity ordered** checks.
+  </Step>
+  <Step title="It is matched like any invoice">
+    The PO, the receipts and every check above apply unchanged. A misread price fails **Unit price**. A misread quantity fails **Quantity ordered** or **Line total**. A misread total fails **Invoice total**. A line the AI read with a garbled description is matched by description at best, which a person confirms. Every failure opens a case for a person.
+  </Step>
+  <Step title="Its confidence is shown">
+    The invoice drawer lists, under **Source record**, how sure the reading was of each field it flagged. An invoice from a system feed says "These fields came from a system feed, so there is no extraction confidence." **Open PDF** shows the document beside it.
+  </Step>
+  <Step title="It waits for the ledger">
+    An emailed or uploaded invoice is not booked. When your ledger books the same invoice, Coverbase recognizes it by the duplicate fingerprint, keeps the booked copy as the invoice and links the emailed copy to it as a duplicate. Any open case moves to the booked copy.
+  </Step>
+</Steps>
+
+If the reading fails three times, the message stops retrying and shows on the **Sources** tab, where **Replay** tries again.
+
+<Note>
+  A field read with low confidence does not on its own hold the invoice. What holds it is a check failing. If the AI misread a value in a way that still agrees with the PO, for example a quantity that happens to equal the ordered quantity, the checks pass. Open the PDF on invoices that arrived by email when you review them.
+</Note>
+
+## Coverbase AI on a mismatch
+
+With **Explain mismatches with Coverbase AI** on, Coverbase AI looks at invoices from the last 14 days that did not match and have no explanation yet. It reads the invoice and PO lines (description, part number, quantity, unit price) and the failed checks, and writes:
+
+- An explanation of under 80 words of what differs and why, naming the lines.
+- For each invoice line no method placed, the PO line it thinks it bills, with its reasoning, or none when nothing fits.
+
+The case shows it in a panel labeled "Coverbase AI reading. A suggestion, not a decision.", with the fields it read. A proposed line is shown as **Suggested by Coverbase AI** and stays unverified. A proposal can move an invoice to **Likely a match** or **Needs a reviewer**, never to **Matched**. A proposal that names a PO line not on the PO is dropped. If the model call fails, the case has no explanation rather than an invented one, and Coverbase stops asking after three failed attempts.
+
+## Duplicates, credit notes and corrected invoices
+
+### Duplicates
+
+Coverbase keeps every copy and decides which is the invoice:
+
+| What arrived | What happens |
+| --- | --- |
+| A copy by email, EDI, API or portal, then the ledger booked the same invoice | The booked copy is the invoice. The other is marked **Duplicate** and linked to it. No case. |
+| The ledger booked the invoice, then a copy arrived by email or another channel | The new copy is marked **Duplicate** and linked. No case. |
+| Two copies, neither booked by the ledger | The later one is marked **Duplicate**. No case. |
+| The ledger booked the same invoice twice | The second is marked **Duplicate** and a **Possible duplicate** case opens for AP, because that is a real double billing. |
+
+<Frame caption="A possible duplicate: the same invoice booked twice by the ledger.">
+  <img src="/images/user-guides/payables/internal/06-case-33-duplicate.png" alt="Possible duplicate case with the invoice against its PO, the documents list, the activity showing the case opened and routed to AP, and the supplier view saying the invoice was received twice and only one copy will be processed" />
+</Frame>
+
+The invoice drawer lists every copy under **Versions and duplicates**, marked **Current**, **Duplicate** or **Replaced**.
+
+<Frame caption="The drawer of a duplicate invoice, with both copies listed.">
+  <img src="/images/user-guides/payables/internal/11-invoice-drawer-duplicate.png" alt="Invoice drawer for a duplicate invoice, with its open case at the top, its lines against the PO, its record, a Versions and duplicates list showing the current copy and the duplicate, and where each field came from" />
+</Frame>
+
+A duplicate is never paid twice by Coverbase, because Coverbase pays nothing. Marking one **Duplicate** keeps it on record and out of matching. Void it in your ledger.
+
+### Credit notes
+
+A credit note is matched against its PO like an invoice, and its quantities subtract from what has been billed on each PO line. So a credit note for returned goods makes room for the supplier to bill them again. On a statement, a credit note is its own line, and the statement shows a credit notes total.
+
+### Corrected invoices
+
+A corrected invoice, whether the supplier sent it from the portal or your ledger sent a revision, becomes a new version of the same invoice. The earlier version shows **Replaced by correction** and stays on record. Every open case on it moves to the new version, and the checks run on the new version straight away. A difference the correction fixed resolves its case.
+
+The first-pass result belongs to the original billing. A correction never turns a first-pass mismatch into a first-pass match.
+
+If your ledger sends a changed invoice under the same ID without marking it a revision, Coverbase refuses it rather than overwrite a booked invoice. The event shows **Waiting for a reference** on the **Sources** tab, with "It conflicts with a record we already hold." Send it again as a revision, then replay it.
+
+## When matching runs again
+
+| Trigger | What reruns |
+| --- | --- |
+| A PO arrives that a waiting invoice names | That invoice. |
+| A PO is revised | Every unsettled invoice on it. |
+| A goods receipt is recorded | Every unsettled invoice on its PO. |
+| A corrected invoice arrives | The new version. |
+| You click **Run the checks again** on a case | That invoice. |
+| Coverbase AI explains a mismatch | That invoice, with the suggestion folded in. |
+
+Unsettled means waiting for a PO or a receipt, in review, or an exception. A matched, duplicate or replaced invoice is not rerun.
+
+When a rerun no longer finds a reason, its case resolves on its own, with **Receipt recorded** for a missing receipt, **Corrected invoice** when a new version fixed it, and **Match accepted** otherwise. The activity says "Matching ran again and this difference is gone." and the supplier sees "Resolved. The invoice now matches the purchase order." When a rerun still finds the reason, the open case is kept and updated. It is not opened twice.
+
+## Worked examples
+
+{/* EXAMPLES: filled from the matching corpus */}
+
+## Troubleshooting
+
+| Problem | What to check |
+| --- | --- |
+| A line shows **Matched by description, 100% similar** but the invoice is not **Matched** | Description matches always need a person. Confirm the line and accept, or get the supplier to quote the PO line number or part number. |
+| An invoice shows **Waiting for PO** for days | The PO number on the invoice does not match any PO from your procurement system. Compare the two numbers, ignoring labels and punctuation. |
+| A price within pennies opened a case | The unit price tolerance is the larger of the percentage and the amount. Check both on the rules page. |
+| An invoice for a partial delivery opened **No goods receipt** | 3-way matching compares everything billed with everything received. The case closes on its own when the rest is received. |
+| A second invoice on the same PO opened **Quantity differs from receipt** | Quantities are cumulative across invoices on the PO. Check what earlier invoices billed, shown as "billed earlier" under the line. |
+| An emailed invoice has the wrong supplier | The AI read no supplier name, so the sender's address was used. Set the supplier's ID on the vendor, or ask the supplier to put their legal name on the invoice. |
+| An invoice in euros against a dollar PO | Coverbase does not convert. Ask the supplier to reissue in the PO currency, or amend the PO. |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Working exceptions" icon="inbox" href="/user-guides/payables-exceptions">
+    What to do with each case.
+  </Card>
+  <Card title="Setting up Payables" icon="sliders" href="/user-guides/payables-setup">
+    Tolerances, routing and the email intake address.
+  </Card>
+  <Card title="Invoices and statements" icon="file-lines" href="/user-guides/payables-invoices-and-statements">
+    The invoice drawer, versions and duplicates.
+  </Card>
+  <Card title="Performance and scorecards" icon="chart-line" href="/user-guides/payables-performance">
+    How first-pass match is counted.
+  </Card>
+</CardGroup>
