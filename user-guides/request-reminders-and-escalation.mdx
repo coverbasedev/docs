@@ -14,14 +14,14 @@ import AgentDirective from "/snippets/agent-directive.mdx";
 
 A request reminds the people it was sent to on a schedule you set. Escalation adds one more email, to someone else, when the request is still not submitted after a set number of days: a General Partner, the relationship owner, a risk analyst, or a team.
 
-The mistake people make most often is turning escalation on for requests that are already late. Escalation goes out on its exact day and is never sent afterwards, so a request already past that day is not escalated. Use **Send reminder now** for those.
+The mistake people make most often is turning escalation on for a template and expecting it to reach requests already sent. A request keeps the schedule it was created with, so tick **Also apply to open requests** when you save. Requests already past their escalation day then escalate once, on the next daily run.
 
 ## Where the schedule lives
 
 - **On a portal template.** Open **Configuration → Portal Templates**, open a template, and find the **Reminders** card. Its schedule applies to requests created from the template.
 - **On one request.** Open the request's configuration drawer and go to the **Schedule** tab.
 
-A request copies its template's schedule when it is created. Changing the template never changes requests already sent, so change those on their own **Schedule** tab.
+A request copies its template's schedule when it is created. Changing the template's reminders never changes requests already sent, so change those on their own **Schedule** tab. Escalation is the exception: see [Apply escalation to requests already sent](#apply-escalation-to-requests-already-sent).
 
 ## What a schedule sends
 
@@ -72,12 +72,26 @@ Escalation is on the schedules of inherent risk, assessment and Know-Your-Vendor
 
 How it behaves:
 
-- **Once, on that day only.** The escalation goes out on the day you set and never later. A request already past that day when you turn escalation on is not escalated, and a missed day is not made up.
+- **On that day.** The escalation goes out on the day you set. A missed day is not made up, with two exceptions: a request you apply escalation to with **Also apply to open requests** while it is already past its day escalates on the next daily run, and a request on hold on its day escalates once on the first daily run after the hold lifts.
 - **Once per request.** A request escalates at most once.
 - **Someone always gets it.** If a field is empty on a request, or a group has nobody in it, the person who sent the request gets the escalation instead. People who have left your organization are skipped.
 - **Only after a delivered invitation.** A request whose invitation failed or bounced for every recipient is not escalated, since the respondent never received it.
-- **Only for requests still waiting.** A request that is submitted, closed or on hold is not escalated.
+- **Only for requests still waiting.** A request that is submitted or closed is not escalated. A request that is paused, or whose supplier portal is closed, waits: if it was on hold on its escalation day, it escalates once on the first daily run after the hold lifts, if it is still not submitted. Lifting one hold that covered several requests' days escalates each of them once on the next run.
 - **Recorded on the request.** The request's activity records the escalation, and the **Due** column on the work queue's [Requests tab](/user-guides/work-queue#the-requests-tab) shows **Escalated** with the date.
+
+### Apply escalation to requests already sent
+
+When you save an escalation on a portal template, **Also apply to open requests** appears under it if some open requests from that template do not have this escalation yet. It says how many, and how many of those are already past the escalation day, for example "37 open requests from this template don't have this escalation yet. 22 were sent at least 14 days ago and escalate on the next daily run."
+
+Tick it and save. The escalation is added to each of those requests, and a confirmation names how many. Then:
+
+- **Requests already past their day escalate once, on the next daily run.** Requests not there yet escalate on their day, as usual.
+- **Only the escalation is added.** Each request keeps its own reminders. A request sent before November 19, 2026 still sends no scheduled reminders; only the escalation reaches it.
+- **Requests that already escalated are left alone**, and applying the same rule again changes nothing.
+- **Only open requests that were sent.** Submitted, closed and unsent requests are not touched. A paused request gets the escalation and escalates after it resumes, if it is still not submitted.
+- **Recorded.** **Configuration → Audit Logs** records who applied it, when, and to how many requests.
+
+The option is unticked each time you open the template, so saving a template never reaches open requests unless you tick it.
 
 ## Write the Escalation version of the reminder email
 
@@ -103,7 +117,7 @@ On the work queue's **Requests** tab, the row menu of a request offers **Send re
 | --- | --- |
 | I changed the template's reminders and a request already sent did not change | A request keeps the schedule it was created with. Change it on the request's **Schedule** tab. |
 | There is no **Escalation** switch | The request type has none. Escalation is on inherent risk, assessment and Know-Your-Vendor schedules. |
-| An escalation never went out | The request was already past its escalation day when escalation was turned on, it was submitted, closed or on hold on that day, or it already escalated once. |
+| An escalation never went out | The request was created before escalation was on its template and nobody applied it to open requests, it was submitted or closed by that day, it is still on hold, or it already escalated once. |
 | The escalation went to the sender, not the General Partner | The General Partner field was empty on that request. Fill in the field on the service or vendor. |
 | The escalation used the standard wording | The template has no **Escalation** version saved, or **Email for the escalation** is empty and the schedule has no template. |
 | An inherent risk request gets no reminders | It was sent before November 19, 2026. Use **Send reminder now**, or rely on escalation. |
